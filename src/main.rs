@@ -1,23 +1,190 @@
-use bevy::asset::AssetMetaCheck;
-use bevy::prelude::*;
+//! This example demonstrates the built-in 3d shapes in Bevy.
+//! The scene includes a patterned texture and a rotation for visualizing the normals and UVs.
+//!
+//! You can toggle wireframes with the space bar except on wasm. Wasm does not support
+//! `POLYGON_MODE_LINE` on the gpu.
+
+use std::f32::consts::PI;
+
+#[cfg(not(target_arch = "wasm32"))]
+use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
+use bevy::{
+    color::palettes::basic::SILVER,
+    prelude::*,
+    render::{
+        render_asset::RenderAssetUsages,
+        render_resource::{Extent3d, TextureDimension, TextureFormat},
+    },
+    window::CursorGrabMode,
+    input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
+};
+
+/// A marker component for our shapes so we can query them separately from the ground plane
+#[derive(Component)]
+struct Paddle;
+#[derive(Component)]
+struct Ball;
+
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(AssetPlugin {
-            // Wasm builds will check for meta files (that don't exist) if this isn't set.
-            // This causes errors and even panics in web builds on itch.
-            // See https://github.com/bevyengine/bevy_github_ci_template/issues/48.
-            meta_check: AssetMetaCheck::Never,
-            ..default()
-        }))
+        .add_plugins((
+            DefaultPlugins.set(ImagePlugin::default_nearest()),
+            #[cfg(not(target_arch = "wasm32"))]
+            WireframePlugin,
+        ))
         .add_systems(Startup, setup)
+        .add_systems(
+            Update,
+            (
+                rotate,
+                #[cfg(not(target_arch = "wasm32"))]
+                toggle_wireframe,
+                grab_mouse,
+            ),
+        )
         .run();
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2d);
-    commands.spawn(Sprite {
-        image: asset_server.load("ducky.png"),
-        ..Default::default()
+
+
+const SHAPES_X_EXTENT: f32 = 14.0;
+const Z_EXTENT: f32 = 5.0;
+
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut images: ResMut<Assets<Image>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    let debug_material = materials.add(StandardMaterial {
+        base_color_texture: Some(images.add(uv_debug_texture())),
+        ..default()
     });
+
+
+    // ball
+    commands.spawn((
+        Mesh3d(meshes.add(Sphere::new(0.3).mesh()),),
+        MeshMaterial3d(debug_material.clone()),
+        Transform::from_xyz(
+            SHAPES_X_EXTENT / 2.  /  SHAPES_X_EXTENT,
+            2.0,
+            Z_EXTENT / 2.,
+        ),
+        Ball,
+    ));
+    commands.spawn((
+        Mesh3d(meshes.add(Capsule3d::new(0.3, 2.0).mesh()),),
+        MeshMaterial3d(debug_material.clone()),
+        Transform::from_xyz(
+            -SHAPES_X_EXTENT / 2.  /  SHAPES_X_EXTENT,
+            2.0,
+            Z_EXTENT / 2.,
+        )
+        .with_rotation(Quat::from_rotation_x(-PI / 2.)),
+        Paddle,
+    ));
+
+    // light
+    commands.spawn((
+        PointLight {
+            shadows_enabled: true,
+            intensity: 10_000_000.,
+            range: 100.0,
+            shadow_depth_bias: 0.2,
+            ..default()
+        },
+        Transform::from_xyz(-4.0, 16.0, 2.0),
+    ));
+
+    // ground plane
+    commands.spawn((
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 50.0).subdivisions(10))),
+        MeshMaterial3d(materials.add(Color::from(SILVER))),
+    ));
+
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(0.0, 20., 0.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+    ));
+
+    #[cfg(not(target_arch = "wasm32"))]
+    commands.spawn((
+        Text::new("Press space to toggle wireframes"),
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(12.0),
+            left: Val::Px(12.0),
+            ..default()
+        },
+    ));
+}
+
+fn rotate(
+    mut query: Query<&mut Transform, With<Paddle>>,
+    time: Res<Time>,
+    accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
+    accumulated_mouse_scroll: Res<AccumulatedMouseScroll>,
+    ) {
+    for mut transform in &mut query {
+        transform.rotate_y(accumulated_mouse_scroll.delta.y / 3.0 );
+        transform.translation.x += accumulated_mouse_motion.delta.y / 50.0;
+        transform.translation.z -= accumulated_mouse_motion.delta.x / 50.0;
+    }
+}
+
+/// Creates a colorful test pattern
+fn uv_debug_texture() -> Image {
+    const TEXTURE_SIZE: usize = 8;
+
+    let mut palette: [u8; 32] = [
+        255, 102, 159, 255, 255, 159, 102, 255, 236, 255, 102, 255, 121, 255, 102, 255, 102, 255,
+        198, 255, 102, 198, 255, 255, 121, 102, 255, 255, 236, 102, 255, 255,
+    ];
+
+    let mut texture_data = [0; TEXTURE_SIZE * TEXTURE_SIZE * 4];
+    for y in 0..TEXTURE_SIZE {
+        let offset = TEXTURE_SIZE * y * 4;
+        texture_data[offset..(offset + TEXTURE_SIZE * 4)].copy_from_slice(&palette);
+        palette.rotate_right(4);
+    }
+
+    Image::new_fill(
+        Extent3d {
+            width: TEXTURE_SIZE as u32,
+            height: TEXTURE_SIZE as u32,
+            depth_or_array_layers: 1,
+        },
+        TextureDimension::D2,
+        &texture_data,
+        TextureFormat::Rgba8UnormSrgb,
+        RenderAssetUsages::RENDER_WORLD,
+    )
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn toggle_wireframe(
+    mut wireframe_config: ResMut<WireframeConfig>,
+    keyboard: Res<ButtonInput<KeyCode>>,
+) {
+    if keyboard.just_pressed(KeyCode::Space) {
+        wireframe_config.global = !wireframe_config.global;
+    }
+}
+
+fn grab_mouse(
+    mut window: Single<&mut Window>,
+    mouse: Res<ButtonInput<MouseButton>>,
+    key: Res<ButtonInput<KeyCode>>,
+) {
+    if mouse.just_pressed(MouseButton::Left) {
+        window.cursor_options.visible = false;
+        window.cursor_options.grab_mode = CursorGrabMode::Locked;
+    }
+
+    if key.just_pressed(KeyCode::Escape) {
+        window.cursor_options.visible = true;
+        window.cursor_options.grab_mode = CursorGrabMode::None;
+    }
 }
