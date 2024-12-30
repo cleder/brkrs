@@ -9,14 +9,10 @@ use std::f32::consts::PI;
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 use bevy::{
-    color::palettes::basic::SILVER,
-    prelude::*,
-    render::{
+    color::palettes::{basic::SILVER, css::RED}, input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll}, prelude::*, render::{
         render_asset::RenderAssetUsages,
         render_resource::{Extent3d, TextureDimension, TextureFormat},
-    },
-    window::CursorGrabMode,
-    input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
+    }, window::CursorGrabMode
 };
 use bevy_rapier3d::prelude::*;
 
@@ -92,10 +88,12 @@ fn setup(
         ActiveEvents::COLLISION_EVENTS,
         Collider::ball(BALL_RADIUS),
         Restitution {
-            coefficient: 1.0,
+            coefficient: 0.9,
             combine_rule: CoefficientCombineRule::Max,
-        }
-    ));
+        },
+        LockedAxes::TRANSLATION_LOCKED_Y,
+    )).insert(Ccd::enabled());
+    // paddle
     commands.spawn((
         Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh()),),
         MeshMaterial3d(debug_material.clone()),
@@ -107,8 +105,9 @@ fn setup(
         .with_rotation(Quat::from_rotation_x(-PI / 2.)),
         Paddle,
         RigidBody::KinematicPositionBased,
+        CollidingEntities::default(),
         Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
-    ));
+    )).insert(Ccd::enabled());
 
     // light
     commands.spawn((
@@ -165,7 +164,7 @@ fn spawn_border(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let border_material = materials.add(StandardMaterial {
-        base_color: Color::rgb(0.8, 0.2, 0.2),
+        base_color: Color::from(RED),
         ..default()
     });
 
