@@ -18,7 +18,15 @@ use bevy::{
     window::CursorGrabMode,
     input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
 };
+use bevy_rapier3d::prelude::*;
 
+const SHAPES_X_EXTENT: f32 = 14.0;
+const Z_EXTENT: f32 = 5.0;
+const BALL_RADIUS: f32 = 0.3;
+const PADDLE_RADIUS: f32 = 0.3;
+const PADDLE_HEIGHT: f32 = 2.0;
+const PLANE_H: f32 = 30.0;
+const PLANE_W: f32 = 40.0;
 /// A marker component for our shapes so we can query them separately from the ground plane
 #[derive(Component)]
 struct Paddle;
@@ -33,11 +41,13 @@ fn main() {
             #[cfg(not(target_arch = "wasm32"))]
             WireframePlugin,
         ))
-        .add_systems(Startup, setup)
+        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugins(RapierDebugRenderPlugin::default())
+        .add_systems(Startup, (setup, spawn_border))
         .add_systems(
             Update,
             (
-                rotate,
+                move_paddle,
                 #[cfg(not(target_arch = "wasm32"))]
                 toggle_wireframe,
                 grab_mouse,
@@ -48,15 +58,19 @@ fn main() {
 
 
 
-const SHAPES_X_EXTENT: f32 = 14.0;
-const Z_EXTENT: f32 = 5.0;
+
 
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut rapier_config: Query<&mut RapierConfiguration>,
 ) {
+    let mut rapier_config = rapier_config.single_mut();
+    // Set gravity to 0.0.
+    rapier_config.gravity = Vec3::ZERO;
+
     let debug_material = materials.add(StandardMaterial {
         base_color_texture: Some(images.add(uv_debug_texture())),
         ..default()
@@ -65,7 +79,7 @@ fn setup(
 
     // ball
     commands.spawn((
-        Mesh3d(meshes.add(Sphere::new(0.3).mesh()),),
+        Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh()),),
         MeshMaterial3d(debug_material.clone()),
         Transform::from_xyz(
             SHAPES_X_EXTENT / 2.  /  SHAPES_X_EXTENT,
@@ -73,9 +87,17 @@ fn setup(
             Z_EXTENT / 2.,
         ),
         Ball,
+        RigidBody::Dynamic,
+        CollidingEntities::default(),
+        ActiveEvents::COLLISION_EVENTS,
+        Collider::ball(BALL_RADIUS),
+        Restitution {
+            coefficient: 1.0,
+            combine_rule: CoefficientCombineRule::Max,
+        }
     ));
     commands.spawn((
-        Mesh3d(meshes.add(Capsule3d::new(0.3, 2.0).mesh()),),
+        Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh()),),
         MeshMaterial3d(debug_material.clone()),
         Transform::from_xyz(
             -SHAPES_X_EXTENT / 2.  /  SHAPES_X_EXTENT,
@@ -84,6 +106,8 @@ fn setup(
         )
         .with_rotation(Quat::from_rotation_x(-PI / 2.)),
         Paddle,
+        RigidBody::KinematicPositionBased,
+        Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
     ));
 
     // light
@@ -100,13 +124,13 @@ fn setup(
 
     // ground plane
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 50.0).subdivisions(10))),
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(PLANE_H, PLANE_W).subdivisions(4))),
         MeshMaterial3d(materials.add(Color::from(SILVER))),
     ));
 
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(0.0, 20., 0.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+        Transform::from_xyz(0.0, 40., 0.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
     ));
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -121,7 +145,7 @@ fn setup(
     ));
 }
 
-fn rotate(
+fn move_paddle(
     mut query: Query<&mut Transform, With<Paddle>>,
     time: Res<Time>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
@@ -133,6 +157,38 @@ fn rotate(
         transform.translation.z -= accumulated_mouse_motion.delta.x / 50.0;
     }
 }
+
+fn spawn_border(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut images: ResMut<Assets<Image>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    let border_material = materials.add(StandardMaterial {
+        base_color: Color::rgb(0.8, 0.2, 0.2),
+        ..default()
+    });
+
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new( 1.0, 5.0, PLANE_W).mesh()),),
+        MeshMaterial3d(border_material.clone()),
+        Transform::from_xyz( -15.5, 0.0, 0.0),
+        Collider::cuboid(1.0, 2.5, PLANE_W / 2.0,),
+    ));
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new( PLANE_H, 5.0, 1.0).mesh()),),
+        MeshMaterial3d(border_material.clone()),
+        Transform::from_xyz( -0.0, 0.0, -20.5),
+        Collider::cuboid( PLANE_H / 2.0 , 2.5, 0.5),
+    ));
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new( PLANE_H, 5.0, 1.0).mesh()),),
+        MeshMaterial3d(border_material.clone()),
+        Transform::from_xyz( -0.0, 0.0, 20.5),
+        Collider::cuboid(PLANE_H / 2.0, 2.5, 0.5),
+    ));
+}
+
 
 /// Creates a colorful test pattern
 fn uv_debug_texture() -> Image {
