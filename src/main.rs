@@ -14,7 +14,7 @@ use bevy::{
         render_resource::{Extent3d, TextureDimension, TextureFormat},
     }, window::CursorGrabMode
 };
-use bevy_rapier3d::prelude::*;
+use bevy_rapier3d::{parry::math::AngularInertia, prelude::*};
 
 const SHAPES_X_EXTENT: f32 = 14.0;
 const Z_EXTENT: f32 = 5.0;
@@ -96,7 +96,9 @@ fn setup(
             combine_rule: CoefficientCombineRule::Max,
         },
         LockedAxes::TRANSLATION_LOCKED_Y,
-    )).insert(Ccd::enabled());
+        Ccd::enabled(),
+        AngularInertia::default(),
+    ));
     // paddle
     commands.spawn((
         Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh()),),
@@ -114,8 +116,9 @@ fn setup(
         Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
         LockedAxes::TRANSLATION_LOCKED_Y,
         KinematicCharacterController::default(),
+        Ccd::enabled(),
 
-    )).insert(Ccd::enabled());
+    ));
 
     // light
     commands.spawn((
