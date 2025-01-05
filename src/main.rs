@@ -91,6 +91,10 @@ fn setup(
             coefficient: 0.9,
             combine_rule: CoefficientCombineRule::Max,
         },
+        Friction {
+            coefficient: 0.8,
+            combine_rule: CoefficientCombineRule::Max,
+        },
         LockedAxes::TRANSLATION_LOCKED_Y,
     )).insert(Ccd::enabled());
     // paddle
@@ -107,6 +111,8 @@ fn setup(
         RigidBody::KinematicPositionBased,
         CollidingEntities::default(),
         Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
+        LockedAxes::TRANSLATION_LOCKED_Y,
+
     )).insert(Ccd::enabled());
 
     // light
@@ -118,7 +124,7 @@ fn setup(
             shadow_depth_bias: 0.2,
             ..default()
         },
-        Transform::from_xyz(-4.0, 16.0, 2.0),
+        Transform::from_xyz(-4.0, 20.0, 2.0),
     ));
 
     // ground plane
@@ -129,7 +135,7 @@ fn setup(
 
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(0.0, 40., 0.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+        Transform::from_xyz(0.0, 37., 0.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
     ));
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -151,11 +157,13 @@ fn move_paddle(
     accumulated_mouse_scroll: Res<AccumulatedMouseScroll>,
     ) {
     for mut transform in &mut query {
-        transform.rotate_y(accumulated_mouse_scroll.delta.y / 3.0 );
-        transform.translation.x += accumulated_mouse_motion.delta.y / 50.0;
-        transform.translation.z -= accumulated_mouse_motion.delta.x / 50.0;
+        transform.rotate_y(accumulated_mouse_scroll.delta.y * time.delta_secs() * 3.0);
+        transform.translation.x += accumulated_mouse_motion.delta.y * time.delta_secs();
+        transform.translation.z -= accumulated_mouse_motion.delta.x * time. delta_secs();
+
     }
 }
+
 
 fn spawn_border(
     mut commands: Commands,
@@ -168,12 +176,14 @@ fn spawn_border(
         ..default()
     });
 
+    // upper border
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new( 1.0, 5.0, PLANE_W).mesh()),),
         MeshMaterial3d(border_material.clone()),
         Transform::from_xyz( -15.5, 0.0, 0.0),
         Collider::cuboid(1.0, 2.5, PLANE_W / 2.0,),
     ));
+    //
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new( PLANE_H, 5.0, 1.0).mesh()),),
         MeshMaterial3d(border_material.clone()),
@@ -185,6 +195,19 @@ fn spawn_border(
         MeshMaterial3d(border_material.clone()),
         Transform::from_xyz( -0.0, 0.0, 20.5),
         Collider::cuboid(PLANE_H / 2.0, 2.5, 0.5),
+    ));
+    //  lower border
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new( 0.0, 5.0, PLANE_W).mesh()),),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgba(0.0, 0.0, 0.0, 0.0),
+            //alpha_mode: AlphaMode::Mask(0.0),
+            unlit: true,
+            ..default()
+        })),
+        Transform::from_xyz( 15.5, 0.0, 0.0),
+        Collider::cuboid(0.0, 2.5, PLANE_W / 2.0,),
+        //Sensor::default(),
     ));
 }
 
