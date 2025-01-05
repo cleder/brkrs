@@ -109,9 +109,11 @@ fn setup(
         .with_rotation(Quat::from_rotation_x(-PI / 2.)),
         Paddle,
         RigidBody::KinematicPositionBased,
+        GravityScale(0.0),
         CollidingEntities::default(),
         Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
         LockedAxes::TRANSLATION_LOCKED_Y,
+        KinematicCharacterController::default(),
 
     )).insert(Ccd::enabled());
 
@@ -153,15 +155,21 @@ fn setup(
 fn move_paddle(
     mut query: Query<&mut Transform, With<Paddle>>,
     time: Res<Time>,
+    mut controllers: Query<&mut KinematicCharacterController>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     accumulated_mouse_scroll: Res<AccumulatedMouseScroll>,
     ) {
+        for mut controller in controllers.iter_mut() {
+            controller.translation = Some(Vec3::new(
+                accumulated_mouse_motion.delta.y,
+                0.0,
+                -accumulated_mouse_motion.delta.x,
+                ) * time.delta_secs());
+        }
     for mut transform in &mut query {
-        transform.rotate_y(accumulated_mouse_scroll.delta.y * time.delta_secs() * 3.0);
-        transform.translation.x += accumulated_mouse_motion.delta.y * time.delta_secs();
-        transform.translation.z -= accumulated_mouse_motion.delta.x * time. delta_secs();
-
-    }
+         transform.rotate_y(accumulated_mouse_scroll.delta.y * time.delta_secs() * 3.0);
+         transform.translation.y = 2.0;
+     }
 }
 
 
