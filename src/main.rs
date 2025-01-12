@@ -9,10 +9,15 @@ use std::f32::consts::PI;
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 use bevy::{
-    color::palettes::{basic::SILVER, css::RED}, input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll}, prelude::*, render::{
+    color::palettes::{basic::SILVER, css::RED},
+    input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
+    log::tracing_subscriber::field::debug,
+    prelude::*,
+    render::{
         render_asset::RenderAssetUsages,
         render_resource::{Extent3d, TextureDimension, TextureFormat},
-    }, window::CursorGrabMode
+    },
+    window::CursorGrabMode,
 };
 use bevy_rapier3d::{parry::math::AngularInertia, prelude::*};
 
@@ -28,7 +33,8 @@ const PLANE_W: f32 = 40.0;
 struct Paddle;
 #[derive(Component)]
 struct Ball;
-
+#[derive(Component)]
+struct Border;
 
 fn main() {
     App::new()
@@ -47,14 +53,12 @@ fn main() {
                 #[cfg(not(target_arch = "wasm32"))]
                 toggle_wireframe,
                 grab_mouse,
+                read_character_controller_collisions,
+                display_events,
             ),
         )
         .run();
 }
-
-
-
-
 
 fn setup(
     mut commands: Commands,
@@ -72,16 +76,11 @@ fn setup(
         ..default()
     });
 
-
     // ball
     commands.spawn((
-        Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh()),),
+        Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
         MeshMaterial3d(debug_material.clone()),
-        Transform::from_xyz(
-            SHAPES_X_EXTENT / 2.  /  SHAPES_X_EXTENT,
-            2.0,
-            Z_EXTENT / 2.,
-        ),
+        Transform::from_xyz(SHAPES_X_EXTENT / 2. / SHAPES_X_EXTENT, 2.0, Z_EXTENT / 2.),
         Ball,
         RigidBody::Dynamic,
         CollidingEntities::default(),
@@ -95,20 +94,19 @@ fn setup(
             coefficient: 0.8,
             combine_rule: CoefficientCombineRule::Max,
         },
+        Damping {
+            linear_damping: 0.1,
+            angular_damping: 0.1,
+        },
         LockedAxes::TRANSLATION_LOCKED_Y,
         Ccd::enabled(),
-        AngularInertia::default(),
     ));
     // paddle
     commands.spawn((
-        Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh()),),
+        Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
         MeshMaterial3d(debug_material.clone()),
-        Transform::from_xyz(
-            -SHAPES_X_EXTENT / 2.  /  SHAPES_X_EXTENT,
-            2.0,
-            Z_EXTENT / 2.,
-        )
-        .with_rotation(Quat::from_rotation_x(-PI / 2.)),
+        Transform::from_xyz(-SHAPES_X_EXTENT / 2. / SHAPES_X_EXTENT, 2.0, Z_EXTENT / 2.)
+            .with_rotation(Quat::from_rotation_x(-PI / 2.)),
         Paddle,
         RigidBody::KinematicPositionBased,
         GravityScale(0.0),
@@ -117,7 +115,6 @@ fn setup(
         LockedAxes::TRANSLATION_LOCKED_Y,
         KinematicCharacterController::default(),
         Ccd::enabled(),
-
     ));
 
     // light
@@ -134,7 +131,14 @@ fn setup(
 
     // ground plane
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(PLANE_H, PLANE_W).subdivisions(4))),
+        Mesh3d(
+            meshes.add(
+                Plane3d::default()
+                    .mesh()
+                    .size(PLANE_H, PLANE_W)
+                    .subdivisions(4),
+            ),
+        ),
         MeshMaterial3d(materials.add(Color::from(SILVER))),
     ));
 
@@ -161,20 +165,22 @@ fn move_paddle(
     mut controllers: Query<&mut KinematicCharacterController>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     accumulated_mouse_scroll: Res<AccumulatedMouseScroll>,
-    ) {
-        for mut controller in controllers.iter_mut() {
-            controller.translation = Some(Vec3::new(
+) {
+    for mut controller in controllers.iter_mut() {
+        controller.translation = Some(
+            Vec3::new(
                 accumulated_mouse_motion.delta.y,
                 0.0,
                 -accumulated_mouse_motion.delta.x,
-                ) * time.delta_secs());
-        }
+            ) * time.delta_secs(),
+        );
+    }
+    // The built-in character controller does not support rotational movement.
     for mut transform in &mut query {
-         transform.rotate_y(accumulated_mouse_scroll.delta.y * time.delta_secs() * 3.0);
-         transform.translation.y = 2.0;
-     }
+        transform.rotate_y(accumulated_mouse_scroll.delta.y * time.delta_secs() * 3.0);
+        transform.translation.y = 2.0; // force the paddle to stay at the same height
+    }
 }
-
 
 fn spawn_border(
     mut commands: Commands,
@@ -189,39 +195,42 @@ fn spawn_border(
 
     // upper border
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new( 1.0, 5.0, PLANE_W).mesh()),),
+        Mesh3d(meshes.add(Cuboid::new(1.0, 5.0, PLANE_W).mesh())),
         MeshMaterial3d(border_material.clone()),
-        Transform::from_xyz( -15.5, 0.0, 0.0),
-        Collider::cuboid(1.0, 2.5, PLANE_W / 2.0,),
+        Transform::from_xyz(-15.5, 0.0, 0.0),
+        Collider::cuboid(1.0, 2.5, PLANE_W / 2.0),
+        Border,
     ));
     //
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new( PLANE_H, 5.0, 1.0).mesh()),),
+        Mesh3d(meshes.add(Cuboid::new(PLANE_H, 5.0, 1.0).mesh())),
         MeshMaterial3d(border_material.clone()),
-        Transform::from_xyz( -0.0, 0.0, -20.5),
-        Collider::cuboid( PLANE_H / 2.0 , 2.5, 0.5),
+        Transform::from_xyz(-0.0, 0.0, -20.5),
+        Collider::cuboid(PLANE_H / 2.0, 2.5, 0.5),
+        Border,
     ));
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new( PLANE_H, 5.0, 1.0).mesh()),),
+        Mesh3d(meshes.add(Cuboid::new(PLANE_H, 5.0, 1.0).mesh())),
         MeshMaterial3d(border_material.clone()),
-        Transform::from_xyz( -0.0, 0.0, 20.5),
+        Transform::from_xyz(-0.0, 0.0, 20.5),
         Collider::cuboid(PLANE_H / 2.0, 2.5, 0.5),
+        Border,
     ));
     //  lower border
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new( 0.0, 5.0, PLANE_W).mesh()),),
+        Mesh3d(meshes.add(Cuboid::new(0.0, 5.0, PLANE_W).mesh())),
         MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgba(0.0, 0.0, 0.0, 0.0),
+            base_color: Color::srgba(0.0, 0.0, 0.0, 1.0),
             //alpha_mode: AlphaMode::Mask(0.0),
             unlit: true,
             ..default()
         })),
-        Transform::from_xyz( 15.5, 0.0, 0.0),
-        Collider::cuboid(0.0, 2.5, PLANE_W / 2.0,),
+        Transform::from_xyz(15.5, 0.0, 0.0),
+        Collider::cuboid(0.0, 2.5, PLANE_W / 2.0),
         //Sensor::default(),
+        Border,
     ));
 }
-
 
 /// Creates a colorful test pattern
 fn uv_debug_texture() -> Image {
@@ -275,5 +284,49 @@ fn grab_mouse(
     if key.just_pressed(KeyCode::Escape) {
         window.cursor_options.visible = true;
         window.cursor_options.grab_mode = CursorGrabMode::None;
+    }
+}
+
+/* A system that displays the events. */
+fn display_events(
+    mut collision_events: EventReader<CollisionEvent>,
+    mut contact_force_events: EventReader<ContactForceEvent>,
+) {
+    for collision_event in collision_events.read() {
+        println!("Received collision event: {:?}", collision_event);
+    }
+
+    for contact_force_event in contact_force_events.read() {
+        println!("Received contact force event: {:?}", contact_force_event);
+    }
+}
+
+/* Read the character controller collisions stored in the character controller’s output. */
+fn read_character_controller_collisions(
+    paddle_outputs: Query<&KinematicCharacterControllerOutput, With<Paddle>>,
+    walls: Query<Entity, With<Border>>,
+    balls: Query<Entity, With<Ball>>,
+) {
+    let output = match paddle_outputs.get_single() {
+        Ok(controller) => controller,
+        Err(_) => return,
+    };
+    for collision in output.collisions.iter() {
+        // paddle collides with the walls
+        for wall in walls.iter() {
+            if collision.entity == wall {
+                println!("hit wall {:?}", wall);
+                println!("collision {:?}", collision);
+            }
+        }
+    }
+    for collision in output.collisions.iter() {
+        // paddle collides with the balls
+        for ball in balls.iter() {
+            if collision.entity == ball {
+                println!("hit ball {:?}", ball);
+                println!("collision {:?}", collision);
+            }
+        }
     }
 }
