@@ -41,6 +41,11 @@ struct WallHit {
     pub impulse: Vec3,
 }
 
+#[derive(Event)]
+struct BallHit {
+    pub impulse: Vec3,
+}
+
 fn main() {
     App::new()
         .add_plugins((
@@ -59,10 +64,11 @@ fn main() {
                 toggle_wireframe,
                 grab_mouse,
                 read_character_controller_collisions,
-                display_events,
+                // display_events,
             ),
         )
         .add_observer(on_wall_hit)
+        .add_observer(on_paddle_ball_hit)
         .run();
 }
 
@@ -97,7 +103,7 @@ fn setup(
             combine_rule: CoefficientCombineRule::Max,
         },
         Friction {
-            coefficient: 0.8,
+            coefficient: 2.0,
             combine_rule: CoefficientCombineRule::Max,
         },
         Damping {
@@ -122,6 +128,10 @@ fn setup(
         LockedAxes::TRANSLATION_LOCKED_Y,
         KinematicCharacterController::default(),
         Ccd::enabled(),
+        Friction {
+            coefficient: 2.0,
+            combine_rule: CoefficientCombineRule::Max,
+        },
     ));
 
     // light
@@ -315,6 +325,7 @@ fn read_character_controller_collisions(
     walls: Query<Entity, With<Border>>,
     balls: Query<Entity, With<Ball>>,
     time: Res<Time>,
+    accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     mut commands: Commands,
 ) {
     let output = match paddle_outputs.get_single() {
@@ -326,13 +337,6 @@ fn read_character_controller_collisions(
         // paddle collides with the walls
         for wall in walls.iter() {
             if collision.entity == wall {
-                // println!("hit wall {:?}", wall);
-                // println!("collision {:?}", collision);
-                // println!(
-                //     "paddle move {:?}",
-                //     (collision.translation_applied + collision.translation_remaining)
-                //         / time.delta_secs(),
-                // );
                 commands.trigger(WallHit {
                     impulse: (collision.translation_applied + collision.translation_remaining)
                         / time.delta_secs(),
@@ -345,17 +349,47 @@ fn read_character_controller_collisions(
         for ball in balls.iter() {
             if collision.entity == ball {
                 // println!("hit ball {:?}", ball);
-                // println!("collision {:?}", collision);
+                println!("collision {:?}", collision);
+                commands.trigger(BallHit {
+                    impulse: Vec3::new(
+                        0.0, // accumulated_mouse_motion.delta.y,
+                        0.0,
+                        -accumulated_mouse_motion.delta.x,
+                    ) / time.delta_secs(),
+                });
             }
         }
     }
 }
 
-fn on_wall_hit(trigger: Trigger<WallHit>, mut balls: Query<&mut ExternalImpulse, With<Ball>>) {
+fn on_wall_hit(
+    trigger: Trigger<WallHit>,
+    mut balls: Query<&mut ExternalImpulse, With<Ball>>,
+    mut controllers: Query<&mut KinematicCharacterController, With<Paddle>>,
+) {
     let event = trigger.event();
-    println!("Received wall hit event: {:?}", event.impulse);
+    // println!("Received wall hit event: {:?}", event.impulse);
 
+    // give the balls an impulse
     for mut impulse in balls.iter_mut() {
         impulse.impulse = event.impulse * 0.001;
+    }
+
+    // let the paddle bounce back
+    for mut controller in controllers.iter_mut() {
+        controller.translation = Some(-event.impulse * 0.03);
+    }
+}
+
+fn on_paddle_ball_hit(
+    trigger: Trigger<BallHit>,
+    mut balls: Query<&mut ExternalImpulse, With<Ball>>,
+) {
+    let event = trigger.event();
+    println!("Received ball hit event: {:?}", event.impulse);
+
+    // give the balls an impulse
+    for mut impulse in balls.iter_mut() {
+        impulse.impulse = event.impulse * 0.000_2;
     }
 }
