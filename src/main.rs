@@ -25,7 +25,7 @@ const SHAPES_X_EXTENT: f32 = 14.0;
 const Z_EXTENT: f32 = 5.0;
 const BALL_RADIUS: f32 = 0.3;
 const PADDLE_RADIUS: f32 = 0.3;
-const PADDLE_HEIGHT: f32 = 2.0;
+const PADDLE_HEIGHT: f32 = 3.0;
 const PLANE_H: f32 = 30.0;
 const PLANE_W: f32 = 40.0;
 /// A marker component for our shapes so we can query them separately from the ground plane
@@ -44,6 +44,7 @@ struct WallHit {
 #[derive(Event)]
 struct BallHit {
     pub impulse: Vec3,
+    pub ball: Entity,
 }
 
 fn main() {
@@ -81,7 +82,7 @@ fn setup(
 ) {
     let mut rapier_config = rapier_config.single_mut();
     // Set gravity to 0.0.
-    rapier_config.gravity = Vec3::ZERO;
+    rapier_config.gravity = Vec3::new(15.0, 0.0, 0.0);
 
     let debug_material = materials.add(StandardMaterial {
         base_color_texture: Some(images.add(uv_debug_texture())),
@@ -107,12 +108,13 @@ fn setup(
             combine_rule: CoefficientCombineRule::Max,
         },
         Damping {
-            linear_damping: 0.1,
+            linear_damping: 0.01,
             angular_damping: 0.1,
         },
         LockedAxes::TRANSLATION_LOCKED_Y,
         Ccd::enabled(),
         ExternalImpulse::default(),
+        GravityScale(1.0),
     ));
     // paddle
     commands.spawn((
@@ -352,10 +354,11 @@ fn read_character_controller_collisions(
                 println!("collision {:?}", collision);
                 commands.trigger(BallHit {
                     impulse: Vec3::new(
-                        0.0, // accumulated_mouse_motion.delta.y,
+                        accumulated_mouse_motion.delta.y,
                         0.0,
                         -accumulated_mouse_motion.delta.x,
                     ) / time.delta_secs(),
+                    ball: ball,
                 });
             }
         }
@@ -368,7 +371,6 @@ fn on_wall_hit(
     mut controllers: Query<&mut KinematicCharacterController, With<Paddle>>,
 ) {
     let event = trigger.event();
-    // println!("Received wall hit event: {:?}", event.impulse);
 
     // give the balls an impulse
     for mut impulse in balls.iter_mut() {
@@ -383,13 +385,15 @@ fn on_wall_hit(
 
 fn on_paddle_ball_hit(
     trigger: Trigger<BallHit>,
-    mut balls: Query<&mut ExternalImpulse, With<Ball>>,
+    mut balls: Query<(Entity, &mut ExternalImpulse), With<Ball>>,
 ) {
     let event = trigger.event();
     println!("Received ball hit event: {:?}", event.impulse);
 
     // give the balls an impulse
-    for mut impulse in balls.iter_mut() {
-        impulse.impulse = event.impulse * 0.000_2;
+    for (mut ball, mut impulse) in balls.iter_mut() {
+        if ball == event.ball {
+            impulse.impulse = event.impulse * 0.000_2;
+        }
     }
 }
