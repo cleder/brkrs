@@ -49,7 +49,7 @@ fn main() {
         .add_plugins((
             DefaultPlugins.set(ImagePlugin::default_nearest()),
             #[cfg(not(target_arch = "wasm32"))]
-            WireframePlugin,
+            WireframePlugin::default(),
         ))
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(RapierDebugRenderPlugin::default())
@@ -77,9 +77,9 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut rapier_config: Query<&mut RapierConfiguration>,
 ) {
-    let mut rapier_config = rapier_config.single_mut();
+    let rapier_config = rapier_config.single_mut();
     // Set gravity to 0.0.
-    rapier_config.gravity = Vec3::new(15.0, 0.0, 0.0);
+    rapier_config.unwrap().gravity = Vec3::new(15.0, 0.0, 0.0);
 
     let debug_material = materials.add(StandardMaterial {
         base_color_texture: Some(images.add(uv_debug_texture())),
@@ -327,7 +327,7 @@ fn read_character_controller_collisions(
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     mut commands: Commands,
 ) {
-    let output = match paddle_outputs.get_single() {
+    let output = match paddle_outputs.single() {
         Ok(controller) => controller,
         Err(_) => return,
     };
