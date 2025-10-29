@@ -1,5 +1,3 @@
-//! This example demonstrates the built-in 3d shapes in Bevy.
-//! The scene includes a patterned texture and a rotation for visualizing the normals and UVs.
 //!
 //! You can toggle wireframes with the space bar except on wasm. Wasm does not support
 //! `POLYGON_MODE_LINE` on the gpu.
@@ -11,7 +9,6 @@ use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 use bevy::{
     color::palettes::{basic::SILVER, css::RED},
     input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
-    log::tracing_subscriber::field::debug,
     prelude::*,
     render::{
         render_asset::RenderAssetUsages,
@@ -19,7 +16,7 @@ use bevy::{
     },
     window::CursorGrabMode,
 };
-use bevy_rapier3d::{parry::math::AngularInertia, prelude::*};
+use bevy_rapier3d::prelude::*;
 
 const SHAPES_X_EXTENT: f32 = 14.0;
 const Z_EXTENT: f32 = 5.0;
@@ -52,7 +49,7 @@ fn main() {
         .add_plugins((
             DefaultPlugins.set(ImagePlugin::default_nearest()),
             #[cfg(not(target_arch = "wasm32"))]
-            WireframePlugin,
+            WireframePlugin::default(),
         ))
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(RapierDebugRenderPlugin::default())
@@ -80,9 +77,9 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut rapier_config: Query<&mut RapierConfiguration>,
 ) {
-    let mut rapier_config = rapier_config.single_mut();
+    let rapier_config = rapier_config.single_mut();
     // Set gravity to 0.0.
-    rapier_config.gravity = Vec3::new(15.0, 0.0, 0.0);
+    rapier_config.unwrap().gravity = Vec3::new(15.0, 0.0, 0.0);
 
     let debug_material = materials.add(StandardMaterial {
         base_color_texture: Some(images.add(uv_debug_texture())),
@@ -205,7 +202,7 @@ fn move_paddle(
 fn spawn_border(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut images: ResMut<Assets<Image>>,
+    images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let border_material = materials.add(StandardMaterial {
@@ -330,7 +327,7 @@ fn read_character_controller_collisions(
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     mut commands: Commands,
 ) {
-    let output = match paddle_outputs.get_single() {
+    let output = match paddle_outputs.single() {
         Ok(controller) => controller,
         Err(_) => return,
     };
@@ -391,7 +388,7 @@ fn on_paddle_ball_hit(
     println!("Received ball hit event: {:?}", event.impulse);
 
     // give the balls an impulse
-    for (mut ball, mut impulse) in balls.iter_mut() {
+    for (ball, mut impulse) in balls.iter_mut() {
         if ball == event.ball {
             impulse.impulse = event.impulse * 0.000_2;
         }
