@@ -21,7 +21,10 @@ opt-level = 3
 
 [dependencies]
 bevy = { version = "0.15.0", features = ["dynamic_linking"] }
-bevy_rapier3d = { version = "0.28.0",  features = ["simd-stable", "debug-render-3d" ] }
+bevy_rapier3d = { version = "0.28.0", features = [
+    "simd-stable",
+    "debug-render-3d",
+] }
 
 # These lints may be important signals about code quality, but normal Bevy code
 # commonly triggers them and the CI workflow treats them as errors, so we've
