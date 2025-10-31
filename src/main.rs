@@ -32,6 +32,8 @@ struct Paddle;
 struct Ball;
 #[derive(Component)]
 struct Border;
+#[derive(Component)]
+struct LowerGoal;
 
 #[derive(Event)]
 struct WallHit {
@@ -62,6 +64,7 @@ fn main() {
                 toggle_wireframe,
                 grab_mouse,
                 read_character_controller_collisions,
+                despawn_ball_on_lower_goal_collision,
                 // display_events,
             ),
         )
@@ -86,11 +89,12 @@ fn setup(
         ..default()
     });
 
-    // ball
+    // ball (spawned in upper play area, paddle will be beneath/below it toward lower edge)
     commands.spawn((
         Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
         MeshMaterial3d(debug_material.clone()),
-        Transform::from_xyz(SHAPES_X_EXTENT / 2. / SHAPES_X_EXTENT, 2.0, Z_EXTENT / 2.),
+        // Spawn ball at X=-5 (upper area), center Z, on plane Y=2.0
+        Transform::from_xyz(-5.0, 2.0, 0.0),
         Ball,
         RigidBody::Dynamic,
         CollidingEntities::default(),
@@ -113,12 +117,12 @@ fn setup(
         ExternalImpulse::default(),
         GravityScale(1.0),
     ));
-    // paddle
+    // paddle (spawn beneath/below the ball, closer to lower edge)
     commands.spawn((
         Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
         MeshMaterial3d(debug_material.clone()),
-        Transform::from_xyz(-SHAPES_X_EXTENT / 2. / SHAPES_X_EXTENT, 2.0, Z_EXTENT / 2.)
-            .with_rotation(Quat::from_rotation_x(-PI / 2.)),
+        // Paddle at X=10 (below ball at X=-5), center Z=0, on plane Y=2.0
+        Transform::from_xyz(10.0, 2.0, 0.0).with_rotation(Quat::from_rotation_x(-PI / 2.)),
         Paddle,
         RigidBody::KinematicPositionBased,
         GravityScale(0.0),
@@ -251,6 +255,7 @@ fn spawn_border(
         Collider::cuboid(0.0, 2.5, PLANE_W / 2.0),
         //Sensor::default(),
         Border,
+        LowerGoal,
     ));
 }
 
@@ -281,6 +286,30 @@ fn uv_debug_texture() -> Image {
         TextureFormat::Rgba8UnormSrgb,
         RenderAssetUsages::RENDER_WORLD,
     )
+}
+
+/// Despawn the ball when it collides with the lower goal border
+fn despawn_ball_on_lower_goal_collision(
+    mut collision_events: EventReader<CollisionEvent>,
+    balls: Query<Entity, With<Ball>>,
+    lower_goals: Query<Entity, With<LowerGoal>>,
+    mut commands: Commands,
+) {
+    for event in collision_events.read() {
+        if let CollisionEvent::Started(e1, e2, _) = event {
+            let e1_is_ball = balls.get(*e1).is_ok();
+            let e2_is_ball = balls.get(*e2).is_ok();
+            let e1_is_lower = lower_goals.get(*e1).is_ok();
+            let e2_is_lower = lower_goals.get(*e2).is_ok();
+
+            // If collision is between a Ball and a LowerGoal, despawn the ball
+            if e1_is_ball && e2_is_lower {
+                commands.entity(*e1).despawn();
+            } else if e2_is_ball && e1_is_lower {
+                commands.entity(*e2).despawn();
+            }
+        }
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]

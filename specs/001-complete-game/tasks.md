@@ -33,9 +33,9 @@ description: "Task list for Brkrs Complete Game - User Story 1 breakdown"
 
 **Purpose**: Core components and collision hooks required for User Story 1.
 
-- [ ] T005 Ensure marker components exist in src/main.rs: `Paddle`, `Ball`, `Border` (already present) and add new `LowerGoal` marker
-- [ ] T006 Tag lower edge border with `LowerGoal` in `spawn_border()` in src/main.rs (the -Z or designated lower wall)
-- [ ] T007 Add CollisionEvent reader system stub in src/main.rs for ball/world interactions (if not already present)
+- [x] T005 Ensure marker components exist in src/main.rs: `Paddle`, `Ball`, `Border` (already present) and add new `LowerGoal` marker
+- [x] T006 Tag lower edge border with `LowerGoal` in `spawn_border()` in src/main.rs (the -Z or designated lower wall)
+- [x] T007 Add CollisionEvent reader system stub in src/main.rs for ball/world interactions (if not already present)
 
 **Checkpoint**: Foundation ready — US1 tasks can proceed in parallel where marked [P]
 
@@ -57,7 +57,7 @@ description: "Task list for Brkrs Complete Game - User Story 1 breakdown"
 - [ ] T008 [P] [US1] Spawn a sample Brick for MVP in src/main.rs within setup (position to align with grid cell at center)
 - [ ] T009 [US1] Handle ball-brick collision to despawn brick in src/main.rs (CollisionEvent handler)
 - [ ] T010 [US1] Calibrate paddle "english" impulse factor in on_paddle_ball_hit in src/main.rs (tune multiplier for noticeable but controlled steering)
-- [ ] T011 [P] [US1] Implement lower wall ball-destroy rule in src/main.rs: on CollisionEvent between `Ball` and entity tagged `LowerGoal` → despawn ball entity
+- [x] T011 [P] [US1] Implement lower wall ball-destroy rule in src/main.rs: on CollisionEvent between `Ball` and entity tagged `LowerGoal` → despawn ball entity
 - [ ] T012 [P] [US1] Implement 22x22 grid wireframe overlay spawn in src/systems/grid_debug.rs; spawn entity with `GridOverlay` + `Visibility::Hidden`
 - [ ] T013 [P] [US1] Toggle grid overlay visibility in a new system (src/systems/grid_debug.rs): if wireframe enabled (WireframeConfig.global == true) → Visible; else Hidden; register system
 - [ ] T014 [P] [US1] Constrain paddle movement to play area: clamp transform X/Z inside bounds in move_paddle system in src/main.rs (in addition to colliders)
