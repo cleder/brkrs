@@ -14,7 +14,7 @@ use bevy::{
         render_asset::RenderAssetUsages,
         render_resource::{Extent3d, TextureDimension, TextureFormat},
     },
-    window::CursorGrabMode,
+    window::{CursorGrabMode, PrimaryWindow},
 };
 use bevy_rapier3d::prelude::*;
 
@@ -181,7 +181,12 @@ fn move_paddle(
     mut controllers: Query<&mut KinematicCharacterController>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     accumulated_mouse_scroll: Res<AccumulatedMouseScroll>,
+    window: Single<&Window, With<PrimaryWindow>>,
 ) {
+    if !window.focused {
+        return;
+    }
+    let _sensitivity = 100.0 / window.height().min(window.width());
     for mut controller in controllers.iter_mut() {
         controller.translation = Some(
             Vec3::new(
@@ -202,7 +207,7 @@ fn move_paddle(
 fn spawn_border(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    images: ResMut<Assets<Image>>,
+    _images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let border_material = materials.add(StandardMaterial {
@@ -289,10 +294,13 @@ fn toggle_wireframe(
 }
 
 fn grab_mouse(
-    mut window: Single<&mut Window>,
+    mut window: Single<&mut Window, With<PrimaryWindow>>,
     mouse: Res<ButtonInput<MouseButton>>,
     key: Res<ButtonInput<KeyCode>>,
 ) {
+    if !window.focused {
+        return;
+    }
     if mouse.just_pressed(MouseButton::Left) {
         window.cursor_options.visible = false;
         window.cursor_options.grab_mode = CursorGrabMode::Locked;
@@ -301,20 +309,6 @@ fn grab_mouse(
     if key.just_pressed(KeyCode::Escape) {
         window.cursor_options.visible = true;
         window.cursor_options.grab_mode = CursorGrabMode::None;
-    }
-}
-
-/* A system that displays the events. */
-fn display_events(
-    mut collision_events: EventReader<CollisionEvent>,
-    mut contact_force_events: EventReader<ContactForceEvent>,
-) {
-    for collision_event in collision_events.read() {
-        println!("Received collision event: {:?}", collision_event);
-    }
-
-    for contact_force_event in contact_force_events.read() {
-        println!("Received contact force event: {:?}", contact_force_event);
     }
 }
 
@@ -331,7 +325,6 @@ fn read_character_controller_collisions(
         Ok(controller) => controller,
         Err(_) => return,
     };
-    // time.delta_secs();
     for collision in output.collisions.iter() {
         // paddle collides with the walls
         for wall in walls.iter() {
@@ -355,7 +348,7 @@ fn read_character_controller_collisions(
                         0.0,
                         -accumulated_mouse_motion.delta.x,
                     ) / time.delta_secs(),
-                    ball: ball,
+                    ball,
                 });
             }
         }
