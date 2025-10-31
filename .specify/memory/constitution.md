@@ -114,7 +114,9 @@ expensive to fix.
 - Manual testing required for gameplay features
 - Integration testing for critical game mechanics when feasible
 - Test both native and WASM builds before releases
-- Performance profiling for new systems
+- every function should be unit tested
+
+## - Performance profiling for new systems
 
 **Documentation**:
 
