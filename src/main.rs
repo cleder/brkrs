@@ -26,6 +26,14 @@ const PADDLE_HEIGHT: f32 = 3.0;
 const PLANE_H: f32 = 30.0;
 const PLANE_W: f32 = 40.0;
 
+// Bounce/impulse tuning
+// How strongly the wall collision pushes the ball (ExternalImpulse on balls)
+const BALL_WALL_IMPULSE_FACTOR: f32 = 0.001;
+// How strongly the paddle bounces back when hitting a wall
+const PADDLE_BOUNCE_WALL_FACTOR: f32 = 0.03;
+// How strongly the paddle bounces back when hitting a brick (separate from walls)
+const PADDLE_BOUNCE_BRICK_FACTOR: f32 = 0.02;
+
 // Grid debug overlay constants (22x22 grid covering PLANE_H × PLANE_W)
 const GRID_WIDTH: usize = 22; // Columns (Z-axis)
 const GRID_HEIGHT: usize = 22; // Rows (X-axis)
@@ -50,6 +58,11 @@ struct MarkedForDespawn;
 
 #[derive(Event)]
 struct WallHit {
+    pub impulse: Vec3,
+}
+
+#[derive(Event)]
+struct BrickHit {
     pub impulse: Vec3,
 }
 
@@ -90,6 +103,7 @@ fn main() {
         )
         .add_observer(on_wall_hit)
         .add_observer(on_paddle_ball_hit)
+        .add_observer(on_brick_hit)
         .run();
 }
 
@@ -445,6 +459,7 @@ fn grab_mouse(
 fn read_character_controller_collisions(
     paddle_outputs: Query<&KinematicCharacterControllerOutput, With<Paddle>>,
     walls: Query<Entity, With<Border>>,
+    bricks: Query<Entity, With<Brick>>,
     balls: Query<Entity, With<Ball>>,
     time: Res<Time>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
@@ -459,6 +474,17 @@ fn read_character_controller_collisions(
         for wall in walls.iter() {
             if collision.entity == wall {
                 commands.trigger(WallHit {
+                    impulse: (collision.translation_applied + collision.translation_remaining)
+                        / time.delta_secs(),
+                });
+            }
+        }
+    }
+    for collision in output.collisions.iter() {
+        // paddle collides with the bricks: emit BrickHit (separate from walls)
+        for brick in bricks.iter() {
+            if collision.entity == brick {
+                commands.trigger(BrickHit {
                     impulse: (collision.translation_applied + collision.translation_remaining)
                         / time.delta_secs(),
                 });
@@ -493,12 +519,24 @@ fn on_wall_hit(
 
     // give the balls an impulse
     for mut impulse in balls.iter_mut() {
-        impulse.impulse = event.impulse * 0.001;
+        impulse.impulse = event.impulse * BALL_WALL_IMPULSE_FACTOR;
     }
 
-    // let the paddle bounce back
+    // let the paddle bounce back on wall collisions as well
     for mut controller in controllers.iter_mut() {
-        controller.translation = Some(-event.impulse * 0.03);
+        controller.translation = Some(-event.impulse * PADDLE_BOUNCE_WALL_FACTOR);
+    }
+}
+
+fn on_brick_hit(
+    trigger: Trigger<BrickHit>,
+    mut controllers: Query<&mut KinematicCharacterController, With<Paddle>>,
+) {
+    let event = trigger.event();
+
+    // let the paddle bounce back on brick collisions only
+    for mut controller in controllers.iter_mut() {
+        controller.translation = Some(-event.impulse * PADDLE_BOUNCE_BRICK_FACTOR);
     }
 }
 
