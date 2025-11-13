@@ -122,9 +122,22 @@ Or run the compiled binary:
 
 ### Development
 
+- **Space**: Toggle wireframe mode (native only) - Also shows 22x22 debug grid overlay
 - **F3**: Toggle FPS counter (if implemented)
 - **F5**: Reload current level
 - **F12**: Toggle debug physics rendering
+
+**Debug Grid Overlay**: When wireframe mode is enabled (Space key on native
+platforms), a 22x22 grid overlay becomes visible. This grid aligns with the
+game's logical grid cells and helps with:
+
+- Verifying brick alignment
+- Debugging paddle/ball positioning
+- Understanding coordinate mapping
+- Visual confirmation of play area boundaries
+
+The grid is automatically hidden when wireframe mode is disabled. Note: WASM
+builds do not support wireframe mode, so the grid overlay remains hidden.
 
 ## Testing
 

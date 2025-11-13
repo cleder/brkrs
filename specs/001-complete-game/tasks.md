@@ -54,15 +54,15 @@ description: "Task list for Brkrs Complete Game - User Story 1 breakdown"
 
 ### Implementation Tasks
 
-- [ ] T008 [P] [US1] Spawn a sample Brick for MVP in src/main.rs within setup (position to align with grid cell at center)
-- [ ] T009 [US1] Handle ball-brick collision to despawn brick in src/main.rs (CollisionEvent handler)
-- [ ] T010 [US1] Calibrate paddle "english" impulse factor in on_paddle_ball_hit in src/main.rs (tune multiplier for noticeable but controlled steering)
+- [x] T008 [P] [US1] Spawn a sample Brick for MVP in src/main.rs within setup (position to align with grid cell at center)
+- [x] T009 [US1] Handle ball-brick collision to despawn brick in src/main.rs (CollisionEvent handler)
+- [x] T010 [US1] Calibrate paddle "english" impulse factor in on_paddle_ball_hit in src/main.rs (tune multiplier for noticeable but controlled steering)
 - [x] T011 [P] [US1] Implement lower wall ball-destroy rule in src/main.rs: on CollisionEvent between `Ball` and entity tagged `LowerGoal` → despawn ball entity
-- [ ] T012 [P] [US1] Implement 22x22 grid wireframe overlay spawn in src/systems/grid_debug.rs; spawn entity with `GridOverlay` + `Visibility::Hidden`
-- [ ] T013 [P] [US1] Toggle grid overlay visibility in a new system (src/systems/grid_debug.rs): if wireframe enabled (WireframeConfig.global == true) → Visible; else Hidden; register system
-- [ ] T014 [P] [US1] Constrain paddle movement to play area: clamp transform X/Z inside bounds in move_paddle system in src/main.rs (in addition to colliders)
+- [x] T012 [P] [US1] Implement 22x22 grid wireframe overlay spawn in src/systems/grid_debug.rs; spawn entity with `GridOverlay` + `Visibility::Hidden`
+- [x] T013 [P] [US1] Toggle grid overlay visibility in a new system (src/systems/grid_debug.rs): if wireframe enabled (WireframeConfig.global == true) → Visible; else Hidden; register system
+- [x] T014 [P] [US1] Constrain paddle movement to play area: clamp transform X/Z inside bounds in move_paddle system in src/main.rs (in addition to colliders)
 - [ ] T015 [P] [US1] Verify/tune mouse sensitivity and rotation responsiveness in src/main.rs for smooth control (<=100ms perceived latency)
-- [ ] T016 [US1] Document the grid overlay debug behavior in specs/001-complete-game/quickstart.md (wireframe toggle shows grid; hidden otherwise)
+- [x] T016 [US1] Document the grid overlay debug behavior in specs/001-complete-game/quickstart.md (wireframe toggle shows grid; hidden otherwise)
 
 **Checkpoint**: MVP playable — brick destruction, lower-wall destroy, paddle control, wireframe grid debug works
 

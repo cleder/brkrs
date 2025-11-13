@@ -20,8 +20,6 @@ use bevy::{
 };
 use bevy_rapier3d::prelude::*;
 
-const SHAPES_X_EXTENT: f32 = 14.0;
-const Z_EXTENT: f32 = 5.0;
 const BALL_RADIUS: f32 = 0.3;
 const PADDLE_RADIUS: f32 = 0.3;
 const PADDLE_HEIGHT: f32 = 3.0;
@@ -45,6 +43,10 @@ struct Border;
 struct LowerGoal;
 #[derive(Component)]
 struct GridOverlay;
+#[derive(Component)]
+struct Brick;
+#[derive(Component)]
+struct MarkedForDespawn;
 
 #[derive(Event)]
 struct WallHit {
@@ -81,7 +83,9 @@ fn main() {
                 grab_mouse,
                 read_character_controller_collisions,
                 despawn_ball_on_lower_goal_collision,
-                // display_events,
+                mark_brick_on_ball_collision,
+                despawn_marked_entities, // Runs after marking, allowing physics to resolve
+                                         // display_events,
             ),
         )
         .add_observer(on_wall_hit)
@@ -153,6 +157,43 @@ fn setup(
         },
     ));
 
+    // Sample brick for MVP testing (positioned in upper play area, centered in grid cell)
+    // Position at grid cell (row 5, column 11) - roughly center-top area
+    // Brick centered within cell, with 3:4 aspect ratio (height:width) matching cell proportions
+    let brick_row = 5.0;
+    let brick_col = 11.0;
+    let brick_x = -PLANE_H / 2.0 + (brick_row + 0.5) * CELL_HEIGHT; // Center in cell
+    let brick_z = -PLANE_W / 2.0 + (brick_col + 0.5) * CELL_WIDTH; // Center in cell
+
+    // Brick dimensions: 90% of cell size to avoid overlapping grid lines
+    // X-axis: CELL_HEIGHT (vertical), Z-axis: CELL_WIDTH (horizontal)
+    let brick_height_x = CELL_HEIGHT * 0.9;
+    let brick_width_z = CELL_WIDTH * 0.9;
+    let brick_thickness_y = 0.5; // Thickness in Y direction
+
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new(
+            brick_height_x,
+            brick_thickness_y,
+            brick_width_z,
+        ))),
+        MeshMaterial3d(materials.add(Color::from(RED))),
+        Transform::from_xyz(brick_x, 2.0, brick_z),
+        Brick,
+        RigidBody::Fixed,
+        Collider::cuboid(
+            brick_height_x / 2.0,
+            brick_thickness_y / 2.0,
+            brick_width_z / 2.0,
+        ),
+        Restitution {
+            coefficient: 1.0,
+            combine_rule: CoefficientCombineRule::Max,
+        },
+        CollidingEntities::default(),
+        ActiveEvents::COLLISION_EVENTS,
+    ));
+
     // light
     commands.spawn((
         PointLight {
@@ -221,6 +262,16 @@ fn move_paddle(
     for mut transform in &mut query {
         transform.rotate_y(accumulated_mouse_scroll.delta.y * time.delta_secs() * 3.0);
         transform.translation.y = 2.0; // force the paddle to stay at the same height
+
+        // Constrain paddle to play area bounds (with some padding for paddle size)
+        let padding = PADDLE_HEIGHT / 2.0;
+        let x_min = -PLANE_H / 2.0 + padding;
+        let x_max = PLANE_H / 2.0 - padding;
+        let z_min = -PLANE_W / 2.0 + padding;
+        let z_max = PLANE_W / 2.0 - padding;
+
+        transform.translation.x = transform.translation.x.clamp(x_min, x_max);
+        transform.translation.z = transform.translation.z.clamp(z_min, z_max);
     }
 }
 
@@ -328,6 +379,39 @@ fn despawn_ball_on_lower_goal_collision(
     }
 }
 
+/// Mark bricks for despawn when hit by the ball
+/// This allows the physics collision response to complete before removal
+fn mark_brick_on_ball_collision(
+    mut collision_events: EventReader<CollisionEvent>,
+    balls: Query<Entity, With<Ball>>,
+    bricks: Query<Entity, (With<Brick>, Without<MarkedForDespawn>)>,
+    mut commands: Commands,
+) {
+    for event in collision_events.read() {
+        if let CollisionEvent::Started(e1, e2, _) = event {
+            let e1_is_ball = balls.get(*e1).is_ok();
+            let e2_is_ball = balls.get(*e2).is_ok();
+            let e1_is_brick = bricks.get(*e1).is_ok();
+            let e2_is_brick = bricks.get(*e2).is_ok();
+
+            // If collision is between a Ball and a Brick, mark the brick for despawn
+            // This ensures the physics collision response happens first
+            if e1_is_ball && e2_is_brick {
+                commands.entity(*e2).insert(MarkedForDespawn);
+            } else if e2_is_ball && e1_is_brick {
+                commands.entity(*e1).insert(MarkedForDespawn);
+            }
+        }
+    }
+}
+
+/// Despawn entities marked for removal (runs after physics step)
+fn despawn_marked_entities(marked: Query<Entity, With<MarkedForDespawn>>, mut commands: Commands) {
+    for entity in marked.iter() {
+        commands.entity(entity).despawn();
+    }
+}
+
 #[cfg(not(target_arch = "wasm32"))]
 fn toggle_wireframe(
     mut wireframe_config: ResMut<WireframeConfig>,
@@ -425,10 +509,11 @@ fn on_paddle_ball_hit(
     let event = trigger.event();
     println!("Received ball hit event: {:?}", event.impulse);
 
-    // give the balls an impulse
+    // give the balls an impulse with "english" - paddle rotation affects ball trajectory
+    // Tuned multiplier for noticeable but controlled steering effect
     for (ball, mut impulse) in balls.iter_mut() {
         if ball == event.ball {
-            impulse.impulse = event.impulse * 0.000_2;
+            impulse.impulse = event.impulse * 0.001; // Increased from 0.000_2 for more noticeable effect
         }
     }
 }
