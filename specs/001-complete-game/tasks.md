@@ -22,10 +22,10 @@ description: "Task list for Brkrs Complete Game - User Story 1 breakdown"
 
 **Purpose**: Prepare minimal structure and constants to support User Story 1.
 
-- [ ] T001 [P] Create grid debug system file at src/systems/grid_debug.rs (module for 22x22 wireframe grid overlay)
-- [ ] T002 Add module wiring for systems in src/main.rs (declare `mod systems;` and `pub mod grid_debug;` as needed)
-- [ ] T003 [P] Define grid constants in src/main.rs: `GRID_WIDTH=22`, `GRID_HEIGHT=22`, `CELL_SIZE` (world units per cell)
-- [ ] T004 [P] Add GridOverlay marker component in src/main.rs to tag the grid entity
+- [x] T001 [P] Create grid debug system file at src/systems/grid_debug.rs (module for 22x22 wireframe grid overlay)
+- [x] T002 Add module wiring for systems in src/main.rs (declare `mod systems;` and `pub mod grid_debug;` as needed)
+- [x] T003 [P] Define grid constants in src/main.rs: `GRID_WIDTH=22`, `GRID_HEIGHT=22`, `CELL_SIZE` (world units per cell)
+- [x] T004 [P] Add GridOverlay marker component in src/main.rs to tag the grid entity
 
 ---
 

@@ -2,6 +2,8 @@
 //! You can toggle wireframes with the space bar except on wasm. Wasm does not support
 //! `POLYGON_MODE_LINE` on the gpu.
 
+mod systems;
+
 use std::f32::consts::PI;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -25,6 +27,13 @@ const PADDLE_RADIUS: f32 = 0.3;
 const PADDLE_HEIGHT: f32 = 3.0;
 const PLANE_H: f32 = 30.0;
 const PLANE_W: f32 = 40.0;
+
+// Grid debug overlay constants (22x22 grid covering PLANE_H × PLANE_W)
+const GRID_WIDTH: usize = 22; // Columns (Z-axis)
+const GRID_HEIGHT: usize = 22; // Rows (X-axis)
+const CELL_WIDTH: f32 = PLANE_W / GRID_WIDTH as f32; // ~1.818 (Z dimension)
+const CELL_HEIGHT: f32 = PLANE_H / GRID_HEIGHT as f32; // ~1.364 (X dimension)
+                                                       // Cell aspect ratio: CELL_HEIGHT / CELL_WIDTH = 30/40 * 22/22 = 3/4 = 0.75
 /// A marker component for our shapes so we can query them separately from the ground plane
 #[derive(Component)]
 struct Paddle;
@@ -34,6 +43,8 @@ struct Ball;
 struct Border;
 #[derive(Component)]
 struct LowerGoal;
+#[derive(Component)]
+struct GridOverlay;
 
 #[derive(Event)]
 struct WallHit {
@@ -55,13 +66,18 @@ fn main() {
         ))
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(RapierDebugRenderPlugin::default())
-        .add_systems(Startup, (setup, spawn_border))
+        .add_systems(
+            Startup,
+            (setup, spawn_border, systems::grid_debug::spawn_grid_overlay),
+        )
         .add_systems(
             Update,
             (
                 move_paddle,
                 #[cfg(not(target_arch = "wasm32"))]
                 toggle_wireframe,
+                #[cfg(not(target_arch = "wasm32"))]
+                systems::grid_debug::toggle_grid_visibility,
                 grab_mouse,
                 read_character_controller_collisions,
                 despawn_ball_on_lower_goal_collision,
