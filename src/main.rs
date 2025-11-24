@@ -369,6 +369,7 @@ fn grab_mouse(
     mut window: Single<&mut Window, With<PrimaryWindow>>,
     mouse: Res<ButtonInput<MouseButton>>,
     key: Res<ButtonInput<KeyCode>>,
+    mut app_exit: EventWriter<AppExit>,
 ) {
     if !window.focused {
         return;
@@ -381,6 +382,10 @@ fn grab_mouse(
     if key.just_pressed(KeyCode::Escape) {
         window.cursor_options.visible = true;
         window.cursor_options.grab_mode = CursorGrabMode::None;
+    }
+
+    if key.just_pressed(KeyCode::KeyQ) {
+        app_exit.write(AppExit::Success);
     }
 }
 
