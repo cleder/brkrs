@@ -200,13 +200,28 @@ fn setup(
     ));
 }
 
-/// Limit ball velocity to prevent excessive speeds
-fn limit_ball_velocity(mut balls: Query<&mut Velocity, With<Ball>>) {
-    for mut velocity in balls.iter_mut() {
+/// Apply speed-dependent damping to control ball velocity
+fn limit_ball_velocity(mut balls: Query<(&Velocity, &mut Damping), With<Ball>>) {
+    for (velocity, mut damping) in balls.iter_mut() {
         let speed = velocity.linvel.length();
-        if speed > MAX_BALL_VELOCITY {
-            velocity.linvel = velocity.linvel.normalize() * MAX_BALL_VELOCITY;
+
+        // Calculate damping based on speed relative to target velocity
+        // Higher speeds get more damping, lower speeds get less
+        let speed_ratio = speed / MAX_BALL_VELOCITY;
+
+        if speed_ratio > 1.0 {
+            // Above target: increase damping exponentially
+            damping.linear_damping = 0.5 + (speed_ratio - 1.0) * 2.0;
+        } else if speed_ratio < 0.5 {
+            // Below half target: reduce damping to allow acceleration
+            damping.linear_damping = 0.1 + speed_ratio * 0.8;
+        } else {
+            // Near target: moderate damping
+            damping.linear_damping = 0.5;
         }
+
+        // Clamp damping to reasonable bounds
+        damping.linear_damping = damping.linear_damping.clamp(0.1, 5.0);
     }
 }
 
