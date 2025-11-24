@@ -95,6 +95,8 @@ Or run the compiled binary:
 ./target/release/brkrs      # Release
 ```
 
+**Window Behavior**: The game launches in borderless fullscreen mode by default for an immersive experience. Press Escape to unlock the cursor and access window controls. Press Alt+Enter to toggle between windowed and fullscreen modes (native platforms).
+
 ### WASM Execution
 
 1. **Start a local web server**:

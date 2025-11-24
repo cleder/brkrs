@@ -26,6 +26,7 @@ description: "Task list for Brkrs Complete Game - User Story 1 breakdown"
 - [x] T002 Add module wiring for systems in src/main.rs (declare `mod systems;` and `pub mod grid_debug;` as needed)
 - [x] T003 [P] Define grid constants in src/main.rs: `GRID_WIDTH=22`, `GRID_HEIGHT=22`, `CELL_SIZE` (world units per cell)
 - [x] T004 [P] Add GridOverlay marker component in src/main.rs to tag the grid entity
+- [ ] T005 [P] Configure window to launch in borderless fullscreen mode in src/main.rs: set `WindowPlugin` with `primary_window.mode = WindowMode::BorderlessFullscreen`; use conditional compilation for WASM (Windowed mode)
 
 ---
 
@@ -33,9 +34,9 @@ description: "Task list for Brkrs Complete Game - User Story 1 breakdown"
 
 **Purpose**: Core components and collision hooks required for User Story 1.
 
-- [x] T005 Ensure marker components exist in src/main.rs: `Paddle`, `Ball`, `Border` (already present) and add new `LowerGoal` marker
-- [x] T006 Tag lower edge border with `LowerGoal` in `spawn_border()` in src/main.rs (the -Z or designated lower wall)
-- [x] T007 Add CollisionEvent reader system stub in src/main.rs for ball/world interactions (if not already present)
+- [x] T006 Ensure marker components exist in src/main.rs: `Paddle`, `Ball`, `Border` (already present) and add new `LowerGoal` marker
+- [x] T007 Tag lower edge border with `LowerGoal` in `spawn_border()` in src/main.rs (the -Z or designated lower wall)
+- [x] T008 Add CollisionEvent reader system stub in src/main.rs for ball/world interactions (if not already present)
 
 **Checkpoint**: Foundation ready — US1 tasks can proceed in parallel where marked [P]
 
@@ -54,15 +55,15 @@ description: "Task list for Brkrs Complete Game - User Story 1 breakdown"
 
 ### Implementation Tasks
 
-- [x] T008 [P] [US1] Spawn a sample Brick for MVP in src/main.rs within setup (position to align with grid cell at center)
-- [x] T009 [US1] Handle ball-brick collision to despawn brick in src/main.rs (CollisionEvent handler)
-- [x] T010 [US1] Calibrate paddle "english" impulse factor in on_paddle_ball_hit in src/main.rs (tune multiplier for noticeable but controlled steering)
-- [x] T011 [P] [US1] Implement lower wall ball-destroy rule in src/main.rs: on CollisionEvent between `Ball` and entity tagged `LowerGoal` → despawn ball entity
-- [x] T012 [P] [US1] Implement 22x22 grid wireframe overlay spawn in src/systems/grid_debug.rs; spawn entity with `GridOverlay` + `Visibility::Hidden`
-- [x] T013 [P] [US1] Toggle grid overlay visibility in a new system (src/systems/grid_debug.rs): if wireframe enabled (WireframeConfig.global == true) → Visible; else Hidden; register system
-- [x] T014 [P] [US1] Constrain paddle movement to play area: clamp transform X/Z inside bounds in move_paddle system in src/main.rs (in addition to colliders)
-- [ ] T015 [P] [US1] Verify/tune mouse sensitivity and rotation responsiveness in src/main.rs for smooth control (<=100ms perceived latency)
-- [x] T016 [US1] Document the grid overlay debug behavior in specs/001-complete-game/quickstart.md (wireframe toggle shows grid; hidden otherwise)
+- [x] T009 [P] [US1] Spawn a sample Brick for MVP in src/main.rs within setup (position to align with grid cell at center)
+- [x] T010 [US1] Handle ball-brick collision to despawn brick in src/main.rs (CollisionEvent handler)
+- [x] T011 [US1] Calibrate paddle "english" impulse factor in on_paddle_ball_hit in src/main.rs (tune multiplier for noticeable but controlled steering)
+- [x] T012 [P] [US1] Implement lower wall ball-destroy rule in src/main.rs: on CollisionEvent between `Ball` and entity tagged `LowerGoal` → despawn ball entity
+- [x] T013 [P] [US1] Implement 22x22 grid wireframe overlay spawn in src/systems/grid_debug.rs; spawn entity with `GridOverlay` + `Visibility::Hidden`
+- [x] T014 [P] [US1] Toggle grid overlay visibility in a new system (src/systems/grid_debug.rs): if wireframe enabled (WireframeConfig.global == true) → Visible; else Hidden; register system
+- [x] T015 [P] [US1] Constrain paddle movement to play area: clamp transform X/Z inside bounds in move_paddle system in src/main.rs (in addition to colliders)
+- [ ] T016 [P] [US1] Verify/tune mouse sensitivity and rotation responsiveness in src/main.rs for smooth control (<=100ms perceived latency)
+- [x] T017 [US1] Document the grid overlay debug behavior in specs/001-complete-game/quickstart.md (wireframe toggle shows grid; hidden otherwise)
 
 **Checkpoint**: MVP playable — brick destruction, lower-wall destroy, paddle control, wireframe grid debug works
 
@@ -70,8 +71,9 @@ description: "Task list for Brkrs Complete Game - User Story 1 breakdown"
 
 ## Phase N: Polish & Cross-Cutting Concerns
 
-- [ ] T100 [P] Update README.md with quick controls and debug grid note
-- [ ] T101 Performance tuning pass for ball physics and input smoothing (optional)
+- [ ] T100 [P] Update README.md with quick controls, fullscreen behavior, and debug grid note
+- [ ] T101 [P] Document fullscreen Alt+Enter toggle in specs/001-complete-game/quickstart.md (if not already documented)
+- [ ] T102 Performance tuning pass for ball physics and input smoothing (optional)
 
 ---
 
@@ -102,6 +104,12 @@ Task: "Implement 22x22 grid wireframe overlay spawn in src/systems/grid_debug.rs
 Task: "Toggle grid overlay visibility based on WireframeConfig in src/systems/grid_debug.rs"
 Task: "Constrain paddle movement to play area in src/main.rs"
 Task: "Tune mouse sensitivity and rotation in src/main.rs"
+
+# Setup phase parallelizable:
+Task: "Configure window fullscreen mode in src/main.rs (T005)"
+Task: "Create grid debug system file (T001)"
+Task: "Define grid constants (T003)"
+Task: "Add GridOverlay marker component (T004)"
 ```
 
 ---

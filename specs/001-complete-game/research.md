@@ -272,10 +272,43 @@ codegen-units = 1
 3. **Parallel Systems**: Mark independent systems as parallel-safe
 4. **Entity Pooling**: Reuse ball entities rather than spawn/despawn
 
+### 9. Window Fullscreen on Startup
+
+**Decision**: Configure Bevy window to maximize to fullscreen borderless mode on launch
+
+**Rationale**:
+
+- User requirement for immersive gameplay experience
+- Bevy's WindowPlugin supports window mode configuration
+- Borderless fullscreen (not exclusive fullscreen) allows alt-tab on desktop
+- Works cross-platform (native + WASM with browser fullscreen API)
+
+**Alternatives Considered**:
+
+- **Exclusive fullscreen** (rejected): Harder to alt-tab, can cause issues on multi-monitor setups
+- **Manual maximize after launch** (rejected): Flashing window before maximize, poor UX
+
+**Implementation**:
+
+```rust
+// In main.rs DefaultPlugins configuration
+.set(WindowPlugin {
+    primary_window: Some(Window {
+        mode: WindowMode::BorderlessFullscreen,
+        title: "Brkrs".to_string(),
+        resolution: WindowResolution::new(1920.0, 1080.0)
+            .with_scale_factor_override(1.0),
+        ..default()
+    }),
+    ..default()
+})
+```
+
+**WASM Consideration**: Use `WindowMode::Windowed` for WASM builds and let user request fullscreen via browser F11 or fullscreen button, as automatic fullscreen requires user gesture for security.
+
 ## Open Questions (Resolved)
 
-All technical clarifications from the planning phase have been resolved
-through the decisions above. No blocking unknowns remain.
+All technical clarifications from the planning phase have been resolved through the decisions above. No blocking unknowns remain.
 
 ## Next Steps
 

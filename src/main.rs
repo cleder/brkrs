@@ -5,8 +5,6 @@
 mod level_loader;
 mod systems;
 
-// use std::f32::consts::PI; // no longer needed after removing direct paddle spawn here
-
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 use bevy::{
@@ -159,7 +157,7 @@ fn setup(
 
     #[cfg(not(target_arch = "wasm32"))]
     commands.spawn((
-        Text::new("Press space to toggle wireframes"),
+        Text::new("Press space to toggle wire frames"),
         Node {
             position_type: PositionType::Absolute,
             top: Val::Px(12.0),
