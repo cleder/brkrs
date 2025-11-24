@@ -1,1 +1,38 @@
+# Rust build artifacts
 /target
+debug/
+release/
+
+# Rust backup files
+*.rs.bk
+*.rlib
+
+# Profiling and instrumentation
+*.prof
+*.profdata
+*.profraw
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment and secrets
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# WASM build artifacts
+/wasm/target
+/wasm/pkg
+
+# Web build outputs
+/target/web

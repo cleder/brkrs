@@ -15,7 +15,7 @@ use bevy::{
         render_asset::RenderAssetUsages,
         render_resource::{Extent3d, TextureDimension, TextureFormat},
     },
-    window::{CursorGrabMode, PrimaryWindow},
+    window::{CursorGrabMode, MonitorSelection, PrimaryWindow, Window, WindowMode, WindowPlugin},
 };
 use bevy_rapier3d::prelude::*;
 
@@ -74,7 +74,19 @@ struct BallHit {
 fn main() {
     App::new()
         .add_plugins((
-            DefaultPlugins.set(ImagePlugin::default_nearest()),
+            DefaultPlugins
+                .set(ImagePlugin::default_nearest())
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: "Brkrs".to_string(),
+                        #[cfg(not(target_arch = "wasm32"))]
+                        mode: WindowMode::BorderlessFullscreen(MonitorSelection::Current),
+                        #[cfg(target_arch = "wasm32")]
+                        mode: WindowMode::Windowed,
+                        ..default()
+                    }),
+                    ..default()
+                }),
             #[cfg(not(target_arch = "wasm32"))]
             WireframePlugin::default(),
         ))

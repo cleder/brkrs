@@ -26,7 +26,7 @@ description: "Task list for Brkrs Complete Game - User Story 1 breakdown"
 - [x] T002 Add module wiring for systems in src/main.rs (declare `mod systems;` and `pub mod grid_debug;` as needed)
 - [x] T003 [P] Define grid constants in src/main.rs: `GRID_WIDTH=22`, `GRID_HEIGHT=22`, `CELL_SIZE` (world units per cell)
 - [x] T004 [P] Add GridOverlay marker component in src/main.rs to tag the grid entity
-- [ ] T005 [P] Configure window to launch in borderless fullscreen mode in src/main.rs: set `WindowPlugin` with `primary_window.mode = WindowMode::BorderlessFullscreen`; use conditional compilation for WASM (Windowed mode)
+- [x] T005 [P] Configure window to launch in borderless fullscreen mode in src/main.rs: set `WindowPlugin` with `primary_window.mode = WindowMode::BorderlessFullscreen`; use conditional compilation for WASM (Windowed mode)
 
 ---
 
