@@ -1,175 +1,107 @@
-# Implementation Plan: Brkrs Complete Game
+# Implementation Plan: [FEATURE]
 
-**Branch**: `001-complete-game` | **Date**: 2025-10-31 | **Spec**:
-[spec.md](spec.md)
-**Input**: Feature specification from `/specs/001-complete-game/spec.md`
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-Build a complete Arkanoid/Breakout-style game with mouse-controlled paddle
-movement (X/Z axes + rotation), physics-driven ball mechanics with steering
-("english"), 77 levels arranged in a 22x22 brick grid, 37+ unique brick
-types, and 3D rendering constrained to a 2D gameplay plane. The game uses
-Bevy's ECS architecture with Rapier3D physics, supports both native and WASM
-platforms, and targets 60 FPS performance.
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
 
-**Language/Version**: Rust 1.75+ (2021 edition)
-**Primary Dependencies**: Bevy 0.16.0, bevy_rapier3d 0.31.0
-**Storage**: File-based level definitions (RON/JSON format), local asset
-files
-**Testing**: Manual gameplay testing, `cargo test` for unit tests
-**Target Platform**: Native (Linux/Windows/macOS) + WASM (web browsers)
-**Project Type**: Single game project (standalone executable)
-**Performance Goals**: 60 FPS on modern desktop (native), 60 FPS on moderate
-hardware (WASM)
-**Constraints**: All gameplay constrained to Y=2.0 plane, <100ms input
-latency, WASM package size optimization
-**Scale/Scope**: 77 levels, 37+ brick types, 22x22 grid layout, single-player
-game
+<!--
+  ACTION REQUIRED: Replace the content in this section with the technical details
+  for the project. The structure here is presented in advisory capacity to guide
+  the iteration process.
+
+-->
+
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [single/web/mobile - determines source structure]  
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-### I. Entity-Component-System Architecture (ECS-First)
-
-✅ **PASS**: Game design fully embraces Bevy's ECS paradigm
-
-- Paddle, Ball, Brick, Border entities with component-based properties
-- Game logic implemented as systems (movement, collision handling, state
-  transitions)
-- Event-driven communication (collision events, state change events)
-- No global mutable state; all state in ECS components
-
-### II. Physics-Driven Gameplay
-
-✅ **PASS**: Core mechanics rely on Rapier3D physics engine
-
-- Ball movement and bouncing through physics simulation
-- Restitution and friction for realistic collision response
-- Impulses for paddle "english" effect and special brick behaviors
-- Collision detection drives all game events (brick destruction, ball loss)
-
-### III. Modular Feature Design
-
-✅ **PASS**: Features designed as independent, testable modules
-
-- Clear component markers (Paddle, Ball, Brick, Border)
-- User stories (P1-P5) represent independently deliverable features
-- Event-based communication between systems
-- Features can be developed and tested separately (basic gameplay → state
-  management → brick types → levels → visuals)
-
-### IV. Performance-First Implementation
-
-✅ **PASS**: Design targets 60 FPS with performance considerations
-
-- Physics engine handles parallel collision detection
-- Component queries for efficient system execution
-- Asset optimization for WASM delivery
-- Early testing on both native and WASM platforms planned
-- Profiling planned for system performance monitoring
-
-### V. Cross-Platform Compatibility
-
-✅ **PASS**: Explicit support for native and WASM targets
-
-- Conditional compilation for platform-specific features (wireframe mode)
-- WASM as first-class target alongside native
-- Platform compatibility tested throughout development
-- Asset optimization for web delivery
-
-**Constitution Compliance**: ✅ ALL GATES PASSED
-
-No violations detected. The design aligns with all constitutional principles.
+[Gates determined based on constitution file]
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/001-complete-game/
-├── plan.md              # This file
-├── research.md          # Phase 0 output (architecture decisions)
-├── data-model.md        # Phase 1 output (ECS components & entities)
-├── quickstart.md        # Phase 1 output (how to build, run, test)
-├── contracts/           # Phase 1 output (event definitions, APIs)
-│   └── events.md        # Game events and observers
-└── checklists/          # Quality checklists
-    └── requirements.md  # Spec validation checklist
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
 ### Source Code (repository root)
 
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+
+-->
+
 ```text
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
 src/
-├── main.rs              # Application entry point, plugin registration
-├── components/          # ECS component definitions
-│   ├── mod.rs
-│   ├── paddle.rs        # Paddle components
-│   ├── ball.rs          # Ball components
-│   ├── brick.rs         # Brick components and types
-│   ├── border.rs        # Border/wall components
-│   └── game_state.rs    # Game state components
-├── systems/             # ECS systems
-│   ├── mod.rs
-│   ├── paddle_control.rs       # Mouse input → paddle movement
-│   ├── ball_physics.rs         # Ball physics and steering
-│   ├── collision.rs            # Collision event handling
-│   ├── brick_behavior.rs       # Brick-specific collision logic
-│   ├── state_management.rs     # Game state transitions
-│   └── level_loading.rs        # Level definition loading
-├── events/              # Custom game events
-│   ├── mod.rs
-│   ├── collision_events.rs     # Ball-brick, ball-paddle events
-│   └── state_events.rs         # State transition events
-├── resources/           # Global resources
-│   ├── mod.rs
-│   ├── game_config.rs          # Physics tuning, grid size
-│   └── level_data.rs           # Level definitions
-├── plugins/             # Feature modules as Bevy plugins
-│   ├── mod.rs
-│   ├── physics_plugin.rs       # Rapier3D configuration
-│   ├── input_plugin.rs         # Mouse/keyboard input
-│   ├── rendering_plugin.rs     # 3D rendering setup
-│   └── ui_plugin.rs            # Menu, HUD, pause screen
-└── lib.rs               # Library interface (optional, for testing)
+├── models/
+├── services/
+├── cli/
+└── lib/
 
-assets/
-├── levels/              # Level definition files
-│   ├── level_001.ron
-│   ├── level_002.ron
-│   └── ...
-├── models/              # 3D mesh files
-│   ├── paddle.glb
-│   ├── ball.glb
-│   ├── bricks/
-│   │   ├── standard.glb
-│   │   ├── multi_hit.glb
-│   │   └── ...
-│   └── border.glb
-├── textures/            # Texture files
-│   └── uv_debug.png
-└── fonts/               # UI fonts
+tests/
+├── contract/
+├── integration/
+└── unit/
 
-wasm/
-├── index.html           # WASM launcher page
-└── restart-audio-context.js  # WASM audio workaround
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
 
-target/                  # Build outputs (gitignored)
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: Single Rust game project using Bevy's plugin
-architecture for modularity. The `src/` directory is organized by ECS
-concepts (components, systems, events, resources) with additional
-`plugins/` for feature grouping. This aligns with Bevy best practices and
-the project's ECS-first principle. Level data stored as RON files in
-`assets/` for easy editing. WASM build artifacts in separate `wasm/`
-directory.
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Complexity Tracking
 
-> No constitutional violations detected. This section intentionally left
-> empty.
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |

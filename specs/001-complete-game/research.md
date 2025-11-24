@@ -74,10 +74,6 @@ gameplay objects to enforce 2D plane constraint at Y=2.0
 **Decision**: Apply impulse to ball based on paddle velocity at collision
 moment, added to Rapier's natural collision response
 
-**Rationale**:
-
-- Works with physics engine rather than overriding it
-- Provides predictable, tunable control over steering strength
 - Maintains physics realism while adding gameplay depth
 - Impulse magnitude can be adjusted via resource/config file
 
@@ -92,26 +88,15 @@ moment, added to Rapier's natural collision response
 ```rust
 // Pseudocode - actual implementation in systems/ball_physics.rs
 fn on_paddle_collision(
-    paddle_velocity: Vec3,
-    collision_normal: Vec3,
-    steering_factor: f32,
 ) -> Vec3 {
     // Project paddle velocity onto collision plane
     let tangent_velocity = paddle_velocity -
         paddle_velocity.dot(collision_normal) * collision_normal;
 
     // Apply steering impulse
-    tangent_velocity * steering_factor
-}
-```
-
-### 4. Brick Type System
 
 **Decision**: Use Rust enums for brick types with behavior trait pattern
 
-**Rationale**:
-
-- Type-safe brick definitions
 - Compiler ensures all types handled in match statements
 - Easy to add new brick types
 - Behavior trait allows extensible collision handling
@@ -124,9 +109,13 @@ fn on_paddle_collision(
 
 **Implementation**:
 
+```
+
 ```rust
 // Pseudocode - actual implementation in components/brick.rs
-#[derive(Component, Debug, Clone, Copy)]
+
+## [derive(Component, Debug, Clone, Copy)]
+
 pub enum BrickType {
     Standard,
     MultiHit { durability: u8 },
@@ -148,36 +137,23 @@ trait BrickBehavior {
 **Rationale**:
 
 - Native Rust serialization format
-- Human-readable and editable
-- Supports complex nested structures
-- Better error messages than JSON
 - Integrates seamlessly with serde
 
-**Alternatives Considered**:
-
 - **JSON** (rejected): Less Rust-native, verbose for nested data
-- **Binary format** (rejected): Not human-editable, harder to debug
-- **TOML** (rejected): Less suitable for nested/array-heavy data
 
 **Level File Structure**:
-
-```ron
 // assets/levels/level_001.ron
 Level(
-    number: 1,
-    grid: Grid(
-        width: 22,
-        height: 22,
-    ),
     bricks: [
         Brick(pos: (0, 0), type: Standard),
         Brick(pos: (1, 0), type: MultiHit(durability: 2)),
         // ...
-    ],
-)
-```
 
-### 6. Game State Management
+],
+
+```text
+
+## 6. Game State Management
 
 **Decision**: Use Bevy's built-in `States` system with enum for game modes
 
@@ -196,9 +172,13 @@ Level(
 
 **Implementation**:
 
+```
+
 ```rust
 // Pseudocode - actual implementation in components/game_state.rs
-#[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+
+## [derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+
 pub enum GameState {
     Menu,
     Playing,
@@ -247,7 +227,9 @@ resources with sensitivity scaling
 **Implementation**:
 
 ```toml
-# Cargo.toml profile for WASM
+
+## Cargo.toml profile for WASM
+
 [profile.wasm-release]
 inherits = "release"
 opt-level = "z"  # Optimize for size

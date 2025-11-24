@@ -2,9 +2,10 @@
 //! You can toggle wireframes with the space bar except on wasm. Wasm does not support
 //! `POLYGON_MODE_LINE` on the gpu.
 
+mod level_loader;
 mod systems;
 
-use std::f32::consts::PI;
+// use std::f32::consts::PI; // no longer needed after removing direct paddle spawn here
 
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
@@ -80,6 +81,7 @@ fn main() {
             WireframePlugin::default(),
         ))
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugins(crate::level_loader::LevelLoaderPlugin)
         .add_plugins(RapierDebugRenderPlugin::default())
         .add_systems(
             Startup,
@@ -118,95 +120,12 @@ fn setup(
     // Set gravity to 0.0.
     rapier_config.unwrap().gravity = Vec3::new(15.0, 0.0, 0.0);
 
-    let debug_material = materials.add(StandardMaterial {
+    let _debug_material = materials.add(StandardMaterial {
         base_color_texture: Some(images.add(uv_debug_texture())),
         ..default()
     });
 
-    // ball (spawned in upper play area, paddle will be beneath/below it toward lower edge)
-    commands.spawn((
-        Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
-        MeshMaterial3d(debug_material.clone()),
-        // Spawn ball at X=-5 (upper area), center Z, on plane Y=2.0
-        Transform::from_xyz(-5.0, 2.0, 0.0),
-        Ball,
-        RigidBody::Dynamic,
-        CollidingEntities::default(),
-        ActiveEvents::COLLISION_EVENTS,
-        Collider::ball(BALL_RADIUS),
-        Restitution {
-            coefficient: 0.9,
-            combine_rule: CoefficientCombineRule::Max,
-        },
-        Friction {
-            coefficient: 2.0,
-            combine_rule: CoefficientCombineRule::Max,
-        },
-        Damping {
-            linear_damping: 0.01,
-            angular_damping: 0.1,
-        },
-        LockedAxes::TRANSLATION_LOCKED_Y,
-        Ccd::enabled(),
-        ExternalImpulse::default(),
-        GravityScale(1.0),
-    ));
-    // paddle (spawn beneath/below the ball, closer to lower edge)
-    commands.spawn((
-        Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
-        MeshMaterial3d(debug_material.clone()),
-        // Paddle at X=10 (below ball at X=-5), center Z=0, on plane Y=2.0
-        Transform::from_xyz(10.0, 2.0, 0.0).with_rotation(Quat::from_rotation_x(-PI / 2.)),
-        Paddle,
-        RigidBody::KinematicPositionBased,
-        GravityScale(0.0),
-        CollidingEntities::default(),
-        Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
-        LockedAxes::TRANSLATION_LOCKED_Y,
-        KinematicCharacterController::default(),
-        Ccd::enabled(),
-        Friction {
-            coefficient: 2.0,
-            combine_rule: CoefficientCombineRule::Max,
-        },
-    ));
-
-    // Sample brick for MVP testing (positioned in upper play area, centered in grid cell)
-    // Position at grid cell (row 5, column 11) - roughly center-top area
-    // Brick centered within cell, with 3:4 aspect ratio (height:width) matching cell proportions
-    let brick_row = 5.0;
-    let brick_col = 11.0;
-    let brick_x = -PLANE_H / 2.0 + (brick_row + 0.5) * CELL_HEIGHT; // Center in cell
-    let brick_z = -PLANE_W / 2.0 + (brick_col + 0.5) * CELL_WIDTH; // Center in cell
-
-    // Brick dimensions: 90% of cell size to avoid overlapping grid lines
-    // X-axis: CELL_HEIGHT (vertical), Z-axis: CELL_WIDTH (horizontal)
-    let brick_height_x = CELL_HEIGHT * 0.9;
-    let brick_width_z = CELL_WIDTH * 0.9;
-    let brick_thickness_y = 0.5; // Thickness in Y direction
-
-    commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(
-            brick_height_x,
-            brick_thickness_y,
-            brick_width_z,
-        ))),
-        MeshMaterial3d(materials.add(Color::from(RED))),
-        Transform::from_xyz(brick_x, 2.0, brick_z),
-        Brick,
-        RigidBody::Fixed,
-        Collider::cuboid(
-            brick_height_x / 2.0,
-            brick_thickness_y / 2.0,
-            brick_width_z / 2.0,
-        ),
-        Restitution {
-            coefficient: 1.0,
-            combine_rule: CoefficientCombineRule::Max,
-        },
-        CollidingEntities::default(),
-        ActiveEvents::COLLISION_EVENTS,
-    ));
+    // Level entities (paddle, ball, bricks) are spawned by LevelLoaderPlugin after level parsing.
 
     // light
     commands.spawn((

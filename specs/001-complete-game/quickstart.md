@@ -149,27 +149,27 @@ builds do not support wireframe mode, so the grid overlay remains hidden.
    cargo run
    ```
 
-   - Move mouse → paddle moves
-   - Scroll wheel → paddle rotates
-   - Ball bounces off paddle/walls
-   - Ball destroys bricks
-   - Ball moving past lower boundary → life lost
+- Move mouse → paddle moves
+- Scroll wheel → paddle rotates
+- Ball bounces off paddle/walls
+- Ball destroys bricks
+- Ball moving past lower boundary → life lost
 
-2. **Game States** (User Story 2):
+1. **Game States** (User Story 2):
 
-   - Start game from menu
-   - Press Escape → pause menu
-   - Resume game
-   - Lose all lives → game over screen
-   - Complete level → level transition
+- Start game from menu
+- Press Escape → pause menu
+- Resume game
+- Lose all lives → game over screen
+- Complete level → level transition
 
-3. **Brick Types** (User Story 3):
+1. **Brick Types** (User Story 3):
 
-   - Hit multi-hit brick multiple times
-   - Observe different brick behaviors
-   - Verify brick destruction
+- Hit multi-hit brick multiple times
+- Observe different brick behaviors
+- Verify brick destruction
 
-4. **Cross-Platform** (User Story 5):
+1. **Cross-Platform** (User Story 5):
 
    ```bash
    # Native
