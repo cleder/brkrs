@@ -39,6 +39,8 @@ const CAMERA_SHAKE_DURATION: f32 = 0.15;
 const CAMERA_SHAKE_IMPULSE_SCALE: f32 = 0.005; // Scale factor for impulse to shake intensity
 const CAMERA_SHAKE_MIN_INTENSITY: f32 = 0.05;
 const CAMERA_SHAKE_MAX_INTENSITY: f32 = 10.0;
+// Paddle growth animation duration
+const PADDLE_GROWTH_DURATION: f32 = 2.0;
 
 // Grid debug overlay constants (22x22 grid covering PLANE_H × PLANE_W)
 const GRID_WIDTH: usize = 22; // Columns (Z-axis)
@@ -69,6 +71,15 @@ struct CameraShake {
     original_position: Vec3,
 }
 
+#[derive(Component)]
+pub struct PaddleGrowing {
+    pub timer: Timer,
+    pub target_scale: Vec3,
+}
+
+#[derive(Component)]
+pub struct BallFrozen;
+
 #[derive(Event)]
 struct WallHit {
     pub impulse: Vec3,
@@ -85,8 +96,40 @@ struct BallHit {
     pub ball: Entity,
 }
 
+#[derive(Resource)]
+struct RespawnState {
+    timer: Timer,
+    active: bool,
+}
+
+#[derive(Resource, Default)]
+pub struct InitialPositions {
+    pub paddle_pos: Option<Vec3>,
+    pub ball_pos: Option<Vec3>,
+}
+
+/// Stores configurable gravity values (normal gameplay gravity, etc.)
+#[derive(Resource)]
+struct GravityConfig {
+    normal: Vec3,
+}
+
+#[derive(Resource, Default)]
+pub struct GameProgress {
+    finished: bool,
+}
+
 fn main() {
     App::new()
+        .insert_resource(RespawnState {
+            timer: Timer::from_seconds(1.0, TimerMode::Once),
+            active: false,
+        })
+        .insert_resource(InitialPositions::default())
+        .insert_resource(GravityConfig {
+            normal: Vec3::new(2.0, 0.0, 0.0),
+        })
+        .insert_resource(GameProgress::default())
         .add_plugins((
             DefaultPlugins
                 .set(ImagePlugin::default_nearest())
@@ -117,6 +160,10 @@ fn main() {
                 move_paddle,
                 limit_ball_velocity,
                 update_camera_shake,
+                update_paddle_growth,
+                freeze_ball_during_paddle_growth,
+                restore_gravity_post_growth,
+                handle_respawn,
                 #[cfg(not(target_arch = "wasm32"))]
                 toggle_wireframe,
                 #[cfg(not(target_arch = "wasm32"))]
@@ -142,10 +189,11 @@ fn setup(
     mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut rapier_config: Query<&mut RapierConfiguration>,
+    gravity_cfg: Res<GravityConfig>,
 ) {
     let rapier_config = rapier_config.single_mut();
-    // Set gravity to provide gentle acceleration
-    rapier_config.unwrap().gravity = Vec3::new(2.0, 0.0, 0.0);
+    // Set gravity for normal gameplay (respawn will temporarily disable it)
+    rapier_config.unwrap().gravity = gravity_cfg.normal;
 
     let _debug_material = materials.add(StandardMaterial {
         base_color_texture: Some(images.add(uv_debug_texture())),
@@ -275,6 +323,74 @@ fn start_camera_shake(
     }
 }
 
+/// Animate paddle growth over PADDLE_GROWTH_DURATION seconds
+fn update_paddle_growth(
+    time: Res<Time>,
+    mut paddles: Query<(Entity, &mut Transform, &mut PaddleGrowing)>,
+    mut rapier_config: Query<&mut RapierConfiguration>,
+    gravity_cfg: Res<GravityConfig>,
+    mut commands: Commands,
+) {
+    for (entity, mut transform, mut growing) in paddles.iter_mut() {
+        growing.timer.tick(time.delta());
+
+        if growing.timer.finished() {
+            // Growth complete: set final scale, enable gravity, remove component
+            transform.scale = growing.target_scale;
+            if let Ok(mut config) = rapier_config.single_mut() {
+                config.gravity = gravity_cfg.normal;
+            }
+            commands.entity(entity).remove::<PaddleGrowing>();
+        } else {
+            // Interpolate scale from near-zero to target
+            let progress = growing.timer.fraction();
+            // Use smooth easing function (ease-out cubic)
+            let eased_progress = 1.0 - (1.0 - progress).powi(3);
+            transform.scale = Vec3::splat(0.01).lerp(growing.target_scale, eased_progress);
+        }
+    }
+}
+
+/// Ensure gravity is restored if growth finished but previous restoration was missed.
+/// Acts as a safety net in case the growth completion frame didn't run gravity restoration.
+fn restore_gravity_post_growth(
+    paddles: Query<&PaddleGrowing>,
+    mut rapier_config: Query<&mut RapierConfiguration>,
+    gravity_cfg: Res<GravityConfig>,
+) {
+    // Only restore if no paddle is growing and gravity is currently zero.
+    if paddles.is_empty() {
+        if let Ok(mut config) = rapier_config.single_mut() {
+            if config.gravity == Vec3::ZERO {
+                config.gravity = gravity_cfg.normal;
+            }
+        }
+    }
+}
+
+/// Keep ball frozen (zero velocity, locked position) while paddle is growing
+fn freeze_ball_during_paddle_growth(
+    paddles: Query<&PaddleGrowing>,
+    mut balls: Query<&mut Velocity, (With<Ball>, With<BallFrozen>)>,
+    frozen_balls: Query<Entity, With<BallFrozen>>,
+    mut commands: Commands,
+) {
+    let paddle_growing = !paddles.is_empty();
+
+    if paddle_growing {
+        // Keep balls frozen
+        for mut velocity in balls.iter_mut() {
+            velocity.linvel = Vec3::ZERO;
+            velocity.angvel = Vec3::ZERO;
+        }
+    } else {
+        // Growth complete: unfreeze all balls
+        for entity in frozen_balls.iter() {
+            commands.entity(entity).remove::<BallFrozen>();
+        }
+    }
+}
+
 fn move_paddle(
     mut query: Query<&mut Transform, With<Paddle>>,
     time: Res<Time>,
@@ -282,8 +398,13 @@ fn move_paddle(
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     accumulated_mouse_scroll: Res<AccumulatedMouseScroll>,
     window: Single<&Window, With<PrimaryWindow>>,
+    growing: Query<&PaddleGrowing>,
 ) {
     if !window.focused {
+        return;
+    }
+    // If paddle is currently growing, ignore input and movement entirely.
+    if !growing.is_empty() {
         return;
     }
     let _sensitivity = 100.0 / window.height().min(window.width());
@@ -297,8 +418,8 @@ fn move_paddle(
                 / time.delta_secs(),
         );
     }
-    // The built-in character controller does not support rotational movement.
     for mut transform in &mut query {
+        // Allow rotation only when not growing
         transform.rotate_y(accumulated_mouse_scroll.delta.y * time.delta_secs() * 3.0);
         transform.translation.y = 2.0; // force the paddle to stay at the same height
 
@@ -394,11 +515,13 @@ fn uv_debug_texture() -> Image {
     )
 }
 
-/// Despawn the ball when it collides with the lower goal border
+/// Despawn the ball when it collides with the lower goal border and trigger respawn
 fn despawn_ball_on_lower_goal_collision(
     mut collision_events: EventReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
     lower_goals: Query<Entity, With<LowerGoal>>,
+    paddles: Query<Entity, With<Paddle>>,
+    mut respawn_state: ResMut<RespawnState>,
     mut commands: Commands,
 ) {
     for event in collision_events.read() {
@@ -408,11 +531,19 @@ fn despawn_ball_on_lower_goal_collision(
             let e1_is_lower = lower_goals.get(*e1).is_ok();
             let e2_is_lower = lower_goals.get(*e2).is_ok();
 
-            // If collision is between a Ball and a LowerGoal, despawn the ball
-            if e1_is_ball && e2_is_lower {
-                commands.entity(*e1).despawn();
-            } else if e2_is_ball && e1_is_lower {
-                commands.entity(*e2).despawn();
+            // If collision is between a Ball and a LowerGoal, despawn ball and paddle, trigger respawn
+            if (e1_is_ball && e2_is_lower) || (e2_is_ball && e1_is_lower) {
+                let ball_entity = if e1_is_ball { *e1 } else { *e2 };
+                commands.entity(ball_entity).despawn();
+
+                // Despawn paddle too
+                for paddle in paddles.iter() {
+                    commands.entity(paddle).despawn();
+                }
+
+                // Start respawn timer
+                respawn_state.timer.reset();
+                respawn_state.active = true;
             }
         }
     }
@@ -599,6 +730,101 @@ fn on_paddle_ball_hit(
     for (ball, mut impulse) in balls.iter_mut() {
         if ball == event.ball {
             impulse.impulse = event.impulse * 0.001; // Increased from 0.000_2 for more noticeable effect
+        }
+    }
+}
+
+/// Handle respawn after 1 second delay
+fn handle_respawn(
+    time: Res<Time>,
+    mut respawn_state: ResMut<RespawnState>,
+    initial_positions: Res<InitialPositions>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut rapier_config: Query<&mut RapierConfiguration>,
+    mut commands: Commands,
+) {
+    if !respawn_state.active {
+        return;
+    }
+
+    respawn_state.timer.tick(time.delta());
+
+    if respawn_state.timer.finished() {
+        respawn_state.active = false;
+
+        // Reset gravity to zero for growth animation
+        if let Ok(mut config) = rapier_config.single_mut() {
+            config.gravity = Vec3::ZERO;
+        }
+
+        let debug_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.8, 0.2, 0.2),
+            unlit: false,
+            ..default()
+        });
+
+        // Spawn paddle at initial position with growth animation
+        if let Some(paddle_pos) = initial_positions.paddle_pos {
+            commands
+                .spawn((
+                    Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
+                    MeshMaterial3d(debug_material.clone()),
+                    Transform::from_xyz(paddle_pos.x, paddle_pos.y, paddle_pos.z)
+                        .with_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 2.0))
+                        .with_scale(Vec3::splat(0.01)),
+                    Paddle,
+                    PaddleGrowing {
+                        timer: Timer::from_seconds(PADDLE_GROWTH_DURATION, TimerMode::Once),
+                        target_scale: Vec3::ONE,
+                    },
+                    RigidBody::KinematicPositionBased,
+                    GravityScale(0.0),
+                    CollidingEntities::default(),
+                    Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
+                    LockedAxes::TRANSLATION_LOCKED_Y,
+                    KinematicCharacterController::default(),
+                    Ccd::enabled(),
+                ))
+                .insert(Friction {
+                    coefficient: 2.0,
+                    combine_rule: CoefficientCombineRule::Max,
+                });
+        }
+
+        // Spawn ball at initial position, frozen with zero velocity
+        if let Some(ball_pos) = initial_positions.ball_pos {
+            commands
+                .spawn((
+                    Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
+                    MeshMaterial3d(debug_material.clone()),
+                    Transform::from_xyz(ball_pos.x, ball_pos.y, ball_pos.z),
+                    Ball,
+                    BallFrozen,
+                    RigidBody::Dynamic,
+                    Velocity::zero(),
+                    CollidingEntities::default(),
+                    ActiveEvents::COLLISION_EVENTS,
+                    Collider::ball(BALL_RADIUS),
+                    Restitution {
+                        coefficient: 0.9,
+                        combine_rule: CoefficientCombineRule::Max,
+                    },
+                    Friction {
+                        coefficient: 2.0,
+                        combine_rule: CoefficientCombineRule::Max,
+                    },
+                    Damping {
+                        linear_damping: 0.5,
+                        angular_damping: 0.5,
+                    },
+                ))
+                .insert((
+                    LockedAxes::TRANSLATION_LOCKED_Y,
+                    Ccd::enabled(),
+                    ExternalImpulse::default(),
+                    GravityScale(1.0),
+                ));
         }
     }
 }
