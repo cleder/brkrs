@@ -24,9 +24,43 @@ pub struct LevelLoaderPlugin;
 impl Plugin for LevelLoaderPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, (load_level, spawn_level_entities).chain());
-        app.add_systems(Update, (advance_level_when_cleared, restart_level_on_key));
+        app.add_systems(
+            Update,
+            (
+                advance_level_when_cleared,
+                handle_level_advance_delay,
+                finalize_level_advance,
+                spawn_fade_overlay_if_needed,
+                update_fade_overlay,
+                restart_level_on_key,
+            ),
+        );
     }
 }
+
+/// State machine for delayed level advancement and growth animation.
+#[derive(Resource)]
+pub struct LevelAdvanceState {
+    pub timer: Timer,                     // initial delay before spawning growth paddle
+    pub active: bool,                     // transition in progress
+    pub growth_spawned: bool,             // tiny paddle+ball spawned, waiting for growth completion
+    pub pending: Option<LevelDefinition>, // next level definition awaiting brick spawn
+}
+
+impl Default for LevelAdvanceState {
+    fn default() -> Self {
+        Self {
+            timer: Timer::from_seconds(1.0, TimerMode::Once),
+            active: false,
+            growth_spawned: false,
+            pending: None,
+        }
+    }
+}
+
+/// Full-screen UI overlay used for fade in/out during level transitions.
+#[derive(Component)]
+struct FadeOverlay;
 
 fn load_level(
     mut commands: Commands,
@@ -280,6 +314,72 @@ fn spawn_level_entities_impl(
     }
 }
 
+/// Only spawn bricks for a level (used after paddle growth completes during level advance).
+fn spawn_bricks_only(
+    def: &LevelDefinition,
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+) {
+    for (row, row_data) in def.matrix.iter().enumerate() {
+        for (col, value) in row_data.iter().enumerate() {
+            if *value != 3 {
+                continue;
+            }
+            let x = -PLANE_H / 2.0 + (row as f32 + 0.5) * CELL_HEIGHT;
+            let z = -PLANE_W / 2.0 + (col as f32 + 0.5) * CELL_WIDTH;
+            commands.spawn((
+                Mesh3d(meshes.add(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9))),
+                MeshMaterial3d(materials.add(Color::srgb(0.9, 0.1, 0.1))),
+                Transform::from_xyz(x, 2.0, z),
+                Brick,
+                RigidBody::Fixed,
+                Collider::cuboid(CELL_HEIGHT * 0.9 / 2.0, 0.25, CELL_WIDTH * 0.9 / 2.0),
+                Restitution {
+                    coefficient: 1.0,
+                    combine_rule: CoefficientCombineRule::Max,
+                },
+                CollidingEntities::default(),
+                ActiveEvents::COLLISION_EVENTS,
+            ));
+        }
+    }
+}
+
+/// Extract and set initial positions for paddle & ball from a level definition (without spawning bricks).
+fn set_initial_positions_only(
+    def: &LevelDefinition,
+    initial_positions: &mut ResMut<InitialPositions>,
+) {
+    initial_positions.paddle_pos = None;
+    initial_positions.ball_pos = None;
+    let mut paddle_set = false;
+    let mut ball_set = false;
+    for (row, row_data) in def.matrix.iter().enumerate() {
+        for (col, value) in row_data.iter().enumerate() {
+            let x = -PLANE_H / 2.0 + (row as f32 + 0.5) * CELL_HEIGHT;
+            let z = -PLANE_W / 2.0 + (col as f32 + 0.5) * CELL_WIDTH;
+            match value {
+                1 if !paddle_set => {
+                    paddle_set = true;
+                    initial_positions.paddle_pos = Some(Vec3::new(x, 2.0, z));
+                }
+                2 if !ball_set => {
+                    ball_set = true;
+                    initial_positions.ball_pos = Some(Vec3::new(x, 2.0, z));
+                }
+                _ => {}
+            }
+        }
+    }
+    if initial_positions.paddle_pos.is_none() {
+        initial_positions.paddle_pos = Some(Vec3::new(0.0, 2.0, 0.0));
+    }
+    if initial_positions.ball_pos.is_none() {
+        initial_positions.ball_pos = Some(Vec3::new(0.0, 2.0, 0.0));
+    }
+}
+
 /// Advance to the next level when all bricks have been cleared.
 fn advance_level_when_cleared(
     bricks: Query<Entity, With<Brick>>,
@@ -287,18 +387,18 @@ fn advance_level_when_cleared(
     ball_q: Query<Entity, With<Ball>>,
     current_level: Option<Res<CurrentLevel>>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut initial_positions: ResMut<InitialPositions>,
-    mut gravity_cfg: ResMut<GravityConfig>,
-    mut rapier_config: Query<&mut RapierConfiguration>,
     mut game_progress: ResMut<GameProgress>,
+    mut level_advance: ResMut<LevelAdvanceState>,
 ) {
     let Some(curr) = current_level else {
         return;
     };
     if !bricks.is_empty() {
         return; // still bricks remaining
+    }
+    // If already transitioning, don't restart it.
+    if level_advance.active {
+        return;
     }
     let next_number = curr.0.number + 1;
     let path = format!("assets/levels/level_{:03}.ron", next_number);
@@ -330,36 +430,22 @@ fn advance_level_when_cleared(
         }
         return;
     }
-
-    // Despawn existing paddle and ball (bricks already gone or will be ignored)
-    for p in paddle_q.iter() {
-        commands.entity(p).despawn();
-    }
-    for b in ball_q.iter() {
-        commands.entity(b).despawn();
-    }
-
+    // Parse and store next level; delay spawning via LevelAdvanceState.
     match std::fs::read_to_string(&path) {
         Ok(content) => match from_str::<LevelDefinition>(&content) {
             Ok(def) => {
-                info!("Advancing to level {}", def.number);
-                // Apply gravity override if present
-                if let Some((x, y, z)) = def.gravity {
-                    gravity_cfg.normal = Vec3::new(x, y, z);
-                    if let Ok(mut config) = rapier_config.single_mut() {
-                        config.gravity = gravity_cfg.normal;
-                    }
-                    info!("Level gravity set to {:?}", gravity_cfg.normal);
+                info!("Preparing advancement to level {} (delayed)", def.number);
+                level_advance.timer.reset();
+                level_advance.active = true;
+                level_advance.growth_spawned = false;
+                level_advance.pending = Some(def);
+                // Despawn paddle & ball now to show empty field during delay.
+                for p in paddle_q.iter() {
+                    commands.entity(p).despawn();
                 }
-                // Spawn entities first, then publish resource (systems reading CurrentLevel next frame)
-                spawn_level_entities_impl(
-                    &def,
-                    &mut commands,
-                    &mut meshes,
-                    &mut materials,
-                    &mut initial_positions,
-                );
-                commands.insert_resource(CurrentLevel(def));
+                for b in ball_q.iter() {
+                    commands.entity(b).despawn();
+                }
             }
             Err(e) => warn!("Failed to parse next level '{}': {e}", path),
         },
@@ -381,6 +467,7 @@ fn restart_level_on_key(
     paddle_q: Query<Entity, With<Paddle>>,
     ball_q: Query<Entity, With<Ball>>,
     mut game_progress: ResMut<GameProgress>,
+    mut level_advance: ResMut<LevelAdvanceState>,
 ) {
     if !keyboard.just_pressed(KeyCode::KeyR) {
         return;
@@ -402,6 +489,9 @@ fn restart_level_on_key(
 
     // Reset progress if we were finished
     game_progress.finished = false;
+    level_advance.active = false;
+    level_advance.pending = None;
+    level_advance.growth_spawned = false;
 
     // Reset initial positions
     *initial_positions = InitialPositions::default();
@@ -435,5 +525,187 @@ fn restart_level_on_key(
             Err(e) => warn!("Failed to parse level on restart '{}': {e}", path),
         },
         Err(e) => warn!("Failed to read level file on restart '{}': {e}", path),
+    }
+}
+
+/// After delay, spawn tiny paddle + frozen ball for growth animation (similar to respawn), defer bricks.
+fn handle_level_advance_delay(
+    time: Res<Time>,
+    mut level_advance: ResMut<LevelAdvanceState>,
+    mut initial_positions: ResMut<InitialPositions>,
+    mut gravity_cfg: ResMut<GravityConfig>,
+    mut rapier_config: Query<&mut RapierConfiguration>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    if !level_advance.active || level_advance.pending.is_none() || level_advance.growth_spawned {
+        return;
+    }
+    level_advance.timer.tick(time.delta());
+    if !level_advance.timer.finished() {
+        return;
+    }
+    let def = level_advance.pending.as_ref().unwrap();
+    // Apply per-level gravity (or keep current) immediately so it is ready when the ball unfreezes.
+    let target_gravity = if let Some((x, y, z)) = def.gravity {
+        let vec = Vec3::new(x, y, z);
+        gravity_cfg.normal = vec;
+        vec
+    } else {
+        gravity_cfg.normal
+    };
+    if let Ok(mut config) = rapier_config.single_mut() {
+        config.gravity = target_gravity;
+    }
+    // Set initial positions (used by spawn below and later systems).
+    set_initial_positions_only(def, &mut initial_positions);
+    let debug_material = materials.add(StandardMaterial {
+        base_color: Color::srgb(0.8, 0.2, 0.2),
+        unlit: false,
+        ..default()
+    });
+    if let Some(paddle_pos) = initial_positions.paddle_pos {
+        commands
+            .spawn((
+                Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
+                MeshMaterial3d(debug_material.clone()),
+                Transform::from_xyz(paddle_pos.x, paddle_pos.y, paddle_pos.z)
+                    .with_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 2.0))
+                    .with_scale(Vec3::splat(0.01)),
+                Paddle,
+                crate::PaddleGrowing {
+                    timer: Timer::from_seconds(crate::PADDLE_GROWTH_DURATION, TimerMode::Once),
+                    target_scale: Vec3::ONE,
+                },
+                RigidBody::KinematicPositionBased,
+                GravityScale(0.0),
+                CollidingEntities::default(),
+                Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
+                LockedAxes::TRANSLATION_LOCKED_Y,
+                KinematicCharacterController::default(),
+                Ccd::enabled(),
+            ))
+            .insert(Friction {
+                coefficient: 2.0,
+                combine_rule: CoefficientCombineRule::Max,
+            });
+    }
+    if let Some(ball_pos) = initial_positions.ball_pos {
+        commands
+            .spawn((
+                Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
+                MeshMaterial3d(debug_material.clone()),
+                Transform::from_xyz(ball_pos.x, ball_pos.y, ball_pos.z),
+                Ball,
+                crate::BallFrozen,
+                RigidBody::Dynamic,
+                Velocity::zero(),
+                CollidingEntities::default(),
+                ActiveEvents::COLLISION_EVENTS,
+                Collider::ball(BALL_RADIUS),
+                Restitution {
+                    coefficient: 0.9,
+                    combine_rule: CoefficientCombineRule::Max,
+                },
+                Friction {
+                    coefficient: 2.0,
+                    combine_rule: CoefficientCombineRule::Max,
+                },
+                Damping {
+                    linear_damping: 0.5,
+                    angular_damping: 0.5,
+                },
+            ))
+            .insert((
+                LockedAxes::TRANSLATION_LOCKED_Y,
+                Ccd::enabled(),
+                ExternalImpulse::default(),
+                GravityScale(1.0),
+            ));
+    }
+    level_advance.growth_spawned = true;
+}
+
+/// After paddle growth ends, spawn bricks and finalize level change.
+fn finalize_level_advance(
+    paddles_growing: Query<&crate::PaddleGrowing>,
+    mut level_advance: ResMut<LevelAdvanceState>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut rapier_config: Query<&mut RapierConfiguration>,
+    gravity_cfg: Res<GravityConfig>,
+) {
+    if !level_advance.active
+        || !level_advance.growth_spawned
+        || level_advance.pending.is_none()
+        || !paddles_growing.is_empty()
+    {
+        return;
+    }
+    let def = level_advance.pending.take().unwrap();
+    // Spawn bricks now.
+    spawn_bricks_only(&def, &mut commands, &mut meshes, &mut materials);
+    // Restore gravity to new level's normal.
+    if let Ok(mut config) = rapier_config.single_mut() {
+        config.gravity = gravity_cfg.normal;
+    }
+    // Update CurrentLevel resource.
+    commands.insert_resource(CurrentLevel(def));
+    // Reset state.
+    level_advance.active = false;
+    level_advance.growth_spawned = false;
+}
+
+/// Spawn fade overlay once when level advancement begins.
+fn spawn_fade_overlay_if_needed(
+    level_advance: Res<LevelAdvanceState>,
+    existing: Query<Entity, With<FadeOverlay>>,
+    mut commands: Commands,
+) {
+    if !level_advance.active || level_advance.pending.is_none() || !existing.is_empty() {
+        return;
+    }
+    // Spawn a full-screen black Node with 0 alpha; animated by update_fade_overlay.
+    commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(0.0),
+            left: Val::Px(0.0),
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
+        FadeOverlay,
+    ));
+}
+
+/// Animate fade overlay alpha based on delay (fade in) and paddle growth (fade out).
+fn update_fade_overlay(
+    level_advance: Res<LevelAdvanceState>,
+    mut overlays: Query<(Entity, &mut BackgroundColor), With<FadeOverlay>>,
+    paddles_growing: Query<&crate::PaddleGrowing>,
+    mut commands: Commands,
+) {
+    if let Ok((entity, mut color)) = overlays.single_mut() {
+        if !level_advance.active {
+            commands.entity(entity).despawn();
+            return;
+        }
+        if !level_advance.growth_spawned {
+            let alpha: f32 = level_advance.timer.fraction();
+            let a = alpha.clamp(0.0, 1.0);
+            color.0 = Color::srgba(0.0, 0.0, 0.0, a);
+        } else if let Ok(growing) = paddles_growing.single() {
+            let progress: f32 = growing.timer.fraction();
+            let alpha: f32 = 1.0 - progress;
+            let a = alpha.clamp(0.0, 1.0);
+            color.0 = Color::srgba(0.0, 0.0, 0.0, a);
+        } else {
+            // Growth finished; remove overlay.
+            commands.entity(entity).despawn();
+        }
     }
 }

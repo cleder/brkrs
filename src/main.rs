@@ -130,6 +130,7 @@ fn main() {
             normal: Vec3::new(2.0, 0.0, 0.0),
         })
         .insert_resource(GameProgress::default())
+        .insert_resource(level_loader::LevelAdvanceState::default())
         .add_plugins((
             DefaultPlugins
                 .set(ImagePlugin::default_nearest())
@@ -741,7 +742,6 @@ fn handle_respawn(
     initial_positions: Res<InitialPositions>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut rapier_config: Query<&mut RapierConfiguration>,
     mut commands: Commands,
 ) {
     if !respawn_state.active {
@@ -752,11 +752,6 @@ fn handle_respawn(
 
     if respawn_state.timer.finished() {
         respawn_state.active = false;
-
-        // Reset gravity to zero for growth animation
-        if let Ok(mut config) = rapier_config.single_mut() {
-            config.gravity = Vec3::ZERO;
-        }
 
         let debug_material = materials.add(StandardMaterial {
             base_color: Color::srgb(0.8, 0.2, 0.2),
