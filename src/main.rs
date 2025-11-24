@@ -32,6 +32,13 @@ const BALL_WALL_IMPULSE_FACTOR: f32 = 0.001;
 const PADDLE_BOUNCE_WALL_FACTOR: f32 = 0.03;
 // How strongly the paddle bounces back when hitting a brick (separate from walls)
 const PADDLE_BOUNCE_BRICK_FACTOR: f32 = 0.02;
+// Maximum ball velocity (can be made ball-type dependent in the future)
+const MAX_BALL_VELOCITY: f32 = 15.0;
+// Camera shake parameters
+const CAMERA_SHAKE_DURATION: f32 = 0.15;
+const CAMERA_SHAKE_IMPULSE_SCALE: f32 = 0.005; // Scale factor for impulse to shake intensity
+const CAMERA_SHAKE_MIN_INTENSITY: f32 = 0.05;
+const CAMERA_SHAKE_MAX_INTENSITY: f32 = 10.0;
 
 // Grid debug overlay constants (22x22 grid covering PLANE_H × PLANE_W)
 const GRID_WIDTH: usize = 22; // Columns (Z-axis)
@@ -54,6 +61,13 @@ struct GridOverlay;
 struct Brick;
 #[derive(Component)]
 struct MarkedForDespawn;
+
+#[derive(Component)]
+struct CameraShake {
+    timer: Timer,
+    intensity: f32,
+    original_position: Vec3,
+}
 
 #[derive(Event)]
 struct WallHit {
@@ -101,6 +115,8 @@ fn main() {
             Update,
             (
                 move_paddle,
+                limit_ball_velocity,
+                update_camera_shake,
                 #[cfg(not(target_arch = "wasm32"))]
                 toggle_wireframe,
                 #[cfg(not(target_arch = "wasm32"))]
@@ -116,6 +132,7 @@ fn main() {
         .add_observer(on_wall_hit)
         .add_observer(on_paddle_ball_hit)
         .add_observer(on_brick_hit)
+        .add_observer(start_camera_shake)
         .run();
 }
 
@@ -127,8 +144,8 @@ fn setup(
     mut rapier_config: Query<&mut RapierConfiguration>,
 ) {
     let rapier_config = rapier_config.single_mut();
-    // Set gravity to 0.0.
-    rapier_config.unwrap().gravity = Vec3::new(15.0, 0.0, 0.0);
+    // Set gravity to provide gentle acceleration
+    rapier_config.unwrap().gravity = Vec3::new(2.0, 0.0, 0.0);
 
     let _debug_material = materials.add(StandardMaterial {
         base_color_texture: Some(images.add(uv_debug_texture())),
@@ -165,7 +182,11 @@ fn setup(
     commands.spawn((
         Camera3d::default(),
         Transform::from_xyz(0.0, 37., 0.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+        MainCamera,
     ));
+
+    #[derive(Component)]
+    struct MainCamera;
 
     #[cfg(not(target_arch = "wasm32"))]
     commands.spawn((
@@ -177,6 +198,66 @@ fn setup(
             ..default()
         },
     ));
+}
+
+/// Limit ball velocity to prevent excessive speeds
+fn limit_ball_velocity(mut balls: Query<&mut Velocity, With<Ball>>) {
+    for mut velocity in balls.iter_mut() {
+        let speed = velocity.linvel.length();
+        if speed > MAX_BALL_VELOCITY {
+            velocity.linvel = velocity.linvel.normalize() * MAX_BALL_VELOCITY;
+        }
+    }
+}
+
+/// Update camera shake effect
+fn update_camera_shake(
+    time: Res<Time>,
+    mut cameras: Query<(Entity, &mut Transform, Option<&mut CameraShake>)>,
+    mut commands: Commands,
+) {
+    for (entity, mut transform, shake_opt) in cameras.iter_mut() {
+        if let Some(mut shake) = shake_opt {
+            shake.timer.tick(time.delta());
+
+            if shake.timer.finished() {
+                // Restore original position and remove shake component
+                transform.translation = shake.original_position;
+                commands.entity(entity).remove::<CameraShake>();
+            } else {
+                // Apply random offset based on intensity
+                let progress = shake.timer.fraction();
+                let intensity = shake.intensity * (1.0 - progress); // Fade out
+                let offset = Vec3::new(
+                    (time.elapsed_secs() * 50.0).sin() * intensity,
+                    0.0,
+                    (time.elapsed_secs() * 43.0).cos() * intensity,
+                );
+                transform.translation = shake.original_position + offset;
+            }
+        }
+    }
+}
+
+/// Observer to start camera shake
+fn start_camera_shake(
+    trigger: Trigger<StartCameraShake>,
+    mut cameras: Query<(Entity, &Transform), (With<Camera3d>, Without<CameraShake>)>,
+    mut commands: Commands,
+) {
+    let event = trigger.event();
+    // Calculate intensity based on impulse magnitude
+    let impulse_magnitude = event.impulse.length();
+    let intensity = (impulse_magnitude * CAMERA_SHAKE_IMPULSE_SCALE)
+        .clamp(CAMERA_SHAKE_MIN_INTENSITY, CAMERA_SHAKE_MAX_INTENSITY);
+
+    for (entity, transform) in cameras.iter_mut() {
+        commands.entity(entity).insert(CameraShake {
+            timer: Timer::from_seconds(CAMERA_SHAKE_DURATION, TimerMode::Once),
+            intensity,
+            original_position: transform.translation,
+        });
+    }
 }
 
 fn move_paddle(
@@ -448,6 +529,7 @@ fn on_wall_hit(
     trigger: Trigger<WallHit>,
     mut balls: Query<&mut ExternalImpulse, With<Ball>>,
     mut controllers: Query<&mut KinematicCharacterController, With<Paddle>>,
+    mut commands: Commands,
 ) {
     let event = trigger.event();
 
@@ -460,11 +542,22 @@ fn on_wall_hit(
     for mut controller in controllers.iter_mut() {
         controller.translation = Some(-event.impulse * PADDLE_BOUNCE_WALL_FACTOR);
     }
+
+    // Trigger camera shake with impulse-based intensity
+    commands.trigger(StartCameraShake {
+        impulse: event.impulse,
+    });
+}
+
+#[derive(Event)]
+struct StartCameraShake {
+    impulse: Vec3,
 }
 
 fn on_brick_hit(
     trigger: Trigger<BrickHit>,
     mut controllers: Query<&mut KinematicCharacterController, With<Paddle>>,
+    mut commands: Commands,
 ) {
     let event = trigger.event();
 
@@ -472,6 +565,11 @@ fn on_brick_hit(
     for mut controller in controllers.iter_mut() {
         controller.translation = Some(-event.impulse * PADDLE_BOUNCE_BRICK_FACTOR);
     }
+
+    // Trigger camera shake with impulse-based intensity
+    commands.trigger(StartCameraShake {
+        impulse: event.impulse,
+    });
 }
 
 fn on_paddle_ball_hit(

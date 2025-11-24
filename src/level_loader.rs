@@ -125,8 +125,8 @@ fn spawn_level_entities(
                                 combine_rule: CoefficientCombineRule::Max,
                             },
                             Damping {
-                                linear_damping: 0.01,
-                                angular_damping: 0.1,
+                                linear_damping: 0.5,
+                                angular_damping: 0.5,
                             },
                             LockedAxes::TRANSLATION_LOCKED_Y,
                             Ccd::enabled(),
@@ -202,8 +202,8 @@ fn spawn_level_entities(
                 combine_rule: CoefficientCombineRule::Max,
             },
             Damping {
-                linear_damping: 0.01,
-                angular_damping: 0.1,
+                linear_damping: 0.5,
+                angular_damping: 0.5,
             },
             LockedAxes::TRANSLATION_LOCKED_Y,
             Ccd::enabled(),
