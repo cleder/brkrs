@@ -33,7 +33,7 @@ const PADDLE_BOUNCE_WALL_FACTOR: f32 = 0.03;
 // How strongly the paddle bounces back when hitting a brick (separate from walls)
 const PADDLE_BOUNCE_BRICK_FACTOR: f32 = 0.02;
 // Maximum ball velocity (can be made ball-type dependent in the future)
-const MAX_BALL_VELOCITY: f32 = 15.0;
+const MAX_BALL_VELOCITY: f32 = 20.0;
 // Camera shake parameters
 const CAMERA_SHAKE_DURATION: f32 = 0.15;
 const CAMERA_SHAKE_IMPULSE_SCALE: f32 = 0.005; // Scale factor for impulse to shake intensity
@@ -263,10 +263,10 @@ fn limit_ball_velocity(mut balls: Query<(&Velocity, &mut Damping), With<Ball>>) 
             damping.linear_damping = 0.5 + (speed_ratio - 1.0) * 2.0;
         } else if speed_ratio < 0.5 {
             // Below half target: reduce damping to allow acceleration
-            damping.linear_damping = 0.1 + speed_ratio * 0.8;
+            damping.linear_damping = 0.01 + speed_ratio * 0.8;
         } else {
             // Near target: moderate damping
-            damping.linear_damping = 0.5;
+            damping.linear_damping = 0.1;
         }
 
         // Clamp damping to reasonable bounds
