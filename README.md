@@ -1,54 +1,47 @@
 # Brkrs
 
-`Brkrs` is a classic Breakout/Arkanoid style game implemented in Rust with the Bevy game engine.
-It's a feature-rich clone with advanced gameplay mechanics beyond the basic Breakout formula.
-It features a paddle that can be controlled with the mouse, in all directions (left/right (x), up/down (y)).
-If the player is moving the paddle to the right when the ball makes contact, the game calculates a greater horizontal velocity component in the rightward direction, sending the ball off at a sharper horizontal angle. Conversely, moving the paddle to the left imparts a leftward "english." The mouse wheel controls the rotation of the paddle.
-It uses 3D rendering to display the bricks, the walls, and the ball.
-The game will be implemented in 3D but constrained to a 2D plane above the ground.
+`Brkrs` is a Breakout/Arkanoid style game implemented in Rust with the Bevy engine. It extends the classic formula with richer physics, paddle rotation, and per-level configuration.
 
-The game area is divided into a 22x22 grid, the stones are placed into this grid and fill a grid cell.
-
-## Architecture Overview
+The game area is divided into a 22×22 grid. Bricks occupy individual grid cells. Gameplay is rendered in 3D but constrained to a plane at `Y = 2.0`.
 
 ## Core Systems
 
-1. **Physics Layer (Bevy Rapier3D)**
-   - 3D physics constrained to Y=2.0 plane
-   - Collision detection and response
-   - Ball dynamics with restitution and friction
-   - Paddle kinematic movement
-
-2. **Game State Management**
-   - Menu state
-   - Playing state
-   - Paused state
-   - Game over state
-   - Level transition state
-
-3. **Level System**
-   - Map/level loader
-   - Brick spawning and management
-   - Level progression (77 levels total)
-
-4. **Brick System**
-   - 37+ different brick types with unique behaviors
-   - Component-based brick properties
-   - Event-driven brick collision handlers
+1. **Physics (Rapier3D)** – 3D physics constrained to a flat play plane.
+2. **Game State** – (planned) menu, playing, paused, game over, transitions.
+3. **Level Loader** – RON file parsing, entity spawning, per-level gravity.
+4. **Brick System** – Extensible brick behaviors via components & events.
 
 ## Technical Considerations
 
-### 3D to 2D Plane Constraint
+### Plane Constraint
 
-- All gameplay occurs at Y=2.0
-- Use `LockedAxes::TRANSLATION_LOCKED_Y` for rigid bodies
-- Camera positioned above looking down
-- Maintain 3D aesthetics with lighting and shadows
+All gameplay bodies lock Y translation (`LockedAxes::TRANSLATION_LOCKED_Y`). Camera sits above looking down, allowing lighting & shadows for 3D feel.
 
-### Collision Detection
+### Collisions
 
-- Use Rapier's collision events (automatically handles ball reflection)
-- Rapier's restitution provides the bounce physics
-- For paddle-ball collision: Add steering impulse based on mouse movement (allows player to control ball direction)
-- For brick-ball collision: Determine collision side from contact normal
-- Some bricks modify velocity/apply additional impulses after Rapier's collision response
+Rapier handles base reflection via restitution. Paddle imparts directional “english” using recent mouse movement. Bricks may later apply custom post-collision effects.
+
+## Level File Format
+
+Levels live in `assets/levels/` and are RON files parsed into `LevelDefinition`:
+
+```ron
+LevelDefinition(
+  number: 1,
+  gravity: (2.0, 0.0, 0.0), // Optional per-level gravity (x,y,z)
+  matrix: [ /* 22 x 22 grid of u8 values */ ]
+)
+```
+
+### Gravity Override
+
+If `gravity` is present it sets `GravityConfig.normal` and `RapierConfiguration.gravity` on load. During paddle growth after respawn gravity is temporarily set to zero and restored afterward.
+
+### Matrix Cell Values
+
+- `0` empty
+- `1` paddle (first occurrence only)
+- `2` ball (first occurrence only)
+- `3` brick
+
+Matrix must be 22×22. Missing paddle or ball results in fallback spawns.
