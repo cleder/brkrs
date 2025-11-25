@@ -5,7 +5,7 @@
 mod level_loader;
 mod systems;
 
-use crate::systems::RespawnPlugin;
+use crate::systems::{InputLocked, RespawnPlugin, RespawnSystems};
 
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
@@ -65,7 +65,6 @@ struct GridOverlay;
 struct Brick;
 #[derive(Component)]
 struct MarkedForDespawn;
-
 #[derive(Component)]
 struct CameraShake {
     timer: Timer,
@@ -98,18 +97,6 @@ struct BallHit {
     pub ball: Entity,
 }
 
-#[derive(Resource)]
-struct RespawnState {
-    timer: Timer,
-    active: bool,
-}
-
-#[derive(Resource, Default)]
-pub struct InitialPositions {
-    pub paddle_pos: Option<Vec3>,
-    pub ball_pos: Option<Vec3>,
-}
-
 /// Stores configurable gravity values (normal gameplay gravity, etc.)
 #[derive(Resource)]
 struct GravityConfig {
@@ -123,11 +110,6 @@ pub struct GameProgress {
 
 fn main() {
     App::new()
-        .insert_resource(RespawnState {
-            timer: Timer::from_seconds(1.0, TimerMode::Once),
-            active: false,
-        })
-        .insert_resource(InitialPositions::default())
         .insert_resource(GravityConfig {
             normal: Vec3::new(2.0, 0.0, 0.0),
         })
@@ -161,20 +143,18 @@ fn main() {
         .add_systems(
             Update,
             (
-                move_paddle,
+                move_paddle.after(RespawnSystems::Control),
                 limit_ball_velocity,
                 update_camera_shake,
                 update_paddle_growth,
                 freeze_ball_during_paddle_growth,
                 restore_gravity_post_growth,
-                handle_respawn,
                 #[cfg(not(target_arch = "wasm32"))]
                 toggle_wireframe,
                 #[cfg(not(target_arch = "wasm32"))]
                 systems::grid_debug::toggle_grid_visibility,
                 grab_mouse,
                 read_character_controller_collisions,
-                despawn_ball_on_lower_goal_collision,
                 mark_brick_on_ball_collision,
                 despawn_marked_entities, // Runs after marking, allowing physics to resolve
                                          // display_events,
@@ -396,9 +376,9 @@ fn freeze_ball_during_paddle_growth(
 }
 
 fn move_paddle(
-    mut query: Query<&mut Transform, With<Paddle>>,
+    mut query: Query<&mut Transform, (With<Paddle>, Without<InputLocked>)>,
     time: Res<Time>,
-    mut controllers: Query<&mut KinematicCharacterController>,
+    mut controllers: Query<&mut KinematicCharacterController, (With<Paddle>, Without<InputLocked>)>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     accumulated_mouse_scroll: Res<AccumulatedMouseScroll>,
     window: Single<&Window, With<PrimaryWindow>>,
@@ -412,6 +392,10 @@ fn move_paddle(
         return;
     }
     let _sensitivity = 100.0 / window.height().min(window.width());
+    if query.is_empty() {
+        return;
+    }
+
     for mut controller in controllers.iter_mut() {
         controller.translation = Some(
             Vec3::new(
@@ -517,40 +501,6 @@ fn uv_debug_texture() -> Image {
         TextureFormat::Rgba8UnormSrgb,
         RenderAssetUsages::RENDER_WORLD,
     )
-}
-
-/// Despawn the ball when it collides with the lower goal border and trigger respawn
-fn despawn_ball_on_lower_goal_collision(
-    mut collision_events: EventReader<CollisionEvent>,
-    balls: Query<Entity, With<Ball>>,
-    lower_goals: Query<Entity, With<LowerGoal>>,
-    paddles: Query<Entity, With<Paddle>>,
-    mut respawn_state: ResMut<RespawnState>,
-    mut commands: Commands,
-) {
-    for event in collision_events.read() {
-        if let CollisionEvent::Started(e1, e2, _) = event {
-            let e1_is_ball = balls.get(*e1).is_ok();
-            let e2_is_ball = balls.get(*e2).is_ok();
-            let e1_is_lower = lower_goals.get(*e1).is_ok();
-            let e2_is_lower = lower_goals.get(*e2).is_ok();
-
-            // If collision is between a Ball and a LowerGoal, despawn ball and paddle, trigger respawn
-            if (e1_is_ball && e2_is_lower) || (e2_is_ball && e1_is_lower) {
-                let ball_entity = if e1_is_ball { *e1 } else { *e2 };
-                commands.entity(ball_entity).despawn();
-
-                // Despawn paddle too
-                for paddle in paddles.iter() {
-                    commands.entity(paddle).despawn();
-                }
-
-                // Start respawn timer
-                respawn_state.timer.reset();
-                respawn_state.active = true;
-            }
-        }
-    }
 }
 
 /// Mark bricks for despawn when hit by the ball
@@ -734,95 +684,6 @@ fn on_paddle_ball_hit(
     for (ball, mut impulse) in balls.iter_mut() {
         if ball == event.ball {
             impulse.impulse = event.impulse * 0.001; // Increased from 0.000_2 for more noticeable effect
-        }
-    }
-}
-
-/// Handle respawn after 1 second delay
-fn handle_respawn(
-    time: Res<Time>,
-    mut respawn_state: ResMut<RespawnState>,
-    initial_positions: Res<InitialPositions>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut commands: Commands,
-) {
-    if !respawn_state.active {
-        return;
-    }
-
-    respawn_state.timer.tick(time.delta());
-
-    if respawn_state.timer.finished() {
-        respawn_state.active = false;
-
-        let debug_material = materials.add(StandardMaterial {
-            base_color: Color::srgb(0.8, 0.2, 0.2),
-            unlit: false,
-            ..default()
-        });
-
-        // Spawn paddle at initial position with growth animation
-        if let Some(paddle_pos) = initial_positions.paddle_pos {
-            commands
-                .spawn((
-                    Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
-                    MeshMaterial3d(debug_material.clone()),
-                    Transform::from_xyz(paddle_pos.x, paddle_pos.y, paddle_pos.z)
-                        .with_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 2.0))
-                        .with_scale(Vec3::splat(0.01)),
-                    Paddle,
-                    PaddleGrowing {
-                        timer: Timer::from_seconds(PADDLE_GROWTH_DURATION, TimerMode::Once),
-                        target_scale: Vec3::ONE,
-                    },
-                    RigidBody::KinematicPositionBased,
-                    GravityScale(0.0),
-                    CollidingEntities::default(),
-                    Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
-                    LockedAxes::TRANSLATION_LOCKED_Y,
-                    KinematicCharacterController::default(),
-                    Ccd::enabled(),
-                ))
-                .insert(Friction {
-                    coefficient: 2.0,
-                    combine_rule: CoefficientCombineRule::Max,
-                });
-        }
-
-        // Spawn ball at initial position, frozen with zero velocity
-        if let Some(ball_pos) = initial_positions.ball_pos {
-            commands
-                .spawn((
-                    Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
-                    MeshMaterial3d(debug_material.clone()),
-                    Transform::from_xyz(ball_pos.x, ball_pos.y, ball_pos.z),
-                    Ball,
-                    BallFrozen,
-                    RigidBody::Dynamic,
-                    Velocity::zero(),
-                    CollidingEntities::default(),
-                    ActiveEvents::COLLISION_EVENTS,
-                    Collider::ball(BALL_RADIUS),
-                    Restitution {
-                        coefficient: 0.9,
-                        combine_rule: CoefficientCombineRule::Max,
-                    },
-                    Friction {
-                        coefficient: 2.0,
-                        combine_rule: CoefficientCombineRule::Max,
-                    },
-                    Damping {
-                        linear_damping: 0.5,
-                        angular_damping: 0.5,
-                    },
-                ))
-                .insert((
-                    LockedAxes::TRANSLATION_LOCKED_Y,
-                    Ccd::enabled(),
-                    ExternalImpulse::default(),
-                    GravityScale(1.0),
-                ));
         }
     }
 }

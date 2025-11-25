@@ -41,7 +41,7 @@ specs/002-ball-respawn/
 ├── research.md      # Phase 0 findings
 ├── data-model.md    # Entities, resources, events
 ├── quickstart.md    # Build/test/verification guide
-├── contracts/       # Conceptual API contract (gameplay.yaml)
+├── contracts/       # Conceptual event contract (gameplay.yaml)
 ├── spec.md          # Feature spec with clarifications
 └── tasks.md         # Produced by /speckit.tasks (future)
 ```

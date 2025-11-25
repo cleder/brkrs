@@ -5,4 +5,4 @@
 pub mod grid_debug;
 pub mod respawn;
 
-pub use respawn::RespawnPlugin;
+pub use respawn::{InputLocked, RespawnPlugin, RespawnSystems};

@@ -3,9 +3,10 @@ use ron::de::from_str;
 use serde::Deserialize;
 
 use crate::{
-    Ball, Brick, GameProgress, GravityConfig, InitialPositions, Paddle, BALL_RADIUS, CELL_HEIGHT,
-    CELL_WIDTH, PADDLE_HEIGHT, PADDLE_RADIUS, PLANE_H, PLANE_W,
+    Ball, Brick, GameProgress, GravityConfig, Paddle, BALL_RADIUS, CELL_HEIGHT, CELL_WIDTH,
+    PADDLE_HEIGHT, PADDLE_RADIUS, PLANE_H, PLANE_W,
 };
+use crate::systems::respawn::InitialPositions;
 use bevy_rapier3d::prelude::*;
 
 #[derive(Deserialize, Debug)]
