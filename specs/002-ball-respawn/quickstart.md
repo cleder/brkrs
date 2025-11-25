@@ -30,10 +30,10 @@ cargo build --target wasm32-unknown-unknown --release
 1. **Respawn delay and positions**
    - Play level 001, allow the ball to hit the lower goal.
    - Observe the 1 second pause (ball + paddle hidden) and confirm both respawn exactly at the grid-defined transforms.
-2. **Stationary ball**
-   - After respawn, verify the ball remains frozen atop the paddle until you press the launch input. No drift should occur.
+2. **Stationary until controls return**
+   - After respawn completes, the ball must remain frozen atop the paddle until movement controls unlock. It resumes motion automatically the same frame you regain control.
 3. **Controls locked**
-   - Attempt to move the paddle during the respawn delay; input should be ignored until the timer completes.
+   - Attempt to move the paddle during the respawn delay; input should be ignored until the timer completes and both the paddle and ball release together.
 4. **Lives integration hook**
    - Enable debug logging (`RUST_LOG=info cargo run`). Lose a ball and confirm a `LifeLostEvent` log followed by either respawn scheduling or game-over skip when lives reach zero.
 5. **Repeated losses**
@@ -44,6 +44,6 @@ cargo build --target wasm32-unknown-unknown --release
 ## Troubleshooting
 
 - No respawn? Ensure the lower goal collider sets `Sensor` and `ActiveEvents::COLLISION_EVENTS` in `bevy_rapier3d` setup.
-- Ball keeps moving after respawn? Confirm `BallFrozen` marker exists and velocity is forced to zero when the respawn completes.
+- Ball starts too early? Ensure `BallFrozen` is applied during respawn scheduling and that no system removes `InputLocked` prematurely (the automatic release only fires when both unlock together).
 - Paddle still moveable during delay? Verify the input system checks for `InputLocked` before applying translations.
 - Timer longer/shorter than 1 second? Inspect `RespawnSchedule.timer` for correct duration and confirm `Time` resource is not scaled for slow-mo when testing.

@@ -147,7 +147,7 @@ fn main() {
                 limit_ball_velocity,
                 update_camera_shake,
                 update_paddle_growth,
-                freeze_ball_during_paddle_growth,
+                stabilize_frozen_balls,
                 restore_gravity_post_growth,
                 #[cfg(not(target_arch = "wasm32"))]
                 toggle_wireframe,
@@ -353,25 +353,10 @@ fn restore_gravity_post_growth(
 }
 
 /// Keep ball frozen (zero velocity, locked position) while paddle is growing
-fn freeze_ball_during_paddle_growth(
-    paddles: Query<&PaddleGrowing>,
-    mut balls: Query<&mut Velocity, (With<Ball>, With<BallFrozen>)>,
-    frozen_balls: Query<Entity, With<BallFrozen>>,
-    mut commands: Commands,
-) {
-    let paddle_growing = !paddles.is_empty();
-
-    if paddle_growing {
-        // Keep balls frozen
-        for mut velocity in balls.iter_mut() {
-            velocity.linvel = Vec3::ZERO;
-            velocity.angvel = Vec3::ZERO;
-        }
-    } else {
-        // Growth complete: unfreeze all balls
-        for entity in frozen_balls.iter() {
-            commands.entity(entity).remove::<BallFrozen>();
-        }
+fn stabilize_frozen_balls(mut balls: Query<&mut Velocity, (With<Ball>, With<BallFrozen>)>) {
+    for mut velocity in balls.iter_mut() {
+        velocity.linvel = Vec3::ZERO;
+        velocity.angvel = Vec3::ZERO;
     }
 }
 

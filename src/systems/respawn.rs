@@ -51,8 +51,8 @@ pub struct RespawnRequest {
     pub lost_ball: Entity,
     pub tracked_paddle: Option<Entity>,
     pub remaining_lives: u8,
-    pub ball_spawn: SpawnTransform,
-    pub paddle_spawn: SpawnTransform,
+    pub ball_spawn: Option<SpawnTransform>,
+    pub paddle_spawn: Option<SpawnTransform>,
 }
 
 /// Canonical transform used when respawning an entity.
@@ -320,11 +320,16 @@ fn schedule_respawn_timer(
         if let Some(mut next_request) = respawn_schedule.queue.pop_front() {
             if next_request.tracked_paddle.is_none() {
                 next_request.tracked_paddle = acquire_primary_paddle(&mut paddles, &mut commands);
-                next_request.paddle_spawn = resolve_paddle_spawn(
+            }
+            if next_request.paddle_spawn.is_none() {
+                next_request.paddle_spawn = Some(resolve_paddle_spawn(
                     next_request.tracked_paddle,
                     &paddle_handles,
                     &spawn_points,
-                );
+                ));
+            }
+            if next_request.ball_spawn.is_none() {
+                next_request.ball_spawn = Some(spawn_points.ball_spawn());
             }
             start_pending_request(
                 &mut respawn_schedule,
@@ -356,8 +361,8 @@ fn schedule_respawn_timer(
                 lost_ball: event.ball,
                 tracked_paddle,
                 remaining_lives: lives_state.lives_remaining,
-                ball_spawn: event.ball_spawn,
-                paddle_spawn,
+                ball_spawn: Some(event.ball_spawn),
+                paddle_spawn: Some(paddle_spawn),
             });
             warn!(
                 "respawn already pending; queued additional LifeLostEvent (queue_len={})",
@@ -372,8 +377,8 @@ fn schedule_respawn_timer(
                     lost_ball: event.ball,
                     tracked_paddle,
                     remaining_lives: lives_state.lives_remaining,
-                    ball_spawn: event.ball_spawn,
-                    paddle_spawn,
+                    ball_spawn: Some(event.ball_spawn),
+                    paddle_spawn: Some(paddle_spawn),
                 },
                 &time,
                 &mut respawn_scheduled_events,
@@ -389,6 +394,7 @@ fn schedule_respawn_timer(
 fn respawn_executor(
     time: Res<Time>,
     mut respawn_schedule: ResMut<RespawnSchedule>,
+    spawn_points: Res<SpawnPoints>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut paddles: Query<(Entity, &mut Transform, Option<&mut Velocity>), With<Paddle>>,
@@ -407,6 +413,13 @@ fn respawn_executor(
     let request = respawn_schedule.pending.take().unwrap();
     respawn_schedule.timer.reset();
 
+    let paddle_spawn = request
+        .paddle_spawn
+        .unwrap_or_else(|| spawn_points.paddle_spawn());
+    let ball_spawn = request
+        .ball_spawn
+        .unwrap_or_else(|| spawn_points.ball_spawn());
+
     let debug_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.8, 0.2, 0.2),
         unlit: false,
@@ -416,7 +429,7 @@ fn respawn_executor(
     let mut respawn_paddle_entity = None;
     if let Some(tracked) = request.tracked_paddle {
         if let Ok((entity, mut transform, maybe_velocity)) = paddles.get_mut(tracked) {
-            let mut target_transform = request.paddle_spawn.to_transform();
+            let mut target_transform = paddle_spawn.to_transform();
             target_transform.scale = Vec3::splat(0.01);
             *transform = target_transform;
             if let Some(mut velocity) = maybe_velocity {
@@ -429,7 +442,7 @@ fn respawn_executor(
                     target_scale: Vec3::ONE,
                 },
                 RespawnHandle {
-                    spawn: request.paddle_spawn,
+                    spawn: paddle_spawn,
                     kind: RespawnEntityKind::Paddle,
                 },
             ));
@@ -438,7 +451,7 @@ fn respawn_executor(
     }
 
     if respawn_paddle_entity.is_none() {
-        let mut transform = request.paddle_spawn.to_transform();
+        let mut transform = paddle_spawn.to_transform();
         transform.scale = Vec3::splat(0.01);
         let new_entity = commands
             .spawn((
@@ -459,7 +472,7 @@ fn respawn_executor(
                 KinematicCharacterController::default(),
                 Ccd::enabled(),
                 RespawnHandle {
-                    spawn: request.paddle_spawn,
+                    spawn: paddle_spawn,
                     kind: RespawnEntityKind::Paddle,
                 },
             ))
@@ -475,7 +488,7 @@ fn respawn_executor(
         commands.entity(entity).insert(InputLocked);
     }
 
-    let ball_transform = request.ball_spawn.to_transform();
+    let ball_transform = ball_spawn.to_transform();
     let respawned_ball = commands
         .spawn((
             Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
@@ -501,7 +514,7 @@ fn respawn_executor(
                 angular_damping: 0.5,
             },
             RespawnHandle {
-                spawn: request.ball_spawn,
+                spawn: ball_spawn,
                 kind: RespawnEntityKind::Ball,
             },
         ))
@@ -522,6 +535,7 @@ fn respawn_executor(
 
 fn restore_paddle_control(
     respawn_schedule: Res<RespawnSchedule>,
+    mut frozen_balls: Query<(Entity, &mut Velocity), (With<Ball>, With<BallFrozen>)>,
     mut paddles: Query<(Entity, Option<&PaddleGrowing>), (With<Paddle>, With<InputLocked>)>,
     mut commands: Commands,
 ) {
@@ -529,10 +543,23 @@ fn restore_paddle_control(
         return;
     }
 
+    let mut locked_remaining = false;
     for (entity, maybe_growing) in paddles.iter_mut() {
         if maybe_growing.is_none() {
             commands.entity(entity).remove::<InputLocked>();
+        } else {
+            locked_remaining = true;
         }
+    }
+
+    if locked_remaining {
+        return;
+    }
+
+    for (entity, mut velocity) in frozen_balls.iter_mut() {
+        velocity.linvel = Vec3::ZERO;
+        velocity.angvel = Vec3::ZERO;
+        commands.entity(entity).remove::<BallFrozen>();
     }
 }
 
@@ -639,11 +666,14 @@ mod tests {
                 lost_ball: Entity::from_raw(999),
                 tracked_paddle: Some(paddle),
                 remaining_lives: 2,
-                ball_spawn: SpawnTransform::new(Vec3::new(1.0, 2.0, 3.0), Quat::IDENTITY),
-                paddle_spawn: SpawnTransform::new(
+                ball_spawn: Some(SpawnTransform::new(
+                    Vec3::new(1.0, 2.0, 3.0),
+                    Quat::IDENTITY,
+                )),
+                paddle_spawn: Some(SpawnTransform::new(
                     Vec3::new(-1.0, 2.0, 0.0),
                     Quat::from_rotation_x(-PI / 2.0),
-                ),
+                )),
             });
             schedule.timer.reset();
             let duration = schedule.timer.duration();
@@ -688,8 +718,11 @@ mod tests {
                 lost_ball: Entity::from_raw(1),
                 tracked_paddle: None,
                 remaining_lives: 1,
-                ball_spawn: SpawnTransform::new(Vec3::ZERO, Quat::IDENTITY),
-                paddle_spawn: SpawnTransform::new(Vec3::ZERO, Quat::from_rotation_x(-PI / 2.0)),
+                ball_spawn: Some(SpawnTransform::new(Vec3::ZERO, Quat::IDENTITY)),
+                paddle_spawn: Some(SpawnTransform::new(
+                    Vec3::ZERO,
+                    Quat::from_rotation_x(-PI / 2.0),
+                )),
             });
         }
 
@@ -709,6 +742,48 @@ mod tests {
 
         let world = app.world();
         assert!(world.entity(paddle).contains::<InputLocked>());
+    }
+
+    #[test]
+    fn ball_unlocks_only_after_paddle_ready() {
+        let mut app = test_app();
+
+        let paddle = app
+            .world_mut()
+            .spawn((
+                Paddle,
+                InputLocked,
+                PaddleGrowing {
+                    timer: Timer::from_seconds(1.0, TimerMode::Once),
+                    target_scale: Vec3::ONE,
+                },
+            ))
+            .id();
+
+        let ball = app
+            .world_mut()
+            .spawn((
+                Ball,
+                BallFrozen,
+                Velocity::zero(),
+                ExternalImpulse::default(),
+            ))
+            .id();
+
+        app.update();
+
+        let world = app.world();
+        assert!(world.entity(paddle).contains::<InputLocked>());
+        assert!(world.entity(ball).contains::<BallFrozen>());
+
+        // Simulate paddle ready
+        app.world_mut().entity_mut(paddle).remove::<PaddleGrowing>();
+
+        app.update();
+
+        let world = app.world();
+        assert!(!world.entity(paddle).contains::<InputLocked>());
+        assert!(!world.entity(ball).contains::<BallFrozen>());
     }
 
     #[test]
