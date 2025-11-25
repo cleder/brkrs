@@ -4,8 +4,8 @@ use ron::de::from_str;
 use serde::Deserialize;
 
 use crate::{
-    Ball, Brick, GameProgress, GravityConfig, Paddle, BALL_RADIUS, CELL_HEIGHT, CELL_WIDTH,
-    PADDLE_HEIGHT, PADDLE_RADIUS, PLANE_H, PLANE_W,
+    Ball, Brick, GameProgress, GravityConfig, LowerGoal, Paddle, BALL_RADIUS, CELL_HEIGHT,
+    CELL_WIDTH, PADDLE_HEIGHT, PADDLE_RADIUS, PLANE_H, PLANE_W,
 };
 use bevy_rapier3d::prelude::*;
 
@@ -85,6 +85,26 @@ fn ball_respawn_handle(position: Vec3) -> RespawnHandle {
     }
 }
 
+fn ensure_lower_goal_sensor(commands: &mut Commands, existing: &Query<Entity, With<LowerGoal>>) {
+    if !existing.is_empty() {
+        return;
+    }
+
+    let half_thickness = 0.25;
+    let half_height = 2.5;
+    let half_width = PLANE_W / 2.0;
+    let sensor_x = PLANE_H / 2.0 + half_thickness;
+
+    commands.spawn((
+        Transform::from_xyz(sensor_x, 0.0, 0.0),
+        GlobalTransform::default(),
+        Collider::cuboid(half_thickness, half_height, half_width),
+        Sensor,
+        ActiveEvents::COLLISION_EVENTS,
+        LowerGoal,
+    ));
+}
+
 fn load_level(
     mut commands: Commands,
     mut gravity_cfg: ResMut<GravityConfig>,
@@ -155,11 +175,13 @@ fn spawn_level_entities(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_points: ResMut<SpawnPoints>,
+    lower_goal: Query<Entity, With<LowerGoal>>,
     level: Option<Res<CurrentLevel>>,
 ) {
     let Some(level) = level else {
         return;
     };
+    ensure_lower_goal_sensor(&mut commands, &lower_goal);
     spawn_level_entities_impl(
         &level.0,
         &mut commands,

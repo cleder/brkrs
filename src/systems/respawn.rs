@@ -70,7 +70,7 @@ impl SpawnTransform {
         }
     }
 
-    pub fn to_transform(&self) -> Transform {
+    pub fn to_transform(self) -> Transform {
         Transform::from_translation(self.translation).with_rotation(self.rotation)
     }
 }
@@ -728,7 +728,7 @@ mod tests {
         assert!(respawn_schedule.pending.is_none());
 
         let events = app.world().resource::<Events<GameOverRequested>>();
-        assert!(events.len() >= 1);
+        assert!(!events.is_empty());
     }
 
     #[test]

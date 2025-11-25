@@ -470,7 +470,6 @@ fn spawn_border(
         Collider::cuboid(0.0, 2.5, PLANE_W / 2.0),
         //Sensor::default(),
         Border,
-        LowerGoal,
     ));
 }
 
