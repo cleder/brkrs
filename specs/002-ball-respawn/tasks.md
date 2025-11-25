@@ -50,8 +50,8 @@ description: "Task list for Ball Respawn System"
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Implement `detect_ball_loss_system` in `src/systems/respawn.rs` to read `CollisionEvent::Started`, emit `LifeLostEvent`, and despawn the ball entity.
-- [ ] T010 [US1] Add `life_loss_logging_system` in `src/systems/respawn.rs` to record cause+entity IDs (aids manual verification and SC-004 tracking).
+- [X] T009 [US1] Implement `detect_ball_loss_system` in `src/systems/respawn.rs` to read `CollisionEvent::Started`, emit `LifeLostEvent`, and despawn the ball entity.
+- [X] T010 [US1] Add `life_loss_logging_system` in `src/systems/respawn.rs` to record cause+entity IDs (aids manual verification and SC-004 tracking).
 - [X] T011 [US1] Implement `respawn_scheduler_system` in `src/systems/respawn.rs` that consumes `LifeLostEvent`, populates `RespawnSchedule`, applies `BallFrozen`/`InputLocked`, and zeros velocities using Rapier components.
 - [ ] T012 [US1] Implement `respawn_executor_system` in `src/systems/respawn.rs` that ticks the Bevy `Timer`, respawns/translates ball+paddle using `SpawnPoints`, emits `RespawnScheduled`/`RespawnCompleted`, and keeps ball stationary.
 - [ ] T013 [US1] Add `ball_launch_input_system` in `src/systems/respawn.rs` that listens for launch input (e.g., Space) to remove `BallFrozen` and give the ball its initial impulse.

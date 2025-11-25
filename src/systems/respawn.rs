@@ -1,4 +1,4 @@
-use bevy::log::warn;
+use bevy::log::{info, warn};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use std::{collections::VecDeque, f32::consts::PI, time::Duration};
@@ -125,7 +125,6 @@ pub struct RespawnPlugin;
 #[derive(Event, Debug, Clone, Copy)]
 pub struct LifeLostEvent {
     pub ball: Entity,
-    #[allow(dead_code)]
     pub cause: LifeLossCause,
     pub ball_spawn: SpawnTransform,
 }
@@ -193,6 +192,9 @@ impl Plugin for RespawnPlugin {
                 Update,
                 (
                     detect_ball_loss.in_set(RespawnSystems::Detect),
+                    life_loss_logging
+                        .in_set(RespawnSystems::Detect)
+                        .after(detect_ball_loss),
                     schedule_respawn_timer.in_set(RespawnSystems::Schedule),
                     respawn_executor.in_set(RespawnSystems::Execute),
                     restore_paddle_control.in_set(RespawnSystems::Control),
@@ -237,6 +239,16 @@ fn detect_ball_loss(
                 commands.entity(ball_entity).despawn();
             }
         }
+    }
+}
+
+fn life_loss_logging(mut life_lost_events: EventReader<LifeLostEvent>) {
+    for event in life_lost_events.read() {
+        let spawn = event.ball_spawn.translation;
+        info!(
+            "life lost: ball={:?} cause={:?} spawn=({:.2}, {:.2}, {:.2})",
+            event.ball, event.cause, spawn.x, spawn.y, spawn.z
+        );
     }
 }
 
