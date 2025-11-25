@@ -5,6 +5,8 @@
 mod level_loader;
 mod systems;
 
+use crate::systems::RespawnPlugin;
+
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 use bevy::{
@@ -151,6 +153,7 @@ fn main() {
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(crate::level_loader::LevelLoaderPlugin)
         .add_plugins(RapierDebugRenderPlugin::default())
+        .add_plugins(RespawnPlugin)
         .add_systems(
             Startup,
             (setup, spawn_border, systems::grid_debug::spawn_grid_overlay),

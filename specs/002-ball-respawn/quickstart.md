@@ -15,6 +15,9 @@ cargo test
 # Lint for regressions
 cargo clippy --all-targets --all-features
 
+# Validate Bevy schedule layout
+bevy lint
+
 # Launch the game with dynamic linking for faster reloads
 cargo run --features bevy/dynamic_linking
 

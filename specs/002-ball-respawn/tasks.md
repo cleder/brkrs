@@ -22,9 +22,9 @@ description: "Task list for Ball Respawn System"
 
 **Purpose**: Ensure the workspace has the scaffolding and docs necessary to host the respawn systems.
 
-- [ ] T001 Create `RespawnPlugin` scaffold and placeholder system sets in `src/systems/respawn.rs`.
-- [ ] T002 Register `RespawnPlugin` in `src/systems/mod.rs` and `src/main.rs` so it loads with the app.
-- [ ] T003 Add `bevy lint` invocation to the Build & Test Commands block in `specs/002-ball-respawn/quickstart.md` to align with updated instructions.
+- [X] T001 Create `RespawnPlugin` scaffold and placeholder system sets in `src/systems/respawn.rs`.
+- [X] T002 Register `RespawnPlugin` in `src/systems/mod.rs` and `src/main.rs` so it loads with the app.
+- [X] T003 Add `bevy lint` invocation to the Build & Test Commands block in `specs/002-ball-respawn/quickstart.md` to align with updated instructions.
 
 ---
 
