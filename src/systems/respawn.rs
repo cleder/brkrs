@@ -1,7 +1,7 @@
 use bevy::log::warn;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use std::time::Duration;
+use std::{collections::VecDeque, time::Duration};
 
 use crate::{
     Ball, BallFrozen, LowerGoal, Paddle, PaddleGrowing, BALL_RADIUS, PADDLE_GROWTH_DURATION,
@@ -30,6 +30,7 @@ impl Default for LivesState {
 pub struct RespawnSchedule {
     pub timer: Timer,
     pub pending: Option<RespawnRequest>,
+    pub queue: VecDeque<RespawnRequest>,
     pub last_loss: Option<Duration>,
 }
 
@@ -38,13 +39,14 @@ impl Default for RespawnSchedule {
         Self {
             timer: Timer::from_seconds(1.0, TimerMode::Once),
             pending: None,
+            queue: VecDeque::new(),
             last_loss: None,
         }
     }
 }
 
 /// Details about a single respawn request in flight.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct RespawnRequest {
     pub lost_ball: Entity,
     pub tracked_paddle: Option<Entity>,
@@ -154,6 +156,44 @@ fn detect_ball_loss(
     }
 }
 
+fn acquire_primary_paddle(
+    paddles: &mut Query<(Entity, Option<&mut Velocity>), With<Paddle>>,
+    commands: &mut Commands,
+) -> Option<Entity> {
+    let mut iter = paddles.iter_mut();
+    if let Some((entity, maybe_velocity)) = iter.next() {
+        if let Some(mut velocity) = maybe_velocity {
+            velocity.linvel = Vec3::ZERO;
+            velocity.angvel = Vec3::ZERO;
+        }
+        commands.entity(entity).insert(InputLocked);
+        Some(entity)
+    } else {
+        None
+    }
+}
+
+fn start_pending_request(
+    respawn_schedule: &mut RespawnSchedule,
+    request: RespawnRequest,
+    time: &Time,
+    respawn_scheduled_events: &mut EventWriter<RespawnScheduled>,
+) {
+    respawn_schedule.timer.reset();
+    respawn_schedule.pending = Some(request);
+    respawn_schedule.last_loss = Some(time.elapsed());
+
+    if let Some(active) = respawn_schedule.pending.as_ref() {
+        let completes_at =
+            time.elapsed().as_secs_f64() + respawn_schedule.timer.duration().as_secs_f64();
+        respawn_scheduled_events.write(RespawnScheduled {
+            ball: active.lost_ball,
+            completes_at,
+            remaining_lives: active.remaining_lives,
+        });
+    }
+}
+
 fn schedule_respawn_timer(
     mut respawn_schedule: ResMut<RespawnSchedule>,
     mut events: EventReader<LifeLostEvent>,
@@ -164,52 +204,60 @@ fn schedule_respawn_timer(
     mut paddles: Query<(Entity, Option<&mut Velocity>), With<Paddle>>,
     mut commands: Commands,
 ) {
-    let mut latest_event = None;
-    for event in events.read() {
-        latest_event = Some(*event);
-    }
-
-    let Some(event) = latest_event else {
-        return;
-    };
-
-    if respawn_schedule.pending.is_some() {
-        warn!("respawn already pending; ignoring extra LifeLostEvent");
-        return;
-    }
-
-    if lives_state.lives_remaining == 0 {
-        game_over_events.write(GameOverRequested {
-            remaining_lives: lives_state.lives_remaining,
-        });
-        return;
-    }
-
-    let mut tracked_paddle = None;
-    for (entity, maybe_velocity) in paddles.iter_mut() {
-        if let Some(mut velocity) = maybe_velocity {
-            velocity.linvel = Vec3::ZERO;
-            velocity.angvel = Vec3::ZERO;
+    if respawn_schedule.pending.is_none() {
+        if let Some(next_request) = respawn_schedule.queue.pop_front() {
+            start_pending_request(
+                &mut respawn_schedule,
+                next_request,
+                &time,
+                &mut respawn_scheduled_events,
+            );
         }
-        commands.entity(entity).insert(InputLocked);
-        tracked_paddle = Some(entity);
     }
 
-    respawn_schedule.timer.reset();
-    respawn_schedule.pending = Some(RespawnRequest {
-        lost_ball: event.ball,
-        tracked_paddle,
-        remaining_lives: lives_state.lives_remaining,
-    });
-    respawn_schedule.last_loss = Some(time.elapsed());
+    let mut saw_event = false;
+    for event in events.read().copied() {
+        saw_event = true;
 
-    let completes_at =
-        time.elapsed().as_secs_f64() + respawn_schedule.timer.duration().as_secs_f64();
-    respawn_scheduled_events.write(RespawnScheduled {
-        ball: event.ball,
-        completes_at,
-        remaining_lives: lives_state.lives_remaining,
-    });
+        if lives_state.lives_remaining == 0 {
+            game_over_events.write(GameOverRequested {
+                remaining_lives: lives_state.lives_remaining,
+            });
+            continue;
+        }
+
+        if respawn_schedule.pending.is_some() {
+            let tracked_paddle = respawn_schedule
+                .pending
+                .as_ref()
+                .and_then(|request| request.tracked_paddle);
+            respawn_schedule.queue.push_back(RespawnRequest {
+                lost_ball: event.ball,
+                tracked_paddle,
+                remaining_lives: lives_state.lives_remaining,
+            });
+            warn!(
+                "respawn already pending; queued additional LifeLostEvent (queue_len={})",
+                respawn_schedule.queue.len()
+            );
+        } else {
+            let tracked_paddle = acquire_primary_paddle(&mut paddles, &mut commands);
+            start_pending_request(
+                &mut respawn_schedule,
+                RespawnRequest {
+                    lost_ball: event.ball,
+                    tracked_paddle,
+                    remaining_lives: lives_state.lives_remaining,
+                },
+                &time,
+                &mut respawn_scheduled_events,
+            );
+        }
+    }
+
+    if saw_event {
+        respawn_schedule.last_loss = Some(time.elapsed());
+    }
 }
 
 fn respawn_executor(
@@ -343,7 +391,7 @@ fn restore_paddle_control(
     mut paddles: Query<(Entity, Option<&PaddleGrowing>), (With<Paddle>, With<InputLocked>)>,
     mut commands: Commands,
 ) {
-    if respawn_schedule.pending.is_some() {
+    if respawn_schedule.pending.is_some() || !respawn_schedule.queue.is_empty() {
         return;
     }
 
@@ -520,5 +568,69 @@ mod tests {
 
         let events = app.world().resource::<Events<GameOverRequested>>();
         assert!(events.len() >= 1);
+    }
+
+    #[test]
+    fn queued_life_losses_run_after_pending_respawn() {
+        let mut app = test_app();
+
+        {
+            let mut positions = app.world_mut().resource_mut::<InitialPositions>();
+            positions.ball_pos = Some(Vec3::new(0.0, 2.0, 0.0));
+            positions.paddle_pos = Some(Vec3::new(0.0, 2.0, 0.0));
+        }
+
+        let lower_goal = app.world_mut().spawn(LowerGoal).id();
+        let ball_a = app.world_mut().spawn(Ball).id();
+        let ball_b = app.world_mut().spawn(Ball).id();
+        app.world_mut().spawn((Paddle, Transform::default()));
+
+        app.world_mut()
+            .resource_mut::<Events<CollisionEvent>>()
+            .send(CollisionEvent::Started(
+                ball_a,
+                lower_goal,
+                CollisionEventFlags::SENSOR,
+            ));
+
+        advance_time(&mut app, 0.016);
+        app.update();
+
+        {
+            let schedule = app.world().resource::<RespawnSchedule>();
+            assert!(schedule.pending.is_some());
+            assert_eq!(schedule.queue.len(), 0);
+        }
+
+        app.world_mut()
+            .resource_mut::<Events<CollisionEvent>>()
+            .send(CollisionEvent::Started(
+                ball_b,
+                lower_goal,
+                CollisionEventFlags::SENSOR,
+            ));
+
+        advance_time(&mut app, 0.016);
+        app.update();
+
+        {
+            let schedule = app.world().resource::<RespawnSchedule>();
+            assert!(schedule.pending.is_some());
+            assert_eq!(schedule.queue.len(), 1);
+        }
+
+        {
+            let mut schedule = app.world_mut().resource_mut::<RespawnSchedule>();
+            schedule.pending = None;
+        }
+
+        app.update();
+
+        {
+            let schedule = app.world().resource::<RespawnSchedule>();
+            assert!(schedule.pending.is_some());
+            assert_eq!(schedule.queue.len(), 0);
+            assert_eq!(schedule.pending.as_ref().unwrap().lost_ball, ball_b);
+        }
     }
 }
