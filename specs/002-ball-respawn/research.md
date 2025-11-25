@@ -1,31 +1,31 @@
-# Research Findings: Ball & Paddle Respawn + Level Flow
+# Research Findings: Ball Respawn System
 
-## Research 1: Rapier Lower-Goal Detection & Respawn Scheduling
+## Research 1: Lower-goal detection with Rapier sensors
 
-- **Decision**: Use Rapier sensor colliders on lower goals with `ActiveEvents::COLLISION_EVENTS`, listen for `CollisionEvent::Started` where one entity carries `LowerGoal` marker and the other `Ball` marker, then emit a `LifeLostEvent` that kicks off respawn scheduling in a fixed update set.
-- **Rationale**: Sensors avoid physical response while still emitting reliable collision events. Events decouple detection from respawn logic, keeping systems pure and testable, and aligns with ECS-first requirement.
-- **Alternatives considered**: (1) Polling ball `Transform` y-position each frame—simpler but bypasses physics-driven gameplay. (2) Using Rapier intersection queries manually—more code and still requires event wiring. Sensors + collision events are idiomatic and cheap.
+- **Decision**: Attach a Rapier sensor collider (`Sensor` flag + `ActiveEvents::COLLISION_EVENTS`) to the lower boundary entity and listen for `CollisionEvent::Started` pairs of (`Ball`, `LowerGoal`). On detection, emit a `LifeLostEvent` and despawn the ball in the physics schedule.
+- **Rationale**: Sensors keep physics-driven gameplay intact (Principle II) while avoiding unintended impulses. Events decouple detection from respawn orchestration so the respawn system can live in its own system set and remain testable.
+- **Alternatives considered**: (1) Polling the ball `Transform` y-value every frame—breaks physics-first rule and risks tunneling. (2) Using `IntersectionEvent`s via queries—adds manual broad-phase logic without benefit over sensors already supported by Rapier.
 
-## Research 2: Paddle Growth Animation & Ball Freeze Timing
+## Research 2: Respawn delay tracking via global Time resource
 
-- **Decision**: Add `bevy_tweening` to drive a scaled `Transform` tween on the paddle (ease-out cubic, 0.0→1.0 over 2s) while toggling a `BallFrozen` component so Rapier velocity stays zero until tween completion.
-- **Rationale**: `bevy_tweening` supplies battle-tested easing curves, handles elapsed time in both native + WASM, and integrates with ECS components. A `BallFrozen` marker keep systems simple: physics step checks for the component to skip velocity integration.
-- **Alternatives considered**: (1) Manual timers per paddle with custom interpolation—duplicated code and more error-prone, especially across multiple paddles or future power-ups. (2) Shader-only scaling—would still require component state to lock ball physics, providing no added value.
+- **Decision**: Store a `RespawnSchedule` resource containing `Option<RespawnRequest>` plus a Bevy `Timer` constructed from `Time::delta_seconds()` each frame. Systems tick the timer using the global `Time` resource so both native and WASM builds share deterministic 1-second delays.
+- **Rationale**: Using `Time` avoids per-entity timers and honors the clarification that the delay must be sourced from Bevy time. A resource keeps the scheduling logic single-owner and simplifies serialization for tests.
+- **Alternatives considered**: (1) Using Rapier's physics timestep—ties respawn cadence to physics frequency and complicates pausing. (2) Spawning ad-hoc `Timer` components on entities—harder to coordinate across multiple balls and wastes memory.
 
-## Research 3: Level-Specific Gravity Overrides
+## Research 3: Maintaining stationary ball & disabled controls
 
-- **Decision**: Extend `LevelDefinition` with `gravity: Option<Vec3>` and `respawn_overrides: Option<RespawnConfig>`; when loading a level, update Rapier's `GravityScale` resource (or apply per-body gravity via `ExternalForce`) and cache overrides on a `LevelOverrides` resource.
-- **Rationale**: Keeping overrides in level data keeps gameplay deterministic per level and avoids hardcoding per-level constants. Option type maintains backward compatibility with existing RON files.
-- **Alternatives considered**: (1) Global config file keyed by level—extra IO and risk of divergence from level assets. (2) Per-entity gravity components—complicates ball/paddle setup and duplicates data already inherent to the level definition.
+- **Decision**: Introduce `BallFrozen` and `InputLocked` marker components. While present, the movement/input systems early-return and Rapier velocity integration zeroes out linear velocity. Removal happens once the respawn timer completes and the player explicitly launches the ball.
+- **Rationale**: Components make the lock state visible to ECS queries and satisfy clarifications about stationary ball + disabled paddle controls. They also prevent accidental movement from other systems (e.g., power-ups) because those systems can filter on the markers.
+- **Alternatives considered**: (1) Relying solely on timers without explicit markers—other systems could still mutate velocity or accept input. (2) Pausing the entire physics world—overkill and would stop bricks or other moving pieces.
 
-## Research 4: Level Advance & Restart Flow with Fade Overlay
+## Research 4: Event contract with lives/game-over system
 
-- **Decision**: Represent progress in a `LevelProgress` resource (current level index, cleared bricks, lives). Level completion triggers a `LevelAdvanceEvent`, after which a fade overlay entity (quad + unlit material) tweens alpha (fade out → fade in) while a timer delays `LevelLoader::load` invocation. Keyboard input system listens for `KeyCode::R` to emit `LevelRestartRequested` that reuses the same overlay pipeline.
-- **Rationale**: Central resource keeps transitions deterministic and easier to test. Overlay entity reused for both advance and restart, ensuring animation consistency. Event-driven restart avoids direct coupling between input and loader.
-- **Alternatives considered**: (1) Immediately load next level without delay—does not satisfy user requirement for fade/anticipation. (2) Scene reload via commands—heavyweight and would respawn entire world instead of targeted entities, hurting performance.
+- **Decision**: The respawn feature emits `LifeLostEvent` with metadata (ball entity, cause) and waits for a `LivesState` resource or `GameOverEvent` to indicate whether respawn should proceed. When zero lives remain, the respawn system aborts scheduling and emits `GameOverRequested` for UI/state machines.
+- **Rationale**: Events keep modules independent (Principle III) and align with requirement FR-009/FR-010. The respawn feature can be developed/tested before the lives UI exists by mocking the event stream.
+- **Alternatives considered**: (1) Embedding a lives counter directly inside the respawn system—violates modularity and complicates future HUD integration. (2) Polling global state every frame—less explicit and harder to test.
 
-## Research 5: Game Progress Persistence Within Session
+## Research 5: Multi-ball safety and fallback spawn positions
 
-- **Decision**: Track lives, score, and last respawn timestamp inside `LevelProgress` + `RespawnCounters` resources, persisting through level transitions but resetting when the player restarts via menu; expose debugging info through Bevy `info!` logs to verify state.
-- **Rationale**: Resources remain alive across levels without storing data externally, aligning with ECS-first design. Logging progress aids manual verification until automated tests cover flows.
-- **Alternatives considered**: (1) Storing progress inside individual entities (paddle/ball) leads to state loss when entities despawn. (2) Writing to disk between levels—overkill for single-session progress and would slow transitions.
+- **Decision**: Cache spawn transforms in `SpawnPoints` resource keyed by `BallId`. When multiple balls exist, only the despawned ball gets a respawn entry. If the level grid lacks `1` or `2`, use a constant fallback at the board center with configurable offsets logged as warnings.
+- **Rationale**: Matches FR-008 and ensures multi-ball power-ups don't all reset due to one loss. Centralizing spawn data avoids re-reading level assets during play and keeps per-ball state light-weight.
+- **Alternatives considered**: (1) Respawning all balls together—breaks multi-ball requirement. (2) Re-parsing the level matrix on every respawn—unnecessary IO and potential stutter, especially on WASM.

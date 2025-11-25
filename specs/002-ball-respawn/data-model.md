@@ -1,96 +1,104 @@
-# Data Model: Ball & Paddle Respawn + Level Flow
+# Data Model: Ball Respawn System
 
-## Asset: LevelDefinition (RON)
+## Assets
 
-| Field | Type | Source | Description | Validation |
-|-------|------|--------|-------------|------------|
-| `grid` | `[[i32; 22]; 22]` | Existing level files | Encodes entities by numeric token (1=paddle, 2=ball, 10+ bricks). | Must remain 22×22; at least one paddle and one ball symbol present. |
-| `gravity` | `Option<[f32; 3]>` | **New** per-level override | Custom gravity vector applied when the level loads. | Defaults to global gravity when `None`. Non-zero vector magnitude <= 50 to avoid instability. |
-| `respawn_overrides` | `Option<RespawnConfig>` | **New** optional block | Allows overriding default respawn delay, paddle scale, freeze duration. | When provided, all durations must be >= 0. |
-| `level_id` | `String` | Existing metadata | Unique human-readable ID (e.g., "level_001"). | Must match file stem. |
-| `display_name` | `String` | Existing metadata | Player-facing label. | Non-empty. |
+### LevelDefinition (RON)
 
-## Struct: RespawnConfig
+| Field | Type | Description | Validation |
+|-------|------|-------------|------------|
+| `grid` | `[[i32; 22]; 22]` | Encodes spawn markers (`1` = paddle, `2` = ball) plus bricks. | Must remain 22×22 with at least one `1` and one `2`. |
+| `level_id` | `String` | Matches file stem (e.g., `level_001`). | Non-empty, unique per level. |
 
-| Field | Type | Description | Default |
-|-------|------|-------------|---------|
-| `ball_spawn` | `Option<Vec3>` | Explicit ball spawn; overrides grid lookup "2". | `None` → use grid derived spawn. |
-| `paddle_spawn` | `Option<Vec3>` | Explicit paddle spawn; overrides grid lookup "1". | `None`. |
-| `respawn_delay_ms` | `u64` | Delay between life loss and respawn. | 1000 ms. |
-| `paddle_growth_ms` | `u64` | Duration of ease-out tween. | 2000 ms. |
-| `freeze_ball_ms` | `u64` | How long the ball stays frozen. | `paddle_growth_ms`. |
+During load, the grid is converted into cached spawn transforms instead of being re-read on each respawn.
 
-## Component: SpawnPoint
+## Core Components
 
-Represents the initial transform derived from the level grid or overrides.
+### `Ball`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `entity_type` | `SpawnPointKind` (`Paddle`/`Ball`) | Distinguishes ball vs paddle spawn usage. |
-| `translation` | `Vec3` | Absolute world position used during respawn. |
-| `facing` | `Quat` | Orientation (for paddle alignment). |
+- Marker attached to every ball entity.
+- Paired with Rapier components (`Velocity`, `RigidBody`, `Collider`).
+- Validation: every active ball must also carry `RespawnHandle` (see below) so the scheduler knows how to rebuild it.
 
-Validation: Each level must yield exactly one `SpawnPoint` for paddle and ball. Stored as components on the respective entities for rapid respawn without re-reading assets.
+### `Paddle`
 
-## Resource: LevelOverrides
+- Marker for the controllable paddle entity.
+- Has `Velocity`, `Transform`, and input-driven components.
+- Stores `InitialTransform` component with the spawn transform resolved from the matrix.
 
-Caches per-level settings derived from the asset.
-
-| Field | Type | Notes |
-|-------|------|-------|
-| `gravity` | `Option<Vec3>` | When `Some`, overrides Rapier gravity when the level is active. |
-| `respawn_config` | `RespawnConfig` | Fully resolved config (with defaults). |
-| `level_id` | `String` | Keeps association for logging + telemetry. |
-
-State Transition: Updated whenever a new level loads. Consumers watch for `Changed<LevelOverrides>` to adjust physics or timers.
-
-## Resource: RespawnSchedule
+### `RespawnHandle`
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `pending` | `Option<RespawnRequest>` | Set when a life is lost; cleared once respawn executes. |
-| `timer` | `Timer` | Counts down from `respawn_delay_ms`. |
-| `queued_at` | `Instant` | Diagnostic timestamp for profiling repeated losses. |
+| `spawn_point` | `Vec3` | Cached world position derived from the level matrix (`1` or `2`). |
+| `rotation` | `Quat` | Orientation to restore. |
+| `entity_kind` | `RespawnEntityKind` (`Ball`/`Paddle`) | Distinguishes which entity this handle restores |
 
-`RespawnRequest` contains entity IDs to respawn, spawn points, and overrides for velocity reset. Ensures only one respawn executes at a time.
+Attached to both paddle and ball so systems can reposition without re-reading assets.
 
-## Component: PaddleGrowth
+### `BallFrozen`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `tween` | `Animator<Transform>` handle | Manages scale animation via bevy_tweening. |
-| `state` | `PaddleGrowthState` (`Idle`, `Growing`, `Complete`) | Governs when paddle can move normally. |
+- Marker applied to a ball while respawn delay is active.
+- Systems that impart velocity must check `Without<BallFrozen>` before applying impulses.
 
-Business Rule: Ball receives `BallFrozen` marker while state != `Complete`.
+### `InputLocked`
 
-## Resource: LevelProgress
+- Marker applied to the paddle entity during respawn delay.
+- The paddle control system exits early when this marker is present, fulfilling FR-012.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `current_level` | `usize` | Index into level manifest. |
-| `lives` | `u32` | Remaining lives; decremented on respawn; hitting zero triggers GameOver state. |
-| `cleared_bricks` | `u32` | Count maintained to detect completion. |
-| `total_bricks` | `u32` | Set on level load for completion threshold. |
-| `last_respawn_at` | `Instant` | Used to throttle repeated respawns + debugging. |
+### `LowerGoal`
 
-Transitions: `LevelProgress` resets counters when a new level loads, but `lives` persists unless level restart occurs.
+- Marker on the lower-boundary sensor collider.
+- Used alongside Rapier collision events to detect ball loss.
 
-## Resource: FadeOverlayState
+## Resources
+
+### `SpawnPoints`
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `entity` | `Entity` | Overlay quad (spawned once). |
-| `phase` | `OverlayPhase` (`Hidden`, `FadingOut`, `FadingIn`) | Controls tween direction. |
-| `timer` | `Timer` | Shared timer for fade durations (<500 ms per user requirement). |
+| `paddle` | `Vec3` | Spawn derived from matrix value `1`. |
+| `ball` | `Vec3` | Spawn derived from matrix value `2`. |
+| `fallback_center` | `Vec3` | Used when grid markers are missing; defaults to board center. |
+
+Provides instant lookup for respawn scheduling and is rebuilt on level load.
+
+### `RespawnSchedule`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `pending` | `Option<RespawnRequest>` | Contains entity IDs to respawn plus spawn transforms. |
+| `timer` | `Timer` | Configured for 1 second using Bevy `Time` resource. |
+| `last_loss` | `Duration` | Tracking consecutive life losses (for SC-002 testing). |
+
+`RespawnRequest` fields: `ball_entity`, `paddle_entity`, `ball_spawn`, `paddle_spawn`, `remaining_lives` (mirrors latest `LivesState`).
+
+### `LivesState`
+
+- Shared resource updated by the separate lives system.
+- Fields: `lives_remaining: u8`, `on_last_life: bool`.
+- The respawn system reads this resource when handling `LifeLostEvent`; it never mutates it directly.
 
 ## Events
 
-| Event | Payload | Purpose |
-|-------|---------|---------|
-| `LifeLostEvent` | `Entity` (ball), `Entity` (paddle) | Emitted on lower-goal collision to begin respawn. |
-| `RespawnQueuedEvent` | `RespawnRequest` | Signals scheduling happened—useful for UI or logging. |
-| `RespawnCompleteEvent` | `Entity` (ball) | Unfreezes ball + re-enables input. |
-| `LevelAdvanceEvent` | `usize` next level index | Blocks gameplay while fade overlay runs, then loads next level. |
-| `LevelRestartRequested` | `()` | Sent by input system when `R` is pressed; merges into same level-flow path as completion. |
+| Event | Payload | Emitted By | Consumed By |
+|-------|---------|------------|-------------|
+| `LifeLostEvent` | `{ ball: Entity, cause: LifeLossCause }` | Lower-goal collision system | Lives system (to decrement), respawn scheduler |
+| `GameOverRequested` | `{ remaining_lives: u8 }` | Lives system when counter hits zero | Game state machine (to enter GameOver screen) |
+| `RespawnScheduled` | `{ ball: Entity, paddle: Entity, completes_at: f64 }` | Respawn scheduler when timer starts | UI feedback / debugging |
+| `RespawnCompleted` | `{ ball: Entity }` | Respawn system after transforms/velocities reset | Input system to re-enable launch |
 
-These events ensure modular boundaries between detection, animation, and loader subsystems.
+Event-driven flow keeps the respawn feature modular and satisfies FR-009/FR-010.
+
+## State Transitions
+
+1. `CollisionEvent` (Ball + LowerGoal) ⇒ emit `LifeLostEvent` and remove ball entity.
+2. Lives system decrements `LivesState`; when lives > 0 it echoes `LifeLostAck` (implicit via resource) so respawn scheduler enqueues `RespawnRequest` and starts `RespawnSchedule.timer`.
+3. While the timer is active, `BallFrozen` and `InputLocked` markers remain attached.
+4. When `timer.finished()` is true, respawn system respawns ball + paddle at cached transforms, keeps velocity zero, and removes the lock markers once the player relaunches the ball.
+5. If `LivesState.lives_remaining == 0`, the scheduler aborts and emits `GameOverRequested` instead of respawning.
+
+## Validation Rules
+
+- Each level load must yield exactly one paddle and one ball spawn; missing markers trigger warnings and fallback center positions per FR-008.
+- Only one `RespawnRequest` may be active at a time. A second `LifeLostEvent` while `pending.is_some()` should be queued for after the current respawn completes to satisfy multi-loss handling.
+- Systems manipulating paddle/ball transforms must honor `BallFrozen`/`InputLocked` markers to keep initial velocity zero until the player launches.

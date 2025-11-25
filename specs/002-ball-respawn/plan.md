@@ -1,52 +1,35 @@
-# Implementation Plan: Ball & Paddle Respawn + Level Flow
+# Implementation Plan: Ball Respawn System
 
-**Branch**: `002-ball-respawn` | **Date**: 2025-11-25 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/002-ball-respawn/spec.md` plus user-requested extensions (per-level gravity, paddle growth animation, fade overlays, level restart/advance flow).
-
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**Branch**: `002-ball-respawn` | **Date**: 2025-11-25 | **Spec**: `specs/002-ball-respawn/spec.md`
+**Input**: Feature specification for continuous ball+paddle respawn after life loss.
 
 ## Summary
 
-Implement a resilient respawn + level-flow pipeline: detect when the ball exits via the lower goal, despawn ball and paddle, queue a one-second respawn delay, then recreate both entities at the matrix-defined start positions while freezing ball physics until a two-second paddle growth tween completes. Extend level definitions with optional gravity overrides so each level can tune Rapier gravity, temporarily zeroing gravity during respawn animations. Add progress tracking (lives left, cleared bricks, current level), a fade overlay that ramps opacity while transitioning between levels, and a manual restart shortcut via the `R` key. All behavior remains ECS- and physics-driven: dedicated plugins for respawn + level advancement, systems reading/writing Bevy resources/events, and level loader refactors to surface spawn points + overrides for every level.
+Implement a physics-driven respawn loop so any ball that falls below the lower boundary triggers a `LifeLostEvent`, queues a one-second delay using Bevy's global `Time` resource, and respawns the ball/paddle at their matrix-defined transforms with zero velocity. The respawn feature must emit events for the lives/game-over system, freeze controls until the player relaunches the ball, and handle repeated losses or multi-ball scenarios without stalling gameplay.
 
 ## Technical Context
 
-**Language/Version**: Rust 1.81 (Rust 2021 edition managed via rustup)
-
-**Primary Dependencies**:
-
-- Bevy 0.16 (ECS, renderer, state machine, timers)
-- bevy_rapier3d 0.31 (physics integration + collision events for life loss)
-- Serde 1.0 + RON 0.8 (level metadata, respawn/gravity overrides)
-- bevy_tweening 0.14 (planned) for paddle scaling + fade overlay easings
-
-**Storage**: File-based RON under `assets/levels/`; runtime-only ECS resources for respawn schedule and progress (no persistent storage)
-
-**Testing**: `cargo test`, `cargo clippy --all-targets --all-features`, manual gameplay verification native + WASM (focus on repeated respawns, level restart/advance)
-
-**Target Platform**: Native desktop (Linux/Windows/macOS) plus WASM builds served through wasm-bindgen
-
-**Project Type**: Single Bevy crate with modular plugins
-
-**Performance Goals**: Sustain 60 FPS on native + WASM; respawn/overlay systems must add <2 ms/frame; gravity overrides settle within one frame; no allocation spikes during life-loss loops
-
-**Constraints**: ECS-first state (no global singletons), physics-driven movement (Rapier handles ball/paddle transforms outside of respawn reposition), 1 second respawn delay, 2 second paddle growth (ease-out cubic), overlay alpha ramp <500 ms, deterministic timers for cross-platform parity
-
-**Scale/Scope**: Touches `main.rs`, `level_loader.rs`, new `components/`, `plugins/respawn.rs`, `plugins/level_flow.rs`, physics resources, two sample level files; supports 77 total levels via schema updates
+**Language/Version**: Rust 1.81 (Rust 2021 edition via rustup)
+**Primary Dependencies**: Bevy 0.16 (ECS, scheduling, `Time`), bevy_rapier3d 0.31 (physics + collision sensors), serde/ron (level matrix assets)
+**Storage**: File-based RON assets under `assets/levels/`; no runtime persistence
+**Testing**: `cargo test`, Bevy system unit tests, targeted WASM smoke build for timer parity
+**Target Platform**: Native desktop (Linux/macOS/Windows) plus WASM (Chrome/Firefox)
+**Project Type**: Single Bevy game workspace (`src/` + `assets/`)
+**Performance Goals**: Maintain 60 FPS and avoid respawn-induced GC spikes; respawn delay timing tolerance ±16 ms
+**Constraints**: ECS-first systems, physics-driven detection (Rapier sensors), 1 s delay sourced from Bevy `Time`, ball remains stationary until player launch, paddle controls disabled during delay, respawn positions always derived from matrix markers or fallback center
+**Scale/Scope**: Single-player brick breaker with ≤4 balls simultaneously; dozens of entities per level; respawn flow must succeed for 100 consecutive losses (SC-002)
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+| Principle | Gate Assessment |
+|-----------|-----------------|
+| ECS-First | Respawn logic implemented as system sets operating on components/events → **PASS** |
+| Physics-Driven Gameplay | Lower-goal detection relies on Rapier sensors, not manual transforms → **PASS** |
+| Modular Feature Design | Communication occurs via `LifeLostEvent`, `RespawnScheduled`, `GameOverRequested`; lives system stays decoupled → **PASS** |
+| Performance-First | Minimal allocations (spawn data cached), timer per feature, 60 FPS target tracked in SC-002 → **PASS** |
+| Cross-Platform Compatibility | Uses Bevy `Time` instead of platform clocks; no native-only APIs → **PASS** |
 
-| Principle | Status | Evidence/Notes |
-|-----------|--------|----------------|
-| **I. ECS-First Architecture** | ✅ PASS | Respawn + transitions implemented as Bevy systems (no global state); spawn metadata stored in components/resources; timers via `ResMut<Timer>` or `Time::<Fixed>` handlers. |
-| **II. Physics-Driven Gameplay** | ✅ PASS | Life loss triggered via Rapier sensor events; paddle/ball transforms updated through Rapier bodies (except controlled respawn set); gravity overrides applied through Rapier `GravityScale`. |
-| **III. Modular Feature Design** | ✅ PASS | Feature isolated into `RespawnPlugin` and `LevelFlowPlugin` with explicit events/resources; system sets toggled via states. |
-| **IV. Performance-First Implementation** | ✅ PASS | Systems scheduled in fixed timestep set, data-oriented queries, re-use overlay mesh/material; plan mandates profiling repeated respawns (>100 cycles). |
-| **V. Cross-Platform Compatibility** | ✅ PASS | All dependencies supported on WASM; timers/input rely on Bevy abstractions; fade overlay uses standard material/shader path that works on web. |
-
-**Overall Assessment**: ✅ **APPROVED** – Plan follows every constitutional principle; no waivers required.
+Re-check after design: still PASS (no new violations introduced).
 
 ## Project Structure
 
@@ -54,60 +37,94 @@ Implement a resilient respawn + level-flow pipeline: detect when the ball exits 
 
 ```text
 specs/002-ball-respawn/
-├── plan.md              # This file (/speckit.plan output)
-├── research.md          # Phase 0 research findings
-├── data-model.md        # Phase 1 entity/resource definitions
-├── quickstart.md        # Phase 1 getting-started + verification steps
-├── contracts/
-│   └── gameplay.yaml    # OpenAPI contracts for respawn/level control
-└── tasks.md             # Phase 2 execution plan (via /speckit.tasks)
+├── plan.md          # This file
+├── research.md      # Phase 0 findings
+├── data-model.md    # Entities, resources, events
+├── quickstart.md    # Build/test/verification guide
+├── contracts/       # Conceptual API contract (gameplay.yaml)
+├── spec.md          # Feature spec with clarifications
+└── tasks.md         # Produced by /speckit.tasks (future)
 ```
 
 ### Source Code (repository root)
 
 ```text
 src/
-├── main.rs                  # Registers plugins, states, and schedule ordering
-├── level_loader.rs          # RON parsing, spawn/despawn (extend for overrides)
-├── components/
-│   ├── ball.rs              # Ball marker + SpawnPoint component
-│   ├── paddle.rs            # Paddle marker + PaddleGrowth state
-│   └── progress.rs          # NEW: LevelProgress & RespawnCounters resources
-├── plugins/
-│   ├── respawn.rs           # NEW: RespawnPlugin wiring detection → spawn
-│   └── level_flow.rs        # NEW: LevelFlowPlugin for fade + restart/advance
-├── systems/
-│   ├── grid_debug.rs        # Existing debug overlay
-│   ├── respawn.rs           # NEW: respawn queue execute + ball freeze/unfreeze
-│   ├── gravity.rs           # NEW: apply per-level gravity overrides
-│   └── level_transition.rs  # NEW: fade overlay, next-level spawn, restart key
-├── events.rs                # NEW: LifeLostEvent, RespawnQueued, LevelAdvance
-└── resources/
-    └── respawn.rs          # NEW: RespawnSchedule, PaddleGrowthTimers
+├── main.rs                # App entry; schedules plugins/system sets
+├── level_loader.rs        # Level matrix parsing into spawn resources
+└── systems/
+   ├── mod.rs             # System set registration
+   └── grid_debug.rs      # Existing helpers (extend with respawn module)
+
+assets/
+└── levels/
+   ├── level_001.ron
+   └── level_002.ron
 
 tests/
-├── integration/
-│   └── respawn_flow.rs      # Future integration tests for respawn pipeline
-└── unit/
-    └── level_overrides.rs   # Future unit tests for level gravity parsing
+└── (integration tests live under src/tests modules via `cfg(test)`)
 ```
 
-**Structure Decision**: Single Bevy crate (Option 1). Expanding `components/`, `plugins/`, and `systems/` keeps respawn + level-flow logic modular and testable. Documentation remains co-located under `specs/002-ball-respawn/` for feature-specific artifacts.
+**Structure Decision**: Keep single Bevy game crate. Add a new `systems/respawn.rs` module registered in `systems/mod.rs`; reuse existing asset loader and resources under `src/` rather than introducing new crates.
 
-## Constitution Check (Post-Design)
+## Implementation Phases
 
-| Principle | Status | Evidence/Notes |
-|-----------|--------|----------------|
-| **I. ECS-First Architecture** | ✅ PASS | Data model locks critical state (SpawnPoint components, LevelProgress resource) so systems stay declarative; contracts + quickstart reinforce ECS ownership of gameplay data. |
-| **II. Physics-Driven Gameplay** | ✅ PASS | Research decisions confirm Rapier collisions + gravity overrides drive mechanics; no manual transform hacks beyond controlled respawn set. |
-| **III. Modular Feature Design** | ✅ PASS | Separate plugins + documented events keep respawn, gravity, fade overlay isolated; contracts describe clear boundaries. |
-| **IV. Performance-First Implementation** | ✅ PASS | Respawn schedule + fade overlay reuse shared timers/materials; plan mandates profiling repeated respawns; data model avoids per-entity allocations. |
-| **V. Cross-Platform Compatibility** | ✅ PASS | Quickstart includes WASM checks; animations rely on `bevy_tweening` which supports web; no platform-specific APIs introduced. |
+### Phase 0 – Research & Unknowns Resolution
+
+Key findings recorded in `research.md`:
+
+1. **Lower-goal detection** – Use Rapier sensors + `CollisionEvent::Started` to emit `LifeLostEvent` (ensures physics compliance).
+2. **Timer source** – Manage a `RespawnSchedule` resource ticking a Bevy `Timer` via global `Time` for deterministic 1 s delays across native/WASM.
+3. **Freeze/lock markers** – `BallFrozen` and `InputLocked` components shield other systems from mutating state until relaunch.
+4. **Lives/game-over handshake** – Respawn emits `LifeLostEvent`, waits on `LivesState`, aborts when zero lives remain, emits `GameOverRequested` instead of respawn.
+5. **Multi-ball safety** – Cache spawn transforms per entity via `RespawnHandle` and only respawn the lost ball; log and fallback to board center when markers missing.
+
+All technical unknowns resolved; no pending research blockers.
+
+### Phase 1 – Design, Data Model & Contracts
+
+- **Resources & components** (see `data-model.md`):
+
+  - `SpawnPoints` (paddle, ball, fallback) built during level load.
+  - `RespawnSchedule` (pending request, timer, last_loss) to coordinate delay.
+  - Components: `RespawnHandle`, `BallFrozen`, `InputLocked`, `LowerGoal` markers.
+  - Events: `LifeLostEvent`, `RespawnScheduled`, `RespawnCompleted`, `GameOverRequested`.
+
+- **Systems layout**:
+
+  - `detect_ball_loss_system` (Rapier event reader) → emit `LifeLostEvent` & despawn ball.
+  - `lives_ack_system` (existing or stub) updates `LivesState` and optionally triggers `GameOverRequested`.
+  - `respawn_scheduler_system` consumes `LifeLostEvent`, reads `LivesState`, populates `RespawnSchedule`, adds `BallFrozen`/`InputLocked` markers, zeroes velocities.
+  - `respawn_executor_system` ticks timer, respawns transforms when finished, emits `RespawnCompleted` and removes lock markers.
+  - `ball_launch_system` listens for player launch input to remove `BallFrozen` and apply initial velocity.
+
+- **Contracts**: `contracts/gameplay.yaml` documents conceptual HTTP endpoints mirroring these events for automation/telemetry (life loss, respawn completion, game over).
+
+- **Agent context**: `.specify/scripts/bash/update-agent-context.sh copilot` executed to ensure Copilot instructions include Bevy/Rapier respawn constraints (see repo logs for confirmation).
+
+### Phase 2 – Implementation & Testing Plan
+
+- **Code tasks**:
+
+  - Add new respawn module with system set ordering: detection (Physics schedule) → scheduling (PostUpdate) → execution (FixedUpdate) → input unlock (Update).
+  - Extend `level_loader.rs` to populate `SpawnPoints` and attach `RespawnHandle` components.
+  - Introduce event structs/resources in `src/` plus tests validating serialization/defaults.
+
+- **Testing**:
+
+  - Unit tests for `SpawnPoints` extraction (missing markers fallback) and `RespawnSchedule` timer logic using Bevy `App` + `Time` stepping.
+  - Integration/system tests ensuring `LifeLostEvent` triggers respawn exactly once per loss and respects `GameOverRequested` short-circuit.
+  - Manual quickstart steps in `quickstart.md` (native + WASM) verifying stationary ball + control lock + repeated respawns.
+
+- **Observability**:
+
+  - Add `info!` logs when respawn schedules/executes and when game over cancels respawn for easier QA.
+
+- **Risks & mitigations**:
+
+  - **Timer drift**: rely on `Time` resource and deterministic tests; add asserts in tests for ±16 ms tolerance.
+  - **Multi-ball race**: ensure `RespawnSchedule` queues per entity; consider future extension to a Vec but start with single pending + warning if already active.
 
 ## Complexity Tracking
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| *None* | N/A | N/A |
+No constitution violations; table not required.

@@ -1,54 +1,46 @@
-# Quickstart: Ball & Paddle Respawn + Level Flow
+# Quickstart: Ball Respawn System
 
 ## Prerequisites
 
-- Rust toolchain 1.81 installed via `rustup` (matches workspace `rust-toolchain.toml`).
-- Fetch dependencies: `cargo fetch` at repo root.
-- Ensure assets are available (`assets/levels/level_001.ron`, etc.).
-- WASM target (`wasm32-unknown-unknown`) added if testing web build: `rustup target add wasm32-unknown-unknown`.
+- Rust 1.81 toolchain via `rustup` (matches repo toolchain file).
+- Assets present under `assets/levels/` (grid must include `1` and `2`).
+- Optional: add WASM target for browser smoke tests (`rustup target add wasm32-unknown-unknown`).
 
 ## Build & Test Commands
 
-1. Native build + tests (Rust + Rapier + Bevy):
+```bash
+# Run unit + integration tests
+cargo test
 
-   ```bash
-   cargo test && cargo clippy --all-targets --all-features
-   ```
+# Lint for regressions
+cargo clippy --all-targets --all-features
 
-2. Run the game (native):
+# Launch the game with dynamic linking for faster reloads
+cargo run --features bevy/dynamic_linking
 
-   ```bash
-   cargo run --features bevy/dynamic_linking
-   ```
+# (Optional) WASM build to ensure timer logic is platform agnostic
+cargo build --target wasm32-unknown-unknown --release
+```
 
-3. WASM smoke test (optional, ensures cross-platform parity):
+## Manual Verification
 
-   ```bash
-   cargo build --target wasm32-unknown-unknown --release
-   ```
-
-## Manual Verification Steps
-
-1. **Life Loss Triggers Respawn**
-   - Launch the game, let the ball fall past the lower goal.
-   - Confirm both ball and paddle despawn, a 1-second pause occurs, then both respawn at the original grid-defined positions.
-2. **Paddle Growth & Ball Freeze**
-   - Observe paddle reappearing small and scaling up smoothly over ~2 seconds.
-   - During the growth animation, confirm the ball remains stationary/frozen.
-3. **Level-Specific Gravity**
-   - Modify `assets/levels/level_002.ron` to include a non-default `gravity` vector (example in plan).
-   - Load the level, confirm ball trajectory reflects the override while standard gravity resumes on other levels.
-4. **Fade Overlay & Level Advance**
-   - Clear all bricks (or temporarily reduce brick count) to trigger level completion.
-   - Ensure a fade-out occurs, the next level loads after the delay, and fade-in restores gameplay.
-5. **Manual Restart (`R` key)**
-   - During play, press `R`.
-   - Verify fade overlay replays, the current level reloads, and paddle/ball respawn at initial positions with counters reset appropriately.
-6. **Repeated Respawns**
-   - Lose the ball multiple times; ensure respawn timing and animations remain consistent and no stale timers accumulate.
+1. **Respawn delay and positions**
+   - Play level 001, allow the ball to hit the lower goal.
+   - Observe the 1 second pause (ball + paddle hidden) and confirm both respawn exactly at the grid-defined transforms.
+2. **Stationary ball**
+   - After respawn, verify the ball remains frozen atop the paddle until you press the launch input. No drift should occur.
+3. **Controls locked**
+   - Attempt to move the paddle during the respawn delay; input should be ignored until the timer completes.
+4. **Lives integration hook**
+   - Enable debug logging (`RUST_LOG=info cargo run`). Lose a ball and confirm a `LifeLostEvent` log followed by either respawn scheduling or game-over skip when lives reach zero.
+5. **Repeated losses**
+   - Intentionally lose the ball multiple times in a row. Verify timers reset correctly and the system handles at least 5 consecutive respawns without panics or timer drift.
+6. **Multi-ball safety (if feature flag enabled)**
+   - Spawn an extra ball (debug command). Lose only one ball and ensure the remaining ball stays active while only the lost ball respawns.
 
 ## Troubleshooting
 
-- If respawn never triggers, ensure lower-goal collider has `Sensor` + `ActiveEvents::COLLISION_EVENTS` enabled (check Rapier debug logs).
-- If paddle keeps shrinking/growing instantly, verify `bevy_tweening` feature is enabled in `Cargo.toml` and the tween system runs in the main schedule.
-- For gravity overrides not applying, confirm `LevelDefinition.gravity` exists in the RON file and `LevelOverrides` resource logs the new vector.
+- No respawn? Ensure the lower goal collider sets `Sensor` and `ActiveEvents::COLLISION_EVENTS` in `bevy_rapier3d` setup.
+- Ball keeps moving after respawn? Confirm `BallFrozen` marker exists and velocity is forced to zero when the respawn completes.
+- Paddle still moveable during delay? Verify the input system checks for `InputLocked` before applying translations.
+- Timer longer/shorter than 1 second? Inspect `RespawnSchedule.timer` for correct duration and confirm `Time` resource is not scaled for slow-mo when testing.

@@ -1,16 +1,16 @@
 openapi: 3.1.0
 info:
-  title: Brkrs Gameplay Control API (Conceptual)
-  version: "0.1.0"
+  title: Ball Respawn Event Contract (Conceptual)
+  version: "0.2.0"
   description: |
-    Conceptual contract describing the ECS-driven respawn and level-flow actions.
-    Endpoints mirror in-game events and provide a stable shape for telemetry or tooling.
+    Conceptual HTTP contract mirroring the in-game respawn events so tooling or automation can
+    simulate life loss, respawn scheduling, and game over transitions.
 servers:
   - url: https://game.local/api
 paths:
   /sessions/{sessionId}/life-loss:
     post:
-      summary: Notify the engine that a ball crossed the lower goal and queue respawn.
+      summary: Notify the engine that a ball crossed the lower boundary.
       tags: [Respawn]
       parameters:
         - $ref: '#/components/parameters/SessionId'
@@ -22,14 +22,14 @@ paths:
               $ref: '#/components/schemas/LifeLossEvent'
       responses:
         '202':
-          description: Respawn scheduled.
+          description: Respawn scheduled or skipped due to game over.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RespawnTicket'
+                $ref: '#/components/schemas/LifeLossResponse'
   /sessions/{sessionId}/respawns/{ticketId}/complete:
     post:
-      summary: Confirm that paddle growth finished and ball can unfreeze.
+      summary: Confirm that the respawn delay elapsed and the ball/paddle were reset.
       tags: [Respawn]
       parameters:
         - $ref: '#/components/parameters/SessionId'
@@ -46,39 +46,22 @@ paths:
               $ref: '#/components/schemas/RespawnComplete'
       responses:
         '204':
-          description: Respawn marked complete.
-  /sessions/{sessionId}/levels/{levelId}/advance:
+          description: Respawn marked complete; ball remains stationary until launch input.
+  /sessions/{sessionId}/game-over:
     post:
-      summary: Begin fade overlay and schedule the next level load after brick-clear.
-      tags: [LevelFlow]
+      summary: Report that no lives remain so respawn must abort.
+      tags: [Lives]
       parameters:
         - $ref: '#/components/parameters/SessionId'
-        - $ref: '#/components/parameters/LevelId'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LevelAdvanceRequest'
+              $ref: '#/components/schemas/GameOverRequest'
       responses:
-        '202':
-          description: Level advance in progress.
-  /sessions/{sessionId}/levels/{levelId}/restart:
-    post:
-      summary: Player requested a restart (e.g., pressed the `R` key).
-      tags: [LevelFlow]
-      parameters:
-        - $ref: '#/components/parameters/SessionId'
-        - $ref: '#/components/parameters/LevelId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LevelRestartRequest'
-      responses:
-        '202':
-          description: Restart scheduled.
+        '204':
+          description: Game over acknowledged.
 components:
   parameters:
     SessionId:
@@ -88,13 +71,6 @@ components:
       schema:
         type: string
       description: Gameplay session identifier.
-    LevelId:
-      name: levelId
-      in: path
-      required: true
-      schema:
-        type: string
-      description: Matches `level_id` from `LevelDefinition`.
   schemas:
     Vec3:
       type: object
@@ -111,45 +87,48 @@ components:
       properties:
         ballEntity:
           type: string
-          description: ECS entity ID (debug).
+          description: ECS entity ID (for telemetry only).
         paddleEntity:
           type: string
         cause:
           type: string
-          enum: [LowerGoal, Manual, Scripted]
+          enum: [LowerGoal]
         timestampMs:
           type: integer
           format: int64
       required: [ballEntity, paddleEntity, cause, timestampMs]
-    RespawnTicket:
+    LifeLossResponse:
       type: object
       properties:
         ticketId:
           type: string
-        scheduledAtMs:
+          description: Present when respawn was scheduled.
+        completesAtMs:
           type: integer
           format: int64
-        respawnDelayMs:
+          description: Epoch millis for when the 1-second delay ends.
+        remainingLives:
           type: integer
-          format: int64
-        paddleGrowthMs:
-          type: integer
-          format: int64
+          minimum: 0
+        gameOver:
+          type: boolean
+          description: True when respawn is skipped because lives hit zero.
         spawnPoints:
           type: array
           items:
             $ref: '#/components/schemas/SpawnPoint'
-      required: [ticketId, scheduledAtMs, respawnDelayMs, paddleGrowthMs, spawnPoints]
+      required: [remainingLives, gameOver]
     SpawnPoint:
       type: object
       properties:
         kind:
           type: string
-          enum: [Paddle, Ball]
+          enum: [Ball, Paddle]
         translation:
           $ref: '#/components/schemas/Vec3'
-        facing:
+        rotation:
           $ref: '#/components/schemas/Vec3'
+          description: Forward vector for paddle alignment.
       required: [kind, translation]
     RespawnComplete:
       type: object
@@ -157,43 +136,20 @@ components:
         completedAtMs:
           type: integer
           format: int64
-      required: [completedAtMs]
-    LevelAdvanceRequest:
+        stationary:
+          type: boolean
+          description: Should always be true to confirm zero velocity (SC-003).
+      required: [completedAtMs, stationary]
+    GameOverRequest:
       type: object
       properties:
-        clearedBricks:
+        remainingLives:
           type: integer
-          minimum: 0
-        totalBricks:
-          type: integer
-          minimum: 0
-        fadeDurationMs:
-          type: integer
-          minimum: 0
-        gravityOverride:
-          $ref: '#/components/schemas/Vec3'
-      required: [clearedBricks, totalBricks, fadeDurationMs]
-    LevelRestartRequest:
-      type: object
-      properties:
+          enum: [0]
         reason:
           type: string
-          enum: [PlayerInput, Scripted]
-        requestedAtMs:
+          enum: [LivesExhausted]
+        triggeredAtMs:
           type: integer
           format: int64
-      required: [reason, requestedAtMs]
-    LevelProgress:
-      type: object
-      properties:
-        currentLevel:
-          type: integer
-          minimum: 0
-        lives:
-          type: integer
-          minimum: 0
-        pendingRespawn:
-          type: boolean
-        gravity:
-          $ref: '#/components/schemas/Vec3'
-      required: [currentLevel, lives, pendingRespawn]
+      required: [remainingLives, reason, triggeredAtMs]
