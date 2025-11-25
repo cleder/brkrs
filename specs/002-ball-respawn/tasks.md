@@ -32,8 +32,8 @@ description: "Task list for Ball Respawn System"
 
 **Purpose**: Core ECS data and Rapier plumbing required by all user stories.
 
-- [ ] T004 Extend `src/level_loader.rs` to extract paddle/ball transforms from the level matrix into a `SpawnPoints` resource and attach `RespawnHandle` components (with fallback logging).
-- [ ] T005 Define `LifeLostEvent`, `RespawnScheduled`, `RespawnCompleted`, and the `RespawnSchedule` resource structs in `src/systems/respawn.rs`.
+- [X] T004 Extend `src/level_loader.rs` to extract paddle/ball transforms from the level matrix into a `SpawnPoints` resource and attach `RespawnHandle` components (with fallback logging).
+- [X] T005 Define `LifeLostEvent`, `RespawnScheduled`, `RespawnCompleted`, and the `RespawnSchedule` resource structs in `src/systems/respawn.rs`.
 - [ ] T006 Add a `LowerGoal` sensor entity setup (collider + `ActiveEvents::COLLISION_EVENTS`) in `src/level_loader.rs` to detect life loss.
 - [X] T007 Introduce `BallFrozen` and `InputLocked` marker components plus helpers in `src/systems/respawn.rs` so other systems can filter on them.
 - [ ] T008 Create `tests/respawn_spawn_points.rs` verifying fallback center behavior and one-to-one spawn extraction using Bevy `App` tests.

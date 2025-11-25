@@ -1,7 +1,7 @@
 use bevy::log::warn;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use std::{collections::VecDeque, time::Duration};
+use std::{collections::VecDeque, f32::consts::PI, time::Duration};
 
 use crate::{
     Ball, BallFrozen, LowerGoal, Paddle, PaddleGrowing, BALL_RADIUS, PADDLE_GROWTH_DURATION,
@@ -51,13 +51,72 @@ pub struct RespawnRequest {
     pub lost_ball: Entity,
     pub tracked_paddle: Option<Entity>,
     pub remaining_lives: u8,
+    pub ball_spawn: SpawnTransform,
+    pub paddle_spawn: SpawnTransform,
 }
 
-/// Cached spawn transforms populated during level loading.
-#[derive(Resource, Default)]
-pub struct InitialPositions {
-    pub paddle_pos: Option<Vec3>,
-    pub ball_pos: Option<Vec3>,
+/// Canonical transform used when respawning an entity.
+#[derive(Debug, Clone, Copy)]
+pub struct SpawnTransform {
+    pub translation: Vec3,
+    pub rotation: Quat,
+}
+
+impl SpawnTransform {
+    pub fn new(translation: Vec3, rotation: Quat) -> Self {
+        Self {
+            translation,
+            rotation,
+        }
+    }
+
+    pub fn to_transform(&self) -> Transform {
+        Transform::from_translation(self.translation).with_rotation(self.rotation)
+    }
+}
+
+/// Cached spawn data populated during level loading.
+#[derive(Resource, Debug)]
+pub struct SpawnPoints {
+    pub paddle: Option<Vec3>,
+    pub ball: Option<Vec3>,
+    pub fallback_center: Vec3,
+}
+
+impl Default for SpawnPoints {
+    fn default() -> Self {
+        Self {
+            paddle: None,
+            ball: None,
+            fallback_center: Vec3::new(0.0, 2.0, 0.0),
+        }
+    }
+}
+
+impl SpawnPoints {
+    pub fn paddle_spawn(&self) -> SpawnTransform {
+        let translation = self.paddle.unwrap_or(self.fallback_center);
+        SpawnTransform::new(translation, Quat::from_rotation_x(-PI / 2.0))
+    }
+
+    pub fn ball_spawn(&self) -> SpawnTransform {
+        let translation = self.ball.unwrap_or(self.fallback_center);
+        SpawnTransform::new(translation, Quat::IDENTITY)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RespawnEntityKind {
+    Paddle,
+    Ball,
+}
+
+/// Component tagging entities with their canonical respawn transform.
+#[derive(Component, Debug, Clone, Copy)]
+pub struct RespawnHandle {
+    pub spawn: SpawnTransform,
+    #[allow(dead_code)]
+    pub kind: RespawnEntityKind,
 }
 
 /// Plugin wiring the respawn flow through ordered system sets.
@@ -66,12 +125,21 @@ pub struct RespawnPlugin;
 #[derive(Event, Debug, Clone, Copy)]
 pub struct LifeLostEvent {
     pub ball: Entity,
+    #[allow(dead_code)]
+    pub cause: LifeLossCause,
+    pub ball_spawn: SpawnTransform,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LifeLossCause {
+    LowerGoal,
 }
 
 #[allow(dead_code)]
 #[derive(Event, Debug, Clone, Copy)]
 pub struct RespawnScheduled {
     pub ball: Entity,
+    pub paddle: Option<Entity>,
     pub completes_at: f64,
     pub remaining_lives: u8,
 }
@@ -80,6 +148,7 @@ pub struct RespawnScheduled {
 #[derive(Event, Debug, Clone, Copy)]
 pub struct RespawnCompleted {
     pub ball: Entity,
+    pub paddle: Option<Entity>,
     pub remaining_lives: u8,
 }
 
@@ -105,7 +174,7 @@ impl Plugin for RespawnPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<RespawnSchedule>()
             .init_resource::<LivesState>()
-            .init_resource::<InitialPositions>()
+            .init_resource::<SpawnPoints>()
             .add_event::<LifeLostEvent>()
             .add_event::<RespawnScheduled>()
             .add_event::<RespawnCompleted>()
@@ -135,7 +204,9 @@ impl Plugin for RespawnPlugin {
 fn detect_ball_loss(
     mut collision_events: EventReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
+    ball_handles: Query<&RespawnHandle, With<Ball>>,
     lower_goals: Query<Entity, With<LowerGoal>>,
+    spawn_points: Res<SpawnPoints>,
     mut commands: Commands,
     mut life_lost_events: EventWriter<LifeLostEvent>,
 ) {
@@ -148,8 +219,21 @@ fn detect_ball_loss(
 
             if (e1_is_ball && e2_is_lower) || (e2_is_ball && e1_is_lower) {
                 let ball_entity = if e1_is_ball { *e1 } else { *e2 };
-
-                life_lost_events.write(LifeLostEvent { ball: ball_entity });
+                let ball_spawn = match ball_handles.get(ball_entity) {
+                    Ok(handle) => handle.spawn,
+                    Err(_) => {
+                        warn!(
+                            "Ball entity {:?} missing RespawnHandle; using fallback",
+                            ball_entity
+                        );
+                        spawn_points.ball_spawn()
+                    }
+                };
+                life_lost_events.write(LifeLostEvent {
+                    ball: ball_entity,
+                    cause: LifeLossCause::LowerGoal,
+                    ball_spawn,
+                });
                 commands.entity(ball_entity).despawn();
             }
         }
@@ -173,6 +257,19 @@ fn acquire_primary_paddle(
     }
 }
 
+fn resolve_paddle_spawn(
+    tracked_paddle: Option<Entity>,
+    paddle_handles: &Query<&RespawnHandle, With<Paddle>>,
+    spawn_points: &SpawnPoints,
+) -> SpawnTransform {
+    if let Some(entity) = tracked_paddle {
+        if let Ok(handle) = paddle_handles.get(entity) {
+            return handle.spawn;
+        }
+    }
+    spawn_points.paddle_spawn()
+}
+
 fn start_pending_request(
     respawn_schedule: &mut RespawnSchedule,
     request: RespawnRequest,
@@ -188,6 +285,7 @@ fn start_pending_request(
             time.elapsed().as_secs_f64() + respawn_schedule.timer.duration().as_secs_f64();
         respawn_scheduled_events.write(RespawnScheduled {
             ball: active.lost_ball,
+            paddle: active.tracked_paddle,
             completes_at,
             remaining_lives: active.remaining_lives,
         });
@@ -199,13 +297,23 @@ fn schedule_respawn_timer(
     mut events: EventReader<LifeLostEvent>,
     lives_state: Res<LivesState>,
     time: Res<Time>,
+    spawn_points: Res<SpawnPoints>,
     mut respawn_scheduled_events: EventWriter<RespawnScheduled>,
     mut game_over_events: EventWriter<GameOverRequested>,
     mut paddles: Query<(Entity, Option<&mut Velocity>), With<Paddle>>,
+    paddle_handles: Query<&RespawnHandle, With<Paddle>>,
     mut commands: Commands,
 ) {
     if respawn_schedule.pending.is_none() {
-        if let Some(next_request) = respawn_schedule.queue.pop_front() {
+        if let Some(mut next_request) = respawn_schedule.queue.pop_front() {
+            if next_request.tracked_paddle.is_none() {
+                next_request.tracked_paddle = acquire_primary_paddle(&mut paddles, &mut commands);
+                next_request.paddle_spawn = resolve_paddle_spawn(
+                    next_request.tracked_paddle,
+                    &paddle_handles,
+                    &spawn_points,
+                );
+            }
             start_pending_request(
                 &mut respawn_schedule,
                 next_request,
@@ -231,10 +339,13 @@ fn schedule_respawn_timer(
                 .pending
                 .as_ref()
                 .and_then(|request| request.tracked_paddle);
+            let paddle_spawn = resolve_paddle_spawn(tracked_paddle, &paddle_handles, &spawn_points);
             respawn_schedule.queue.push_back(RespawnRequest {
                 lost_ball: event.ball,
                 tracked_paddle,
                 remaining_lives: lives_state.lives_remaining,
+                ball_spawn: event.ball_spawn,
+                paddle_spawn,
             });
             warn!(
                 "respawn already pending; queued additional LifeLostEvent (queue_len={})",
@@ -242,12 +353,15 @@ fn schedule_respawn_timer(
             );
         } else {
             let tracked_paddle = acquire_primary_paddle(&mut paddles, &mut commands);
+            let paddle_spawn = resolve_paddle_spawn(tracked_paddle, &paddle_handles, &spawn_points);
             start_pending_request(
                 &mut respawn_schedule,
                 RespawnRequest {
                     lost_ball: event.ball,
                     tracked_paddle,
                     remaining_lives: lives_state.lives_remaining,
+                    ball_spawn: event.ball_spawn,
+                    paddle_spawn,
                 },
                 &time,
                 &mut respawn_scheduled_events,
@@ -263,7 +377,6 @@ fn schedule_respawn_timer(
 fn respawn_executor(
     time: Res<Time>,
     mut respawn_schedule: ResMut<RespawnSchedule>,
-    initial_positions: Res<InitialPositions>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut paddles: Query<(Entity, &mut Transform, Option<&mut Velocity>), With<Paddle>>,
@@ -288,100 +401,109 @@ fn respawn_executor(
         ..default()
     });
 
-    if let Some(paddle_pos) = initial_positions.paddle_pos {
-        let rotation = Quat::from_rotation_x(-std::f32::consts::PI / 2.0);
-        let mut respawn_paddle_entity = None;
-
-        if let Some(tracked) = request.tracked_paddle {
-            if let Ok((entity, mut transform, maybe_velocity)) = paddles.get_mut(tracked) {
-                *transform = Transform::from_xyz(paddle_pos.x, paddle_pos.y, paddle_pos.z)
-                    .with_rotation(rotation)
-                    .with_scale(Vec3::splat(0.01));
-                if let Some(mut velocity) = maybe_velocity {
-                    velocity.linvel = Vec3::ZERO;
-                    velocity.angvel = Vec3::ZERO;
-                }
-                commands.entity(entity).insert(PaddleGrowing {
+    let mut respawn_paddle_entity = None;
+    if let Some(tracked) = request.tracked_paddle {
+        if let Ok((entity, mut transform, maybe_velocity)) = paddles.get_mut(tracked) {
+            let mut target_transform = request.paddle_spawn.to_transform();
+            target_transform.scale = Vec3::splat(0.01);
+            *transform = target_transform;
+            if let Some(mut velocity) = maybe_velocity {
+                velocity.linvel = Vec3::ZERO;
+                velocity.angvel = Vec3::ZERO;
+            }
+            commands.entity(entity).insert((
+                PaddleGrowing {
                     timer: Timer::from_seconds(PADDLE_GROWTH_DURATION, TimerMode::Once),
                     target_scale: Vec3::ONE,
-                });
-                respawn_paddle_entity = Some(entity);
-            }
-        }
-
-        if respawn_paddle_entity.is_none() {
-            let new_entity = commands
-                .spawn((
-                    Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
-                    MeshMaterial3d(debug_material.clone()),
-                    Transform::from_xyz(paddle_pos.x, paddle_pos.y, paddle_pos.z)
-                        .with_rotation(rotation)
-                        .with_scale(Vec3::splat(0.01)),
-                    Paddle,
-                    PaddleGrowing {
-                        timer: Timer::from_seconds(PADDLE_GROWTH_DURATION, TimerMode::Once),
-                        target_scale: Vec3::ONE,
-                    },
-                    InputLocked,
-                    RigidBody::KinematicPositionBased,
-                    GravityScale(0.0),
-                    CollidingEntities::default(),
-                    Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
-                    LockedAxes::TRANSLATION_LOCKED_Y,
-                    KinematicCharacterController::default(),
-                    Ccd::enabled(),
-                ))
-                .insert(Friction {
-                    coefficient: 2.0,
-                    combine_rule: CoefficientCombineRule::Max,
-                })
-                .id();
-            respawn_paddle_entity = Some(new_entity);
-        }
-
-        if let Some(entity) = respawn_paddle_entity {
-            commands.entity(entity).insert(InputLocked);
+                },
+                RespawnHandle {
+                    spawn: request.paddle_spawn,
+                    kind: RespawnEntityKind::Paddle,
+                },
+            ));
+            respawn_paddle_entity = Some(entity);
         }
     }
 
-    let mut respawned_ball = request.lost_ball;
-    if let Some(ball_pos) = initial_positions.ball_pos {
-        respawned_ball = commands
+    if respawn_paddle_entity.is_none() {
+        let mut transform = request.paddle_spawn.to_transform();
+        transform.scale = Vec3::splat(0.01);
+        let new_entity = commands
             .spawn((
-                Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
+                Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
                 MeshMaterial3d(debug_material.clone()),
-                Transform::from_xyz(ball_pos.x, ball_pos.y, ball_pos.z),
-                Ball,
-                BallFrozen,
-                RigidBody::Dynamic,
-                Velocity::zero(),
+                transform,
+                Paddle,
+                PaddleGrowing {
+                    timer: Timer::from_seconds(PADDLE_GROWTH_DURATION, TimerMode::Once),
+                    target_scale: Vec3::ONE,
+                },
+                InputLocked,
+                RigidBody::KinematicPositionBased,
+                GravityScale(0.0),
                 CollidingEntities::default(),
-                ActiveEvents::COLLISION_EVENTS,
-                Collider::ball(BALL_RADIUS),
-                Restitution {
-                    coefficient: 0.9,
-                    combine_rule: CoefficientCombineRule::Max,
-                },
-                Friction {
-                    coefficient: 2.0,
-                    combine_rule: CoefficientCombineRule::Max,
-                },
-                Damping {
-                    linear_damping: 0.5,
-                    angular_damping: 0.5,
-                },
-            ))
-            .insert((
+                Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
                 LockedAxes::TRANSLATION_LOCKED_Y,
+                KinematicCharacterController::default(),
                 Ccd::enabled(),
-                ExternalImpulse::default(),
-                GravityScale(1.0),
+                RespawnHandle {
+                    spawn: request.paddle_spawn,
+                    kind: RespawnEntityKind::Paddle,
+                },
             ))
+            .insert(Friction {
+                coefficient: 2.0,
+                combine_rule: CoefficientCombineRule::Max,
+            })
             .id();
+        respawn_paddle_entity = Some(new_entity);
     }
+
+    if let Some(entity) = respawn_paddle_entity {
+        commands.entity(entity).insert(InputLocked);
+    }
+
+    let ball_transform = request.ball_spawn.to_transform();
+    let respawned_ball = commands
+        .spawn((
+            Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
+            MeshMaterial3d(debug_material.clone()),
+            ball_transform,
+            Ball,
+            BallFrozen,
+            RigidBody::Dynamic,
+            Velocity::zero(),
+            CollidingEntities::default(),
+            ActiveEvents::COLLISION_EVENTS,
+            Collider::ball(BALL_RADIUS),
+            Restitution {
+                coefficient: 0.9,
+                combine_rule: CoefficientCombineRule::Max,
+            },
+            Friction {
+                coefficient: 2.0,
+                combine_rule: CoefficientCombineRule::Max,
+            },
+            Damping {
+                linear_damping: 0.5,
+                angular_damping: 0.5,
+            },
+            RespawnHandle {
+                spawn: request.ball_spawn,
+                kind: RespawnEntityKind::Ball,
+            },
+        ))
+        .insert((
+            LockedAxes::TRANSLATION_LOCKED_Y,
+            Ccd::enabled(),
+            ExternalImpulse::default(),
+            GravityScale(1.0),
+        ))
+        .id();
 
     respawn_completed_events.write(RespawnCompleted {
         ball: respawned_ball,
+        paddle: respawn_paddle_entity,
         remaining_lives: request.remaining_lives,
     });
 }
@@ -411,6 +533,7 @@ mod tests {
     use bevy::MinimalPlugins;
     use bevy_rapier3d::prelude::CollisionEvent;
     use bevy_rapier3d::rapier::prelude::CollisionEventFlags;
+    use std::f32::consts::PI;
     use std::time::Duration;
 
     fn test_app() -> App {
@@ -420,7 +543,26 @@ mod tests {
             .insert_resource(Assets::<StandardMaterial>::default())
             .add_event::<CollisionEvent>()
             .add_plugins(RespawnPlugin);
+        {
+            let mut spawn_points = app.world_mut().resource_mut::<SpawnPoints>();
+            spawn_points.ball = Some(Vec3::new(0.0, 2.0, 0.0));
+            spawn_points.paddle = Some(Vec3::new(0.0, 2.0, 0.0));
+        }
         app
+    }
+
+    fn ball_handle_at(position: Vec3) -> RespawnHandle {
+        RespawnHandle {
+            spawn: SpawnTransform::new(position, Quat::IDENTITY),
+            kind: RespawnEntityKind::Ball,
+        }
+    }
+
+    fn paddle_handle_at(position: Vec3) -> RespawnHandle {
+        RespawnHandle {
+            spawn: SpawnTransform::new(position, Quat::from_rotation_x(-PI / 2.0)),
+            kind: RespawnEntityKind::Paddle,
+        }
     }
 
     fn advance_time(app: &mut App, delta_secs: f32) {
@@ -432,9 +574,19 @@ mod tests {
     fn collision_triggers_respawn_schedule() {
         let mut app = test_app();
 
-        let ball = app.world_mut().spawn(Ball).id();
+        let ball = app
+            .world_mut()
+            .spawn((Ball, ball_handle_at(Vec3::new(0.0, 2.0, 0.0))))
+            .id();
         let lower_goal = app.world_mut().spawn(LowerGoal).id();
-        let paddle = app.world_mut().spawn((Paddle, Transform::default())).id();
+        let paddle = app
+            .world_mut()
+            .spawn((
+                Paddle,
+                Transform::default(),
+                paddle_handle_at(Vec3::new(0.0, 2.0, 0.0)),
+            ))
+            .id();
 
         app.world_mut()
             .resource_mut::<Events<CollisionEvent>>()
@@ -461,14 +613,13 @@ mod tests {
 
         let paddle = app
             .world_mut()
-            .spawn((Paddle, Transform::default(), Velocity::zero()))
+            .spawn((
+                Paddle,
+                Transform::default(),
+                Velocity::zero(),
+                paddle_handle_at(Vec3::new(-1.0, 2.0, 0.0)),
+            ))
             .id();
-
-        {
-            let mut positions = app.world_mut().resource_mut::<InitialPositions>();
-            positions.ball_pos = Some(Vec3::new(1.0, 2.0, 3.0));
-            positions.paddle_pos = Some(Vec3::new(-1.0, 2.0, 0.0));
-        }
 
         {
             let mut schedule = app.world_mut().resource_mut::<RespawnSchedule>();
@@ -476,6 +627,11 @@ mod tests {
                 lost_ball: Entity::from_raw(999),
                 tracked_paddle: Some(paddle),
                 remaining_lives: 2,
+                ball_spawn: SpawnTransform::new(Vec3::new(1.0, 2.0, 3.0), Quat::IDENTITY),
+                paddle_spawn: SpawnTransform::new(
+                    Vec3::new(-1.0, 2.0, 0.0),
+                    Quat::from_rotation_x(-PI / 2.0),
+                ),
             });
             schedule.timer.reset();
             let duration = schedule.timer.duration();
@@ -520,6 +676,8 @@ mod tests {
                 lost_ball: Entity::from_raw(1),
                 tracked_paddle: None,
                 remaining_lives: 1,
+                ball_spawn: SpawnTransform::new(Vec3::ZERO, Quat::IDENTITY),
+                paddle_spawn: SpawnTransform::new(Vec3::ZERO, Quat::from_rotation_x(-PI / 2.0)),
             });
         }
 
@@ -549,7 +707,10 @@ mod tests {
             on_last_life: true,
         });
 
-        let ball = app.world_mut().spawn(Ball).id();
+        let ball = app
+            .world_mut()
+            .spawn((Ball, ball_handle_at(Vec3::new(0.0, 2.0, 0.0))))
+            .id();
         let lower_goal = app.world_mut().spawn(LowerGoal).id();
 
         app.world_mut()
@@ -575,15 +736,25 @@ mod tests {
         let mut app = test_app();
 
         {
-            let mut positions = app.world_mut().resource_mut::<InitialPositions>();
-            positions.ball_pos = Some(Vec3::new(0.0, 2.0, 0.0));
-            positions.paddle_pos = Some(Vec3::new(0.0, 2.0, 0.0));
+            let mut spawn_points = app.world_mut().resource_mut::<SpawnPoints>();
+            spawn_points.ball = Some(Vec3::new(0.0, 2.0, 0.0));
+            spawn_points.paddle = Some(Vec3::new(0.0, 2.0, 0.0));
         }
 
         let lower_goal = app.world_mut().spawn(LowerGoal).id();
-        let ball_a = app.world_mut().spawn(Ball).id();
-        let ball_b = app.world_mut().spawn(Ball).id();
-        app.world_mut().spawn((Paddle, Transform::default()));
+        let ball_a = app
+            .world_mut()
+            .spawn((Ball, ball_handle_at(Vec3::new(0.0, 2.0, 0.0))))
+            .id();
+        let ball_b = app
+            .world_mut()
+            .spawn((Ball, ball_handle_at(Vec3::new(0.0, 2.0, 0.0))))
+            .id();
+        app.world_mut().spawn((
+            Paddle,
+            Transform::default(),
+            paddle_handle_at(Vec3::new(0.0, 2.0, 0.0)),
+        ));
 
         app.world_mut()
             .resource_mut::<Events<CollisionEvent>>()

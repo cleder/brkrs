@@ -1,4 +1,4 @@
-use crate::systems::respawn::InitialPositions;
+use crate::systems::respawn::{RespawnEntityKind, RespawnHandle, SpawnPoints, SpawnTransform};
 use bevy::prelude::*;
 use ron::de::from_str;
 use serde::Deserialize;
@@ -62,6 +62,28 @@ impl Default for LevelAdvanceState {
 /// Full-screen UI overlay used for fade in/out during level transitions.
 #[derive(Component)]
 struct FadeOverlay;
+
+fn paddle_spawn_transform(position: Vec3) -> SpawnTransform {
+    SpawnTransform::new(position, Quat::from_rotation_x(-std::f32::consts::PI / 2.0))
+}
+
+fn ball_spawn_transform(position: Vec3) -> SpawnTransform {
+    SpawnTransform::new(position, Quat::IDENTITY)
+}
+
+fn paddle_respawn_handle(position: Vec3) -> RespawnHandle {
+    RespawnHandle {
+        spawn: paddle_spawn_transform(position),
+        kind: RespawnEntityKind::Paddle,
+    }
+}
+
+fn ball_respawn_handle(position: Vec3) -> RespawnHandle {
+    RespawnHandle {
+        spawn: ball_spawn_transform(position),
+        kind: RespawnEntityKind::Ball,
+    }
+}
 
 fn load_level(
     mut commands: Commands,
@@ -132,7 +154,7 @@ fn spawn_level_entities(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut initial_positions: ResMut<InitialPositions>,
+    mut spawn_points: ResMut<SpawnPoints>,
     level: Option<Res<CurrentLevel>>,
 ) {
     let Some(level) = level else {
@@ -143,7 +165,7 @@ fn spawn_level_entities(
         &mut commands,
         &mut meshes,
         &mut materials,
-        &mut initial_positions,
+        &mut spawn_points,
     );
 }
 
@@ -152,7 +174,7 @@ fn spawn_level_entities_impl(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
-    initial_positions: &mut ResMut<InitialPositions>,
+    spawn_points: &mut ResMut<SpawnPoints>,
 ) {
     debug!("Spawning entities for level {}", def.number);
     // Shared material
@@ -165,6 +187,9 @@ fn spawn_level_entities_impl(
     let mut paddle_spawned = false;
     let mut ball_spawned = false;
 
+    spawn_points.paddle = None;
+    spawn_points.ball = None;
+
     for (row, row_data) in def.matrix.iter().enumerate() {
         for (col, value) in row_data.iter().enumerate() {
             let x = -PLANE_H / 2.0 + (row as f32 + 0.5) * CELL_HEIGHT;
@@ -175,32 +200,39 @@ fn spawn_level_entities_impl(
                     // Paddle
                     if !paddle_spawned {
                         paddle_spawned = true;
-                        initial_positions.paddle_pos = Some(Vec3::new(x, 2.0, z));
-                        commands.spawn((
-                            Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
-                            MeshMaterial3d(debug_material.clone()),
-                            Transform::from_xyz(x, 2.0, z)
-                                .with_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 2.0)),
-                            Paddle,
-                            RigidBody::KinematicPositionBased,
-                            GravityScale(0.0),
-                            CollidingEntities::default(),
-                            Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
-                            LockedAxes::TRANSLATION_LOCKED_Y,
-                            KinematicCharacterController::default(),
-                            Ccd::enabled(),
-                            Friction {
-                                coefficient: 2.0,
-                                combine_rule: CoefficientCombineRule::Max,
-                            },
-                        ));
+                        let position = Vec3::new(x, 2.0, z);
+                        spawn_points.paddle = Some(position);
+                        commands
+                            .spawn((
+                                Mesh3d(
+                                    meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh()),
+                                ),
+                                MeshMaterial3d(debug_material.clone()),
+                                Transform::from_xyz(x, 2.0, z).with_rotation(
+                                    Quat::from_rotation_x(-std::f32::consts::PI / 2.0),
+                                ),
+                                Paddle,
+                                RigidBody::KinematicPositionBased,
+                                GravityScale(0.0),
+                                CollidingEntities::default(),
+                                Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
+                                LockedAxes::TRANSLATION_LOCKED_Y,
+                                KinematicCharacterController::default(),
+                                Ccd::enabled(),
+                                Friction {
+                                    coefficient: 2.0,
+                                    combine_rule: CoefficientCombineRule::Max,
+                                },
+                            ))
+                            .insert(paddle_respawn_handle(position));
                     }
                 }
                 2 => {
                     // Ball
                     if !ball_spawned {
                         ball_spawned = true;
-                        initial_positions.ball_pos = Some(Vec3::new(x, 2.0, z));
+                        let position = Vec3::new(x, 2.0, z);
+                        spawn_points.ball = Some(position);
                         commands
                             .spawn((
                                 Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
@@ -229,7 +261,8 @@ fn spawn_level_entities_impl(
                                 Ccd::enabled(),
                                 ExternalImpulse::default(),
                                 GravityScale(1.0),
-                            ));
+                            ))
+                            .insert(ball_respawn_handle(position));
                     }
                 }
                 3 => {
@@ -260,29 +293,33 @@ fn spawn_level_entities_impl(
         warn!("No paddle found in level matrix; spawning fallback paddle.");
         let x = 0.0;
         let z = 0.0;
-        initial_positions.paddle_pos = Some(Vec3::new(x, 2.0, z));
-        commands.spawn((
-            Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
-            MeshMaterial3d(debug_material.clone()),
-            Transform::from_xyz(x, 2.0, z)
-                .with_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 2.0)),
-            Paddle,
-            RigidBody::KinematicPositionBased,
-            GravityScale(0.0),
-            CollidingEntities::default(),
-            Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
-            LockedAxes::TRANSLATION_LOCKED_Y,
-            KinematicCharacterController::default(),
-            Ccd::enabled(),
-            Friction {
-                coefficient: 2.0,
-                combine_rule: CoefficientCombineRule::Max,
-            },
-        ));
+        let position = Vec3::new(x, 2.0, z);
+        spawn_points.paddle = Some(position);
+        commands
+            .spawn((
+                Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
+                MeshMaterial3d(debug_material.clone()),
+                Transform::from_xyz(x, 2.0, z)
+                    .with_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 2.0)),
+                Paddle,
+                RigidBody::KinematicPositionBased,
+                GravityScale(0.0),
+                CollidingEntities::default(),
+                Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
+                LockedAxes::TRANSLATION_LOCKED_Y,
+                KinematicCharacterController::default(),
+                Ccd::enabled(),
+                Friction {
+                    coefficient: 2.0,
+                    combine_rule: CoefficientCombineRule::Max,
+                },
+            ))
+            .insert(paddle_respawn_handle(position));
     }
     if !ball_spawned {
         warn!("No ball found in level matrix; spawning fallback ball.");
-        initial_positions.ball_pos = Some(Vec3::new(0.0, 2.0, 0.0));
+        let position = Vec3::new(0.0, 2.0, 0.0);
+        spawn_points.ball = Some(position);
         commands
             .spawn((
                 Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
@@ -311,7 +348,8 @@ fn spawn_level_entities_impl(
                 Ccd::enabled(),
                 ExternalImpulse::default(),
                 GravityScale(1.0),
-            ));
+            ))
+            .insert(ball_respawn_handle(position));
     }
 }
 
@@ -347,13 +385,10 @@ fn spawn_bricks_only(
     }
 }
 
-/// Extract and set initial positions for paddle & ball from a level definition (without spawning bricks).
-fn set_initial_positions_only(
-    def: &LevelDefinition,
-    initial_positions: &mut ResMut<InitialPositions>,
-) {
-    initial_positions.paddle_pos = None;
-    initial_positions.ball_pos = None;
+/// Extract and set spawn points for paddle & ball from a level definition (without spawning bricks).
+fn set_spawn_points_only(def: &LevelDefinition, spawn_points: &mut ResMut<SpawnPoints>) {
+    spawn_points.paddle = None;
+    spawn_points.ball = None;
     let mut paddle_set = false;
     let mut ball_set = false;
     for (row, row_data) in def.matrix.iter().enumerate() {
@@ -363,21 +398,21 @@ fn set_initial_positions_only(
             match value {
                 1 if !paddle_set => {
                     paddle_set = true;
-                    initial_positions.paddle_pos = Some(Vec3::new(x, 2.0, z));
+                    spawn_points.paddle = Some(Vec3::new(x, 2.0, z));
                 }
                 2 if !ball_set => {
                     ball_set = true;
-                    initial_positions.ball_pos = Some(Vec3::new(x, 2.0, z));
+                    spawn_points.ball = Some(Vec3::new(x, 2.0, z));
                 }
                 _ => {}
             }
         }
     }
-    if initial_positions.paddle_pos.is_none() {
-        initial_positions.paddle_pos = Some(Vec3::new(0.0, 2.0, 0.0));
+    if spawn_points.paddle.is_none() {
+        spawn_points.paddle = Some(Vec3::new(0.0, 2.0, 0.0));
     }
-    if initial_positions.ball_pos.is_none() {
-        initial_positions.ball_pos = Some(Vec3::new(0.0, 2.0, 0.0));
+    if spawn_points.ball.is_none() {
+        spawn_points.ball = Some(Vec3::new(0.0, 2.0, 0.0));
     }
 }
 
@@ -461,7 +496,7 @@ fn restart_level_on_key(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut initial_positions: ResMut<InitialPositions>,
+    mut spawn_points: ResMut<SpawnPoints>,
     mut gravity_cfg: ResMut<GravityConfig>,
     mut rapier_config: Query<&mut RapierConfiguration>,
     bricks: Query<Entity, With<Brick>>,
@@ -494,8 +529,9 @@ fn restart_level_on_key(
     level_advance.pending = None;
     level_advance.growth_spawned = false;
 
-    // Reset initial positions
-    *initial_positions = InitialPositions::default();
+    // Reset spawn points
+    spawn_points.paddle = None;
+    spawn_points.ball = None;
 
     match std::fs::read_to_string(&path) {
         Ok(content) => match from_str::<LevelDefinition>(&content) {
@@ -519,7 +555,7 @@ fn restart_level_on_key(
                     &mut commands,
                     &mut meshes,
                     &mut materials,
-                    &mut initial_positions,
+                    &mut spawn_points,
                 );
                 commands.insert_resource(CurrentLevel(def));
             }
@@ -533,7 +569,7 @@ fn restart_level_on_key(
 fn handle_level_advance_delay(
     time: Res<Time>,
     mut level_advance: ResMut<LevelAdvanceState>,
-    mut initial_positions: ResMut<InitialPositions>,
+    mut spawn_points: ResMut<SpawnPoints>,
     mut gravity_cfg: ResMut<GravityConfig>,
     mut rapier_config: Query<&mut RapierConfiguration>,
     mut commands: Commands,
@@ -560,13 +596,13 @@ fn handle_level_advance_delay(
         config.gravity = target_gravity;
     }
     // Set initial positions (used by spawn below and later systems).
-    set_initial_positions_only(def, &mut initial_positions);
+    set_spawn_points_only(def, &mut spawn_points);
     let debug_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.8, 0.2, 0.2),
         unlit: false,
         ..default()
     });
-    if let Some(paddle_pos) = initial_positions.paddle_pos {
+    if let Some(paddle_pos) = spawn_points.paddle {
         commands
             .spawn((
                 Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
@@ -590,9 +626,10 @@ fn handle_level_advance_delay(
             .insert(Friction {
                 coefficient: 2.0,
                 combine_rule: CoefficientCombineRule::Max,
-            });
+            })
+            .insert(paddle_respawn_handle(paddle_pos));
     }
-    if let Some(ball_pos) = initial_positions.ball_pos {
+    if let Some(ball_pos) = spawn_points.ball {
         commands
             .spawn((
                 Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
@@ -623,7 +660,8 @@ fn handle_level_advance_delay(
                 Ccd::enabled(),
                 ExternalImpulse::default(),
                 GravityScale(1.0),
-            ));
+            ))
+            .insert(ball_respawn_handle(ball_pos));
     }
     level_advance.growth_spawned = true;
 }
