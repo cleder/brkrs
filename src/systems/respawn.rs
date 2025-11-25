@@ -16,6 +16,10 @@ pub struct LivesState {
     pub on_last_life: bool,
 }
 
+#[cfg(test)]
+#[path = "../../tests/common/multi_respawn.rs"]
+mod multi_respawn;
+
 impl Default for LivesState {
     fn default() -> Self {
         Self {
@@ -575,7 +579,7 @@ mod tests {
     use std::f32::consts::PI;
     use std::time::Duration;
 
-    fn test_app() -> App {
+    pub(super) fn test_app() -> App {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins)
             .insert_resource(Assets::<Mesh>::default())
@@ -590,21 +594,21 @@ mod tests {
         app
     }
 
-    fn ball_handle_at(position: Vec3) -> RespawnHandle {
+    pub(super) fn ball_handle_at(position: Vec3) -> RespawnHandle {
         RespawnHandle {
             spawn: SpawnTransform::new(position, Quat::IDENTITY),
             kind: RespawnEntityKind::Ball,
         }
     }
 
-    fn paddle_handle_at(position: Vec3) -> RespawnHandle {
+    pub(super) fn paddle_handle_at(position: Vec3) -> RespawnHandle {
         RespawnHandle {
             spawn: SpawnTransform::new(position, Quat::from_rotation_x(-PI / 2.0)),
             kind: RespawnEntityKind::Paddle,
         }
     }
 
-    fn advance_time(app: &mut App, delta_secs: f32) {
+    pub(super) fn advance_time(app: &mut App, delta_secs: f32) {
         let mut time = app.world_mut().resource_mut::<Time>();
         time.advance_by(Duration::from_secs_f32(delta_secs));
     }

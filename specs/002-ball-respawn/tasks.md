@@ -73,8 +73,8 @@ description: "Task list for Ball Respawn System"
 - [X] T016 [US2] Extend `respawn_scheduler_system` in `src/systems/respawn.rs` to consult a `LivesState` resource and emit/consume `GameOverRequested` when `lives_remaining == 0`.
 - [X] T017 [US2] Implement per-entity respawn tracking in `src/systems/respawn.rs` so only the lost ball/paddle pair reinitializes (supporting multi-ball power-ups).
 - [X] T018 [US2] Add queuing/guard logic in `src/systems/respawn.rs` to warn when a respawn is already pending and defer new requests until completion (prevents timer overlap).
-- [ ] T019 [P] [US2] Create `tests/multi_respawn.rs` validating two sequential `LifeLostEvent`s process correctly and that game over halts respawn scheduling.
-- [ ] T020 [US2] Enhance `specs/002-ball-respawn/quickstart.md` repeated-loss manual test section with expected log output for lives decrement and game-over skip.
+- [X] T019 [P] [US2] Create `tests/common/multi_respawn.rs` validating two sequential `LifeLostEvent`s process correctly and that game over halts respawn scheduling.
+- [X] T020 [US2] Enhance `specs/002-ball-respawn/quickstart.md` repeated-loss manual test section with expected log output for lives decrement and game-over skip.
 
 **Checkpoint**: User Stories 1 and 2 operate independently; repeated losses no longer block gameplay.
 
