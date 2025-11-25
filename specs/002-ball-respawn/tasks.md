@@ -52,7 +52,7 @@ description: "Task list for Ball Respawn System"
 
 - [ ] T009 [US1] Implement `detect_ball_loss_system` in `src/systems/respawn.rs` to read `CollisionEvent::Started`, emit `LifeLostEvent`, and despawn the ball entity.
 - [ ] T010 [US1] Add `life_loss_logging_system` in `src/systems/respawn.rs` to record cause+entity IDs (aids manual verification and SC-004 tracking).
-- [ ] T011 [US1] Implement `respawn_scheduler_system` in `src/systems/respawn.rs` that consumes `LifeLostEvent`, populates `RespawnSchedule`, applies `BallFrozen`/`InputLocked`, and zeros velocities using Rapier components.
+- [X] T011 [US1] Implement `respawn_scheduler_system` in `src/systems/respawn.rs` that consumes `LifeLostEvent`, populates `RespawnSchedule`, applies `BallFrozen`/`InputLocked`, and zeros velocities using Rapier components.
 - [ ] T012 [US1] Implement `respawn_executor_system` in `src/systems/respawn.rs` that ticks the Bevy `Timer`, respawns/translates ball+paddle using `SpawnPoints`, emits `RespawnScheduled`/`RespawnCompleted`, and keeps ball stationary.
 - [ ] T013 [US1] Add `ball_launch_input_system` in `src/systems/respawn.rs` that listens for launch input (e.g., Space) to remove `BallFrozen` and give the ball its initial impulse.
 - [ ] T014 [US1] Update `specs/002-ball-respawn/quickstart.md` manual steps with the exact launch-input check to close the independent test loop.
@@ -70,7 +70,7 @@ description: "Task list for Ball Respawn System"
 
 ### Implementation for User Story 2
 
-- [ ] T016 [US2] Extend `respawn_scheduler_system` in `src/systems/respawn.rs` to consult a `LivesState` resource and emit/consume `GameOverRequested` when `lives_remaining == 0`.
+- [X] T016 [US2] Extend `respawn_scheduler_system` in `src/systems/respawn.rs` to consult a `LivesState` resource and emit/consume `GameOverRequested` when `lives_remaining == 0`.
 - [ ] T017 [US2] Implement per-entity respawn tracking in `src/systems/respawn.rs` so only the lost ball/paddle pair reinitializes (supporting multi-ball power-ups).
 - [ ] T018 [US2] Add queuing/guard logic in `src/systems/respawn.rs` to warn when a respawn is already pending and defer new requests until completion (prevents timer overlap).
 - [ ] T019 [P] [US2] Create `tests/multi_respawn.rs` validating two sequential `LifeLostEvent`s process correctly and that game over halts respawn scheduling.
