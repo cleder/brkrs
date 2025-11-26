@@ -5,7 +5,9 @@
 pub mod level_loader;
 pub mod systems;
 
-use crate::systems::{InputLocked, RespawnPlugin, RespawnSystems};
+#[cfg(feature = "texture_manifest")]
+use crate::systems::TextureManifestPlugin;
+use crate::systems::{InputLocked, LevelSwitchPlugin, RespawnPlugin, RespawnSystems};
 
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
@@ -105,68 +107,82 @@ struct GravityConfig {
     normal: Vec3,
 }
 
+impl Default for GravityConfig {
+    fn default() -> Self {
+        Self {
+            normal: Vec3::new(2.0, 0.0, 0.0),
+        }
+    }
+}
+
 #[derive(Resource, Default)]
 pub struct GameProgress {
     finished: bool,
 }
 
 pub fn run() {
-    App::new()
-        .insert_resource(GravityConfig {
-            normal: Vec3::new(2.0, 0.0, 0.0),
-        })
-        .insert_resource(GameProgress::default())
-        .insert_resource(level_loader::LevelAdvanceState::default())
-        .add_plugins((
-            DefaultPlugins
-                .set(ImagePlugin::default_nearest())
-                .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        title: "Brkrs".to_string(),
-                        #[cfg(not(target_arch = "wasm32"))]
-                        mode: WindowMode::BorderlessFullscreen(MonitorSelection::Current),
-                        #[cfg(target_arch = "wasm32")]
-                        mode: WindowMode::Windowed,
-                        ..default()
-                    }),
+    let mut app = App::new();
+
+    app.insert_resource(GravityConfig::default());
+    app.insert_resource(GameProgress::default());
+    app.insert_resource(level_loader::LevelAdvanceState::default());
+    app.add_plugins((
+        DefaultPlugins
+            .set(ImagePlugin::default_nearest())
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: "Brkrs".to_string(),
+                    #[cfg(not(target_arch = "wasm32"))]
+                    mode: WindowMode::BorderlessFullscreen(MonitorSelection::Current),
+                    #[cfg(target_arch = "wasm32")]
+                    mode: WindowMode::Windowed,
                     ..default()
                 }),
+                ..default()
+            }),
+        #[cfg(not(target_arch = "wasm32"))]
+        WireframePlugin::default(),
+    ));
+    app.add_plugins(RapierPhysicsPlugin::<NoUserData>::default());
+    app.add_plugins(LevelSwitchPlugin);
+    app.add_plugins(crate::level_loader::LevelLoaderPlugin);
+    app.add_plugins(RapierDebugRenderPlugin::default());
+    app.add_plugins(RespawnPlugin);
+
+    #[cfg(feature = "texture_manifest")]
+    {
+        app.add_plugins(TextureManifestPlugin);
+    }
+
+    app.add_systems(
+        Startup,
+        (setup, spawn_border, systems::grid_debug::spawn_grid_overlay),
+    );
+    app.add_systems(
+        Update,
+        (
+            move_paddle.after(RespawnSystems::Control),
+            limit_ball_velocity,
+            update_camera_shake,
+            update_paddle_growth,
+            stabilize_frozen_balls,
+            restore_gravity_post_growth,
             #[cfg(not(target_arch = "wasm32"))]
-            WireframePlugin::default(),
-        ))
-        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
-        .add_plugins(crate::level_loader::LevelLoaderPlugin)
-        .add_plugins(RapierDebugRenderPlugin::default())
-        .add_plugins(RespawnPlugin)
-        .add_systems(
-            Startup,
-            (setup, spawn_border, systems::grid_debug::spawn_grid_overlay),
-        )
-        .add_systems(
-            Update,
-            (
-                move_paddle.after(RespawnSystems::Control),
-                limit_ball_velocity,
-                update_camera_shake,
-                update_paddle_growth,
-                stabilize_frozen_balls,
-                restore_gravity_post_growth,
-                #[cfg(not(target_arch = "wasm32"))]
-                toggle_wireframe,
-                #[cfg(not(target_arch = "wasm32"))]
-                systems::grid_debug::toggle_grid_visibility,
-                grab_mouse,
-                read_character_controller_collisions,
-                mark_brick_on_ball_collision,
-                despawn_marked_entities, // Runs after marking, allowing physics to resolve
-                                         // display_events,
-            ),
-        )
-        .add_observer(on_wall_hit)
-        .add_observer(on_paddle_ball_hit)
-        .add_observer(on_brick_hit)
-        .add_observer(start_camera_shake)
-        .run();
+            toggle_wireframe,
+            #[cfg(not(target_arch = "wasm32"))]
+            systems::grid_debug::toggle_grid_visibility,
+            grab_mouse,
+            read_character_controller_collisions,
+            mark_brick_on_ball_collision,
+            despawn_marked_entities, // Runs after marking, allowing physics to resolve
+                                     // display_events,
+        ),
+    );
+    app.add_observer(on_wall_hit);
+    app.add_observer(on_paddle_ball_hit);
+    app.add_observer(on_brick_hit);
+    app.add_observer(start_camera_shake);
+    app.run();
 }
 
 fn setup(

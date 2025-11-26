@@ -1,3 +1,4 @@
+use crate::systems::level_switch::{LevelSwitchRequested, LevelSwitchState};
 use crate::systems::respawn::{RespawnEntityKind, RespawnHandle, SpawnPoints, SpawnTransform};
 use bevy::prelude::*;
 use ron::de::from_str;
@@ -9,7 +10,7 @@ use crate::{
 };
 use bevy_rapier3d::prelude::*;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct LevelDefinition {
     pub number: u32,
     /// Optional gravity override for this level (x,y,z). If omitted the existing GravityConfig value is used.
@@ -24,6 +25,7 @@ pub struct LevelLoaderPlugin;
 
 impl Plugin for LevelLoaderPlugin {
     fn build(&self, app: &mut App) {
+        app.init_resource::<GravityConfig>();
         app.add_systems(Startup, (load_level, spawn_level_entities).chain());
         app.add_systems(
             Update,
@@ -34,6 +36,7 @@ impl Plugin for LevelLoaderPlugin {
                 spawn_fade_overlay_if_needed,
                 update_fade_overlay,
                 restart_level_on_key,
+                process_level_switch_requests,
             ),
         );
     }
@@ -536,59 +539,87 @@ fn restart_level_on_key(
     }
     let level_number = current_level.map(|cl| cl.0.number).unwrap_or(1);
     let path = format!("assets/levels/level_{:03}.ron", level_number);
-    info!("Restarting level {} from {}", level_number, path);
-
-    // Despawn existing entities
-    for e in bricks.iter() {
-        commands.entity(e).despawn();
+    match force_load_level_from_path(
+        &path,
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        &mut spawn_points,
+        &mut gravity_cfg,
+        &mut rapier_config,
+        &bricks,
+        &paddle_q,
+        &ball_q,
+        &mut game_progress,
+        &mut level_advance,
+    ) {
+        Ok(_) => info!("Restarted level {level_number}"),
+        Err(err) => warn!("Failed to restart level {level_number}: {err}"),
     }
-    for e in paddle_q.iter() {
-        commands.entity(e).despawn();
-    }
-    for e in ball_q.iter() {
-        commands.entity(e).despawn();
-    }
+}
 
-    // Reset progress if we were finished
-    game_progress.finished = false;
-    level_advance.active = false;
-    level_advance.pending = None;
-    level_advance.growth_spawned = false;
-
-    // Reset spawn points
-    spawn_points.paddle = None;
-    spawn_points.ball = None;
-
-    match std::fs::read_to_string(&path) {
-        Ok(content) => match from_str::<LevelDefinition>(&content) {
-            Ok(def) => {
-                // Apply gravity override
-                if let Some((x, y, z)) = def.gravity {
-                    gravity_cfg.normal = Vec3::new(x, y, z);
-                    if let Ok(mut config) = rapier_config.single_mut() {
-                        config.gravity = gravity_cfg.normal;
-                    }
-                    info!("Level gravity set to {:?}", gravity_cfg.normal);
-                } else {
-                    // Ensure rapier gravity matches current stored config
-                    if let Ok(mut config) = rapier_config.single_mut() {
-                        config.gravity = gravity_cfg.normal;
-                    }
-                }
-                // Spawn entities then update resource
-                spawn_level_entities_impl(
-                    &def,
-                    &mut commands,
-                    &mut meshes,
-                    &mut materials,
-                    &mut spawn_points,
-                );
-                commands.insert_resource(CurrentLevel(def));
-            }
-            Err(e) => warn!("Failed to parse level on restart '{}': {e}", path),
-        },
-        Err(e) => warn!("Failed to read level file on restart '{}': {e}", path),
+pub(crate) fn process_level_switch_requests(
+    mut requests: EventReader<LevelSwitchRequested>,
+    mut switch_state: ResMut<LevelSwitchState>,
+    current_level: Option<Res<CurrentLevel>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut spawn_points: ResMut<SpawnPoints>,
+    mut gravity_cfg: ResMut<GravityConfig>,
+    mut rapier_config: Query<&mut RapierConfiguration>,
+    bricks: Query<Entity, With<Brick>>,
+    paddle_q: Query<Entity, With<Paddle>>,
+    ball_q: Query<Entity, With<Ball>>,
+    mut game_progress: ResMut<GameProgress>,
+    mut level_advance: ResMut<LevelAdvanceState>,
+) {
+    if requests.is_empty() {
+        return;
     }
+    if switch_state.is_transition_pending() || level_advance.active {
+        info!(
+            target: "level_switch",
+            "Level transition already active; ignoring switch request"
+        );
+        requests.clear();
+        return;
+    }
+    let current_number = current_level.map(|c| c.0.number).unwrap_or(0);
+    let Some(target_slot) = switch_state.next_level_after(current_number).cloned() else {
+        warn!(target: "level_switch", "No level entries available for switching");
+        requests.clear();
+        return;
+    };
+    switch_state.mark_transition_start();
+    match force_load_level_from_path(
+        &target_slot.path,
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        &mut spawn_points,
+        &mut gravity_cfg,
+        &mut rapier_config,
+        &bricks,
+        &paddle_q,
+        &ball_q,
+        &mut game_progress,
+        &mut level_advance,
+    ) {
+        Ok(def) => info!(
+            target: "level_switch",
+            number = def.number,
+            path = %target_slot.path,
+            "Level switch completed"
+        ),
+        Err(err) => warn!(
+            target: "level_switch",
+            path = %target_slot.path,
+            "Failed to switch levels: {err}"
+        ),
+    }
+    switch_state.mark_transition_end();
+    requests.clear();
 }
 
 /// After delay, spawn tiny paddle + frozen ball for growth animation (similar to respawn), defer bricks.
@@ -773,4 +804,91 @@ fn update_fade_overlay(
             commands.entity(entity).despawn();
         }
     }
+}
+
+fn force_load_level_from_path(
+    path: &str,
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    spawn_points: &mut ResMut<SpawnPoints>,
+    gravity_cfg: &mut ResMut<GravityConfig>,
+    rapier_config: &mut Query<&mut RapierConfiguration>,
+    bricks: &Query<Entity, With<Brick>>,
+    paddle_q: &Query<Entity, With<Paddle>>,
+    ball_q: &Query<Entity, With<Ball>>,
+    game_progress: &mut ResMut<GameProgress>,
+    level_advance: &mut ResMut<LevelAdvanceState>,
+) -> Result<LevelDefinition, String> {
+    reset_level_state(
+        commands,
+        bricks,
+        paddle_q,
+        ball_q,
+        spawn_points,
+        game_progress,
+        level_advance,
+    );
+    let content = std::fs::read_to_string(path)
+        .map_err(|err| format!("failed to read level file '{path}': {err}"))?;
+    let def = from_str::<LevelDefinition>(&content)
+        .map_err(|err| format!("failed to parse level '{path}': {err}"))?;
+    apply_level_definition(
+        &def,
+        commands,
+        meshes,
+        materials,
+        spawn_points,
+        gravity_cfg,
+        rapier_config,
+    );
+    commands.insert_resource(CurrentLevel(def.clone()));
+    Ok(def)
+}
+
+fn reset_level_state(
+    commands: &mut Commands,
+    bricks: &Query<Entity, With<Brick>>,
+    paddle_q: &Query<Entity, With<Paddle>>,
+    ball_q: &Query<Entity, With<Ball>>,
+    spawn_points: &mut ResMut<SpawnPoints>,
+    game_progress: &mut ResMut<GameProgress>,
+    level_advance: &mut ResMut<LevelAdvanceState>,
+) {
+    for entity in bricks.iter() {
+        commands.entity(entity).despawn();
+    }
+    for entity in paddle_q.iter() {
+        commands.entity(entity).despawn();
+    }
+    for entity in ball_q.iter() {
+        commands.entity(entity).despawn();
+    }
+    spawn_points.paddle = None;
+    spawn_points.ball = None;
+    game_progress.finished = false;
+    level_advance.active = false;
+    level_advance.pending = None;
+    level_advance.growth_spawned = false;
+}
+
+fn apply_level_definition(
+    def: &LevelDefinition,
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    spawn_points: &mut ResMut<SpawnPoints>,
+    gravity_cfg: &mut ResMut<GravityConfig>,
+    rapier_config: &mut Query<&mut RapierConfiguration>,
+) {
+    if let Some((x, y, z)) = def.gravity {
+        gravity_cfg.normal = Vec3::new(x, y, z);
+        if let Ok(mut config) = rapier_config.single_mut() {
+            config.gravity = gravity_cfg.normal;
+        }
+        info!("Level gravity set to {:?}", gravity_cfg.normal);
+    } else if let Ok(mut config) = rapier_config.single_mut() {
+        config.gravity = gravity_cfg.normal;
+    }
+    spawn_level_entities_impl(def, commands, meshes, materials, spawn_points);
 }

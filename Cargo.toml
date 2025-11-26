@@ -5,6 +5,10 @@ version = "0.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
+[features]
+default = []
+texture_manifest = []
+
 # Enable a small amount of optimization in debug mode
 [profile.dev]
 opt-level = 1

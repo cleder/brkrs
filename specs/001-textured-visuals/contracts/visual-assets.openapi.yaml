@@ -1,0 +1,116 @@
+openapi: 3.1.0
+info:
+  title: Brkrs Visual Asset Contracts
+  version: 0.1.0
+  description: >-
+    Offline/tooling contract that mirrors the in-game texture manifest and level-switch
+    controls so artists and QA can preview assets without touching engine code.
+paths:
+  /visual-assets/manifest:
+    get:
+      summary: Retrieve the current texture manifest derived from `manifest.ron`.
+      operationId: getVisualManifest
+      responses:
+        '200':
+          description: Current manifest.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextureManifest'
+  /visual-assets/preview:
+    post:
+      summary: Hot-load a temporary texture profile for previewing new art.
+      operationId: previewVisualAsset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VisualAssetProfile'
+      responses:
+        '202':
+          description: Preview accepted; the engine will apply it on next level load.
+  /levels/next:
+    post:
+      summary: Trigger the same behavior as pressing the **L** key to cycle levels.
+      operationId: cycleLevel
+      responses:
+        '202':
+          description: Level switch request accepted.
+components:
+  schemas:
+    TextureManifest:
+      type: object
+      required: [profiles, typeVariants]
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisualAssetProfile'
+        typeVariants:
+          type: array
+          items:
+            $ref: '#/components/schemas/TypeVariant'
+    VisualAssetProfile:
+      type: object
+      required: [id, albedoPath]
+      properties:
+        id:
+          type: string
+        albedoPath:
+          type: string
+          description: Relative path under assets/textures/
+        normalPath:
+          type: string
+          nullable: true
+        roughness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        metallic:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        uvScale:
+          type: array
+          items:
+            type: number
+          minItems: 2
+          maxItems: 2
+        uvOffset:
+          type: array
+          items:
+            type: number
+          minItems: 2
+          maxItems: 2
+        fallbackChain:
+          type: array
+          items:
+            type: string
+    TypeVariant:
+      type: object
+      required: [objectClass, typeId, profileId]
+      properties:
+        objectClass:
+          type: string
+          enum: [Ball, Brick]
+        typeId:
+          type: integer
+          format: int32
+        profileId:
+          type: string
+        emissiveColor:
+          type: array
+          items:
+            type: number
+          minItems: 4
+          maxItems: 4
+        animation:
+          type: object
+          properties:
+            kind:
+              type: string
+            params:
+              type: object
