@@ -1468,6 +1468,7 @@ dependencies = [
  "bevy_rapier3d",
  "ron",
  "serde",
+ "tracing",
 ]
 
 [[package]]

@@ -110,3 +110,9 @@ When a respawn occurs, the player receives clear visual feedback indicating the 
 - **SC-005**: Game correctly transitions to game over state when final life is lost (0% incorrect respawns on last life)
 - **SC-006**: Initial positions from level matrix are accurately retrieved and applied 100% of the time
 - **SC-007**: Fallback positions are used successfully when matrix positions are invalid or missing
+
+## Known Limitations & Follow-Ups *(Phase 6)*
+
+1. **Grid overlay visibility warning** – `bevy lint` / `cargo clippy` warn that `GridOverlay` is `pub(crate)` while `toggle_grid_visibility` is `pub`. Nothing fails at runtime, but we should either widen the struct visibility or reduce the helper function to crate scope before feature freeze.
+2. **Unused monitor import in WASM** – `cargo build --target wasm32-unknown-unknown --release` currently warns about an unused `MonitorSelection` import (only required for desktop-exclusive window handling). Feature-gate or remove the import to keep WASM builds clean.
+3. **Structured logging scope** – Respawn events emit structured `tracing` spans/logs (`life_lost`, `respawn_scheduled`, `game_over_requested`), but the rest of the gameplay stack still relies on ad-hoc `log` macros. Future polish should migrate other critical systems or install a shared `tracing-subscriber` configuration so downstream tooling can consume the richer fields.

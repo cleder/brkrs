@@ -1,7 +1,7 @@
-use bevy::log::{info, warn};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use std::{collections::VecDeque, f32::consts::PI, time::Duration};
+use tracing::{info, warn};
 
 use crate::{
     Ball, BallFrozen, LowerGoal, Paddle, PaddleGrowing, BALL_RADIUS, PADDLE_GROWTH_DURATION,
@@ -237,6 +237,12 @@ impl Plugin for RespawnPlugin {
                         .in_set(RespawnSystems::Detect)
                         .after(detect_ball_loss),
                     schedule_respawn_timer.in_set(RespawnSystems::Schedule),
+                    log_respawn_scheduled
+                        .in_set(RespawnSystems::Schedule)
+                        .after(schedule_respawn_timer),
+                    log_game_over_requested
+                        .in_set(RespawnSystems::Schedule)
+                        .after(schedule_respawn_timer),
                     respawn_executor.in_set(RespawnSystems::Execute),
                     (respawn_visual_trigger, animate_respawn_visual)
                         .chain()
@@ -269,8 +275,10 @@ fn detect_ball_loss(
                     Ok(handle) => handle.spawn,
                     Err(_) => {
                         warn!(
-                            "Ball entity {:?} missing RespawnHandle; using fallback",
-                            ball_entity
+                            target: "respawn",
+                            event = "missing_respawn_handle",
+                            ?ball_entity,
+                            "Ball missing RespawnHandle; falling back to cached spawn"
                         );
                         spawn_points.ball_spawn()
                     }
@@ -290,8 +298,39 @@ fn life_loss_logging(mut life_lost_events: EventReader<LifeLostEvent>) {
     for event in life_lost_events.read() {
         let spawn = event.ball_spawn.translation;
         info!(
-            "life lost: ball={:?} cause={:?} spawn=({:.2}, {:.2}, {:.2})",
-            event.ball, event.cause, spawn.x, spawn.y, spawn.z
+            target: "respawn",
+            event = "life_lost",
+            cause = ?event.cause,
+            ?event.ball,
+            spawn_x = spawn.x,
+            spawn_y = spawn.y,
+            spawn_z = spawn.z,
+            "Life lost; scheduling respawn"
+        );
+    }
+}
+
+fn log_respawn_scheduled(mut events: EventReader<RespawnScheduled>) {
+    for event in events.read() {
+        info!(
+            target: "respawn",
+            event = "respawn_scheduled",
+            ?event.ball,
+            paddle = ?event.paddle,
+            completes_at = event.completes_at,
+            remaining_lives = event.remaining_lives,
+            "Respawn scheduled"
+        );
+    }
+}
+
+fn log_game_over_requested(mut events: EventReader<GameOverRequested>) {
+    for event in events.read() {
+        info!(
+            target: "respawn",
+            event = "game_over_requested",
+            remaining_lives = event.remaining_lives,
+            "Lives exhausted; requesting game over"
         );
     }
 }

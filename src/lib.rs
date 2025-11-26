@@ -9,6 +9,8 @@ use crate::systems::{InputLocked, RespawnPlugin, RespawnSystems};
 
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
+#[cfg(not(target_arch = "wasm32"))]
+use bevy::window::MonitorSelection;
 use bevy::{
     color::palettes::{basic::SILVER, css::RED},
     input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
@@ -17,7 +19,7 @@ use bevy::{
         render_asset::RenderAssetUsages,
         render_resource::{Extent3d, TextureDimension, TextureFormat},
     },
-    window::{CursorGrabMode, MonitorSelection, PrimaryWindow, Window, WindowMode, WindowPlugin},
+    window::{CursorGrabMode, PrimaryWindow, Window, WindowMode, WindowPlugin},
 };
 use bevy_rapier3d::prelude::*;
 
@@ -60,7 +62,7 @@ struct Border;
 #[derive(Component)]
 pub struct LowerGoal;
 #[derive(Component)]
-struct GridOverlay;
+pub struct GridOverlay;
 #[derive(Component)]
 struct Brick;
 #[derive(Component)]

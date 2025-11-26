@@ -28,6 +28,15 @@ cargo run --features bevy/dynamic_linking
 cargo build --target wasm32-unknown-unknown --release
 ```
 
+## Phase 6 Validation Log
+
+| Command | Result |
+| --- | --- |
+| `cargo test` | ✅ All 13 unit + 6 integration tests pass; repeats known `GridOverlay` visibility warning. |
+| `cargo clippy --all-targets --all-features` | ✅ No new lint violations; same `GridOverlay` warning flagged (tracked under grid debug polish). |
+| `bevy lint` | ✅ Succeeds; surfaces the same `GridOverlay` visibility warning only. |
+| `cargo build --target wasm32-unknown-unknown --release` | ✅ Web build produced `target/wasm32-unknown-unknown/release/brkrs.wasm`; emits one warn for unused `MonitorSelection` import (safe to remove later). |
+
 ## Automated Coverage
 
 - `tests/common/multi_respawn.rs` verifies that queued `LifeLostEvent`s process sequentially and game-over states halt new respawns. Run `cargo test multi_respawn` to execute only these cases when iterating on User Story 2.
@@ -37,6 +46,10 @@ cargo build --target wasm32-unknown-unknown --release
 1. **Respawn delay and positions**
    - Play level 001, allow the ball to hit the lower goal.
    - Observe the 1 second pause (ball + paddle hidden) and confirm both respawn exactly at the grid-defined transforms.
+
+1. **Screen-wide overlay cue**
+   - When the respawn delay begins, a translucent black fade should cover the entire screen (see `Respawn Fade Overlay` in the Bevy inspector) and list `Name: Respawn Fade Overlay` in the entity hierarchy.
+   - The overlay should reach peak opacity halfway through the delay, then fade back out before controls unlock; if the overlay never appears or sticks around, file a bug under US3.
 
 1. **Stationary until controls return (launch-input check)**
    - After respawn completes, keep your hands off the launch input (space/left click). The ball must remain frozen atop the paddle until movement controls unlock, then resume motion on its own the exact frame you regain control—no manual launch allowed.

@@ -36,7 +36,7 @@ description: "Task list for Ball Respawn System"
 - [X] T005 Define `LifeLostEvent`, `RespawnScheduled`, `RespawnCompleted`, and the `RespawnSchedule` resource structs in `src/systems/respawn.rs`.
 - [X] T006 Add a `LowerGoal` sensor entity setup (collider + `ActiveEvents::COLLISION_EVENTS`) in `src/level_loader.rs` to detect life loss.
 - [X] T007 Introduce `BallFrozen` and `InputLocked` marker components plus helpers in `src/systems/respawn.rs` so other systems can filter on them.
-- [ ] T008 Create `tests/respawn_spawn_points.rs` verifying fallback center behavior and one-to-one spawn extraction using Bevy `App` tests.
+- [X] T008 Create `tests/respawn_spawn_points.rs` verifying fallback center behavior and one-to-one spawn extraction using Bevy `App` tests.
 
 **Checkpoint**: Spawn data, events, and markers exist; Rapier can emit the required collisions.
 
@@ -56,7 +56,7 @@ description: "Task list for Ball Respawn System"
 - [X] T012 [US1] Implement `respawn_executor_system` in `src/systems/respawn.rs` that ticks the Bevy `Timer`, respawns/translates ball+paddle using `SpawnPoints`, emits `RespawnScheduled`/`RespawnCompleted`, and keeps ball stationary.
 - [X] T013 [US1] Add an automatic release system in `src/systems/respawn.rs` that removes `BallFrozen` only after paddle controls unlock so the ball resumes motion with no manual input or extra impulse.
 - [X] T014 [US1] Update `specs/002-ball-respawn/quickstart.md` manual steps with the exact launch-input check to close the independent test loop.
-- [ ] T015 [P] [US1] Add `tests/respawn_timer.rs` exercising `RespawnSchedule` timing tolerance (±16 ms) and verifying the ball remains stationary until launch.
+- [X] T015 [P] [US1] Add `tests/respawn_timer.rs` exercising `RespawnSchedule` timing tolerance (±16 ms) and verifying the ball remains stationary until launch.
 
 **Checkpoint**: User Story 1 is fully functional and testable; qualifies as MVP.
 
@@ -88,10 +88,10 @@ description: "Task list for Ball Respawn System"
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Add a simple fade overlay or pause tween implementation in `src/systems/respawn.rs` (or dedicated `src/systems/visuals.rs`) that listens to `RespawnScheduled` and animates opacity.
-- [ ] T022 [US3] Gate control re-enabling in `src/systems/respawn.rs` on the visual feedback completion event to keep behavior consistent across native/WASM.
-- [ ] T023 [P] [US3] Create `tests/respawn_visual.rs` (can be feature-flagged) to confirm the overlay entity transitions through expected phases when `RespawnScheduled` fires.
-- [ ] T024 [US3] Document the visual indicator expectation in `specs/002-ball-respawn/quickstart.md` manual verification step 1 (include screenshot or description).
+- [X] T021 [US3] Add a simple fade overlay or pause tween implementation in `src/systems/respawn.rs` (or dedicated `src/systems/visuals.rs`) that listens to `RespawnScheduled` and animates opacity.
+- [X] T022 [US3] Gate control re-enabling in `src/systems/respawn.rs` on the visual feedback completion event to keep behavior consistent across native/WASM.
+- [X] T023 [P] [US3] Create `tests/respawn_visual.rs` (can be feature-flagged) to confirm the overlay entity transitions through expected phases when `RespawnScheduled` fires.
+- [X] T024 [US3] Document the visual indicator expectation in `specs/002-ball-respawn/quickstart.md` manual verification step 1 (include screenshot or description).
 
 **Checkpoint**: All three user stories are independently testable and deliver polished UX.
 
@@ -101,9 +101,9 @@ description: "Task list for Ball Respawn System"
 
 **Purpose**: Hardening, docs, and verification spanning all stories.
 
-- [ ] T025 [P] Add structured logging hooks (e.g., `tracing::info!`) for `LifeLostEvent`, `RespawnScheduled`, and `GameOverRequested` inside `src/systems/respawn.rs` for observability.
-- [ ] T026 [P] Run `cargo test`, `cargo clippy --all-targets --all-features`, `bevy lint`, and `cargo build --target wasm32-unknown-unknown --release` documenting outputs in `specs/002-ball-respawn/quickstart.md`.
-- [ ] T027 Capture known limitations / future work for respawn (e.g., HUD lives display) in `specs/002-ball-respawn/spec.md` Edge Cases list once implementation gaps are observed.
+- [X] T025 [P] Add structured logging hooks (e.g., `tracing::info!`) for `LifeLostEvent`, `RespawnScheduled`, and `GameOverRequested` inside `src/systems/respawn.rs` for observability.
+- [X] T026 [P] Run `cargo test`, `cargo clippy --all-targets --all-features`, `bevy lint`, and `cargo build --target wasm32-unknown-unknown --release` documenting outputs in `specs/002-ball-respawn/quickstart.md`.
+- [X] T027 Capture known limitations / future work for respawn (e.g., HUD lives display) in `specs/002-ball-respawn/spec.md` Edge Cases list once implementation gaps are observed.
 
 ---
 
