@@ -17,13 +17,29 @@ pub struct LivesState {
 }
 
 #[derive(Resource, Debug, Default, Clone, Copy)]
-struct RespawnVisualState {
+pub struct RespawnVisualState {
     active: bool,
 }
 
+impl RespawnVisualState {
+    pub fn is_active(&self) -> bool {
+        self.active
+    }
+}
+
 #[derive(Component)]
-struct RespawnFadeOverlay {
+pub struct RespawnFadeOverlay {
     timer: Timer,
+}
+
+impl RespawnFadeOverlay {
+    pub fn timer(&self) -> &Timer {
+        &self.timer
+    }
+
+    pub fn timer_mut(&mut self) -> &mut Timer {
+        &mut self.timer
+    }
 }
 
 #[cfg(test)]

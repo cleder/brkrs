@@ -408,7 +408,11 @@ fn spawn_bricks_only(
 }
 
 /// Extract and set spawn points for paddle & ball from a level definition (without spawning bricks).
-fn set_spawn_points_only(def: &LevelDefinition, spawn_points: &mut ResMut<SpawnPoints>) {
+/// Recomputes paddle and ball spawn points from a level definition.
+///
+/// Exposed for integration tests to validate fallback behavior. Runtime code should
+/// continue invoking this through the level loader systems.
+pub fn set_spawn_points_only(def: &LevelDefinition, spawn_points: &mut SpawnPoints) {
     spawn_points.paddle = None;
     spawn_points.ball = None;
     let mut paddle_set = false;
@@ -618,7 +622,7 @@ fn handle_level_advance_delay(
         config.gravity = target_gravity;
     }
     // Set initial positions (used by spawn below and later systems).
-    set_spawn_points_only(def, &mut spawn_points);
+    set_spawn_points_only(def, spawn_points.as_mut());
     let debug_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.8, 0.2, 0.2),
         unlit: false,
