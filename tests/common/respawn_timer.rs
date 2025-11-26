@@ -1,7 +1,6 @@
 use super::tests::{advance_time, ball_handle_at, paddle_handle_at, test_app};
 use super::*;
 use bevy::ecs::event::Events;
-use bevy::prelude::*;
 use bevy_rapier3d::prelude::{CollisionEvent, Velocity};
 use bevy_rapier3d::rapier::prelude::CollisionEventFlags;
 use std::time::Duration;
@@ -148,12 +147,49 @@ fn ball_remains_frozen_until_launch_unlock() {
     {
         let world = app.world();
         assert!(
+            world.entity(respawned_ball).contains::<BallFrozen>(),
+            "ball should remain frozen while the overlay fade runs",
+        );
+        assert!(
+            world.resource::<RespawnVisualState>().active,
+            "visual overlay stays active until fade completes",
+        );
+        assert!(
+            world.entity(paddle).contains::<InputLocked>(),
+            "paddle control must stay locked until animation finishes",
+        );
+    }
+
+    {
+        let world = app.world_mut();
+        let overlay_entity = world
+            .iter_entities()
+            .find(|entity| entity.contains::<RespawnFadeOverlay>())
+            .map(|entity| entity.id())
+            .expect("respawn overlay should exist while visual state is active");
+        let mut entity = world.entity_mut(overlay_entity);
+        let mut overlay = entity
+            .get_mut::<RespawnFadeOverlay>()
+            .expect("overlay component missing timer");
+        let remaining = overlay.timer.remaining_secs();
+        overlay.timer.tick(Duration::from_secs_f32(remaining + 0.1));
+    }
+    advance_time(&mut app, 0.0);
+    app.update();
+
+    {
+        let world = app.world();
+        assert!(
+            !world.resource::<RespawnVisualState>().active,
+            "overlay state should clear once fade completes",
+        );
+        assert!(
             !world.entity(respawned_ball).contains::<BallFrozen>(),
-            "ball should unfreeze once paddle unlocks",
+            "ball should unfreeze once paddle is ready and overlay finishes",
         );
         assert!(
             !world.entity(paddle).contains::<InputLocked>(),
-            "paddle should regain control after growth completes",
+            "paddle should regain control after growth and fade",
         );
     }
 }

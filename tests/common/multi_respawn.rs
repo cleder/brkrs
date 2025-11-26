@@ -24,13 +24,14 @@ fn sequential_life_losses_complete_in_order() {
         paddle_handle_at(Vec3::new(0.0, 2.0, 0.0)),
     ));
 
-    let mut collisions = app.world_mut().resource_mut::<Events<CollisionEvent>>();
-    collisions.send(CollisionEvent::Started(
-        ball_a,
-        lower_goal,
-        CollisionEventFlags::SENSOR,
-    ));
-    drop(collisions);
+    {
+        let mut collisions = app.world_mut().resource_mut::<Events<CollisionEvent>>();
+        collisions.send(CollisionEvent::Started(
+            ball_a,
+            lower_goal,
+            CollisionEventFlags::SENSOR,
+        ));
+    }
 
     advance_time(&mut app, 0.016);
     app.update();
@@ -41,13 +42,14 @@ fn sequential_life_losses_complete_in_order() {
         assert_eq!(schedule.pending.as_ref().unwrap().lost_ball, ball_a);
     }
 
-    let mut collisions = app.world_mut().resource_mut::<Events<CollisionEvent>>();
-    collisions.send(CollisionEvent::Started(
-        ball_b,
-        lower_goal,
-        CollisionEventFlags::SENSOR,
-    ));
-    drop(collisions);
+    {
+        let mut collisions = app.world_mut().resource_mut::<Events<CollisionEvent>>();
+        collisions.send(CollisionEvent::Started(
+            ball_b,
+            lower_goal,
+            CollisionEventFlags::SENSOR,
+        ));
+    }
 
     advance_time(&mut app, 0.016);
     app.update();

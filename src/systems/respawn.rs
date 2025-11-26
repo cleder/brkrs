@@ -16,6 +16,16 @@ pub struct LivesState {
     pub on_last_life: bool,
 }
 
+#[derive(Resource, Debug, Default, Clone, Copy)]
+struct RespawnVisualState {
+    active: bool,
+}
+
+#[derive(Component)]
+struct RespawnFadeOverlay {
+    timer: Timer,
+}
+
 #[cfg(test)]
 #[path = "../../tests/common/multi_respawn.rs"]
 mod multi_respawn;
@@ -23,6 +33,10 @@ mod multi_respawn;
 #[cfg(test)]
 #[path = "../../tests/common/respawn_timer.rs"]
 mod respawn_timer;
+
+#[cfg(test)]
+#[path = "../../tests/common/respawn_visual.rs"]
+mod respawn_visual;
 
 impl Default for LivesState {
     fn default() -> Self {
@@ -174,6 +188,7 @@ pub enum RespawnSystems {
     Detect,
     Schedule,
     Execute,
+    Visual,
     Control,
 }
 
@@ -182,6 +197,7 @@ impl Plugin for RespawnPlugin {
         app.init_resource::<RespawnSchedule>()
             .init_resource::<LivesState>()
             .init_resource::<SpawnPoints>()
+            .init_resource::<RespawnVisualState>()
             .add_event::<LifeLostEvent>()
             .add_event::<RespawnScheduled>()
             .add_event::<RespawnCompleted>()
@@ -192,6 +208,7 @@ impl Plugin for RespawnPlugin {
                     RespawnSystems::Detect,
                     RespawnSystems::Schedule,
                     RespawnSystems::Execute,
+                    RespawnSystems::Visual,
                     RespawnSystems::Control,
                 )
                     .chain(),
@@ -205,6 +222,9 @@ impl Plugin for RespawnPlugin {
                         .after(detect_ball_loss),
                     schedule_respawn_timer.in_set(RespawnSystems::Schedule),
                     respawn_executor.in_set(RespawnSystems::Execute),
+                    (respawn_visual_trigger, animate_respawn_visual)
+                        .chain()
+                        .in_set(RespawnSystems::Visual),
                     restore_paddle_control.in_set(RespawnSystems::Control),
                 ),
             );
@@ -541,13 +561,85 @@ fn respawn_executor(
     });
 }
 
+fn respawn_visual_trigger(
+    mut events: EventReader<RespawnScheduled>,
+    mut commands: Commands,
+    mut visual_state: ResMut<RespawnVisualState>,
+    overlay_query: Query<Entity, With<RespawnFadeOverlay>>,
+    respawn_schedule: Res<RespawnSchedule>,
+) {
+    let mut spawned = false;
+    for _ in events.read() {
+        spawned = true;
+    }
+
+    if !spawned {
+        return;
+    }
+
+    visual_state.active = true;
+
+    if let Some(entity) = overlay_query.iter().next() {
+        commands.entity(entity).despawn();
+    }
+
+    let duration_secs = respawn_schedule.timer.duration().as_secs_f32().max(0.016);
+
+    commands.spawn((
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            position_type: PositionType::Absolute,
+            left: Val::Px(0.0),
+            right: Val::Px(0.0),
+            top: Val::Px(0.0),
+            bottom: Val::Px(0.0),
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
+        RespawnFadeOverlay {
+            timer: Timer::from_seconds(duration_secs, TimerMode::Once),
+        },
+        Name::new("Respawn Fade Overlay"),
+    ));
+}
+
+fn animate_respawn_visual(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut visual_state: ResMut<RespawnVisualState>,
+    mut overlays: Query<(Entity, &mut RespawnFadeOverlay, &mut BackgroundColor)>,
+) {
+    if let Some((entity, mut overlay, mut color)) = overlays.iter_mut().next() {
+        overlay.timer.tick(time.delta());
+        let progress = overlay.timer.fraction();
+        let alpha = if progress < 0.5 {
+            (progress / 0.5) * 0.6
+        } else {
+            ((1.0 - progress) / 0.5) * 0.6
+        };
+        color.0 = Color::srgba(0.0, 0.0, 0.0, alpha.clamp(0.0, 0.6));
+        visual_state.active = true;
+        if overlay.timer.finished() {
+            commands.entity(entity).despawn();
+            visual_state.active = false;
+        }
+    } else {
+        visual_state.active = false;
+    }
+}
+
 fn restore_paddle_control(
     respawn_schedule: Res<RespawnSchedule>,
+    respawn_visual_state: Res<RespawnVisualState>,
     mut frozen_balls: Query<(Entity, &mut Velocity), (With<Ball>, With<BallFrozen>)>,
     mut paddles: Query<(Entity, Option<&PaddleGrowing>), (With<Paddle>, With<InputLocked>)>,
     mut commands: Commands,
 ) {
-    if respawn_schedule.pending.is_some() || !respawn_schedule.queue.is_empty() {
+    if respawn_schedule.pending.is_some()
+        || !respawn_schedule.queue.is_empty()
+        || respawn_visual_state.active
+    {
         return;
     }
 
