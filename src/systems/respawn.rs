@@ -236,13 +236,16 @@ impl Plugin for RespawnPlugin {
                     life_loss_logging
                         .in_set(RespawnSystems::Detect)
                         .after(detect_ball_loss),
-                    schedule_respawn_timer.in_set(RespawnSystems::Schedule),
+                    enqueue_respawn_requests.in_set(RespawnSystems::Schedule),
+                    process_respawn_queue
+                        .in_set(RespawnSystems::Schedule)
+                        .after(enqueue_respawn_requests),
                     log_respawn_scheduled
                         .in_set(RespawnSystems::Schedule)
-                        .after(schedule_respawn_timer),
+                        .after(process_respawn_queue),
                     log_game_over_requested
                         .in_set(RespawnSystems::Schedule)
-                        .after(schedule_respawn_timer),
+                        .after(enqueue_respawn_requests),
                     respawn_executor.in_set(RespawnSystems::Execute),
                     (respawn_visual_trigger, animate_respawn_visual)
                         .chain()
@@ -386,43 +389,39 @@ fn start_pending_request(
         });
     }
 }
+fn hydrate_respawn_request(
+    request: &mut RespawnRequest,
+    paddles: &mut Query<(Entity, Option<&mut Velocity>), With<Paddle>>,
+    paddle_handles: &Query<&RespawnHandle, With<Paddle>>,
+    spawn_points: &SpawnPoints,
+    commands: &mut Commands,
+) {
+    if request.tracked_paddle.is_none() {
+        request.tracked_paddle = acquire_primary_paddle(paddles, commands);
+    }
+    if request.paddle_spawn.is_none() {
+        request.paddle_spawn = Some(resolve_paddle_spawn(
+            request.tracked_paddle,
+            paddle_handles,
+            spawn_points,
+        ));
+    }
+    if request.ball_spawn.is_none() {
+        request.ball_spawn = Some(spawn_points.ball_spawn());
+    }
+}
 
-fn schedule_respawn_timer(
+fn enqueue_respawn_requests(
     mut respawn_schedule: ResMut<RespawnSchedule>,
     mut events: EventReader<LifeLostEvent>,
     lives_state: Res<LivesState>,
     time: Res<Time>,
     spawn_points: Res<SpawnPoints>,
-    mut respawn_scheduled_events: EventWriter<RespawnScheduled>,
     mut game_over_events: EventWriter<GameOverRequested>,
     mut paddles: Query<(Entity, Option<&mut Velocity>), With<Paddle>>,
     paddle_handles: Query<&RespawnHandle, With<Paddle>>,
     mut commands: Commands,
 ) {
-    if respawn_schedule.pending.is_none() {
-        if let Some(mut next_request) = respawn_schedule.queue.pop_front() {
-            if next_request.tracked_paddle.is_none() {
-                next_request.tracked_paddle = acquire_primary_paddle(&mut paddles, &mut commands);
-            }
-            if next_request.paddle_spawn.is_none() {
-                next_request.paddle_spawn = Some(resolve_paddle_spawn(
-                    next_request.tracked_paddle,
-                    &paddle_handles,
-                    &spawn_points,
-                ));
-            }
-            if next_request.ball_spawn.is_none() {
-                next_request.ball_spawn = Some(spawn_points.ball_spawn());
-            }
-            start_pending_request(
-                &mut respawn_schedule,
-                next_request,
-                &time,
-                &mut respawn_scheduled_events,
-            );
-        }
-    }
-
     let mut saw_event = false;
     for event in events.read().copied() {
         saw_event = true;
@@ -434,43 +433,67 @@ fn schedule_respawn_timer(
             continue;
         }
 
-        if respawn_schedule.pending.is_some() {
-            let tracked_paddle = respawn_schedule
+        let (tracked_paddle, paddle_spawn) = if respawn_schedule.pending.is_some() {
+            let tracked = respawn_schedule
                 .pending
                 .as_ref()
                 .and_then(|request| request.tracked_paddle);
-            let paddle_spawn = resolve_paddle_spawn(tracked_paddle, &paddle_handles, &spawn_points);
-            respawn_schedule.queue.push_back(RespawnRequest {
-                lost_ball: event.ball,
-                tracked_paddle,
-                remaining_lives: lives_state.lives_remaining,
-                ball_spawn: Some(event.ball_spawn),
-                paddle_spawn: Some(paddle_spawn),
-            });
+            let spawn = resolve_paddle_spawn(tracked, &paddle_handles, &spawn_points);
+            (tracked, spawn)
+        } else {
+            let tracked = acquire_primary_paddle(&mut paddles, &mut commands);
+            let spawn = resolve_paddle_spawn(tracked, &paddle_handles, &spawn_points);
+            (tracked, spawn)
+        };
+
+        respawn_schedule.queue.push_back(RespawnRequest {
+            lost_ball: event.ball,
+            tracked_paddle,
+            remaining_lives: lives_state.lives_remaining,
+            ball_spawn: Some(event.ball_spawn),
+            paddle_spawn: Some(paddle_spawn),
+        });
+
+        if respawn_schedule.pending.is_some() {
             warn!(
                 "respawn already pending; queued additional LifeLostEvent (queue_len={})",
                 respawn_schedule.queue.len()
-            );
-        } else {
-            let tracked_paddle = acquire_primary_paddle(&mut paddles, &mut commands);
-            let paddle_spawn = resolve_paddle_spawn(tracked_paddle, &paddle_handles, &spawn_points);
-            start_pending_request(
-                &mut respawn_schedule,
-                RespawnRequest {
-                    lost_ball: event.ball,
-                    tracked_paddle,
-                    remaining_lives: lives_state.lives_remaining,
-                    ball_spawn: Some(event.ball_spawn),
-                    paddle_spawn: Some(paddle_spawn),
-                },
-                &time,
-                &mut respawn_scheduled_events,
             );
         }
     }
 
     if saw_event {
         respawn_schedule.last_loss = Some(time.elapsed());
+    }
+}
+
+fn process_respawn_queue(
+    mut respawn_schedule: ResMut<RespawnSchedule>,
+    time: Res<Time>,
+    spawn_points: Res<SpawnPoints>,
+    mut respawn_scheduled_events: EventWriter<RespawnScheduled>,
+    mut paddles: Query<(Entity, Option<&mut Velocity>), With<Paddle>>,
+    paddle_handles: Query<&RespawnHandle, With<Paddle>>,
+    mut commands: Commands,
+) {
+    if respawn_schedule.pending.is_some() {
+        return;
+    }
+
+    if let Some(mut next_request) = respawn_schedule.queue.pop_front() {
+        hydrate_respawn_request(
+            &mut next_request,
+            &mut paddles,
+            &paddle_handles,
+            &spawn_points,
+            &mut commands,
+        );
+        start_pending_request(
+            &mut respawn_schedule,
+            next_request,
+            &time,
+            &mut respawn_scheduled_events,
+        );
     }
 }
 
