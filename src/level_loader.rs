@@ -1,7 +1,9 @@
 use crate::systems::level_switch::{LevelSwitchRequested, LevelSwitchState};
 use crate::systems::respawn::{RespawnEntityKind, RespawnHandle, SpawnPoints, SpawnTransform};
 #[cfg(feature = "texture_manifest")]
-use crate::systems::textures::{BaselineMaterialKind, CanonicalMaterialHandles};
+use crate::systems::textures::{
+    baseline_material_handle, BaselineMaterialKind, CanonicalMaterialHandles, FallbackRegistry,
+};
 use bevy::prelude::*;
 use ron::de::from_str;
 use serde::Deserialize;
@@ -183,6 +185,7 @@ fn spawn_level_entities(
     lower_goal: Query<Entity, With<LowerGoal>>,
     level: Option<Res<CurrentLevel>>,
     #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
+    #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
 ) {
     let Some(level) = level else {
         return;
@@ -196,6 +199,8 @@ fn spawn_level_entities(
         &mut spawn_points,
         #[cfg(feature = "texture_manifest")]
         canonical.as_deref(),
+        #[cfg(feature = "texture_manifest")]
+        fallback.as_deref_mut(),
     );
 }
 
@@ -206,6 +211,7 @@ fn spawn_level_entities_impl(
     materials: &mut ResMut<Assets<StandardMaterial>>,
     spawn_points: &mut ResMut<SpawnPoints>,
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
+    #[cfg(feature = "texture_manifest")] mut fallback: Option<&mut FallbackRegistry>,
 ) {
     debug!("Spawning entities for level {}", def.number);
     // Shared material
@@ -226,9 +232,13 @@ fn spawn_level_entities_impl(
     let paddle_material = {
         #[cfg(feature = "texture_manifest")]
         {
-            canonical_handles
-                .and_then(|handles| handles.get(BaselineMaterialKind::Paddle))
-                .unwrap_or_else(|| debug_material.clone())
+            baseline_material_handle(
+                canonical_handles,
+                fallback.as_deref_mut(),
+                BaselineMaterialKind::Paddle,
+                "level_loader.spawn_level_entities.paddle",
+            )
+            .unwrap_or_else(|| debug_material.clone())
         }
         #[cfg(not(feature = "texture_manifest"))]
         {
@@ -239,9 +249,13 @@ fn spawn_level_entities_impl(
     let ball_material = {
         #[cfg(feature = "texture_manifest")]
         {
-            canonical_handles
-                .and_then(|handles| handles.get(BaselineMaterialKind::Ball))
-                .unwrap_or_else(|| debug_material.clone())
+            baseline_material_handle(
+                canonical_handles,
+                fallback.as_deref_mut(),
+                BaselineMaterialKind::Ball,
+                "level_loader.spawn_level_entities.ball",
+            )
+            .unwrap_or_else(|| debug_material.clone())
         }
         #[cfg(not(feature = "texture_manifest"))]
         {
@@ -252,9 +266,13 @@ fn spawn_level_entities_impl(
     let brick_material = {
         #[cfg(feature = "texture_manifest")]
         {
-            canonical_handles
-                .and_then(|handles| handles.get(BaselineMaterialKind::Brick))
-                .unwrap_or_else(|| default_brick_material.clone())
+            baseline_material_handle(
+                canonical_handles,
+                fallback.as_deref_mut(),
+                BaselineMaterialKind::Brick,
+                "level_loader.spawn_level_entities.brick",
+            )
+            .unwrap_or_else(|| default_brick_material.clone())
         }
         #[cfg(not(feature = "texture_manifest"))]
         {
@@ -438,6 +456,7 @@ fn spawn_bricks_only(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
+    #[cfg(feature = "texture_manifest")] mut fallback: Option<&mut FallbackRegistry>,
 ) {
     let default_brick_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.9, 0.1, 0.1),
@@ -451,9 +470,13 @@ fn spawn_bricks_only(
     let brick_material = {
         #[cfg(feature = "texture_manifest")]
         {
-            canonical_handles
-                .and_then(|handles| handles.get(BaselineMaterialKind::Brick))
-                .unwrap_or_else(|| default_brick_material.clone())
+            baseline_material_handle(
+                canonical_handles,
+                fallback.as_deref_mut(),
+                BaselineMaterialKind::Brick,
+                "level_loader.spawn_bricks_only",
+            )
+            .unwrap_or_else(|| default_brick_material.clone())
         }
         #[cfg(not(feature = "texture_manifest"))]
         {
@@ -610,6 +633,7 @@ fn restart_level_on_key(
     mut game_progress: ResMut<GameProgress>,
     mut level_advance: ResMut<LevelAdvanceState>,
     #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
+    #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
 ) {
     if !keyboard.just_pressed(KeyCode::KeyR) {
         return;
@@ -631,6 +655,8 @@ fn restart_level_on_key(
         &mut level_advance,
         #[cfg(feature = "texture_manifest")]
         canonical.as_deref(),
+        #[cfg(feature = "texture_manifest")]
+        fallback.as_deref_mut(),
     ) {
         Ok(_) => info!("Restarted level {level_number}"),
         Err(err) => warn!("Failed to restart level {level_number}: {err}"),
@@ -653,6 +679,7 @@ pub(crate) fn process_level_switch_requests(
     mut game_progress: ResMut<GameProgress>,
     mut level_advance: ResMut<LevelAdvanceState>,
     #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
+    #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
 ) {
     if requests.is_empty() {
         return;
@@ -687,6 +714,8 @@ pub(crate) fn process_level_switch_requests(
         &mut level_advance,
         #[cfg(feature = "texture_manifest")]
         canonical.as_deref(),
+        #[cfg(feature = "texture_manifest")]
+        fallback.as_deref_mut(),
     ) {
         Ok(def) => info!(
             target: "level_switch",
@@ -715,6 +744,7 @@ fn handle_level_advance_delay(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
+    #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
 ) {
     if !level_advance.active || level_advance.pending.is_none() || level_advance.growth_spawned {
         return;
@@ -749,9 +779,13 @@ fn handle_level_advance_delay(
     let paddle_material = {
         #[cfg(feature = "texture_manifest")]
         {
-            canonical_handles
-                .and_then(|handles| handles.get(BaselineMaterialKind::Paddle))
-                .unwrap_or_else(|| debug_material.clone())
+            baseline_material_handle(
+                canonical_handles,
+                fallback.as_deref_mut(),
+                BaselineMaterialKind::Paddle,
+                "level_loader.handle_level_advance_delay.paddle",
+            )
+            .unwrap_or_else(|| debug_material.clone())
         }
         #[cfg(not(feature = "texture_manifest"))]
         {
@@ -762,9 +796,13 @@ fn handle_level_advance_delay(
     let ball_material = {
         #[cfg(feature = "texture_manifest")]
         {
-            canonical_handles
-                .and_then(|handles| handles.get(BaselineMaterialKind::Ball))
-                .unwrap_or_else(|| debug_material.clone())
+            baseline_material_handle(
+                canonical_handles,
+                fallback.as_deref_mut(),
+                BaselineMaterialKind::Ball,
+                "level_loader.handle_level_advance_delay.ball",
+            )
+            .unwrap_or_else(|| debug_material.clone())
         }
         #[cfg(not(feature = "texture_manifest"))]
         {
@@ -845,6 +883,7 @@ fn finalize_level_advance(
     mut rapier_config: Query<&mut RapierConfiguration>,
     gravity_cfg: Res<GravityConfig>,
     #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
+    #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
 ) {
     if !level_advance.active
         || !level_advance.growth_spawned
@@ -862,6 +901,8 @@ fn finalize_level_advance(
         &mut materials,
         #[cfg(feature = "texture_manifest")]
         canonical.as_deref(),
+        #[cfg(feature = "texture_manifest")]
+        fallback.as_deref_mut(),
     );
     // Restore gravity to new level's normal.
     if let Ok(mut config) = rapier_config.single_mut() {
@@ -940,6 +981,7 @@ fn force_load_level_from_path(
     game_progress: &mut ResMut<GameProgress>,
     level_advance: &mut ResMut<LevelAdvanceState>,
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
+    #[cfg(feature = "texture_manifest")] fallback: Option<&mut FallbackRegistry>,
 ) -> Result<LevelDefinition, String> {
     reset_level_state(
         commands,
@@ -964,6 +1006,8 @@ fn force_load_level_from_path(
         rapier_config,
         #[cfg(feature = "texture_manifest")]
         canonical,
+        #[cfg(feature = "texture_manifest")]
+        fallback,
     );
     commands.insert_resource(CurrentLevel(def.clone()));
     Ok(def)
@@ -1004,6 +1048,7 @@ fn apply_level_definition(
     gravity_cfg: &mut ResMut<GravityConfig>,
     rapier_config: &mut Query<&mut RapierConfiguration>,
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
+    #[cfg(feature = "texture_manifest")] fallback: Option<&mut FallbackRegistry>,
 ) {
     if let Some((x, y, z)) = def.gravity {
         gravity_cfg.normal = Vec3::new(x, y, z);
@@ -1022,5 +1067,7 @@ fn apply_level_definition(
         spawn_points,
         #[cfg(feature = "texture_manifest")]
         canonical,
+        #[cfg(feature = "texture_manifest")]
+        fallback,
     );
 }

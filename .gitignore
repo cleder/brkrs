@@ -3,6 +3,12 @@
 debug/
 release/
 
+# Local tooling environments
+/.venv
+
+# Tool caches
+/.rumdl_cache
+
 # Rust backup files
 *.rs.bk
 *.rlib

@@ -57,8 +57,8 @@ description: "Task list for Textured Visuals Overhaul implementation"
 
 - [x] T010 [US1] Implement canonical material baking system for ball/paddle/bricks/sidewalls/background in `src/systems/textures/materials.rs` using manifest data.
 - [x] T011 [US1] Apply baseline textures during level spawn/resets by extending `src/level_loader.rs` to request materials via the new resources.
-- [ ] T012 [US1] Wire fallback application + `log_once` helper inside `src/systems/textures/materials.rs` so missing assets swap immediately without spam.
-- [ ] T013 [US1] Keep `/visual-assets/manifest` contract aligned with runtime schema by documenting exported fields in `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml` and adding any required adapters.
+- [x] T012 [US1] Wire fallback application + `log_once` helper inside `src/systems/textures/materials.rs` so missing assets swap immediately without spam.
+- [x] T013 [US1] Keep `/visual-assets/manifest` contract aligned with runtime schema by documenting exported fields in `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml` and adding any required adapters.
 
 **Parallel Example (US1)**: Implementers can build T008 and T009 simultaneously, while T010/T011 proceed in parallel once manifest loader is stable (different files: `tests/*` vs `src/systems/textures/*`).
 
@@ -74,7 +74,7 @@ description: "Task list for Textured Visuals Overhaul implementation"
 
 ### Tests for User Story 2
 
-- [ ] T014 [P] [US2] Add type-variant swap tests in `tests/type_variants.rs` covering both immediate spawns and runtime mutations.
+- [x] T014 [P] [US2] Add type-variant swap tests in `tests/type_variants.rs` covering both immediate spawns and runtime mutations.
 
 ### Implementation for User Story 2
 

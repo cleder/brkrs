@@ -1,5 +1,6 @@
 //! Material and fallback plumbing for the texture subsystem.
 
+use super::loader::ObjectClass;
 use std::collections::{HashMap, HashSet};
 
 use bevy::prelude::*;
@@ -15,6 +16,7 @@ impl Plugin for TextureMaterialsPlugin {
         app.add_systems(Startup, initialize_fallback_registry);
         app.init_resource::<ProfileMaterialBank>();
         app.init_resource::<CanonicalMaterialHandles>();
+        app.init_resource::<TypeVariantRegistry>();
         app.add_systems(Update, hydrate_texture_materials);
     }
 }
@@ -106,6 +108,15 @@ pub enum BaselineMaterialKind {
     Background,
 }
 
+impl BaselineMaterialKind {
+    fn profile_id(self) -> &'static str {
+        BASELINE_PROFILE_IDS
+            .iter()
+            .find_map(|(kind, id)| (*kind == self).then_some(*id))
+            .unwrap_or("unknown")
+    }
+}
+
 const BASELINE_PROFILE_IDS: &[(BaselineMaterialKind, &str)] = &[
     (BaselineMaterialKind::Ball, "ball/default"),
     (BaselineMaterialKind::Paddle, "paddle/default"),
@@ -136,6 +147,46 @@ impl ProfileMaterialBank {
 
     pub fn handle(&self, profile_id: &str) -> Option<Handle<StandardMaterial>> {
         self.handles.get(profile_id).cloned()
+    }
+
+    /// Test helper: insert a mapping for a profile id -> material handle.
+    /// This exists to make unit tests straightforward without requiring the AssetServer.
+    pub fn insert_for_tests(&mut self, profile_id: &str, handle: Handle<StandardMaterial>) {
+        self.handles.insert(profile_id.to_string(), handle);
+    }
+}
+
+/// Registry mapping (object class + type id) -> baked material handle.
+#[derive(Resource, Default, Debug)]
+pub struct TypeVariantRegistry {
+    map: HashMap<(ObjectClass, u8), Handle<StandardMaterial>>,
+}
+
+impl TypeVariantRegistry {
+    pub fn rebuild(
+        &mut self,
+        manifest: &TextureManifest,
+        bank: &ProfileMaterialBank,
+        fallback: &mut FallbackRegistry,
+    ) {
+        self.map.clear();
+        for variant in manifest.type_variants.iter() {
+            let profile = variant.profile_id.as_str();
+            let handle = bank.handle(profile).unwrap_or_else(|| {
+                fallback
+                    .handle(match variant.object_class {
+                        ObjectClass::Ball => FallbackMaterial::Ball,
+                        ObjectClass::Brick => FallbackMaterial::Brick,
+                    })
+                    .clone()
+            });
+            self.map
+                .insert((variant.object_class, variant.type_id), handle);
+        }
+    }
+
+    pub fn get(&self, class: ObjectClass, type_id: u8) -> Option<Handle<StandardMaterial>> {
+        self.map.get(&(class, type_id)).cloned()
     }
 }
 
@@ -180,6 +231,7 @@ fn hydrate_texture_materials(
     mut bank: ResMut<ProfileMaterialBank>,
     mut canonical: ResMut<CanonicalMaterialHandles>,
     mut fallback: ResMut<FallbackRegistry>,
+    type_variants: Option<ResMut<TypeVariantRegistry>>,
 ) {
     let Some(manifest) = manifest else {
         return;
@@ -191,6 +243,10 @@ fn hydrate_texture_materials(
         return;
     }
     bank.rebuild(&manifest, &asset_server, materials.as_mut());
+    if let Some(mut registry) = type_variants {
+        // Need to call rebuild with mutable fallback which consumes &mut FallbackRegistry
+        registry.rebuild(&manifest, &bank, fallback.as_mut());
+    }
     canonical.sync(&bank, fallback.as_mut());
     info!(
         target: "textures::materials",
@@ -244,4 +300,52 @@ fn fallback_handle(
 ) -> Handle<StandardMaterial> {
     fallback.log_once(format!("missing profile {profile_id}; using fallback"));
     fallback.handle(kind.into()).clone()
+}
+
+fn fallback_material_handle(
+    fallback: &mut FallbackRegistry,
+    kind: BaselineMaterialKind,
+    warn_key: Option<String>,
+) -> Handle<StandardMaterial> {
+    if let Some(key) = warn_key {
+        fallback.log_once(key);
+    }
+    fallback.handle(kind.into()).clone()
+}
+
+/// Resolve a canonical baseline material, falling back (and logging) when missing.
+pub fn baseline_material_handle(
+    canonical: Option<&CanonicalMaterialHandles>,
+    fallback: Option<&mut FallbackRegistry>,
+    kind: BaselineMaterialKind,
+    warn_context: &str,
+) -> Option<Handle<StandardMaterial>> {
+    if let Some(handles) = canonical {
+        if let Some(handle) = handles.get(kind) {
+            return Some(handle);
+        }
+        if !handles.is_ready() {
+            return fallback.map(|registry| fallback_material_handle(registry, kind, None));
+        }
+        return fallback.map(|registry| {
+            fallback_material_handle(
+                registry,
+                kind,
+                Some(format!(
+                    "{warn_context}: missing canonical profile '{}'",
+                    kind.profile_id()
+                )),
+            )
+        });
+    }
+    fallback.map(|registry| {
+        fallback_material_handle(
+            registry,
+            kind,
+            Some(format!(
+                "{warn_context}: canonical handles unavailable; defaulting to '{}'",
+                kind.profile_id()
+            )),
+        )
+    })
 }

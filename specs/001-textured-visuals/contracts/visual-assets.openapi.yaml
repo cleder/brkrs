@@ -41,7 +41,7 @@ components:
   schemas:
     TextureManifest:
       type: object
-      required: [profiles, typeVariants]
+      required: [profiles, typeVariants, levelOverrides]
       properties:
         profiles:
           type: array
@@ -51,6 +51,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TypeVariant'
+        levelOverrides:
+          type: array
+          description: Per-level presentation overrides keyed to level numbers.
+          items:
+            $ref: '#/components/schemas/LevelTextureSet'
+        levelSwitch:
+          $ref: '#/components/schemas/LevelSwitchState'
     VisualAssetProfile:
       type: object
       required: [id, albedoPath]
@@ -89,6 +96,7 @@ components:
           type: array
           items:
             type: string
+          description: Ordered fallback profiles the runtime will attempt before using baked materials.
     TypeVariant:
       type: object
       required: [objectClass, typeId, profileId]
@@ -108,9 +116,55 @@ components:
           minItems: 4
           maxItems: 4
         animation:
+          $ref: '#/components/schemas/AnimationDescriptor'
+    AnimationDescriptor:
+      type: object
+      required: [kind]
+      properties:
+        kind:
+          type: string
+        params:
           type: object
-          properties:
-            kind:
-              type: string
-            params:
-              type: object
+          additionalProperties: true
+          description: Free-form parameter bag interpreted by the engine for prototype effects.
+    LevelTextureSet:
+      type: object
+      required: [levelNumber]
+      properties:
+        levelNumber:
+          type: integer
+          format: int32
+        groundProfile:
+          type: string
+          nullable: true
+        backgroundProfile:
+          type: string
+          nullable: true
+        sidewallProfile:
+          type: string
+          nullable: true
+        tint:
+          type: array
+          items:
+            type: number
+          minItems: 4
+          maxItems: 4
+          nullable: true
+          description: Optional RGBA multiplier applied to all override materials.
+        notes:
+          type: string
+          nullable: true
+    LevelSwitchState:
+      type: object
+      required: [orderedLevels, currentIndex, pendingSwitch]
+      properties:
+        orderedLevels:
+          type: array
+          items:
+            type: integer
+            format: int32
+        currentIndex:
+          type: integer
+          format: int32
+        pendingSwitch:
+          type: boolean
