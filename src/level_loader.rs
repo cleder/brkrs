@@ -2,17 +2,30 @@ use crate::systems::level_switch::{LevelSwitchRequested, LevelSwitchState};
 use crate::systems::respawn::{RespawnEntityKind, RespawnHandle, SpawnPoints, SpawnTransform};
 #[cfg(feature = "texture_manifest")]
 use crate::systems::textures::{
-    baseline_material_handle, BaselineMaterialKind, CanonicalMaterialHandles, FallbackRegistry,
+    baseline_material_handle, brick_type_material_handle, BaselineMaterialKind,
+    CanonicalMaterialHandles, FallbackRegistry, LevelPresentation, TextureManifest,
+    TypeVariantRegistry,
 };
+#[cfg(feature = "texture_manifest")]
+use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use ron::de::from_str;
 use serde::Deserialize;
 
 use crate::{
-    Ball, Brick, GameProgress, GravityConfig, LowerGoal, Paddle, BALL_RADIUS, CELL_HEIGHT,
-    CELL_WIDTH, PADDLE_HEIGHT, PADDLE_RADIUS, PLANE_H, PLANE_W,
+    Ball, BallTypeId, Brick, BrickTypeId, GameProgress, GravityConfig, LowerGoal, Paddle,
+    BALL_RADIUS, CELL_HEIGHT, CELL_WIDTH, PADDLE_HEIGHT, PADDLE_RADIUS, PLANE_H, PLANE_W,
 };
 use bevy_rapier3d::prelude::*;
+
+/// Bundled texture-related resources to reduce system parameter count.
+#[cfg(feature = "texture_manifest")]
+#[derive(SystemParam)]
+pub struct TextureResources<'w> {
+    pub canonical: Option<Res<'w, CanonicalMaterialHandles>>,
+    pub fallback: Option<ResMut<'w, FallbackRegistry>>,
+    pub type_registry: Option<Res<'w, TypeVariantRegistry>>,
+}
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct LevelDefinition {
@@ -31,6 +44,21 @@ impl Plugin for LevelLoaderPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GravityConfig>();
         app.add_systems(Startup, (load_level, spawn_level_entities).chain());
+        #[cfg(feature = "texture_manifest")]
+        app.add_systems(
+            Update,
+            (
+                advance_level_when_cleared,
+                handle_level_advance_delay,
+                finalize_level_advance,
+                spawn_fade_overlay_if_needed,
+                update_fade_overlay,
+                restart_level_on_key,
+                process_level_switch_requests,
+                sync_level_presentation,
+            ),
+        );
+        #[cfg(not(feature = "texture_manifest"))]
         app.add_systems(
             Update,
             (
@@ -186,6 +214,7 @@ fn spawn_level_entities(
     level: Option<Res<CurrentLevel>>,
     #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
     #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
+    #[cfg(feature = "texture_manifest")] type_registry: Option<Res<TypeVariantRegistry>>,
 ) {
     let Some(level) = level else {
         return;
@@ -201,6 +230,8 @@ fn spawn_level_entities(
         canonical.as_deref(),
         #[cfg(feature = "texture_manifest")]
         fallback.as_deref_mut(),
+        #[cfg(feature = "texture_manifest")]
+        type_registry.as_deref(),
     );
 }
 
@@ -212,6 +243,7 @@ fn spawn_level_entities_impl(
     spawn_points: &mut ResMut<SpawnPoints>,
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
     #[cfg(feature = "texture_manifest")] mut fallback: Option<&mut FallbackRegistry>,
+    #[cfg(feature = "texture_manifest")] type_registry: Option<&TypeVariantRegistry>,
 ) {
     debug!("Spawning entities for level {}", def.number);
     // Shared material
@@ -358,16 +390,39 @@ fn spawn_level_entities_impl(
                                 ExternalImpulse::default(),
                                 GravityScale(1.0),
                             ))
+                            .insert(BallTypeId(0)) // Default ball type
                             .insert(ball_respawn_handle(position));
                     }
                 }
-                3 => {
-                    // Brick
+                brick_type @ 3..=255 => {
+                    // Brick with type ID (value 3+ maps to brick types)
+                    let brick_type_id = *brick_type;
+                    #[cfg(feature = "texture_manifest")]
+                    let brick_mat = {
+                        // Try type-variant lookup first, then fall back to canonical brick
+                        type_registry
+                            .and_then(|reg| {
+                                reg.get(crate::systems::textures::ObjectClass::Brick, brick_type_id)
+                            })
+                            .or_else(|| {
+                                brick_type_material_handle(
+                                    type_registry,
+                                    fallback.as_deref_mut(),
+                                    brick_type_id,
+                                    "level_loader.spawn_level_entities.brick",
+                                )
+                            })
+                            .unwrap_or_else(|| brick_material.clone())
+                    };
+                    #[cfg(not(feature = "texture_manifest"))]
+                    let brick_mat = brick_material.clone();
+
                     commands.spawn((
                         Mesh3d(meshes.add(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9))),
-                        MeshMaterial3d(brick_material.clone()),
+                        MeshMaterial3d(brick_mat),
                         Transform::from_xyz(x, 2.0, z),
                         Brick,
+                        BrickTypeId(brick_type_id),
                         RigidBody::Fixed,
                         Collider::cuboid(CELL_HEIGHT * 0.9 / 2.0, 0.25, CELL_WIDTH * 0.9 / 2.0),
                         Restitution {
@@ -377,9 +432,6 @@ fn spawn_level_entities_impl(
                         CollidingEntities::default(),
                         ActiveEvents::COLLISION_EVENTS,
                     ));
-                }
-                _ => {
-                    warn!("Unsupported cell value {value} at ({row},{col})");
                 }
             }
         }
@@ -457,6 +509,7 @@ fn spawn_bricks_only(
     materials: &mut ResMut<Assets<StandardMaterial>>,
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
     #[cfg(feature = "texture_manifest")] mut fallback: Option<&mut FallbackRegistry>,
+    #[cfg(feature = "texture_manifest")] type_registry: Option<&TypeVariantRegistry>,
 ) {
     let default_brick_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.9, 0.1, 0.1),
@@ -486,16 +539,38 @@ fn spawn_bricks_only(
 
     for (row, row_data) in def.matrix.iter().enumerate() {
         for (col, value) in row_data.iter().enumerate() {
-            if *value != 3 {
+            if *value < 3 {
                 continue;
             }
+            let brick_type_id = *value;
             let x = -PLANE_H / 2.0 + (row as f32 + 0.5) * CELL_HEIGHT;
             let z = -PLANE_W / 2.0 + (col as f32 + 0.5) * CELL_WIDTH;
+
+            #[cfg(feature = "texture_manifest")]
+            let brick_mat = {
+                type_registry
+                    .and_then(|reg| {
+                        reg.get(crate::systems::textures::ObjectClass::Brick, brick_type_id)
+                    })
+                    .or_else(|| {
+                        brick_type_material_handle(
+                            type_registry,
+                            fallback.as_deref_mut(),
+                            brick_type_id,
+                            "level_loader.spawn_bricks_only",
+                        )
+                    })
+                    .unwrap_or_else(|| brick_material.clone())
+            };
+            #[cfg(not(feature = "texture_manifest"))]
+            let brick_mat = brick_material.clone();
+
             commands.spawn((
                 Mesh3d(meshes.add(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9))),
-                MeshMaterial3d(brick_material.clone()),
+                MeshMaterial3d(brick_mat),
                 Transform::from_xyz(x, 2.0, z),
                 Brick,
+                BrickTypeId(brick_type_id),
                 RigidBody::Fixed,
                 Collider::cuboid(CELL_HEIGHT * 0.9 / 2.0, 0.25, CELL_WIDTH * 0.9 / 2.0),
                 Restitution {
@@ -632,8 +707,7 @@ fn restart_level_on_key(
     ball_q: Query<Entity, With<Ball>>,
     mut game_progress: ResMut<GameProgress>,
     mut level_advance: ResMut<LevelAdvanceState>,
-    #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
-    #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
+    #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
 ) {
     if !keyboard.just_pressed(KeyCode::KeyR) {
         return;
@@ -654,9 +728,11 @@ fn restart_level_on_key(
         &mut game_progress,
         &mut level_advance,
         #[cfg(feature = "texture_manifest")]
-        canonical.as_deref(),
+        tex_res.canonical.as_deref(),
         #[cfg(feature = "texture_manifest")]
-        fallback.as_deref_mut(),
+        tex_res.fallback.as_deref_mut(),
+        #[cfg(feature = "texture_manifest")]
+        tex_res.type_registry.as_deref(),
     ) {
         Ok(_) => info!("Restarted level {level_number}"),
         Err(err) => warn!("Failed to restart level {level_number}: {err}"),
@@ -678,8 +754,7 @@ pub(crate) fn process_level_switch_requests(
     ball_q: Query<Entity, With<Ball>>,
     mut game_progress: ResMut<GameProgress>,
     mut level_advance: ResMut<LevelAdvanceState>,
-    #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
-    #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
+    #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
 ) {
     if requests.is_empty() {
         return;
@@ -713,9 +788,11 @@ pub(crate) fn process_level_switch_requests(
         &mut game_progress,
         &mut level_advance,
         #[cfg(feature = "texture_manifest")]
-        canonical.as_deref(),
+        tex_res.canonical.as_deref(),
         #[cfg(feature = "texture_manifest")]
-        fallback.as_deref_mut(),
+        tex_res.fallback.as_deref_mut(),
+        #[cfg(feature = "texture_manifest")]
+        tex_res.type_registry.as_deref(),
     ) {
         Ok(def) => info!(
             target: "level_switch",
@@ -884,6 +961,7 @@ fn finalize_level_advance(
     gravity_cfg: Res<GravityConfig>,
     #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
     #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
+    #[cfg(feature = "texture_manifest")] type_registry: Option<Res<TypeVariantRegistry>>,
 ) {
     if !level_advance.active
         || !level_advance.growth_spawned
@@ -903,6 +981,8 @@ fn finalize_level_advance(
         canonical.as_deref(),
         #[cfg(feature = "texture_manifest")]
         fallback.as_deref_mut(),
+        #[cfg(feature = "texture_manifest")]
+        type_registry.as_deref(),
     );
     // Restore gravity to new level's normal.
     if let Ok(mut config) = rapier_config.single_mut() {
@@ -982,6 +1062,7 @@ fn force_load_level_from_path(
     level_advance: &mut ResMut<LevelAdvanceState>,
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
     #[cfg(feature = "texture_manifest")] fallback: Option<&mut FallbackRegistry>,
+    #[cfg(feature = "texture_manifest")] type_registry: Option<&TypeVariantRegistry>,
 ) -> Result<LevelDefinition, String> {
     reset_level_state(
         commands,
@@ -1008,6 +1089,8 @@ fn force_load_level_from_path(
         canonical,
         #[cfg(feature = "texture_manifest")]
         fallback,
+        #[cfg(feature = "texture_manifest")]
+        type_registry,
     );
     commands.insert_resource(CurrentLevel(def.clone()));
     Ok(def)
@@ -1049,6 +1132,7 @@ fn apply_level_definition(
     rapier_config: &mut Query<&mut RapierConfiguration>,
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
     #[cfg(feature = "texture_manifest")] fallback: Option<&mut FallbackRegistry>,
+    #[cfg(feature = "texture_manifest")] type_registry: Option<&TypeVariantRegistry>,
 ) {
     if let Some((x, y, z)) = def.gravity {
         gravity_cfg.normal = Vec3::new(x, y, z);
@@ -1069,5 +1153,45 @@ fn apply_level_definition(
         canonical,
         #[cfg(feature = "texture_manifest")]
         fallback,
+        #[cfg(feature = "texture_manifest")]
+        type_registry,
     );
+}
+
+/// Sync `LevelPresentation` resource whenever `CurrentLevel` changes.
+///
+/// Looks up the current level number in the texture manifest's `level_overrides`
+/// and updates `LevelPresentation` with any per-level texture overrides.
+#[cfg(feature = "texture_manifest")]
+fn sync_level_presentation(
+    current_level: Option<Res<CurrentLevel>>,
+    manifest: Option<Res<TextureManifest>>,
+    presentation: Option<ResMut<LevelPresentation>>,
+) {
+    let Some(level) = current_level else {
+        return;
+    };
+    let Some(mut presentation) = presentation else {
+        // LevelPresentation not available (e.g., no TextureManifestPlugin)
+        return;
+    };
+    // Only update when CurrentLevel changes
+    if !level.is_changed() {
+        return;
+    }
+    let level_number = level.0.number;
+    if let Some(manifest) = manifest {
+        presentation.update_from(level_number, &manifest);
+        debug!(
+            target: "level_loader::presentation",
+            level = level_number,
+            ground = ?presentation.ground_profile(),
+            background = ?presentation.background_profile(),
+            sidewall = ?presentation.sidewall_profile(),
+            "Updated level presentation"
+        );
+    } else {
+        // No manifest loaded yet; reset to defaults
+        presentation.reset();
+    }
 }

@@ -59,14 +59,34 @@ const CELL_HEIGHT: f32 = PLANE_H / GRID_HEIGHT as f32; // ~1.364 (X dimension)
 pub struct Paddle;
 #[derive(Component)]
 pub struct Ball;
+
+/// Type ID for ball variants (used by texture manifest type_variants).
+/// When changed, the ball-type watcher system will swap materials accordingly.
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct BallTypeId(pub u8);
+
+/// Marker component for sidewall/border entities.
+/// Used by per-level texture override system to apply custom sidewall materials.
 #[derive(Component)]
-struct Border;
+pub struct Border;
+
+/// Marker component for the ground plane entity.
+/// Used by per-level texture override system to apply custom ground materials.
+#[derive(Component)]
+pub struct GroundPlane;
+
 #[derive(Component)]
 pub struct LowerGoal;
 #[derive(Component)]
 pub struct GridOverlay;
 #[derive(Component)]
 struct Brick;
+
+/// Type ID for brick variants (used by texture manifest type_variants).
+/// Applied during brick spawn based on level matrix values.
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct BrickTypeId(pub u8);
+
 #[derive(Component)]
 struct MarkedForDespawn;
 #[derive(Component)]
@@ -227,6 +247,7 @@ fn setup(
             ),
         ),
         MeshMaterial3d(materials.add(Color::from(SILVER))),
+        GroundPlane,
     ));
 
     commands.spawn((

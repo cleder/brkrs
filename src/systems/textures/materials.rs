@@ -4,9 +4,10 @@ use super::loader::ObjectClass;
 use std::collections::{HashMap, HashSet};
 
 use bevy::prelude::*;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
 use super::loader::{TextureManifest, VisualAssetProfile};
+use crate::{Ball, BallTypeId};
 
 /// Registers the fallback materials used whenever a texture fails to load.
 pub struct TextureMaterialsPlugin;
@@ -17,7 +18,7 @@ impl Plugin for TextureMaterialsPlugin {
         app.init_resource::<ProfileMaterialBank>();
         app.init_resource::<CanonicalMaterialHandles>();
         app.init_resource::<TypeVariantRegistry>();
-        app.add_systems(Update, hydrate_texture_materials);
+        app.add_systems(Update, (hydrate_texture_materials, watch_ball_type_changes));
     }
 }
 
@@ -347,5 +348,52 @@ pub fn baseline_material_handle(
                 kind.profile_id()
             )),
         )
+    })
+}
+
+/// System that watches for ball type changes and swaps materials accordingly.
+/// Runs every frame and checks for balls whose `BallTypeId` changed since last frame.
+fn watch_ball_type_changes(
+    mut balls: Query<(&BallTypeId, &mut MeshMaterial3d<StandardMaterial>), (With<Ball>, Changed<BallTypeId>)>,
+    type_registry: Res<TypeVariantRegistry>,
+    fallback: Option<Res<FallbackRegistry>>,
+) {
+    for (ball_type, mut material) in balls.iter_mut() {
+        if let Some(handle) = type_registry.get(ObjectClass::Ball, ball_type.0) {
+            debug!(
+                target: "textures::ball_type",
+                type_id = ball_type.0,
+                "Swapping ball material for type variant"
+            );
+            material.0 = handle;
+        } else if let Some(fb) = &fallback {
+            debug!(
+                target: "textures::ball_type",
+                type_id = ball_type.0,
+                "No type variant for ball; using fallback"
+            );
+            material.0 = fb.ball.clone();
+        }
+    }
+}
+
+/// Resolve a type-variant material for a brick, falling back if not found.
+pub fn brick_type_material_handle(
+    type_registry: Option<&TypeVariantRegistry>,
+    fallback: Option<&mut FallbackRegistry>,
+    brick_type: u8,
+    warn_context: &str,
+) -> Option<Handle<StandardMaterial>> {
+    if let Some(registry) = type_registry {
+        if let Some(handle) = registry.get(ObjectClass::Brick, brick_type) {
+            return Some(handle);
+        }
+    }
+    // Type variant not found, use canonical brick or fallback
+    fallback.map(|fb| {
+        fb.log_once(format!(
+            "{warn_context}: no type variant for brick type {brick_type}"
+        ));
+        fb.brick.clone()
     })
 }

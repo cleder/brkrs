@@ -8,12 +8,14 @@ pub mod loader;
 pub mod materials;
 pub mod overrides;
 
-pub use contracts::TextureManifestContract;
+pub use contracts::{PreviewProfileInput, PreviewVisualAsset, TextureManifestContract};
 pub use loader::{
-    LevelSwitchState, LevelTextureSet, TextureManifest, TextureManifestPlugin,
+    LevelSwitchState, LevelTextureSet, ObjectClass, TextureManifest, TextureManifestPlugin,
     TypeVariantDefinition, VisualAssetProfile,
 };
 pub use materials::{
-    baseline_material_handle, BaselineMaterialKind, CanonicalMaterialHandles, FallbackMaterial,
-    FallbackRegistry, ProfileMaterialBank, TextureMaterialsPlugin, TypeVariantRegistry,
+    baseline_material_handle, brick_type_material_handle, BaselineMaterialKind,
+    CanonicalMaterialHandles, FallbackMaterial, FallbackRegistry, ProfileMaterialBank,
+    TextureMaterialsPlugin, TypeVariantRegistry,
 };
+pub use overrides::{LevelOverridesPlugin, LevelPresentation};

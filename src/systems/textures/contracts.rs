@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
-use bevy::prelude::{Color, Vec2};
+use bevy::prelude::{Color, Event, Vec2};
 use ron::Value as RonValue;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 
 use super::loader::{
@@ -205,4 +205,82 @@ fn object_class_label(class: ObjectClass) -> String {
 
 fn ron_to_json(value: &RonValue) -> JsonValue {
     serde_json::to_value(value).unwrap_or(JsonValue::Null)
+}
+
+// ============================================================================
+// Preview Asset Tooling Hook
+// ============================================================================
+
+/// Event to request a temporary texture profile preview.
+///
+/// Implements the `/visual-assets/preview` contract for tooling.
+/// When received, the system temporarily injects the profile into the manifest
+/// so artists can preview new art without rebuilding the game.
+#[derive(Event, Debug, Clone)]
+pub struct PreviewVisualAsset {
+    /// The profile to preview. Must include a valid `id` field.
+    pub profile: VisualAssetProfileContract,
+    /// If true, the preview persists until cleared; otherwise, it's cleared on next level load.
+    pub persist: bool,
+}
+
+/// Contract-friendly input for creating a preview profile from JSON.
+///
+/// This mirrors `VisualAssetProfile` but uses contract-compatible field names
+/// and can be deserialized from JSON payloads.
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PreviewProfileInput {
+    pub id: String,
+    pub albedo_path: String,
+    #[serde(default)]
+    pub normal_path: Option<String>,
+    #[serde(default = "default_roughness")]
+    pub roughness: f32,
+    #[serde(default)]
+    pub metallic: f32,
+    #[serde(default = "default_uv_scale")]
+    pub uv_scale: [f32; 2],
+    #[serde(default)]
+    pub uv_offset: [f32; 2],
+    #[serde(default)]
+    pub fallback_chain: Vec<String>,
+}
+
+fn default_roughness() -> f32 {
+    0.5
+}
+
+fn default_uv_scale() -> [f32; 2] {
+    [1.0, 1.0]
+}
+
+impl From<PreviewProfileInput> for VisualAssetProfileContract {
+    fn from(input: PreviewProfileInput) -> Self {
+        Self {
+            id: input.id,
+            albedo_path: input.albedo_path,
+            normal_path: input.normal_path,
+            roughness: input.roughness,
+            metallic: input.metallic,
+            uv_scale: input.uv_scale,
+            uv_offset: input.uv_offset,
+            fallback_chain: input.fallback_chain,
+        }
+    }
+}
+
+impl From<PreviewProfileInput> for VisualAssetProfile {
+    fn from(input: PreviewProfileInput) -> Self {
+        Self {
+            id: input.id,
+            albedo_path: input.albedo_path,
+            normal_path: input.normal_path,
+            roughness: input.roughness,
+            metallic: input.metallic,
+            uv_scale: Vec2::from_array(input.uv_scale),
+            uv_offset: Vec2::from_array(input.uv_offset),
+            fallback_chain: input.fallback_chain,
+        }
+    }
 }

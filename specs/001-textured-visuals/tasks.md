@@ -78,10 +78,10 @@ description: "Task list for Textured Visuals Overhaul implementation"
 
 ### Implementation for User Story 2
 
-- [ ] T015 [US2] Extend `src/systems/textures/loader.rs` to populate a `TypeVariantRegistry` resource from manifest `type_variants` entries.
-- [ ] T016 [US2] Implement a ball-type watcher system in `src/systems/textures/materials.rs` that swaps materials within 0.1 seconds when the ball component changes.
-- [ ] T017 [US2] Apply brick-type textures on spawn/update by integrating registry lookups into `src/level_loader.rs` (brick matrix parsing).
-- [ ] T018 [US2] Surface type-variant metadata through the `/visual-assets/manifest` contract by updating `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml` and any associated tooling/export commands.
+- [x] T015 [US2] Extend `src/systems/textures/loader.rs` to populate a `TypeVariantRegistry` resource from manifest `type_variants` entries.
+- [x] T016 [US2] Implement a ball-type watcher system in `src/systems/textures/materials.rs` that swaps materials within 0.1 seconds when the ball component changes.
+- [x] T017 [US2] Apply brick-type textures on spawn/update by integrating registry lookups into `src/level_loader.rs` (brick matrix parsing).
+- [x] T018 [US2] Surface type-variant metadata through the `/visual-assets/manifest` contract by updating `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml` and any associated tooling/export commands.
 
 **Parallel Example (US2)**: While T014 establishes regression tests, T015 and T016 can run concurrently (loader vs materials). T017 waits on registry definitions but can start before contract doc (T018).
 

@@ -7,9 +7,11 @@ use bevy::prelude::*;
 use bevy::tasks::ConditionalSendFuture;
 use ron::Value as RonValue;
 use serde::Deserialize;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
+use super::contracts::PreviewVisualAsset;
 use super::materials::TextureMaterialsPlugin;
+use super::overrides::LevelOverridesPlugin;
 
 const TEXTURE_MANIFEST_PATH: &str = "textures/manifest.ron";
 
@@ -19,11 +21,20 @@ pub struct TextureManifestPlugin;
 impl Plugin for TextureManifestPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(TextureMaterialsPlugin);
+        app.add_plugins(LevelOverridesPlugin);
         app.init_asset::<RawTextureManifest>();
         app.register_asset_loader(TextureManifestLoader);
         app.init_resource::<TextureManifest>();
+        app.add_event::<PreviewVisualAsset>();
         app.add_systems(Startup, load_texture_manifest);
-        app.add_systems(Update, (hydrate_manifest_resource, log_manifest_removal));
+        app.add_systems(
+            Update,
+            (
+                hydrate_manifest_resource,
+                process_preview_requests,
+                log_manifest_removal,
+            ),
+        );
     }
 }
 
@@ -258,6 +269,47 @@ fn hydrate_manifest_resource(
                 "Texture manifest hydrated"
             );
         }
+    }
+}
+
+/// Process preview asset requests from tooling.
+///
+/// Implements the `/visual-assets/preview` contract by temporarily injecting
+/// profiles into the manifest. This allows artists to preview new textures
+/// without modifying the manifest file.
+fn process_preview_requests(
+    mut events: EventReader<PreviewVisualAsset>,
+    mut manifest: ResMut<TextureManifest>,
+) {
+    for event in events.read() {
+        let profile_id = event.profile.id.clone();
+        debug!(
+            target: "textures::preview",
+            profile_id = %profile_id,
+            persist = event.persist,
+            "Previewing asset profile"
+        );
+
+        // Convert contract profile to runtime profile
+        let runtime_profile = VisualAssetProfile {
+            id: event.profile.id.clone(),
+            albedo_path: event.profile.albedo_path.clone(),
+            normal_path: event.profile.normal_path.clone(),
+            roughness: event.profile.roughness,
+            metallic: event.profile.metallic,
+            uv_scale: Vec2::from_array(event.profile.uv_scale),
+            uv_offset: Vec2::from_array(event.profile.uv_offset),
+            fallback_chain: event.profile.fallback_chain.clone(),
+        };
+
+        // Insert/update the profile in the manifest
+        manifest.profiles.insert(profile_id, runtime_profile);
+
+        info!(
+            target: "textures::preview",
+            profile = %event.profile.id,
+            "Preview profile injected into manifest"
+        );
     }
 }
 
