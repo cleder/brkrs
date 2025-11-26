@@ -55,7 +55,7 @@ description: "Task list for Ball Respawn System"
 - [X] T011 [US1] Implement `respawn_scheduler_system` in `src/systems/respawn.rs` that consumes `LifeLostEvent`, populates `RespawnSchedule`, applies `BallFrozen`/`InputLocked`, and zeros velocities using Rapier components.
 - [X] T012 [US1] Implement `respawn_executor_system` in `src/systems/respawn.rs` that ticks the Bevy `Timer`, respawns/translates ball+paddle using `SpawnPoints`, emits `RespawnScheduled`/`RespawnCompleted`, and keeps ball stationary.
 - [X] T013 [US1] Add an automatic release system in `src/systems/respawn.rs` that removes `BallFrozen` only after paddle controls unlock so the ball resumes motion with no manual input or extra impulse.
-- [ ] T014 [US1] Update `specs/002-ball-respawn/quickstart.md` manual steps with the exact launch-input check to close the independent test loop.
+- [X] T014 [US1] Update `specs/002-ball-respawn/quickstart.md` manual steps with the exact launch-input check to close the independent test loop.
 - [ ] T015 [P] [US1] Add `tests/respawn_timer.rs` exercising `RespawnSchedule` timing tolerance (±16 ms) and verifying the ball remains stationary until launch.
 
 **Checkpoint**: User Story 1 is fully functional and testable; qualifies as MVP.

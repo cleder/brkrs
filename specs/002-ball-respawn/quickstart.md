@@ -37,29 +37,33 @@ cargo build --target wasm32-unknown-unknown --release
 1. **Respawn delay and positions**
    - Play level 001, allow the ball to hit the lower goal.
    - Observe the 1 second pause (ball + paddle hidden) and confirm both respawn exactly at the grid-defined transforms.
-1. **Stationary until controls return**
-   - After respawn completes, the ball must remain frozen atop the paddle until movement controls unlock. It resumes motion automatically the same frame you regain control.
+
+1. **Stationary until controls return (launch-input check)**
+   - After respawn completes, keep your hands off the launch input (space/left click). The ball must remain frozen atop the paddle until movement controls unlock, then resume motion on its own the exact frame you regain control—no manual launch allowed.
+
 1. **Controls locked**
    - Attempt to move the paddle during the respawn delay; input should be ignored until the timer completes and both the paddle and ball release together.
+
 1. **Lives integration hook**
    - Enable debug logging (`RUST_LOG=info cargo run`). Lose a ball and confirm logs similar to:
 
-```text
-life lost: ball=Entity(34) cause=LowerGoal spawn=(0.00, 2.00, 0.00)
-respawn scheduled: completes_at=12.45 remaining_lives=2
-```
+   ```text
+   life lost: ball=Entity(34) cause=LowerGoal spawn=(0.00, 2.00, 0.00)
+   respawn scheduled: completes_at=12.45 remaining_lives=2
+   ```
 
 1. **Repeated losses + game-over skip**
    - Intentionally lose the ball multiple times in a row. Watch for log output indicating queued respawns and the queue length:
 
-```text
-warn: respawn already pending; queued additional LifeLostEvent (queue_len=1)
-info: life lost: ... remaining_lives=1
-```
+   ```text
+   warn: respawn already pending; queued additional LifeLostEvent (queue_len=1)
+   info: life lost: ... remaining_lives=1
+   ```
 
-- When the final life is lost, expect a `GameOverRequested` log (remaining_lives=0) and no further respawn scheduling entries. Confirm at least 5 consecutive respawns complete without panics or timer drift.
+   - When the final life is lost, expect a `GameOverRequested` log (remaining_lives=0) and no further respawn scheduling entries. Confirm at least 5 consecutive respawns complete without panics or timer drift.
+
 1. **Multi-ball safety (if feature flag enabled)**
-- Spawn an extra ball (debug command). Lose only one ball and ensure the remaining ball stays active while only the lost ball respawns.
+   - Spawn an extra ball (debug command). Lose only one ball and ensure the remaining ball stays active while only the lost ball respawns.
 
 ## Troubleshooting
 

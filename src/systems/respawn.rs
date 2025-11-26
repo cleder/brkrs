@@ -20,6 +20,10 @@ pub struct LivesState {
 #[path = "../../tests/common/multi_respawn.rs"]
 mod multi_respawn;
 
+#[cfg(test)]
+#[path = "../../tests/common/respawn_timer.rs"]
+mod respawn_timer;
+
 impl Default for LivesState {
     fn default() -> Self {
         Self {
