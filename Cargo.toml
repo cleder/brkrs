@@ -5,12 +5,6 @@ version = "0.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
-
-[target.x86_64-unknown-linux-gnu]
-linker = "clang"
-rustflags = ["-C", "link-arg=-fuse-ld=lld"]
-
-
 # Enable a small amount of optimization in debug mode
 [profile.dev]
 opt-level = 1
@@ -27,6 +21,7 @@ bevy_rapier3d = { version = "0.31.0", features = [
 ] }
 serde = { version = "1.0", features = ["derive"] }
 ron = "0.8"
+tracing = "0.1"
 
 # These lints may be important signals about code quality, but normal Bevy code
 # commonly triggers them and the CI workflow treats them as errors, so we've

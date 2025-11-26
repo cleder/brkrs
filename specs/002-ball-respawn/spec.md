@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "implement a ball respawn when a ball is despawned. respawn the ball at its initial position as specified in the level matrix, move the paddle to its initial position as specified in the matrix"
 
+## Clarifications
+
+### Session 2025-11-25
+
+- Q: After the 1 second respawn delay, does the ball auto-launch or stay inert until the player acts? → A: Ball is stationary at spawn
+- Q: Should the respawn feature decrement lives internally or emit an event for the lives system? → A: Emit LifeLost event
+- Q: During the 1 second respawn delay, should paddle controls stay active? → A: Disable controls during delay
+- Q: Can levels override respawn positions independently from the level matrix? → A: Always use matrix positions
+- Q: What timing mechanism enforces the 1 second respawn delay? → A: Use global Time resource
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Ball Respawn After Loss (Priority: P1)
@@ -18,8 +28,8 @@ When a player loses the ball (it falls past the lower boundary), the game automa
 **Acceptance Scenarios**:
 
 1. **Given** the ball is in play, **When** the ball collides with the lower goal boundary and is despawned, **Then** a new ball spawns at position "2" from the level matrix
-2. **Given** the ball is in play, **When** the ball collides with the lower goal boundary and is despawned, **Then** the paddle moves to position "1" from the level matrix
-3. **Given** the ball and paddle have respawned, **When** respawn completes, **Then** the ball remains stationary until player interaction or timer expires
+2. **Given** the ball is in play, **When** the ball collides with the lower goal boundary and is despawned, **Then** the paddle moves to position "1" from the level matrix and controls remain disabled until respawn completes
+3. **Given** the ball and paddle have respawned, **When** respawn completes, **Then** the ball remains stationary (zero velocity) until the player relaunches it
 4. **Given** a ball respawn occurs, **When** checking player lives, **Then** the life count decreases by one (assuming lives system exists)
 
 ---
@@ -69,17 +79,17 @@ When a respawn occurs, the player receives clear visual feedback indicating the 
 ### Functional Requirements
 
 - **FR-001**: System MUST detect when a ball entity is despawned due to lower goal collision
-- **FR-002**: System MUST retrieve initial ball position (designated by "2" in level matrix) when respawn is triggered
-- **FR-003**: System MUST retrieve initial paddle position (designated by "1" in level matrix) when respawn is triggered
+- **FR-002**: System MUST retrieve the ball respawn position directly from the "2" cell in the level matrix
+- **FR-003**: System MUST retrieve the paddle respawn position directly from the "1" cell in the level matrix
 - **FR-004**: System MUST spawn a new ball entity at the retrieved initial position with default physics properties
 - **FR-005**: System MUST move the existing paddle entity to the retrieved initial position
 - **FR-006**: System MUST reset paddle velocity and rotation to initial state during respawn
-- **FR-007**: System MUST reset ball velocity to zero or initial launch velocity during respawn
-- **FR-008**: System MUST handle cases where level matrix positions "1" or "2" are missing by using fallback default positions (center of play area)
-- **FR-009**: System MUST decrement player lives count before triggering respawn (if lives system exists)
-- **FR-010**: System MUST trigger game over state instead of respawn when player has zero remaining lives
+- **FR-007**: System MUST reset ball velocity to zero and keep the ball stationary until the player relaunches it
+- **FR-008**: System MUST handle cases where level matrix positions "1" or "2" are missing by using fallback default positions (center of play area); levels cannot override respawn coordinates elsewhere
+- **FR-009**: System MUST emit a `LifeLost` event before triggering respawn so the lives system can decrement counts
+- **FR-010**: System MUST respect a `GameOver` signal from the lives system and skip respawn when zero lives remain
 - **FR-011**: System MUST maintain game state (score, brick destruction, level progress) across respawns
-- **FR-012**: Respawn process MUST include a 1 second delay between ball despawn and repositioning to give players time to register the ball loss
+- **FR-012**: Respawn process MUST include a 1 second delay, tracked via Bevy's global `Time` resource, between ball despawn and repositioning to give players time to register the loss; paddle and launch controls remain disabled for this duration
 
 ### Key Entities
 
@@ -93,10 +103,16 @@ When a respawn occurs, the player receives clear visual feedback indicating the 
 
 ### Measurable Outcomes
 
-- **SC-001**: Ball and paddle successfully return to initial positions within 100ms of ball despawn event
+- **SC-001**: Ball and paddle successfully return to initial positions within 1 second of ball despawn event
 - **SC-002**: Respawn system handles 100 consecutive ball losses without errors or performance degradation
 - **SC-003**: Player can continue gameplay immediately after respawn with full control restored
 - **SC-004**: Respawn correctly decrements lives counter 100% of the time when integrated with lives system
 - **SC-005**: Game correctly transitions to game over state when final life is lost (0% incorrect respawns on last life)
 - **SC-006**: Initial positions from level matrix are accurately retrieved and applied 100% of the time
 - **SC-007**: Fallback positions are used successfully when matrix positions are invalid or missing
+
+## Known Limitations & Follow-Ups *(Phase 6)*
+
+1. **Grid overlay visibility warning** – `bevy lint` / `cargo clippy` warn that `GridOverlay` is `pub(crate)` while `toggle_grid_visibility` is `pub`. Nothing fails at runtime, but we should either widen the struct visibility or reduce the helper function to crate scope before feature freeze.
+2. **Unused monitor import in WASM** – `cargo build --target wasm32-unknown-unknown --release` currently warns about an unused `MonitorSelection` import (only required for desktop-exclusive window handling). Feature-gate or remove the import to keep WASM builds clean.
+3. **Structured logging scope** – Respawn events emit structured `tracing` spans/logs (`life_lost`, `respawn_scheduled`, `game_over_requested`), but the rest of the gameplay stack still relies on ad-hoc `log` macros. Future polish should migrate other critical systems or install a shared `tracing-subscriber` configuration so downstream tooling can consume the richer fields.

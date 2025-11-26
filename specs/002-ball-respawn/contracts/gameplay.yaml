@@ -1,0 +1,155 @@
+openapi: 3.1.0
+info:
+  title: Ball Respawn Event Contract (Conceptual)
+  version: "0.2.0"
+  description: |
+    Conceptual HTTP contract mirroring the in-game respawn events so tooling or automation can
+    simulate life loss, respawn scheduling, and game over transitions.
+servers:
+  - url: https://game.local/api
+paths:
+  /sessions/{sessionId}/life-loss:
+    post:
+      summary: Notify the engine that a ball crossed the lower boundary.
+      tags: [Respawn]
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LifeLossEvent'
+      responses:
+        '202':
+          description: Respawn scheduled or skipped due to game over.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LifeLossResponse'
+  /sessions/{sessionId}/respawns/{ticketId}/complete:
+    post:
+      summary: Confirm that the respawn delay elapsed and the ball/paddle were reset.
+      tags: [Respawn]
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RespawnComplete'
+      responses:
+        '204':
+          description: Respawn marked complete; ball remains stationary until launch input.
+  /sessions/{sessionId}/game-over:
+    post:
+      summary: Report that no lives remain so respawn must abort.
+      tags: [Lives]
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameOverRequest'
+      responses:
+        '204':
+          description: Game over acknowledged.
+components:
+  parameters:
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Gameplay session identifier.
+  schemas:
+    Vec3:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        z:
+          type: number
+      required: [x, y, z]
+    LifeLossEvent:
+      type: object
+      properties:
+        ballEntity:
+          type: string
+          description: ECS entity ID (for telemetry only).
+        paddleEntity:
+          type: string
+        cause:
+          type: string
+          enum: [LowerGoal]
+        timestampMs:
+          type: integer
+          format: int64
+      required: [ballEntity, paddleEntity, cause, timestampMs]
+    LifeLossResponse:
+      type: object
+      properties:
+        ticketId:
+          type: string
+          description: Present when respawn was scheduled.
+        completesAtMs:
+          type: integer
+          format: int64
+          description: Epoch millis for when the 1-second delay ends.
+        remainingLives:
+          type: integer
+          minimum: 0
+        gameOver:
+          type: boolean
+          description: True when respawn is skipped because lives hit zero.
+        spawnPoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpawnPoint'
+      required: [remainingLives, gameOver]
+    SpawnPoint:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum: [Ball, Paddle]
+        translation:
+          $ref: '#/components/schemas/Vec3'
+        rotation:
+          $ref: '#/components/schemas/Vec3'
+          description: Forward vector for paddle alignment.
+      required: [kind, translation]
+    RespawnComplete:
+      type: object
+      properties:
+        completedAtMs:
+          type: integer
+          format: int64
+        stationary:
+          type: boolean
+          description: Should always be true to confirm zero velocity (SC-003).
+      required: [completedAtMs, stationary]
+    GameOverRequest:
+      type: object
+      properties:
+        remainingLives:
+          type: integer
+          enum: [0]
+        reason:
+          type: string
+          enum: [LivesExhausted]
+        triggeredAtMs:
+          type: integer
+          format: int64
+      required: [remainingLives, reason, triggeredAtMs]

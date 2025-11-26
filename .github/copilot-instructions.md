@@ -1,0 +1,39 @@
+# brkrs Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2025-11-24
+
+## Active Technologies
+
+- Rust 1.81 (Rust 2021 edition via rustup) + Bevy 0.16 (ECS, scheduling, `Time`), bevy_rapier3d 0.31 (physics + collision sensors), serde/ron (level matrix assets) (002-ball-respawn)
+- File-based RON assets under `assets/levels/`; no runtime persistence (002-ball-respawn)
+
+- Rust 1.81 (Rust 2021 edition) + Bevy 0.16 (PBR, asset system), bevy_rapier3d 0.31 (physics-driven gameplay), serde/ron for level parsing (001-apply-textures)
+- File-based assets only (RON levels + PNG textures) (001-apply-textures)
+
+- Rust 2021 edition (toolchain managed by rustup) (001-complete-game)
+
+## Project Structure
+
+```text
+src/
+tests/
+```
+
+## Commands
+
+- `cargo test`
+- `cargo clippy --all-targets --all-features`
+- `bevy lint`
+
+## Code Style
+
+Rust 2021 edition (toolchain managed by rustup): Follow standard conventions
+
+## Recent Changes
+
+- 002-ball-respawn: Added Rust 1.81 (Rust 2021 edition via rustup) + Bevy 0.16 (ECS, scheduling, `Time`), bevy_rapier3d 0.31 (physics + collision sensors), serde/ron (level matrix assets)
+
+- 001-apply-textures: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.16 (PBR, asset system), bevy_rapier3d 0.31 (physics-driven gameplay), serde/ron for level parsing
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->
