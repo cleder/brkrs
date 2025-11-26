@@ -73,14 +73,14 @@
     ],
     type_variants: [
         (
-            object_class: "Ball",
+            object_class: Ball,
             type_id: 0,
             profile_id: "ball/default",
             emissive_color: None,
             animation: None,
         ),
         (
-            object_class: "Brick",
+            object_class: Brick,
             type_id: 0,
             profile_id: "brick/default",
             emissive_color: None,

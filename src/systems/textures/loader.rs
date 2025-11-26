@@ -20,7 +20,7 @@ impl Plugin for TextureManifestPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(TextureMaterialsPlugin);
         app.init_asset::<RawTextureManifest>();
-        app.register_asset_loader(TextureManifestLoader::default());
+        app.register_asset_loader(TextureManifestLoader);
         app.init_resource::<TextureManifest>();
         app.add_systems(Startup, load_texture_manifest);
         app.add_systems(Update, (hydrate_manifest_resource, log_manifest_removal));
@@ -37,6 +37,12 @@ pub struct TextureManifest {
 }
 
 impl TextureManifest {
+    pub fn from_raw(raw: RawTextureManifest) -> Self {
+        let mut manifest = Self::default();
+        manifest.replace_with(raw);
+        manifest
+    }
+
     fn replace_with(&mut self, raw: RawTextureManifest) {
         let RawTextureManifest {
             profiles,

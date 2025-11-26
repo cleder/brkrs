@@ -1,5 +1,7 @@
 use crate::systems::level_switch::{LevelSwitchRequested, LevelSwitchState};
 use crate::systems::respawn::{RespawnEntityKind, RespawnHandle, SpawnPoints, SpawnTransform};
+#[cfg(feature = "texture_manifest")]
+use crate::systems::textures::{BaselineMaterialKind, CanonicalMaterialHandles};
 use bevy::prelude::*;
 use ron::de::from_str;
 use serde::Deserialize;
@@ -180,6 +182,7 @@ fn spawn_level_entities(
     mut spawn_points: ResMut<SpawnPoints>,
     lower_goal: Query<Entity, With<LowerGoal>>,
     level: Option<Res<CurrentLevel>>,
+    #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
 ) {
     let Some(level) = level else {
         return;
@@ -191,6 +194,8 @@ fn spawn_level_entities(
         &mut meshes,
         &mut materials,
         &mut spawn_points,
+        #[cfg(feature = "texture_manifest")]
+        canonical.as_deref(),
     );
 }
 
@@ -200,6 +205,7 @@ fn spawn_level_entities_impl(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     spawn_points: &mut ResMut<SpawnPoints>,
+    #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
 ) {
     debug!("Spawning entities for level {}", def.number);
     // Shared material
@@ -208,6 +214,53 @@ fn spawn_level_entities_impl(
         unlit: false,
         ..default()
     });
+    let default_brick_material = materials.add(StandardMaterial {
+        base_color: Color::srgb(0.9, 0.1, 0.1),
+        unlit: false,
+        ..default()
+    });
+
+    #[cfg(feature = "texture_manifest")]
+    let canonical_handles = canonical;
+
+    let paddle_material = {
+        #[cfg(feature = "texture_manifest")]
+        {
+            canonical_handles
+                .and_then(|handles| handles.get(BaselineMaterialKind::Paddle))
+                .unwrap_or_else(|| debug_material.clone())
+        }
+        #[cfg(not(feature = "texture_manifest"))]
+        {
+            debug_material.clone()
+        }
+    };
+
+    let ball_material = {
+        #[cfg(feature = "texture_manifest")]
+        {
+            canonical_handles
+                .and_then(|handles| handles.get(BaselineMaterialKind::Ball))
+                .unwrap_or_else(|| debug_material.clone())
+        }
+        #[cfg(not(feature = "texture_manifest"))]
+        {
+            debug_material.clone()
+        }
+    };
+
+    let brick_material = {
+        #[cfg(feature = "texture_manifest")]
+        {
+            canonical_handles
+                .and_then(|handles| handles.get(BaselineMaterialKind::Brick))
+                .unwrap_or_else(|| default_brick_material.clone())
+        }
+        #[cfg(not(feature = "texture_manifest"))]
+        {
+            default_brick_material.clone()
+        }
+    };
 
     let mut paddle_spawned = false;
     let mut ball_spawned = false;
@@ -232,7 +285,7 @@ fn spawn_level_entities_impl(
                                 Mesh3d(
                                     meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh()),
                                 ),
-                                MeshMaterial3d(debug_material.clone()),
+                                MeshMaterial3d(paddle_material.clone()),
                                 Transform::from_xyz(x, 2.0, z).with_rotation(
                                     Quat::from_rotation_x(-std::f32::consts::PI / 2.0),
                                 ),
@@ -261,7 +314,7 @@ fn spawn_level_entities_impl(
                         commands
                             .spawn((
                                 Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
-                                MeshMaterial3d(debug_material.clone()),
+                                MeshMaterial3d(ball_material.clone()),
                                 Transform::from_xyz(x, 2.0, z),
                                 Ball,
                                 RigidBody::Dynamic,
@@ -294,7 +347,7 @@ fn spawn_level_entities_impl(
                     // Brick
                     commands.spawn((
                         Mesh3d(meshes.add(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9))),
-                        MeshMaterial3d(materials.add(Color::srgb(0.9, 0.1, 0.1))),
+                        MeshMaterial3d(brick_material.clone()),
                         Transform::from_xyz(x, 2.0, z),
                         Brick,
                         RigidBody::Fixed,
@@ -323,7 +376,7 @@ fn spawn_level_entities_impl(
         commands
             .spawn((
                 Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
-                MeshMaterial3d(debug_material.clone()),
+                MeshMaterial3d(paddle_material.clone()),
                 Transform::from_xyz(x, 2.0, z)
                     .with_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 2.0)),
                 Paddle,
@@ -348,7 +401,7 @@ fn spawn_level_entities_impl(
         commands
             .spawn((
                 Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
-                MeshMaterial3d(debug_material.clone()),
+                MeshMaterial3d(ball_material.clone()),
                 Transform::from_xyz(0.0, 2.0, 0.0),
                 Ball,
                 RigidBody::Dynamic,
@@ -384,7 +437,30 @@ fn spawn_bricks_only(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
 ) {
+    let default_brick_material = materials.add(StandardMaterial {
+        base_color: Color::srgb(0.9, 0.1, 0.1),
+        unlit: false,
+        ..default()
+    });
+
+    #[cfg(feature = "texture_manifest")]
+    let canonical_handles = canonical;
+
+    let brick_material = {
+        #[cfg(feature = "texture_manifest")]
+        {
+            canonical_handles
+                .and_then(|handles| handles.get(BaselineMaterialKind::Brick))
+                .unwrap_or_else(|| default_brick_material.clone())
+        }
+        #[cfg(not(feature = "texture_manifest"))]
+        {
+            default_brick_material.clone()
+        }
+    };
+
     for (row, row_data) in def.matrix.iter().enumerate() {
         for (col, value) in row_data.iter().enumerate() {
             if *value != 3 {
@@ -394,7 +470,7 @@ fn spawn_bricks_only(
             let z = -PLANE_W / 2.0 + (col as f32 + 0.5) * CELL_WIDTH;
             commands.spawn((
                 Mesh3d(meshes.add(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9))),
-                MeshMaterial3d(materials.add(Color::srgb(0.9, 0.1, 0.1))),
+                MeshMaterial3d(brick_material.clone()),
                 Transform::from_xyz(x, 2.0, z),
                 Brick,
                 RigidBody::Fixed,
@@ -533,6 +609,7 @@ fn restart_level_on_key(
     ball_q: Query<Entity, With<Ball>>,
     mut game_progress: ResMut<GameProgress>,
     mut level_advance: ResMut<LevelAdvanceState>,
+    #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
 ) {
     if !keyboard.just_pressed(KeyCode::KeyR) {
         return;
@@ -552,6 +629,8 @@ fn restart_level_on_key(
         &ball_q,
         &mut game_progress,
         &mut level_advance,
+        #[cfg(feature = "texture_manifest")]
+        canonical.as_deref(),
     ) {
         Ok(_) => info!("Restarted level {level_number}"),
         Err(err) => warn!("Failed to restart level {level_number}: {err}"),
@@ -573,6 +652,7 @@ pub(crate) fn process_level_switch_requests(
     ball_q: Query<Entity, With<Ball>>,
     mut game_progress: ResMut<GameProgress>,
     mut level_advance: ResMut<LevelAdvanceState>,
+    #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
 ) {
     if requests.is_empty() {
         return;
@@ -605,6 +685,8 @@ pub(crate) fn process_level_switch_requests(
         &ball_q,
         &mut game_progress,
         &mut level_advance,
+        #[cfg(feature = "texture_manifest")]
+        canonical.as_deref(),
     ) {
         Ok(def) => info!(
             target: "level_switch",
@@ -632,6 +714,7 @@ fn handle_level_advance_delay(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
 ) {
     if !level_advance.active || level_advance.pending.is_none() || level_advance.growth_spawned {
         return;
@@ -659,11 +742,40 @@ fn handle_level_advance_delay(
         unlit: false,
         ..default()
     });
+
+    #[cfg(feature = "texture_manifest")]
+    let canonical_handles = canonical.as_deref();
+
+    let paddle_material = {
+        #[cfg(feature = "texture_manifest")]
+        {
+            canonical_handles
+                .and_then(|handles| handles.get(BaselineMaterialKind::Paddle))
+                .unwrap_or_else(|| debug_material.clone())
+        }
+        #[cfg(not(feature = "texture_manifest"))]
+        {
+            debug_material.clone()
+        }
+    };
+
+    let ball_material = {
+        #[cfg(feature = "texture_manifest")]
+        {
+            canonical_handles
+                .and_then(|handles| handles.get(BaselineMaterialKind::Ball))
+                .unwrap_or_else(|| debug_material.clone())
+        }
+        #[cfg(not(feature = "texture_manifest"))]
+        {
+            debug_material.clone()
+        }
+    };
     if let Some(paddle_pos) = spawn_points.paddle {
         commands
             .spawn((
                 Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
-                MeshMaterial3d(debug_material.clone()),
+                MeshMaterial3d(paddle_material.clone()),
                 Transform::from_xyz(paddle_pos.x, paddle_pos.y, paddle_pos.z)
                     .with_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 2.0))
                     .with_scale(Vec3::splat(0.01)),
@@ -690,7 +802,7 @@ fn handle_level_advance_delay(
         commands
             .spawn((
                 Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
-                MeshMaterial3d(debug_material.clone()),
+                MeshMaterial3d(ball_material.clone()),
                 Transform::from_xyz(ball_pos.x, ball_pos.y, ball_pos.z),
                 Ball,
                 crate::BallFrozen,
@@ -732,6 +844,7 @@ fn finalize_level_advance(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut rapier_config: Query<&mut RapierConfiguration>,
     gravity_cfg: Res<GravityConfig>,
+    #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
 ) {
     if !level_advance.active
         || !level_advance.growth_spawned
@@ -742,7 +855,14 @@ fn finalize_level_advance(
     }
     let def = level_advance.pending.take().unwrap();
     // Spawn bricks now.
-    spawn_bricks_only(&def, &mut commands, &mut meshes, &mut materials);
+    spawn_bricks_only(
+        &def,
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        #[cfg(feature = "texture_manifest")]
+        canonical.as_deref(),
+    );
     // Restore gravity to new level's normal.
     if let Ok(mut config) = rapier_config.single_mut() {
         config.gravity = gravity_cfg.normal;
@@ -819,6 +939,7 @@ fn force_load_level_from_path(
     ball_q: &Query<Entity, With<Ball>>,
     game_progress: &mut ResMut<GameProgress>,
     level_advance: &mut ResMut<LevelAdvanceState>,
+    #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
 ) -> Result<LevelDefinition, String> {
     reset_level_state(
         commands,
@@ -841,6 +962,8 @@ fn force_load_level_from_path(
         spawn_points,
         gravity_cfg,
         rapier_config,
+        #[cfg(feature = "texture_manifest")]
+        canonical,
     );
     commands.insert_resource(CurrentLevel(def.clone()));
     Ok(def)
@@ -880,6 +1003,7 @@ fn apply_level_definition(
     spawn_points: &mut ResMut<SpawnPoints>,
     gravity_cfg: &mut ResMut<GravityConfig>,
     rapier_config: &mut Query<&mut RapierConfiguration>,
+    #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
 ) {
     if let Some((x, y, z)) = def.gravity {
         gravity_cfg.normal = Vec3::new(x, y, z);
@@ -890,5 +1014,13 @@ fn apply_level_definition(
     } else if let Ok(mut config) = rapier_config.single_mut() {
         config.gravity = gravity_cfg.normal;
     }
-    spawn_level_entities_impl(def, commands, meshes, materials, spawn_points);
+    spawn_level_entities_impl(
+        def,
+        commands,
+        meshes,
+        materials,
+        spawn_points,
+        #[cfg(feature = "texture_manifest")]
+        canonical,
+    );
 }

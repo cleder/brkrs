@@ -11,4 +11,7 @@ pub use loader::{
     LevelSwitchState, LevelTextureSet, TextureManifest, TextureManifestPlugin,
     TypeVariantDefinition, VisualAssetProfile,
 };
-pub use materials::{FallbackMaterial, FallbackRegistry, TextureMaterialsPlugin};
+pub use materials::{
+    BaselineMaterialKind, CanonicalMaterialHandles, FallbackMaterial, FallbackRegistry,
+    ProfileMaterialBank, TextureMaterialsPlugin,
+};
