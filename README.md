@@ -4,6 +4,10 @@
 
 The game area is divided into a 20×20 grid. Bricks occupy individual grid cells. Gameplay is rendered in 3D but constrained to a plane at `Y = 2.0`.
 
+## Retrospective & Migration Notes
+
+The 22×22 → 20×20 grid migration, rationale, and follow-up action items are documented in `specs/003-map-format/retrospective.md`.
+
 ## Core Systems
 
 1. **Physics (Rapier3D)** – 3D physics constrained to a flat play plane.

@@ -150,6 +150,10 @@ Level designers receive clear feedback when attempting to load legacy 22x22 leve
 
 Migration from 22×22 to 20×20 grid completed across constants, level assets, transition sequencing, and WASM embedding. Backward compatibility implemented via dimension normalization (padding/truncation) with clear warnings. Level transitions now stage brick visibility before ball physics using BallFrozen marker and a two-phase activation (removal + wake impulse). All user stories (US1–US4) and polish tasks are complete.
 
+### Retrospective
+
+Detailed lessons learned, challenges, and follow-up action items are captured in `specs/003-map-format/retrospective.md`.
+
 ### Remaining Risks
 
 - Legacy external level packs still at 22×22 will load with truncation; recommend manual migration for optimal layout.

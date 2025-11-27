@@ -1342,3 +1342,113 @@ fn sync_level_presentation(
         presentation.reset();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::normalize_matrix;
+
+    #[test]
+    fn normalize_padding_rows_and_cols() {
+        // 18 rows, each 19 cols -> should pad to 20x20
+        let input = vec![vec![1u8; 19]; 18];
+        let out = normalize_matrix(input.clone());
+        assert_eq!(out.len(), 20, "row count padded to 20");
+        for row in &out {
+            assert_eq!(row.len(), 20, "col count padded to 20");
+        }
+        // Original data preserved in leading rows/cols
+        for r in 0..18 {
+            for c in 0..19 {
+                assert_eq!(out[r][c], 1);
+            }
+        }
+        // Padded cells zeroed
+        for r in 0..18 {
+            assert_eq!(out[r][19], 0);
+        }
+        for r in 18..20 {
+            for c in 0..20 {
+                assert_eq!(out[r][c], 0);
+            }
+        }
+    }
+
+    #[test]
+    fn normalize_truncates_rows_and_cols() {
+        // 22 rows of 24 cols -> truncates to first 20 rows/cols
+        let input = vec![vec![2u8; 24]; 22];
+        let out = normalize_matrix(input.clone());
+        assert_eq!(out.len(), 20);
+        for row in &out {
+            assert_eq!(row.len(), 20);
+        }
+        // Leading preserved
+        for r in 0..20 {
+            for c in 0..20 {
+                assert_eq!(out[r][c], 2);
+            }
+        }
+    }
+
+    #[test]
+    fn normalize_irregular_row_lengths() {
+        // Mixture: some short, some long
+        let mut input: Vec<Vec<u8>> = Vec::new();
+        for i in 0..22 {
+            // exceed target rows to test truncation
+            let len = match i % 3 {
+                0 => 10,
+                1 => 25,
+                _ => 20,
+            }; // various lengths
+            input.push(vec![3u8; len]);
+        }
+        let out = normalize_matrix(input);
+        assert_eq!(out.len(), 20);
+        for (r, row) in out.iter().enumerate() {
+            assert_eq!(row.len(), 20, "row {} not normalized to 20 cols", r);
+            let original_len = match r % 3 {
+                0 => 10,
+                1 => 25,
+                _ => 20,
+            };
+            let preserved = original_len.min(20);
+            for c in 0..preserved {
+                assert_eq!(row[c], 3, "row {r} col {c} should preserve value 3");
+            }
+            for c in preserved..20 {
+                assert_eq!(row[c], 0, "row {r} col {c} should be padded zero");
+            }
+        }
+    }
+
+    #[test]
+    fn normalize_empty_matrix() {
+        let out = normalize_matrix(Vec::new());
+        assert_eq!(out.len(), 20);
+        for row in &out {
+            assert_eq!(row.len(), 20);
+            for c in row {
+                assert_eq!(*c, 0);
+            }
+        }
+    }
+
+    #[test]
+    fn normalize_exact_dimensions_unchanged() {
+        let mut input = vec![vec![5u8; 20]; 20];
+        input[0][0] = 7;
+        let out = normalize_matrix(input.clone());
+        assert_eq!(out.len(), 20);
+        for row in &out {
+            assert_eq!(row.len(), 20);
+        }
+        assert_eq!(out[0][0], 7);
+        // Ensure no unintended zeroing
+        for r in 0..20 {
+            for c in 0..20 {
+                assert_eq!(out[r][c], input[r][c]);
+            }
+        }
+    }
+}
