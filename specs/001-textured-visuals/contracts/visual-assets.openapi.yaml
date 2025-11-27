@@ -1,0 +1,170 @@
+openapi: 3.1.0
+info:
+  title: Brkrs Visual Asset Contracts
+  version: 0.1.0
+  description: >-
+    Offline/tooling contract that mirrors the in-game texture manifest and level-switch
+    controls so artists and QA can preview assets without touching engine code.
+paths:
+  /visual-assets/manifest:
+    get:
+      summary: Retrieve the current texture manifest derived from `manifest.ron`.
+      operationId: getVisualManifest
+      responses:
+        '200':
+          description: Current manifest.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextureManifest'
+  /visual-assets/preview:
+    post:
+      summary: Hot-load a temporary texture profile for previewing new art.
+      operationId: previewVisualAsset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VisualAssetProfile'
+      responses:
+        '202':
+          description: Preview accepted; the engine will apply it on next level load.
+  /levels/next:
+    post:
+      summary: Trigger the same behavior as pressing the **L** key to cycle levels.
+      operationId: cycleLevel
+      responses:
+        '202':
+          description: Level switch request accepted.
+components:
+  schemas:
+    TextureManifest:
+      type: object
+      required: [profiles, typeVariants, levelOverrides]
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisualAssetProfile'
+        typeVariants:
+          type: array
+          items:
+            $ref: '#/components/schemas/TypeVariant'
+        levelOverrides:
+          type: array
+          description: Per-level presentation overrides keyed to level numbers.
+          items:
+            $ref: '#/components/schemas/LevelTextureSet'
+        levelSwitch:
+          $ref: '#/components/schemas/LevelSwitchState'
+    VisualAssetProfile:
+      type: object
+      required: [id, albedoPath]
+      properties:
+        id:
+          type: string
+        albedoPath:
+          type: string
+          description: Relative path under assets/textures/
+        normalPath:
+          type: string
+          nullable: true
+        roughness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        metallic:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        uvScale:
+          type: array
+          items:
+            type: number
+          minItems: 2
+          maxItems: 2
+        uvOffset:
+          type: array
+          items:
+            type: number
+          minItems: 2
+          maxItems: 2
+        fallbackChain:
+          type: array
+          items:
+            type: string
+          description: Ordered fallback profiles the runtime will attempt before using baked materials.
+    TypeVariant:
+      type: object
+      required: [objectClass, typeId, profileId]
+      properties:
+        objectClass:
+          type: string
+          enum: [Ball, Brick]
+        typeId:
+          type: integer
+          format: int32
+        profileId:
+          type: string
+        emissiveColor:
+          type: array
+          items:
+            type: number
+          minItems: 4
+          maxItems: 4
+        animation:
+          $ref: '#/components/schemas/AnimationDescriptor'
+    AnimationDescriptor:
+      type: object
+      required: [kind]
+      properties:
+        kind:
+          type: string
+        params:
+          type: object
+          additionalProperties: true
+          description: Free-form parameter bag interpreted by the engine for prototype effects.
+    LevelTextureSet:
+      type: object
+      required: [levelNumber]
+      properties:
+        levelNumber:
+          type: integer
+          format: int32
+        groundProfile:
+          type: string
+          nullable: true
+        backgroundProfile:
+          type: string
+          nullable: true
+        sidewallProfile:
+          type: string
+          nullable: true
+        tint:
+          type: array
+          items:
+            type: number
+          minItems: 4
+          maxItems: 4
+          nullable: true
+          description: Optional RGBA multiplier applied to all override materials.
+        notes:
+          type: string
+          nullable: true
+    LevelSwitchState:
+      type: object
+      required: [orderedLevels, currentIndex, pendingSwitch]
+      properties:
+        orderedLevels:
+          type: array
+          items:
+            type: integer
+            format: int32
+        currentIndex:
+          type: integer
+          format: int32
+        pendingSwitch:
+          type: boolean

@@ -506,6 +506,12 @@ fn respawn_executor(
     mut paddles: Query<(Entity, &mut Transform, Option<&mut Velocity>), With<Paddle>>,
     mut respawn_completed_events: EventWriter<RespawnCompleted>,
     mut commands: Commands,
+    #[cfg(feature = "texture_manifest")] canonical: Option<
+        Res<crate::systems::textures::CanonicalMaterialHandles>,
+    >,
+    #[cfg(feature = "texture_manifest")] mut fallback: Option<
+        ResMut<crate::systems::textures::FallbackRegistry>,
+    >,
 ) {
     if respawn_schedule.pending.is_none() {
         return;
@@ -531,6 +537,32 @@ fn respawn_executor(
         unlit: false,
         ..default()
     });
+
+    #[cfg(feature = "texture_manifest")]
+    let paddle_material = {
+        crate::systems::textures::baseline_material_handle(
+            canonical.as_deref(),
+            fallback.as_deref_mut(),
+            crate::systems::textures::BaselineMaterialKind::Paddle,
+            "respawn.executor.paddle",
+        )
+        .unwrap_or_else(|| debug_material.clone())
+    };
+    #[cfg(not(feature = "texture_manifest"))]
+    let paddle_material = debug_material.clone();
+
+    #[cfg(feature = "texture_manifest")]
+    let ball_material = {
+        crate::systems::textures::baseline_material_handle(
+            canonical.as_deref(),
+            fallback.as_deref_mut(),
+            crate::systems::textures::BaselineMaterialKind::Ball,
+            "respawn.executor.ball",
+        )
+        .unwrap_or_else(|| debug_material.clone())
+    };
+    #[cfg(not(feature = "texture_manifest"))]
+    let ball_material = debug_material.clone();
 
     let mut respawn_paddle_entity = None;
     if let Some(tracked) = request.tracked_paddle {
@@ -562,7 +594,7 @@ fn respawn_executor(
         let new_entity = commands
             .spawn((
                 Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
-                MeshMaterial3d(debug_material.clone()),
+                MeshMaterial3d(paddle_material.clone()),
                 transform,
                 Paddle,
                 PaddleGrowing {
@@ -598,7 +630,7 @@ fn respawn_executor(
     let respawned_ball = commands
         .spawn((
             Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
-            MeshMaterial3d(debug_material.clone()),
+            MeshMaterial3d(ball_material.clone()),
             ball_transform,
             Ball,
             BallFrozen,
