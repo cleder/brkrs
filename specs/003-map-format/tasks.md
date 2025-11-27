@@ -166,9 +166,9 @@
 - [x] T069 Run full playtest: complete level 1 → transition to level 2 → complete level 2
 - [x] T070 Verify all success criteria from spec.md (SC-001 through SC-010)
 - [x] T071 Update spec.md status from "Draft" to "Implemented"
-- [ ] T072 Commit all changes with descriptive message following conventional commits format
+- [x] T072 Commit all changes with descriptive message following conventional commits format
 
-**✅ Checkpoint Pending Commit**: Phase 7 polish tasks T060–T071 validated (WASM build runs in browser, quickstart accurate, full playtest completed through Level 2, success criteria SC-001..SC-010 verified, spec status updated). Proceed to T072 to finalize.
+**✅ Checkpoint Complete**: Phase 7 polish tasks T060–T072 validated (commit performed: feat(map-format): finalize Phase 7 polish & verification). All success criteria met; map format migration fully finalized.
 
 ---
 
