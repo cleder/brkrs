@@ -18,6 +18,9 @@ use crate::{
 };
 use bevy_rapier3d::prelude::*;
 
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct LevelAdvanceSet;
+
 /// Bundled texture-related resources to reduce system parameter count.
 #[cfg(feature = "texture_manifest")]
 #[derive(SystemParam)]
@@ -53,14 +56,15 @@ impl Plugin for LevelLoaderPlugin {
             (
                 advance_level_when_cleared,
                 handle_level_advance_delay,
-                finalize_level_advance,
+                finalize_level_advance.after(handle_level_advance_delay),
                 spawn_fade_overlay_if_needed,
                 update_fade_overlay,
                 restart_level_on_key,
                 destroy_all_bricks_on_key,
                 process_level_switch_requests,
                 sync_level_presentation,
-            ),
+            )
+                .in_set(LevelAdvanceSet),
         );
         #[cfg(not(feature = "texture_manifest"))]
         app.add_systems(
@@ -68,7 +72,7 @@ impl Plugin for LevelLoaderPlugin {
             (
                 advance_level_when_cleared,
                 handle_level_advance_delay,
-                finalize_level_advance,
+                finalize_level_advance.after(handle_level_advance_delay),
                 spawn_fade_overlay_if_needed,
                 update_fade_overlay,
                 restart_level_on_key,
@@ -778,6 +782,7 @@ fn restart_level_on_key(
     if !keyboard.just_pressed(KeyCode::KeyR) {
         return;
     }
+    info!("R key pressed - restarting level");
     let level_number = current_level.map(|cl| cl.0.number).unwrap_or(1);
     let path = format!("assets/levels/level_{:03}.ron", level_number);
     match force_load_level_from_path(
@@ -805,7 +810,7 @@ fn restart_level_on_key(
     }
 }
 
-/// Destroy all bricks when Ctrl+K is pressed (for testing level transitions).
+/// Destroy all bricks when K is pressed (for testing level transitions).
 fn destroy_all_bricks_on_key(
     keyboard: Res<ButtonInput<KeyCode>>,
     bricks: Query<Entity, With<Brick>>,
@@ -813,6 +818,7 @@ fn destroy_all_bricks_on_key(
 ) {
     // Simple key press - just K to destroy all bricks for testing
     if keyboard.just_pressed(KeyCode::KeyK) {
+        info!("K key pressed");
         let count = bricks.iter().len();
         if count > 0 {
             info!("Destroying {} brick(s) for level transition testing", count);
@@ -938,12 +944,21 @@ fn handle_level_advance_delay(
     let target_gravity = if let Some((x, y, z)) = def.gravity {
         let vec = Vec3::new(x, y, z);
         gravity_cfg.normal = vec;
+        info!(
+            "Level {} gravity set to {:?} in handle_level_advance_delay",
+            def.number, vec
+        );
         vec
     } else {
+        info!(
+            "Level {} using existing gravity {:?}",
+            def.number, gravity_cfg.normal
+        );
         gravity_cfg.normal
     };
     if let Ok(mut config) = rapier_config.single_mut() {
         config.gravity = target_gravity;
+        info!("Rapier config gravity set to {:?}", config.gravity);
     }
     // Set initial positions (used by spawn below and later systems).
     set_spawn_points_only(def, spawn_points.as_mut());
@@ -1017,6 +1032,10 @@ fn handle_level_advance_delay(
             .insert(paddle_respawn_handle(paddle_pos));
     }
     if let Some(ball_pos) = spawn_points.ball {
+        info!(
+            "Spawning ball during level advance at {:?} with BallFrozen marker",
+            ball_pos
+        );
         commands
             .spawn((
                 Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
@@ -1025,7 +1044,6 @@ fn handle_level_advance_delay(
                 Ball,
                 crate::BallFrozen,
                 RigidBody::Dynamic,
-                Velocity::zero(),
                 CollidingEntities::default(),
                 ActiveEvents::COLLISION_EVENTS,
                 Collider::ball(BALL_RADIUS),
@@ -1060,25 +1078,59 @@ fn finalize_level_advance(
     mut commands: Commands,
     mut rapier_config: Query<&mut RapierConfiguration>,
     gravity_cfg: Res<GravityConfig>,
-    mut balls: Query<(Entity, &mut GravityScale), With<Ball>>,
+    mut balls: Query<(Entity, &mut GravityScale, Option<&Velocity>), With<Ball>>,
 ) {
-    if !level_advance.active
-        || !level_advance.growth_spawned
-        || level_advance.pending.is_none()
-        || !paddles_growing.is_empty()
-    {
+    let paddle_count = paddles_growing.iter().count();
+    if !level_advance.active || !level_advance.growth_spawned || level_advance.pending.is_none() {
         return;
     }
+
+    // If paddles are still growing, wait
+    if paddle_count > 0 {
+        info!(
+            "finalize_level_advance: waiting for {} paddle(s) to finish growing",
+            paddle_count
+        );
+        return;
+    }
+
+    // Check if we can actually see the spawned ball (commands have been applied)
+    let ball_count = balls.iter().count();
+    if ball_count == 0 {
+        // Ball hasn't been spawned yet (commands not applied), wait for next frame
+        info!("finalize_level_advance: waiting for ball to spawn (commands not yet applied)");
+        return;
+    }
+
+    info!("finalize_level_advance: paddle growth complete, activating ball physics");
     let def = level_advance.pending.take().unwrap();
     // Bricks were spawned at peak of fade (in handle_level_advance_delay).
     // Now activate ball physics after paddle growth completes.
-    for (entity, mut gravity_scale) in balls.iter_mut() {
+    info!(
+        "Finalizing level advance: found {} ball(s), target gravity={:?}",
+        ball_count, gravity_cfg.normal
+    );
+    for (entity, mut gravity_scale, velocity) in balls.iter_mut() {
+        let vel_str = velocity
+            .map(|v| format!("{:?}", v.linvel))
+            .unwrap_or_else(|| "None".to_string());
+        info!(
+            "Removing BallFrozen from {:?}, current velocity={}",
+            entity, vel_str
+        );
         commands.entity(entity).remove::<crate::BallFrozen>();
+        // Remove Velocity component so Rapier manages it internally (like R/L do)
+        commands.entity(entity).remove::<Velocity>();
         gravity_scale.0 = 1.0; // Activate gravity
+        info!(
+            "Ball {:?} gravity activated: scale=1.0, world_gravity={:?}, removed Velocity component",
+            entity, gravity_cfg.normal
+        );
     }
     // Restore gravity to new level's normal.
     if let Ok(mut config) = rapier_config.single_mut() {
         config.gravity = gravity_cfg.normal;
+        info!("Rapier gravity restored to: {:?}", config.gravity);
     }
     // Update CurrentLevel resource.
     commands.insert_resource(CurrentLevel(def));

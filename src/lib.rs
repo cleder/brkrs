@@ -171,7 +171,7 @@ pub fn run() {
     app.add_plugins(RapierPhysicsPlugin::<NoUserData>::default());
     app.add_plugins(LevelSwitchPlugin);
     app.add_plugins(crate::level_loader::LevelLoaderPlugin);
-    app.add_plugins(RapierDebugRenderPlugin::default());
+    // app.add_plugins(RapierDebugRenderPlugin::default());
     app.add_plugins(RespawnPlugin);
 
     #[cfg(feature = "texture_manifest")]
@@ -190,7 +190,7 @@ pub fn run() {
             limit_ball_velocity,
             update_camera_shake,
             update_paddle_growth,
-            stabilize_frozen_balls,
+            stabilize_frozen_balls.before(crate::level_loader::LevelAdvanceSet),
             restore_gravity_post_growth,
             #[cfg(not(target_arch = "wasm32"))]
             toggle_wireframe,
@@ -369,6 +369,10 @@ fn update_paddle_growth(
                 config.gravity = gravity_cfg.normal;
             }
             commands.entity(entity).remove::<PaddleGrowing>();
+            info!(
+                "Paddle growth completed, gravity restored to {:?}",
+                gravity_cfg.normal
+            );
         } else {
             // Interpolate scale from near-zero to target
             let progress = growing.timer.fraction();
@@ -397,10 +401,35 @@ fn restore_gravity_post_growth(
 }
 
 /// Keep ball frozen (zero velocity, locked position) while paddle is growing
-fn stabilize_frozen_balls(mut balls: Query<&mut Velocity, (With<Ball>, With<BallFrozen>)>) {
-    for mut velocity in balls.iter_mut() {
+fn stabilize_frozen_balls(
+    mut balls_with_vel: Query<(Entity, &mut Velocity), (With<Ball>, With<BallFrozen>)>,
+    balls_without_vel: Query<Entity, (With<Ball>, With<BallFrozen>, Without<Velocity>)>,
+    all_balls: Query<(Entity, Option<&BallFrozen>), With<Ball>>,
+    mut commands: Commands,
+) {
+    let with_vel_count = balls_with_vel.iter().count();
+    let without_vel_count = balls_without_vel.iter().count();
+    let total_balls = all_balls.iter().count();
+    if with_vel_count > 0 || without_vel_count > 0 {
+        info!(
+            "stabilize_frozen_balls: {} with velocity, {} without velocity, {} total balls",
+            with_vel_count, without_vel_count, total_balls
+        );
+        // Log each ball's state
+        for (entity, frozen) in all_balls.iter() {
+            info!("  Ball {:?}: has_BallFrozen={}", entity, frozen.is_some());
+        }
+    }
+    // For balls with Velocity component, zero it out
+    for (entity, mut velocity) in balls_with_vel.iter_mut() {
+        info!("Zeroing velocity for frozen ball {:?}", entity);
         velocity.linvel = Vec3::ZERO;
         velocity.angvel = Vec3::ZERO;
+    }
+    // For balls without Velocity component, add it with zero velocity
+    for entity in balls_without_vel.iter() {
+        info!("Adding Velocity::zero() to frozen ball {:?}", entity);
+        commands.entity(entity).insert(Velocity::zero());
     }
 }
 
