@@ -138,15 +138,15 @@
 
 ### Implementation for User Story 4
 
-- [ ] T053 [US4] Add validation check in normalize_matrix() to detect non-20x20 dimensions in src/level_loader.rs
-- [ ] T054 [US4] Update warning log format to "Level matrix wrong dimensions; expected 20x20, got {rows}x{cols}" in normalize_matrix()
-- [ ] T055 [US4] Add row-level dimension warnings in normalize_matrix() (format: "Row {i} has {cols} columns; expected 20")
-- [ ] T056 [US4] Create test level file with 22x22 dimensions (temporary file for testing)
-- [ ] T057 [US4] Run cargo run with test 22x22 level file, verify warning message appears in console
-- [ ] T058 [US4] Verify game loads 22x22 level with padding/truncation (doesn't crash)
-- [ ] T059 [US4] Delete temporary test level file after verification
+- [x] T053 [US4] Add validation check in normalize_matrix() to detect non-20x20 dimensions in src/level_loader.rs
+- [x] T054 [US4] Update warning log format to "Level matrix wrong dimensions; expected 20x20, got {rows}x{cols}" in normalize_matrix()
+- [x] T055 [US4] Add row-level dimension warnings in normalize_matrix() (format: "Row {i} has {cols} columns; expected 20")
+- [x] T056 [US4] Create test level file with 22x22 dimensions (temporary file for testing)
+- [x] T057 [US4] Run cargo run with test 22x22 level file, verify warning message appears in console
+- [x] T058 [US4] Verify game loads 22x22 level with padding/truncation (doesn't crash)
+- [x] T059 [US4] Delete temporary test level file after verification
 
-**Checkpoint**: All user stories complete - backward compatibility warnings provide clear migration guidance for legacy levels
+**✅ Checkpoint Complete**: All user stories complete - backward compatibility warnings provide clear migration guidance for legacy levels. Verified with 22x22 test file: warnings display expected vs actual dimensions, truncation messages for rows and columns, game loads successfully without crashes.
 
 ---
 
@@ -154,19 +154,21 @@
 
 **Purpose**: Cleanup and final validation across all user stories
 
-- [ ] T060 [P] Search codebase for remaining "22" references: grep -rn "22" src/ --include="*.rs" | grep -v version
-- [ ] T061 [P] Update any documentation referencing 22x22 grid to 20x20 in README.md (if applicable)
-- [ ] T062 [P] Update any comments in main.rs referencing old grid dimensions
-- [ ] T063 [P] Update any error messages hardcoding "22" to use GRID_WIDTH/GRID_HEIGHT constants
-- [ ] T064 Run cargo clippy --all-targets --all-features to check for warnings
-- [ ] T065 Run cargo fmt to ensure consistent code formatting
-- [ ] T066 Build WASM for production deployment: cargo build --target wasm32-unknown-unknown --release
-- [ ] T067 Test WASM build in browser (localhost:8000) - verify levels load and transitions work
-- [ ] T068 Verify quickstart.md accuracy - follow steps to ensure guide is correct
-- [ ] T069 Run full playtest: complete level 1 → transition to level 2 → complete level 2
-- [ ] T070 Verify all success criteria from spec.md (SC-001 through SC-010)
-- [ ] T071 Update spec.md status from "Draft" to "Implemented"
+- [x] T060 [P] Search codebase for remaining "22" references: grep -rn "22" src/ --include="*.rs" | grep -v version
+- [x] T061 [P] Update any documentation referencing 22x22 grid to 20x20 in README.md (if applicable)
+- [x] T062 [P] Update any comments in main.rs referencing old grid dimensions
+- [x] T063 [P] Update any error messages hardcoding "22" to use GRID_WIDTH/GRID_HEIGHT constants
+- [x] T064 Run cargo clippy --all-targets --all-features to check for warnings
+- [x] T065 Run cargo fmt to ensure consistent code formatting
+- [x] T066 Build WASM for production deployment: cargo build --target wasm32-unknown-unknown --release
+- [x] T067 Test WASM build in browser (localhost:8000) - verify levels load and transitions work
+- [x] T068 Verify quickstart.md accuracy - follow steps to ensure guide is correct
+- [x] T069 Run full playtest: complete level 1 → transition to level 2 → complete level 2
+- [x] T070 Verify all success criteria from spec.md (SC-001 through SC-010)
+- [x] T071 Update spec.md status from "Draft" to "Implemented"
 - [ ] T072 Commit all changes with descriptive message following conventional commits format
+
+**✅ Checkpoint Pending Commit**: Phase 7 polish tasks T060–T071 validated (WASM build runs in browser, quickstart accurate, full playtest completed through Level 2, success criteria SC-001..SC-010 verified, spec status updated). Proceed to T072 to finalize.
 
 ---
 
