@@ -354,7 +354,10 @@ pub fn baseline_material_handle(
 /// System that watches for ball type changes and swaps materials accordingly.
 /// Runs every frame and checks for balls whose `BallTypeId` changed since last frame.
 fn watch_ball_type_changes(
-    mut balls: Query<(&BallTypeId, &mut MeshMaterial3d<StandardMaterial>), (With<Ball>, Changed<BallTypeId>)>,
+    mut balls: Query<
+        (&BallTypeId, &mut MeshMaterial3d<StandardMaterial>),
+        (With<Ball>, Changed<BallTypeId>),
+    >,
     type_registry: Res<TypeVariantRegistry>,
     fallback: Option<Res<FallbackRegistry>>,
 ) {

@@ -33,6 +33,9 @@ pub struct LevelDefinition {
     /// Optional gravity override for this level (x,y,z). If omitted the existing GravityConfig value is used.
     pub gravity: Option<(f32, f32, f32)>,
     pub matrix: Vec<Vec<u8>>, // expect 22 x 22
+    #[cfg(feature = "texture_manifest")]
+    #[serde(default)]
+    pub presentation: Option<crate::systems::textures::loader::LevelTextureSet>,
 }
 
 #[derive(Resource, Debug)]
@@ -1181,7 +1184,7 @@ fn sync_level_presentation(
     }
     let level_number = level.0.number;
     if let Some(manifest) = manifest {
-        presentation.update_from(level_number, &manifest);
+        presentation.update_from_level_and_manifest(&level.0, &manifest);
         debug!(
             target: "level_loader::presentation",
             level = level_number,

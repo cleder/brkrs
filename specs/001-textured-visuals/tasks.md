@@ -97,14 +97,14 @@ description: "Task list for Textured Visuals Overhaul implementation"
 
 ### Tests for User Story 3
 
-- [ ] T019 [P] [US3] Add level override coverage in `tests/level_overrides.rs` verifying defaults vs custom `LevelTextureSet` entries.
+- [x] T019 [P] [US3] Add level override coverage in `tests/level_overrides.rs` verifying defaults vs custom `LevelTextureSet` entries.
 
 ### Implementation for User Story 3
 
-- [ ] T020 [US3] Extend `assets/levels/*.ron` schema + `src/level_loader.rs` parsing to ingest `LevelTextureSet` references defined in data-model.md.
-- [ ] T021 [US3] Implement per-level override application pipeline in `src/systems/textures/overrides.rs`, layering ground/background/sidewall materials.
-- [ ] T022 [US3] Add manifest hot-reload + asset swap detection in `src/systems/textures/overrides.rs` so artists can replace textures without rebuilding.
-- [ ] T023 [US3] Honor the `/visual-assets/preview` contract by wiring a tooling hook or asset ingestion script referenced in `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml`.
+- [x] T020 [US3] Extend `assets/levels/*.ron` schema + `src/level_loader.rs` parsing to ingest `LevelTextureSet` references defined in data-model.md.
+- [x] T021 [US3] Implement per-level override application pipeline in `src/systems/textures/overrides.rs`, layering ground/background/sidewall materials.
+- [x] T022 [US3] Add manifest hot-reload + asset swap detection in `src/systems/textures/overrides.rs` so artists can replace textures without rebuilding.
+- [x] T023 [US3] Honor the `/visual-assets/preview` contract by wiring a tooling hook or asset ingestion script referenced in `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml`.
 
 **Parallel Example (US3)**: T019 can run alongside T020 since it targets `tests/`, while T021 and T022 proceed sequentially within `src/systems/textures/overrides.rs`. T023 can begin once overrides expose an API endpoint or script integration point.
 

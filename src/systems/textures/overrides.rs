@@ -108,10 +108,41 @@ impl LevelPresentation {
         self.tint = None;
     }
 
-    /// Update this presentation from a new level's texture set.
-    pub fn update_from(&mut self, level_number: u32, manifest: &TextureManifest) {
-        let new = Self::for_level(level_number, manifest);
-        *self = new;
+    /// Update this presentation from a level definition and manifest.
+    ///
+    /// Uses the level's embedded presentation if present, otherwise falls back
+    /// to the manifest's level_overrides for the level number.
+    pub fn update_from_level_and_manifest(
+        &mut self,
+        level: &crate::level_loader::LevelDefinition,
+        manifest: &TextureManifest,
+    ) {
+        #[cfg(feature = "texture_manifest")]
+        let level_set = level
+            .presentation
+            .as_ref()
+            .or_else(|| manifest.level_overrides.get(&level.number));
+
+        #[cfg(not(feature = "texture_manifest"))]
+        let level_set = manifest.level_overrides.get(&level.number);
+        if let Some(level_set) = level_set {
+            *self = Self {
+                level_number: level.number,
+                ground_profile: level_set.ground_profile.clone(),
+                background_profile: level_set.background_profile.clone(),
+                sidewall_profile: level_set.sidewall_profile.clone(),
+                tint: level_set.tint,
+            };
+        } else {
+            // No overrides for this level
+            *self = Self {
+                level_number: level.number,
+                ground_profile: None,
+                background_profile: None,
+                sidewall_profile: None,
+                tint: None,
+            };
+        }
     }
 
     /// Returns the profile ID to use for the given material kind.
@@ -223,6 +254,7 @@ fn apply_level_overrides(
 /// This system enables hot-reload: when an artist edits the manifest file or texture
 /// assets are rebuilt, the presentation is refreshed and materials are reapplied.
 fn refresh_presentation_on_manifest_change(
+    current_level: Option<Res<crate::level_loader::CurrentLevel>>,
     manifest: Option<Res<TextureManifest>>,
     bank: Option<Res<ProfileMaterialBank>>,
     mut presentation: ResMut<LevelPresentation>,
@@ -242,14 +274,16 @@ fn refresh_presentation_on_manifest_change(
     }
 
     if let Some(manifest) = manifest {
-        debug!(
-            target: "textures::overrides::hot_reload",
-            level = level_number,
-            manifest_changed,
-            bank_changed,
-            "Refreshing level presentation after manifest/asset change"
-        );
-        presentation.update_from(level_number, &manifest);
+        if let Some(level) = current_level {
+            debug!(
+                target: "textures::overrides::hot_reload",
+                level = level_number,
+                manifest_changed,
+                bank_changed,
+                "Refreshing level presentation after manifest/asset change"
+            );
+            presentation.update_from_level_and_manifest(&level.0, &manifest);
+        }
     }
 }
 
