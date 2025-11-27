@@ -57,6 +57,7 @@ impl Plugin for LevelLoaderPlugin {
                 spawn_fade_overlay_if_needed,
                 update_fade_overlay,
                 restart_level_on_key,
+                destroy_all_bricks_on_key,
                 process_level_switch_requests,
                 sync_level_presentation,
             ),
@@ -71,6 +72,7 @@ impl Plugin for LevelLoaderPlugin {
                 spawn_fade_overlay_if_needed,
                 update_fade_overlay,
                 restart_level_on_key,
+                destroy_all_bricks_on_key,
                 process_level_switch_requests,
             ),
         );
@@ -742,7 +744,7 @@ fn advance_level_when_cleared(
                 level_advance.active = true;
                 level_advance.growth_spawned = false;
                 level_advance.pending = Some(def);
-                // Despawn paddle & ball now to show empty field during delay.
+                // Despawn paddle & ball now to show empty field during fade-out.
                 for p in paddle_q.iter() {
                     commands.entity(p).despawn();
                 }
@@ -800,6 +802,24 @@ fn restart_level_on_key(
     ) {
         Ok(_) => info!("Restarted level {level_number}"),
         Err(err) => warn!("Failed to restart level {level_number}: {err}"),
+    }
+}
+
+/// Destroy all bricks when Ctrl+K is pressed (for testing level transitions).
+fn destroy_all_bricks_on_key(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    bricks: Query<Entity, With<Brick>>,
+    mut commands: Commands,
+) {
+    // Simple key press - just K to destroy all bricks for testing
+    if keyboard.just_pressed(KeyCode::KeyK) {
+        let count = bricks.iter().len();
+        if count > 0 {
+            info!("Destroying {} brick(s) for level transition testing", count);
+            for entity in bricks.iter() {
+                commands.entity(entity).despawn();
+            }
+        }
     }
 }
 
@@ -886,6 +906,7 @@ fn handle_level_advance_delay(
     mut materials: ResMut<Assets<StandardMaterial>>,
     #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
     #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
+    #[cfg(feature = "texture_manifest")] type_registry: Option<Res<TypeVariantRegistry>>,
 ) {
     if !level_advance.active || level_advance.pending.is_none() || level_advance.growth_spawned {
         return;
@@ -895,6 +916,24 @@ fn handle_level_advance_delay(
         return;
     }
     let def = level_advance.pending.as_ref().unwrap();
+
+    // Spawn bricks at peak of fade (when screen is fully black)
+    #[cfg(feature = "texture_manifest")]
+    let canonical_handles = canonical.as_deref();
+
+    spawn_bricks_only(
+        def,
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        #[cfg(feature = "texture_manifest")]
+        canonical_handles,
+        #[cfg(feature = "texture_manifest")]
+        fallback.as_deref_mut(),
+        #[cfg(feature = "texture_manifest")]
+        type_registry.as_deref(),
+    );
+
     // Apply per-level gravity (or keep current) immediately so it is ready when the ball unfreezes.
     let target_gravity = if let Some((x, y, z)) = def.gravity {
         let vec = Vec3::new(x, y, z);
@@ -1007,7 +1046,7 @@ fn handle_level_advance_delay(
                 LockedAxes::TRANSLATION_LOCKED_Y,
                 Ccd::enabled(),
                 ExternalImpulse::default(),
-                GravityScale(1.0),
+                GravityScale(0.0), // Keep at 0.0 until paddle growth completes
             ))
             .insert(ball_respawn_handle(ball_pos));
     }
@@ -1019,13 +1058,9 @@ fn finalize_level_advance(
     paddles_growing: Query<&crate::PaddleGrowing>,
     mut level_advance: ResMut<LevelAdvanceState>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
     mut rapier_config: Query<&mut RapierConfiguration>,
     gravity_cfg: Res<GravityConfig>,
-    #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
-    #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
-    #[cfg(feature = "texture_manifest")] type_registry: Option<Res<TypeVariantRegistry>>,
+    mut balls: Query<(Entity, &mut GravityScale), With<Ball>>,
 ) {
     if !level_advance.active
         || !level_advance.growth_spawned
@@ -1035,19 +1070,12 @@ fn finalize_level_advance(
         return;
     }
     let def = level_advance.pending.take().unwrap();
-    // Spawn bricks now.
-    spawn_bricks_only(
-        &def,
-        &mut commands,
-        &mut meshes,
-        &mut materials,
-        #[cfg(feature = "texture_manifest")]
-        canonical.as_deref(),
-        #[cfg(feature = "texture_manifest")]
-        fallback.as_deref_mut(),
-        #[cfg(feature = "texture_manifest")]
-        type_registry.as_deref(),
-    );
+    // Bricks were spawned at peak of fade (in handle_level_advance_delay).
+    // Now activate ball physics after paddle growth completes.
+    for (entity, mut gravity_scale) in balls.iter_mut() {
+        commands.entity(entity).remove::<crate::BallFrozen>();
+        gravity_scale.0 = 1.0; // Activate gravity
+    }
     // Restore gravity to new level's normal.
     if let Ok(mut config) = rapier_config.single_mut() {
         config.gravity = gravity_cfg.normal;

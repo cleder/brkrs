@@ -1,6 +1,11 @@
 //!
 //! You can toggle wireframes with the space bar except on wasm. Wasm does not support
 //! `POLYGON_MODE_LINE` on the gpu.
+//!
+//! Keyboard commands:
+//! - R: Restart current level
+//! - L: Switch to next level
+//! - K: Destroy all bricks (for testing level transitions)
 
 pub mod level_loader;
 pub mod systems;
