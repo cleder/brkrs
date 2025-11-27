@@ -402,34 +402,18 @@ fn restore_gravity_post_growth(
 
 /// Keep ball frozen (zero velocity, locked position) while paddle is growing
 fn stabilize_frozen_balls(
-    mut balls_with_vel: Query<(Entity, &mut Velocity), (With<Ball>, With<BallFrozen>)>,
-    balls_without_vel: Query<Entity, (With<Ball>, With<BallFrozen>, Without<Velocity>)>,
-    all_balls: Query<(Entity, Option<&BallFrozen>), With<Ball>>,
+    mut balls: Query<(Entity, Option<&mut Velocity>, &BallFrozen), With<Ball>>,
     mut commands: Commands,
 ) {
-    let with_vel_count = balls_with_vel.iter().count();
-    let without_vel_count = balls_without_vel.iter().count();
-    let total_balls = all_balls.iter().count();
-    if with_vel_count > 0 || without_vel_count > 0 {
-        info!(
-            "stabilize_frozen_balls: {} with velocity, {} without velocity, {} total balls",
-            with_vel_count, without_vel_count, total_balls
-        );
-        // Log each ball's state
-        for (entity, frozen) in all_balls.iter() {
-            info!("  Ball {:?}: has_BallFrozen={}", entity, frozen.is_some());
+    for (entity, velocity, _frozen) in balls.iter_mut() {
+        if let Some(mut vel) = velocity {
+            // Ball has Velocity component, zero it out
+            vel.linvel = Vec3::ZERO;
+            vel.angvel = Vec3::ZERO;
+        } else {
+            // Ball doesn't have Velocity component, add it with zero velocity
+            commands.entity(entity).insert(Velocity::zero());
         }
-    }
-    // For balls with Velocity component, zero it out
-    for (entity, mut velocity) in balls_with_vel.iter_mut() {
-        info!("Zeroing velocity for frozen ball {:?}", entity);
-        velocity.linvel = Vec3::ZERO;
-        velocity.angvel = Vec3::ZERO;
-    }
-    // For balls without Velocity component, add it with zero velocity
-    for entity in balls_without_vel.iter() {
-        info!("Adding Velocity::zero() to frozen ball {:?}", entity);
-        commands.entity(entity).insert(Velocity::zero());
     }
 }
 

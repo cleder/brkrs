@@ -90,6 +90,7 @@ pub struct LevelAdvanceState {
     pub active: bool,                     // transition in progress
     pub growth_spawned: bool,             // tiny paddle+ball spawned, waiting for growth completion
     pub pending: Option<LevelDefinition>, // next level definition awaiting brick spawn
+    pub unfreezing: bool, // BallFrozen removed, waiting one frame for Velocity cleanup
 }
 
 impl Default for LevelAdvanceState {
@@ -99,6 +100,7 @@ impl Default for LevelAdvanceState {
             active: false,
             growth_spawned: false,
             pending: None,
+            unfreezing: false,
         }
     }
 }
@@ -782,7 +784,6 @@ fn restart_level_on_key(
     if !keyboard.just_pressed(KeyCode::KeyR) {
         return;
     }
-    info!("R key pressed - restarting level");
     let level_number = current_level.map(|cl| cl.0.number).unwrap_or(1);
     let path = format!("assets/levels/level_{:03}.ron", level_number);
     match force_load_level_from_path(
@@ -818,13 +819,8 @@ fn destroy_all_bricks_on_key(
 ) {
     // Simple key press - just K to destroy all bricks for testing
     if keyboard.just_pressed(KeyCode::KeyK) {
-        info!("K key pressed");
-        let count = bricks.iter().len();
-        if count > 0 {
-            info!("Destroying {} brick(s) for level transition testing", count);
-            for entity in bricks.iter() {
-                commands.entity(entity).despawn();
-            }
+        for entity in bricks.iter() {
+            commands.entity(entity).despawn();
         }
     }
 }
@@ -1032,10 +1028,6 @@ fn handle_level_advance_delay(
             .insert(paddle_respawn_handle(paddle_pos));
     }
     if let Some(ball_pos) = spawn_points.ball {
-        info!(
-            "Spawning ball during level advance at {:?} with BallFrozen marker",
-            ball_pos
-        );
         commands
             .spawn((
                 Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
@@ -1087,10 +1079,6 @@ fn finalize_level_advance(
 
     // If paddles are still growing, wait
     if paddle_count > 0 {
-        info!(
-            "finalize_level_advance: waiting for {} paddle(s) to finish growing",
-            paddle_count
-        );
         return;
     }
 
@@ -1098,45 +1086,46 @@ fn finalize_level_advance(
     let ball_count = balls.iter().count();
     if ball_count == 0 {
         // Ball hasn't been spawned yet (commands not applied), wait for next frame
-        info!("finalize_level_advance: waiting for ball to spawn (commands not yet applied)");
         return;
     }
 
-    info!("finalize_level_advance: paddle growth complete, activating ball physics");
+    // Two-stage unfreezing process:
+    // Stage 1: Remove BallFrozen, wait one frame for stabilize_frozen_balls to stop acting
+    // Stage 2: Remove Velocity component and activate gravity
+
+    if !level_advance.unfreezing {
+        // Stage 1: Remove BallFrozen marker
+        for (entity, _gravity_scale, _velocity) in balls.iter_mut() {
+            commands.entity(entity).remove::<crate::BallFrozen>();
+        }
+        level_advance.unfreezing = true;
+        return; // Wait one frame for BallFrozen removal to take effect
+    }
+
+    // Stage 2: Now BallFrozen is removed, stabilize_frozen_balls won't act anymore
     let def = level_advance.pending.take().unwrap();
-    // Bricks were spawned at peak of fade (in handle_level_advance_delay).
-    // Now activate ball physics after paddle growth completes.
-    info!(
-        "Finalizing level advance: found {} ball(s), target gravity={:?}",
-        ball_count, gravity_cfg.normal
-    );
-    for (entity, mut gravity_scale, velocity) in balls.iter_mut() {
-        let vel_str = velocity
-            .map(|v| format!("{:?}", v.linvel))
-            .unwrap_or_else(|| "None".to_string());
-        info!(
-            "Removing BallFrozen from {:?}, current velocity={}",
-            entity, vel_str
-        );
-        commands.entity(entity).remove::<crate::BallFrozen>();
+
+    for (entity, mut gravity_scale, _velocity) in balls.iter_mut() {
         // Remove Velocity component so Rapier manages it internally (like R/L do)
         commands.entity(entity).remove::<Velocity>();
+        // Give tiny impulse to wake up Rapier's internal physics state
+        // (Rapier stored zero velocity internally while we were freezing the ball)
+        commands.entity(entity).insert(ExternalImpulse {
+            impulse: Vec3::new(0.0001, 0.0, 0.0001),
+            torque_impulse: Vec3::ZERO,
+        });
         gravity_scale.0 = 1.0; // Activate gravity
-        info!(
-            "Ball {:?} gravity activated: scale=1.0, world_gravity={:?}, removed Velocity component",
-            entity, gravity_cfg.normal
-        );
     }
     // Restore gravity to new level's normal.
     if let Ok(mut config) = rapier_config.single_mut() {
         config.gravity = gravity_cfg.normal;
-        info!("Rapier gravity restored to: {:?}", config.gravity);
     }
     // Update CurrentLevel resource.
     commands.insert_resource(CurrentLevel(def));
     // Reset state.
     level_advance.active = false;
     level_advance.growth_spawned = false;
+    level_advance.unfreezing = false;
 }
 
 /// Spawn fade overlay once when level advancement begins.
