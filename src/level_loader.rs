@@ -1072,13 +1072,12 @@ fn finalize_level_advance(
     gravity_cfg: Res<GravityConfig>,
     mut balls: Query<(Entity, &mut GravityScale, Option<&Velocity>), With<Ball>>,
 ) {
-    let paddle_count = paddles_growing.iter().count();
-    if !level_advance.active || !level_advance.growth_spawned || level_advance.pending.is_none() {
-        return;
-    }
-
-    // If paddles are still growing, wait
-    if paddle_count > 0 {
+    if !level_advance.active
+        || !level_advance.growth_spawned
+        || level_advance.pending.is_none()
+        // If paddles are still growing, wait
+        || !paddles_growing.is_empty()
+    {
         return;
     }
 
