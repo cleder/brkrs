@@ -7,6 +7,7 @@
 //! - L: Switch to next level
 //! - K: Destroy all bricks (for testing level transitions)
 
+pub mod level_format;
 pub mod level_loader;
 pub mod systems;
 
