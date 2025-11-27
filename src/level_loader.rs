@@ -178,7 +178,7 @@ fn load_level(
         }
     };
     #[cfg(target_arch = "wasm32")]
-    let level_str: &str = include_str!("../assets/levels/level_001.ron");
+    let level_str: &str = include_str!("../assets/levels/level_001.ron"); // initial level only; subsequent loads use embedded helper
 
     match from_str::<LevelDefinition>(level_str) {
         Ok(def) => {
@@ -644,7 +644,11 @@ fn advance_level_when_cleared(
     }
     let next_number = curr.0.number + 1;
     let path = format!("assets/levels/level_{:03}.ron", next_number);
-    if !std::path::Path::new(&path).exists() {
+    #[cfg(not(target_arch = "wasm32"))]
+    let level_exists = std::path::Path::new(&path).exists();
+    #[cfg(target_arch = "wasm32")]
+    let level_exists = embedded_level_str(&path).is_some();
+    if !level_exists {
         if !game_progress.finished {
             info!(
                 "All bricks cleared; no next level file {}. Game complete.",
@@ -673,7 +677,13 @@ fn advance_level_when_cleared(
         return;
     }
     // Parse and store next level; delay spawning via LevelAdvanceState.
-    match std::fs::read_to_string(&path) {
+    #[cfg(not(target_arch = "wasm32"))]
+    let file_content_result = std::fs::read_to_string(&path);
+    #[cfg(target_arch = "wasm32")]
+    let file_content_result = embedded_level_str(&path)
+        .map(|s| s.to_string())
+        .ok_or_else(|| format!("failed to read level file '{path}': embedded asset missing"));
+    match file_content_result {
         Ok(content) => match from_str::<LevelDefinition>(&content) {
             Ok(def) => {
                 info!("Preparing advancement to level {} (delayed)", def.number);
@@ -1076,8 +1086,12 @@ fn force_load_level_from_path(
         game_progress,
         level_advance,
     );
+    #[cfg(not(target_arch = "wasm32"))]
     let content = std::fs::read_to_string(path)
         .map_err(|err| format!("failed to read level file '{path}': {err}"))?;
+    #[cfg(target_arch = "wasm32")]
+    let content = embedded_level_str(path)
+        .ok_or_else(|| format!("failed to read level file '{path}': embedded asset missing"))?;
     let def = from_str::<LevelDefinition>(&content)
         .map_err(|err| format!("failed to parse level '{path}': {err}"))?;
     apply_level_definition(
@@ -1097,6 +1111,16 @@ fn force_load_level_from_path(
     );
     commands.insert_resource(CurrentLevel(def.clone()));
     Ok(def)
+}
+
+// Embedded level RON contents for WASM builds (no filesystem access).
+#[cfg(target_arch = "wasm32")]
+fn embedded_level_str(path: &str) -> Option<&'static str> {
+    match path {
+        "assets/levels/level_001.ron" => Some(include_str!("../assets/levels/level_001.ron")),
+        "assets/levels/level_002.ron" => Some(include_str!("../assets/levels/level_002.ron")),
+        _ => None,
+    }
 }
 
 fn reset_level_state(
