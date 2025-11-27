@@ -6,7 +6,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [features]
-default = []
+default = ["texture_manifest"]
 texture_manifest = []
 
 # Enable a small amount of optimization in debug mode
@@ -18,7 +18,7 @@ opt-level = 1
 opt-level = 3
 
 [dependencies]
-bevy = { version = "0.16.0", features = ["dynamic_linking"] }
+bevy = { version = "0.16.0", features = ["dynamic_linking", "file_watcher"] }
 bevy_rapier3d = { version = "0.31.0", features = [
     "simd-stable",
     "debug-render-3d",

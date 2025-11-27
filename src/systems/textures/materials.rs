@@ -18,7 +18,15 @@ impl Plugin for TextureMaterialsPlugin {
         app.init_resource::<ProfileMaterialBank>();
         app.init_resource::<CanonicalMaterialHandles>();
         app.init_resource::<TypeVariantRegistry>();
-        app.add_systems(Update, (hydrate_texture_materials, watch_ball_type_changes));
+        app.add_systems(
+            Update,
+            (
+                hydrate_texture_materials,
+                watch_ball_type_changes,
+                set_texture_repeat_mode,
+                apply_canonical_materials_to_existing_entities,
+            ),
+        );
     }
 }
 
@@ -139,10 +147,22 @@ impl ProfileMaterialBank {
         asset_server: &AssetServer,
         materials: &mut Assets<StandardMaterial>,
     ) {
-        self.handles.clear();
+        // Remove profiles that no longer exist
+        self.handles
+            .retain(|id, _| manifest.profiles.contains_key(id));
+
+        // Update or create materials for each profile
         for profile in manifest.profiles.values() {
-            let handle = bake_material(profile, asset_server, materials);
-            self.handles.insert(profile.id.clone(), handle);
+            if let Some(handle) = self.handles.get(&profile.id) {
+                // Reuse existing handle and update the material in-place
+                if let Some(material) = materials.get_mut(handle) {
+                    update_material(material, profile, asset_server);
+                }
+            } else {
+                // Create new material for new profile
+                let handle = bake_material(profile, asset_server, materials);
+                self.handles.insert(profile.id.clone(), handle);
+            }
         }
     }
 
@@ -225,6 +245,27 @@ fn initialize_fallback_registry(
     commands.insert_resource(FallbackRegistry::new(materials.as_mut()));
 }
 
+fn set_texture_repeat_mode(
+    mut images: ResMut<Assets<Image>>,
+    mut events: EventReader<AssetEvent<Image>>,
+) {
+    use bevy::image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor};
+
+    for event in events.read() {
+        if let AssetEvent::Added { id } | AssetEvent::LoadedWithDependencies { id } = event {
+            if let Some(image) = images.get_mut(*id) {
+                // Set the sampler to repeat mode for tiling
+                image.sampler = ImageSampler::Descriptor(ImageSamplerDescriptor {
+                    address_mode_u: ImageAddressMode::Repeat,
+                    address_mode_v: ImageAddressMode::Repeat,
+                    address_mode_w: ImageAddressMode::Repeat,
+                    ..Default::default()
+                });
+            }
+        }
+    }
+}
+
 fn hydrate_texture_materials(
     manifest: Option<Res<TextureManifest>>,
     asset_server: Option<Res<AssetServer>>,
@@ -267,6 +308,25 @@ fn add_unlit_color(
     })
 }
 
+fn update_material(
+    material: &mut StandardMaterial,
+    profile: &VisualAssetProfile,
+    asset_server: &AssetServer,
+) {
+    material.base_color_texture =
+        Some(asset_server.load(manifest_asset_path(&profile.albedo_path)));
+    material.normal_map_texture = profile
+        .normal_path
+        .as_ref()
+        .map(|path| asset_server.load(manifest_asset_path(path)));
+    material.metallic = profile.metallic;
+    material.perceptual_roughness = profile.roughness;
+
+    use bevy::math::Affine2;
+    material.uv_transform =
+        Affine2::from_scale_angle_translation(profile.uv_scale, 0.0, profile.uv_offset);
+}
+
 fn bake_material(
     profile: &VisualAssetProfile,
     asset_server: &AssetServer,
@@ -277,11 +337,17 @@ fn bake_material(
         .normal_path
         .as_ref()
         .map(|path| asset_server.load(manifest_asset_path(path)));
+
+    use bevy::math::Affine2;
+    let uv_transform =
+        Affine2::from_scale_angle_translation(profile.uv_scale, 0.0, profile.uv_offset);
+
     materials.add(StandardMaterial {
         base_color_texture: Some(base_color_texture),
         normal_map_texture,
         metallic: profile.metallic,
         perceptual_roughness: profile.roughness,
+        uv_transform,
         ..default()
     })
 }
@@ -399,4 +465,50 @@ pub fn brick_type_material_handle(
         ));
         fb.brick.clone()
     })
+}
+
+/// Apply canonical materials to existing entities when they become available.
+/// This ensures paddle and bricks spawned during Startup get proper textures
+/// once the manifest finishes loading.
+fn apply_canonical_materials_to_existing_entities(
+    canonical: Option<Res<CanonicalMaterialHandles>>,
+    type_registry: Option<Res<TypeVariantRegistry>>,
+    mut paddle_query: Query<
+        &mut MeshMaterial3d<StandardMaterial>,
+        (With<crate::Paddle>, Without<crate::Brick>),
+    >,
+    mut brick_query: Query<
+        (&mut MeshMaterial3d<StandardMaterial>, &crate::BrickTypeId),
+        (With<crate::Brick>, Without<crate::Paddle>),
+    >,
+) {
+    let Some(canonical) = canonical else {
+        return;
+    };
+
+    // Only run once when canonical materials first become ready
+    if !canonical.is_changed() || !canonical.is_ready() {
+        return;
+    }
+
+    // Update paddle materials
+    if let Some(paddle_handle) = canonical.get(BaselineMaterialKind::Paddle) {
+        for mut material in paddle_query.iter_mut() {
+            material.0 = paddle_handle.clone();
+        }
+    }
+
+    // Update brick materials based on type
+    for (mut material, brick_type) in brick_query.iter_mut() {
+        if let Some(registry) = type_registry.as_ref() {
+            if let Some(handle) = registry.get(ObjectClass::Brick, brick_type.0) {
+                material.0 = handle;
+                continue;
+            }
+        }
+        // Fall back to canonical brick material
+        if let Some(brick_handle) = canonical.get(BaselineMaterialKind::Brick) {
+            material.0 = brick_handle.clone();
+        }
+    }
 }

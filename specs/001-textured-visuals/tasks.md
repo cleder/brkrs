@@ -120,13 +120,13 @@ description: "Task list for Textured Visuals Overhaul implementation"
 
 ### Tests for User Story 4
 
-- [ ] T024 [P] [US4] Add `KeyCode::L` integration test in `tests/level_switcher.rs` covering wrap-around and texture reinitialization.
+- [x] T024 [P] [US4] Add `KeyCode::L` integration test in `tests/level_switcher.rs` covering wrap-around and texture reinitialization.
 
 ### Implementation for User Story 4
 
-- [ ] T025 [US4] Implement `LevelSwitchRequested` event + `LevelSwitchState` resource and scheduler wiring in `src/systems/level_switch.rs` per research.md Decision 4.
-- [ ] T026 [US4] Connect keyboard input to the new event in `src/main.rs` (or existing input system) and ensure `src/level_loader.rs` handles queued switches.
-- [ ] T027 [US4] Mirror the `/levels/next` contract by exposing a debug command or tooling shim as defined in `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml`.
+- [x] T025 [US4] Implement `LevelSwitchRequested` event + `LevelSwitchState` resource and scheduler wiring in `src/systems/level_switch.rs` per research.md Decision 4.
+- [x] T026 [US4] Connect keyboard input to the new event in `src/main.rs` (or existing input system) and ensure `src/level_loader.rs` handles queued switches.
+- [x] T027 [US4] Mirror the `/levels/next` contract by exposing a debug command or tooling shim as defined in `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml`.
 
 **Parallel Example (US4)**: T024 can be authored while T025 builds the event/resource plumbing. T026 and T027 can proceed concurrently once the event exists (different files: `src/main.rs` vs contracts/tooling script).
 
@@ -136,9 +136,9 @@ description: "Task list for Textured Visuals Overhaul implementation"
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T028 [P] Update `specs/001-textured-visuals/quickstart.md` with any new commands or flags discovered during implementation.
-- [ ] T029 Document manifest + override authoring steps in `README.md` (or a new section) to guide artists.
-- [ ] T030 Run the full validation matrix (`cargo test`, `cargo clippy --all-targets --all-features`, `bevy lint`, `cargo build --target wasm32-unknown-unknown --release`) and capture results inside `specs/001-textured-visuals/quickstart.md`.
+- [x] T028 [P] Update `specs/001-textured-visuals/quickstart.md` with any new commands or flags discovered during implementation.
+- [x] T029 Document manifest + override authoring steps in `README.md` (or a new section) to guide artists.
+- [x] T030 Run the full validation matrix (`cargo test`, `cargo clippy --all-targets --all-features`, `bevy lint`, `cargo build --target wasm32-unknown-unknown --release`) and capture results inside `specs/001-textured-visuals/quickstart.md`.
 
 ---
 

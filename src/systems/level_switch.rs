@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use std::path::{Path, PathBuf};
-use tracing::{info, warn};
+use tracing::info;
+#[cfg(not(target_arch = "wasm32"))]
+use tracing::warn;
 
 /// Event emitted when any source requests a level switch.
 #[derive(Event, Debug, Clone, Copy, PartialEq, Eq)]
@@ -102,6 +104,7 @@ fn discover_level_slots() -> Vec<LevelSlot> {
     slots
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn parse_level_number(file_name: &str) -> Option<u32> {
     let prefix = "level_";
     let suffix = ".ron";
@@ -134,8 +137,8 @@ fn queue_keyboard_requests(
 }
 
 fn poll_contract_trigger(
-    state: Res<LevelSwitchState>,
-    mut events: EventWriter<LevelSwitchRequested>,
+    #[cfg(not(target_arch = "wasm32"))] state: Res<LevelSwitchState>,
+    #[cfg(not(target_arch = "wasm32"))] mut events: EventWriter<LevelSwitchRequested>,
 ) {
     #[cfg(not(target_arch = "wasm32"))]
     {

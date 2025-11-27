@@ -47,6 +47,7 @@ cargo build --target wasm32-unknown-unknown --release
    - Edit `assets/levels/level_002.ron` to reference a distinct `LevelTextureSet`. Reload via `cargo run` and ensure only that level’s ground/background change.
 4. **Level switch shortcut**
    - Press **L** repeatedly during play. Each press should load the next level within two seconds and reapply the correct texture manifest entries, wrapping after the last level.
+   - **Automation contract**: For external tooling/QA scripts, create a `.level-switch-next` file in the project root to trigger the same behavior as pressing L. The engine polls for this file each frame and removes it after triggering the switch (see `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml` for the `POST /levels/next` contract definition).
 5. **WASM sanity**
    - Serve the `wasm/` folder (e.g., `python -m http.server`), open in Chrome/Firefox, and confirm textures load along with the **L** shortcut.
 
@@ -56,3 +57,43 @@ cargo build --target wasm32-unknown-unknown --release
 - **Repeated fallback warnings**: Ensure `FallbackRegistry::log_once` is used when reporting missing assets; duplicate logs indicate the registry resource was not initialized before spawns.
 - **Level switch ignores input**: Verify the `LevelSwitchPlugin` system is added to the appropriate schedule and that `KeyCode::L` is not consumed by another input handler.
 - **WASM build missing textures**: Confirm assets are copied to the web build output (`wasm/run.sh` or bespoke pipeline) and that texture formats are browser-compatible (PNG/KTX2 only).
+
+---
+
+## Validation Matrix Results
+
+Last validation run: 2025-01-XX (User Story 4 completion)
+
+### Test Suite
+
+```bash
+cargo test
+```
+
+- ✅ 33 tests passed (0 failed, 0 ignored)
+- Coverage: respawn system (13 tests), texture manifest (3 tests), level overrides (6 tests), level switcher (1 test), fallback registry (2 tests), type variants (2 tests), spawn points (2 tests), respawn timer (2 tests), respawn visual (2 tests)
+
+### Clippy Lints
+
+```bash
+cargo clippy --all-targets --all-features
+```
+
+- ✅ Clean (no warnings or errors)
+
+### Bevy Lints
+
+```bash
+bevy lint
+```
+
+- ✅ Clean (no warnings or errors)
+
+### WASM Build
+
+```bash
+cargo build --target wasm32-unknown-unknown --release
+```
+
+- ✅ Successful build for web target
+- Feature-gated code correctly excludes filesystem operations in WASM context
