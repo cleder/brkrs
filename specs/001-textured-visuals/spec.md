@@ -96,6 +96,56 @@ Artists and QA can cycle through levels in sequence by pressing the **L** key so
 - When level switching occurs via the **L** key during active gameplay, the system must either confirm the switch or debounce rapid presses so the queue cannot overflow.
 - If **L** is pressed while no additional levels exist (e.g., only one defined), the system should reload the same level and still ensure textures reinitialize correctly.
 
+## Implementation Lessons Learned
+
+### Material Hot-Reload Strategy
+
+**Learning**: When the texture manifest changes, creating entirely new material handles breaks existing entity references. Materials must be updated in-place rather than recreated to ensure live hot-reload without requiring level restart.
+
+**Impact**: Artists can now edit `manifest.ron` UV scales, roughness values, or texture paths and see changes immediately in the running game without pressing 'L' or restarting.
+
+**Implementation Note**: Material bank rebuild logic must reuse existing handles and call `materials.get_mut()` to update properties rather than `materials.add()` to create new handles.
+
+### Texture Addressing Mode for Tiling
+
+**Learning**: By default, Bevy textures use `ClampToEdge` addressing mode, which causes textures to appear stretched or positioned in corners when UV scale exceeds 1.0. Tiling requires explicit `Repeat` mode on the sampler.
+
+**Impact**: Ground plane and wall textures now tile correctly when UV scale is increased (e.g., `(10.0, 8.0)`), creating seamless repeated patterns instead of a single stretched image.
+
+**Implementation Note**: A dedicated system watches for `AssetEvent::Added` on images loaded for texture profiles and updates their sampler to use `ImageAddressMode::Repeat` for all axes.
+
+### Asynchronous Asset Loading Timing
+
+**Learning**: Entities spawned during `Startup` (like paddle and bricks) may render before the texture manifest finishes loading asynchronously, resulting in initial frames showing fallback materials even though proper textures are defined.
+
+**Impact**: Game now shows textures immediately on startup without requiring a level switch. Players no longer see a flash of red/gray materials before textures appear.
+
+**Implementation Note**: A dedicated system monitors when `CanonicalMaterialHandles` becomes ready and triggers once to update all existing paddle and brick materials. Queries must be disjoint using `Without<T>` to avoid conflicts.
+
+### Respawn System Integration
+
+**Learning**: The ball respawn system creates new entities from scratch and was using hardcoded debug materials, causing respawned balls to appear red regardless of texture settings.
+
+**Impact**: Lost balls now respawn with their proper textured material, maintaining visual consistency throughout gameplay.
+
+**Implementation Note**: Respawn executor must query the texture system's canonical material handles at respawn time and use them instead of hardcoded debug materials.
+
+### Feature Flag Coordination
+
+**Learning**: The texture system was behind a feature flag (`texture_manifest`) but not enabled by default, making it invisible during normal development workflow.
+
+**Impact**: Feature is now active by default, allowing immediate testing and iteration without remembering to add `--features texture_manifest` to every cargo command.
+
+**Implementation Note**: Set `default = ["texture_manifest"]` in `Cargo.toml` features section to make the system opt-out rather than opt-in.
+
+### UV Transform Application
+
+**Learning**: The manifest defined `uv_scale` and `uv_offset` fields but the material baking function didn't apply them, causing all textures to stretch to fill the entire mesh regardless of intended tiling.
+
+**Impact**: Artists can now control texture repetition via manifest entries without touching code. Ground planes tile naturally, brick patterns repeat at intended frequencies.
+
+**Implementation Note**: Use `StandardMaterial::uv_transform` with `Affine2::from_scale_angle_translation()` to apply scale/offset from profile data during material creation and updates.
+
 ## Requirements *(mandatory)*
 
 <!--
