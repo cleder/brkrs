@@ -93,6 +93,18 @@ fn discover_level_slots() -> Vec<LevelSlot> {
             }
         }
     }
+    #[cfg(target_arch = "wasm32")]
+    {
+        // On WASM, hardcode the level list since there's no filesystem access
+        slots.push(LevelSlot {
+            number: 1,
+            path: "assets/levels/level_001.ron".to_string(),
+        });
+        slots.push(LevelSlot {
+            number: 2,
+            path: "assets/levels/level_002.ron".to_string(),
+        });
+    }
     if slots.is_empty() {
         slots.push(LevelSlot {
             number: 1,
