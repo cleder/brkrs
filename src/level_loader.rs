@@ -18,6 +18,9 @@ use crate::{
 };
 use bevy_rapier3d::prelude::*;
 
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct LevelAdvanceSet;
+
 /// Bundled texture-related resources to reduce system parameter count.
 #[cfg(feature = "texture_manifest")]
 #[derive(SystemParam)]
@@ -32,7 +35,7 @@ pub struct LevelDefinition {
     pub number: u32,
     /// Optional gravity override for this level (x,y,z). If omitted the existing GravityConfig value is used.
     pub gravity: Option<(f32, f32, f32)>,
-    pub matrix: Vec<Vec<u8>>, // expect 22 x 22
+    pub matrix: Vec<Vec<u8>>, // expect 20 x 20
     #[cfg(feature = "texture_manifest")]
     #[serde(default)]
     pub presentation: Option<crate::systems::textures::loader::LevelTextureSet>,
@@ -53,13 +56,15 @@ impl Plugin for LevelLoaderPlugin {
             (
                 advance_level_when_cleared,
                 handle_level_advance_delay,
-                finalize_level_advance,
+                finalize_level_advance.after(handle_level_advance_delay),
                 spawn_fade_overlay_if_needed,
                 update_fade_overlay,
                 restart_level_on_key,
+                destroy_all_bricks_on_key,
                 process_level_switch_requests,
                 sync_level_presentation,
-            ),
+            )
+                .in_set(LevelAdvanceSet),
         );
         #[cfg(not(feature = "texture_manifest"))]
         app.add_systems(
@@ -67,10 +72,11 @@ impl Plugin for LevelLoaderPlugin {
             (
                 advance_level_when_cleared,
                 handle_level_advance_delay,
-                finalize_level_advance,
+                finalize_level_advance.after(handle_level_advance_delay),
                 spawn_fade_overlay_if_needed,
                 update_fade_overlay,
                 restart_level_on_key,
+                destroy_all_bricks_on_key,
                 process_level_switch_requests,
             ),
         );
@@ -84,6 +90,7 @@ pub struct LevelAdvanceState {
     pub active: bool,                     // transition in progress
     pub growth_spawned: bool,             // tiny paddle+ball spawned, waiting for growth completion
     pub pending: Option<LevelDefinition>, // next level definition awaiting brick spawn
+    pub unfreezing: bool, // BallFrozen removed, waiting one frame for Velocity cleanup
 }
 
 impl Default for LevelAdvanceState {
@@ -93,6 +100,7 @@ impl Default for LevelAdvanceState {
             active: false,
             growth_spawned: false,
             pending: None,
+            unfreezing: false,
         }
     }
 }
@@ -121,6 +129,59 @@ fn ball_respawn_handle(position: Vec3) -> RespawnHandle {
         spawn: ball_spawn_transform(position),
         kind: RespawnEntityKind::Ball,
     }
+}
+
+/// Normalize matrix to 20x20 dimensions with padding/truncation
+fn normalize_matrix(mut matrix: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
+    const TARGET_ROWS: usize = 20;
+    const TARGET_COLS: usize = 20;
+
+    let original_rows = matrix.len();
+    let original_cols = matrix.first().map_or(0, |r| r.len());
+
+    // Log warning if dimensions don't match
+    if original_rows != TARGET_ROWS || original_cols != TARGET_COLS {
+        warn!(
+            "Level matrix wrong dimensions; expected 20x20, got {}x{}",
+            original_rows, original_cols
+        );
+    }
+
+    // Pad rows if needed
+    while matrix.len() < TARGET_ROWS {
+        matrix.push(vec![0; TARGET_COLS]);
+    }
+
+    // Truncate rows if needed
+    if matrix.len() > TARGET_ROWS {
+        warn!(
+            "Level matrix has {} rows; truncating to {}",
+            matrix.len(),
+            TARGET_ROWS
+        );
+        matrix.truncate(TARGET_ROWS);
+    }
+
+    // Pad/truncate columns
+    for (i, row) in matrix.iter_mut().enumerate() {
+        let original_row_len = row.len();
+
+        // Pad columns if needed
+        while row.len() < TARGET_COLS {
+            row.push(0);
+        }
+
+        // Truncate columns if needed
+        if original_row_len > TARGET_COLS {
+            warn!(
+                "Row {} has {} columns; truncating to {}",
+                i, original_row_len, TARGET_COLS
+            );
+            row.truncate(TARGET_COLS);
+        }
+    }
+
+    matrix
 }
 
 fn ensure_lower_goal_sensor(commands: &mut Commands, existing: &Query<Entity, With<LowerGoal>>) {
@@ -181,11 +242,9 @@ fn load_level(
     let level_str: &str = include_str!("../assets/levels/level_001.ron"); // initial level only; subsequent loads use embedded helper
 
     match from_str::<LevelDefinition>(level_str) {
-        Ok(def) => {
-            // basic validation
-            if def.matrix.len() != 22 || def.matrix.iter().any(|r| r.len() != 22) {
-                warn!("Level matrix wrong dimensions; expected 22x22");
-            }
+        Ok(mut def) => {
+            // Normalize matrix to 20x20 with padding/truncation
+            def.matrix = normalize_matrix(def.matrix);
             info!("Loaded level {}", def.number);
             // Apply per-level gravity if present
             if let Some((x, y, z)) = def.gravity {
@@ -691,7 +750,7 @@ fn advance_level_when_cleared(
                 level_advance.active = true;
                 level_advance.growth_spawned = false;
                 level_advance.pending = Some(def);
-                // Despawn paddle & ball now to show empty field during delay.
+                // Despawn paddle & ball now to show empty field during fade-out.
                 for p in paddle_q.iter() {
                     commands.entity(p).despawn();
                 }
@@ -749,6 +808,20 @@ fn restart_level_on_key(
     ) {
         Ok(_) => info!("Restarted level {level_number}"),
         Err(err) => warn!("Failed to restart level {level_number}: {err}"),
+    }
+}
+
+/// Destroy all bricks when K is pressed (for testing level transitions).
+fn destroy_all_bricks_on_key(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    bricks: Query<Entity, With<Brick>>,
+    mut commands: Commands,
+) {
+    // Simple key press - just K to destroy all bricks for testing
+    if keyboard.just_pressed(KeyCode::KeyK) {
+        for entity in bricks.iter() {
+            commands.entity(entity).despawn();
+        }
     }
 }
 
@@ -835,6 +908,7 @@ fn handle_level_advance_delay(
     mut materials: ResMut<Assets<StandardMaterial>>,
     #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
     #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
+    #[cfg(feature = "texture_manifest")] type_registry: Option<Res<TypeVariantRegistry>>,
 ) {
     if !level_advance.active || level_advance.pending.is_none() || level_advance.growth_spawned {
         return;
@@ -844,16 +918,43 @@ fn handle_level_advance_delay(
         return;
     }
     let def = level_advance.pending.as_ref().unwrap();
+
+    // Spawn bricks at peak of fade (when screen is fully black)
+    #[cfg(feature = "texture_manifest")]
+    let canonical_handles = canonical.as_deref();
+
+    spawn_bricks_only(
+        def,
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        #[cfg(feature = "texture_manifest")]
+        canonical_handles,
+        #[cfg(feature = "texture_manifest")]
+        fallback.as_deref_mut(),
+        #[cfg(feature = "texture_manifest")]
+        type_registry.as_deref(),
+    );
+
     // Apply per-level gravity (or keep current) immediately so it is ready when the ball unfreezes.
     let target_gravity = if let Some((x, y, z)) = def.gravity {
         let vec = Vec3::new(x, y, z);
         gravity_cfg.normal = vec;
+        info!(
+            "Level {} gravity set to {:?} in handle_level_advance_delay",
+            def.number, vec
+        );
         vec
     } else {
+        info!(
+            "Level {} using existing gravity {:?}",
+            def.number, gravity_cfg.normal
+        );
         gravity_cfg.normal
     };
     if let Ok(mut config) = rapier_config.single_mut() {
         config.gravity = target_gravity;
+        info!("Rapier config gravity set to {:?}", config.gravity);
     }
     // Set initial positions (used by spawn below and later systems).
     set_spawn_points_only(def, spawn_points.as_mut());
@@ -935,7 +1036,6 @@ fn handle_level_advance_delay(
                 Ball,
                 crate::BallFrozen,
                 RigidBody::Dynamic,
-                Velocity::zero(),
                 CollidingEntities::default(),
                 ActiveEvents::COLLISION_EVENTS,
                 Collider::ball(BALL_RADIUS),
@@ -956,7 +1056,7 @@ fn handle_level_advance_delay(
                 LockedAxes::TRANSLATION_LOCKED_Y,
                 Ccd::enabled(),
                 ExternalImpulse::default(),
-                GravityScale(1.0),
+                GravityScale(0.0), // Keep at 0.0 until paddle growth completes
             ))
             .insert(ball_respawn_handle(ball_pos));
     }
@@ -968,35 +1068,53 @@ fn finalize_level_advance(
     paddles_growing: Query<&crate::PaddleGrowing>,
     mut level_advance: ResMut<LevelAdvanceState>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
     mut rapier_config: Query<&mut RapierConfiguration>,
     gravity_cfg: Res<GravityConfig>,
-    #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
-    #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
-    #[cfg(feature = "texture_manifest")] type_registry: Option<Res<TypeVariantRegistry>>,
+    mut balls: Query<(Entity, &mut GravityScale, Option<&Velocity>), With<Ball>>,
 ) {
     if !level_advance.active
         || !level_advance.growth_spawned
         || level_advance.pending.is_none()
+        // If paddles are still growing, wait
         || !paddles_growing.is_empty()
     {
         return;
     }
+
+    // Check if we can actually see the spawned ball (commands have been applied)
+    let ball_count = balls.iter().count();
+    if ball_count == 0 {
+        // Ball hasn't been spawned yet (commands not applied), wait for next frame
+        return;
+    }
+
+    // Two-stage unfreezing process:
+    // Stage 1: Remove BallFrozen, wait one frame for stabilize_frozen_balls to stop acting
+    // Stage 2: Remove Velocity component and activate gravity
+
+    if !level_advance.unfreezing {
+        // Stage 1: Remove BallFrozen marker
+        for (entity, _gravity_scale, _velocity) in balls.iter_mut() {
+            commands.entity(entity).remove::<crate::BallFrozen>();
+        }
+        level_advance.unfreezing = true;
+        return; // Wait one frame for BallFrozen removal to take effect
+    }
+
+    // Stage 2: Now BallFrozen is removed, stabilize_frozen_balls won't act anymore
     let def = level_advance.pending.take().unwrap();
-    // Spawn bricks now.
-    spawn_bricks_only(
-        &def,
-        &mut commands,
-        &mut meshes,
-        &mut materials,
-        #[cfg(feature = "texture_manifest")]
-        canonical.as_deref(),
-        #[cfg(feature = "texture_manifest")]
-        fallback.as_deref_mut(),
-        #[cfg(feature = "texture_manifest")]
-        type_registry.as_deref(),
-    );
+
+    for (entity, mut gravity_scale, _velocity) in balls.iter_mut() {
+        // Remove Velocity component so Rapier manages it internally (like R/L do)
+        commands.entity(entity).remove::<Velocity>();
+        // Give tiny impulse to wake up Rapier's internal physics state
+        // (Rapier stored zero velocity internally while we were freezing the ball)
+        commands.entity(entity).insert(ExternalImpulse {
+            impulse: Vec3::new(0.0001, 0.0, 0.0001),
+            torque_impulse: Vec3::ZERO,
+        });
+        gravity_scale.0 = 1.0; // Activate gravity
+    }
     // Restore gravity to new level's normal.
     if let Ok(mut config) = rapier_config.single_mut() {
         config.gravity = gravity_cfg.normal;
@@ -1006,6 +1124,7 @@ fn finalize_level_advance(
     // Reset state.
     level_advance.active = false;
     level_advance.growth_spawned = false;
+    level_advance.unfreezing = false;
 }
 
 /// Spawn fade overlay once when level advancement begins.
@@ -1220,5 +1339,115 @@ fn sync_level_presentation(
     } else {
         // No manifest loaded yet; reset to defaults
         presentation.reset();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::normalize_matrix;
+
+    #[test]
+    fn normalize_padding_rows_and_cols() {
+        // 18 rows, each 19 cols -> should pad to 20x20
+        let input = vec![vec![1u8; 19]; 18];
+        let out = normalize_matrix(input.clone());
+        assert_eq!(out.len(), 20, "row count padded to 20");
+        for row in &out {
+            assert_eq!(row.len(), 20, "col count padded to 20");
+        }
+        // Original data preserved in leading rows/cols
+        for r in 0..18 {
+            for c in 0..19 {
+                assert_eq!(out[r][c], 1);
+            }
+        }
+        // Padded cells zeroed
+        for r in 0..18 {
+            assert_eq!(out[r][19], 0);
+        }
+        for r in 18..20 {
+            for c in 0..20 {
+                assert_eq!(out[r][c], 0);
+            }
+        }
+    }
+
+    #[test]
+    fn normalize_truncates_rows_and_cols() {
+        // 22 rows of 24 cols -> truncates to first 20 rows/cols
+        let input = vec![vec![2u8; 24]; 22];
+        let out = normalize_matrix(input.clone());
+        assert_eq!(out.len(), 20);
+        for row in &out {
+            assert_eq!(row.len(), 20);
+        }
+        // Leading preserved
+        for r in 0..20 {
+            for c in 0..20 {
+                assert_eq!(out[r][c], 2);
+            }
+        }
+    }
+
+    #[test]
+    fn normalize_irregular_row_lengths() {
+        // Mixture: some short, some long
+        let mut input: Vec<Vec<u8>> = Vec::new();
+        for i in 0..22 {
+            // exceed target rows to test truncation
+            let len = match i % 3 {
+                0 => 10,
+                1 => 25,
+                _ => 20,
+            }; // various lengths
+            input.push(vec![3u8; len]);
+        }
+        let out = normalize_matrix(input);
+        assert_eq!(out.len(), 20);
+        for (r, row) in out.iter().enumerate() {
+            assert_eq!(row.len(), 20, "row {} not normalized to 20 cols", r);
+            let original_len = match r % 3 {
+                0 => 10,
+                1 => 25,
+                _ => 20,
+            };
+            let preserved = original_len.min(20);
+            for c in 0..preserved {
+                assert_eq!(row[c], 3, "row {r} col {c} should preserve value 3");
+            }
+            for c in preserved..20 {
+                assert_eq!(row[c], 0, "row {r} col {c} should be padded zero");
+            }
+        }
+    }
+
+    #[test]
+    fn normalize_empty_matrix() {
+        let out = normalize_matrix(Vec::new());
+        assert_eq!(out.len(), 20);
+        for row in &out {
+            assert_eq!(row.len(), 20);
+            for c in row {
+                assert_eq!(*c, 0);
+            }
+        }
+    }
+
+    #[test]
+    fn normalize_exact_dimensions_unchanged() {
+        let mut input = vec![vec![5u8; 20]; 20];
+        input[0][0] = 7;
+        let out = normalize_matrix(input.clone());
+        assert_eq!(out.len(), 20);
+        for row in &out {
+            assert_eq!(row.len(), 20);
+        }
+        assert_eq!(out[0][0], 7);
+        // Ensure no unintended zeroing
+        for r in 0..20 {
+            for c in 0..20 {
+                assert_eq!(out[r][c], input[r][c]);
+            }
+        }
     }
 }

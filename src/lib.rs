@@ -1,6 +1,11 @@
 //!
 //! You can toggle wireframes with the space bar except on wasm. Wasm does not support
 //! `POLYGON_MODE_LINE` on the gpu.
+//!
+//! Keyboard commands:
+//! - R: Restart current level
+//! - L: Switch to next level
+//! - K: Destroy all bricks (for testing level transitions)
 
 pub mod level_loader;
 pub mod systems;
@@ -48,12 +53,12 @@ const CAMERA_SHAKE_MAX_INTENSITY: f32 = 10.0;
 // Paddle growth animation duration
 const PADDLE_GROWTH_DURATION: f32 = 2.0;
 
-// Grid debug overlay constants (22x22 grid covering PLANE_H × PLANE_W)
-const GRID_WIDTH: usize = 22; // Columns (Z-axis)
-const GRID_HEIGHT: usize = 22; // Rows (X-axis)
-const CELL_WIDTH: f32 = PLANE_W / GRID_WIDTH as f32; // ~1.818 (Z dimension)
-const CELL_HEIGHT: f32 = PLANE_H / GRID_HEIGHT as f32; // ~1.364 (X dimension)
-                                                       // Cell aspect ratio: CELL_HEIGHT / CELL_WIDTH = 30/40 * 22/22 = 3/4 = 0.75
+// Grid debug overlay constants (20x20 grid covering PLANE_H × PLANE_W)
+const GRID_WIDTH: usize = 20; // Columns (Z-axis)
+const GRID_HEIGHT: usize = 20; // Rows (X-axis)
+const CELL_WIDTH: f32 = PLANE_W / GRID_WIDTH as f32; // 2.0 (Z dimension)
+const CELL_HEIGHT: f32 = PLANE_H / GRID_HEIGHT as f32; // 1.5 (X dimension)
+                                                       // Cell aspect ratio: CELL_HEIGHT / CELL_WIDTH = 30/40 * 20/20 = 3/4 = 0.75
 /// A marker component for our shapes so we can query them separately from the ground plane
 #[derive(Component)]
 pub struct Paddle;
@@ -166,7 +171,7 @@ pub fn run() {
     app.add_plugins(RapierPhysicsPlugin::<NoUserData>::default());
     app.add_plugins(LevelSwitchPlugin);
     app.add_plugins(crate::level_loader::LevelLoaderPlugin);
-    app.add_plugins(RapierDebugRenderPlugin::default());
+    // app.add_plugins(RapierDebugRenderPlugin::default());
     app.add_plugins(RespawnPlugin);
 
     #[cfg(feature = "texture_manifest")]
@@ -185,7 +190,7 @@ pub fn run() {
             limit_ball_velocity,
             update_camera_shake,
             update_paddle_growth,
-            stabilize_frozen_balls,
+            stabilize_frozen_balls.before(crate::level_loader::LevelAdvanceSet),
             restore_gravity_post_growth,
             #[cfg(not(target_arch = "wasm32"))]
             toggle_wireframe,
@@ -364,6 +369,10 @@ fn update_paddle_growth(
                 config.gravity = gravity_cfg.normal;
             }
             commands.entity(entity).remove::<PaddleGrowing>();
+            info!(
+                "Paddle growth completed, gravity restored to {:?}",
+                gravity_cfg.normal
+            );
         } else {
             // Interpolate scale from near-zero to target
             let progress = growing.timer.fraction();
@@ -392,10 +401,19 @@ fn restore_gravity_post_growth(
 }
 
 /// Keep ball frozen (zero velocity, locked position) while paddle is growing
-fn stabilize_frozen_balls(mut balls: Query<&mut Velocity, (With<Ball>, With<BallFrozen>)>) {
-    for mut velocity in balls.iter_mut() {
-        velocity.linvel = Vec3::ZERO;
-        velocity.angvel = Vec3::ZERO;
+fn stabilize_frozen_balls(
+    mut balls: Query<(Entity, Option<&mut Velocity>, &BallFrozen), With<Ball>>,
+    mut commands: Commands,
+) {
+    for (entity, velocity, _frozen) in balls.iter_mut() {
+        if let Some(mut vel) = velocity {
+            // Ball has Velocity component, zero it out
+            vel.linvel = Vec3::ZERO;
+            vel.angvel = Vec3::ZERO;
+        } else {
+            // Ball doesn't have Velocity component, add it with zero velocity
+            commands.entity(entity).insert(Velocity::zero());
+        }
     }
 }
 

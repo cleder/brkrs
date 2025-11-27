@@ -2,7 +2,11 @@
 
 `Brkrs` is a Breakout/Arkanoid style game implemented in Rust with the Bevy engine. It extends the classic formula with richer physics, paddle rotation, and per-level configuration.
 
-The game area is divided into a 22×22 grid. Bricks occupy individual grid cells. Gameplay is rendered in 3D but constrained to a plane at `Y = 2.0`.
+The game area is divided into a 20×20 grid. Bricks occupy individual grid cells. Gameplay is rendered in 3D but constrained to a plane at `Y = 2.0`.
+
+## Retrospective & Migration Notes
+
+The 22×22 → 20×20 grid migration, rationale, and follow-up action items are documented in `specs/003-map-format/retrospective.md`.
 
 ## Core Systems
 
@@ -29,7 +33,7 @@ Levels live in `assets/levels/` and are RON files parsed into `LevelDefinition`:
 LevelDefinition(
   number: 1,
   gravity: (2.0, 0.0, 0.0), // Optional per-level gravity (x,y,z)
-  matrix: [ /* 22 x 22 grid of u8 values */ ]
+  matrix: [ /* 20 x 20 grid of u8 values */ ]
 )
 ```
 
@@ -44,4 +48,4 @@ If `gravity` is present it sets `GravityConfig.normal` and `RapierConfiguration.
 - `2` ball (first occurrence only)
 - `3` brick
 
-Matrix must be 22×22. Missing paddle or ball results in fallback spawns.
+Matrix must be 20×20. Missing paddle or ball results in fallback spawns.

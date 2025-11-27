@@ -1,4 +1,4 @@
-//! Grid debug overlay system for visualizing the 22x22 game grid
+//! Grid debug overlay system for visualizing the 20x20 game grid
 //!
 //! This module provides a wireframe grid overlay that is visible only when
 //! wireframe mode is enabled, helping with alignment and debugging.
@@ -10,7 +10,7 @@ use bevy::pbr::wireframe::WireframeConfig;
 
 use crate::{GridOverlay, CELL_HEIGHT, CELL_WIDTH, GRID_HEIGHT, GRID_WIDTH, PLANE_H, PLANE_W};
 
-/// Spawns the 22x22 grid wireframe overlay
+/// Spawns the 20x20 grid wireframe overlay
 /// The grid is initially hidden and only becomes visible when wireframe mode is enabled
 pub fn spawn_grid_overlay(
     mut commands: Commands,
