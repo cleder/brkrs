@@ -23,7 +23,7 @@ impl Plugin for TextureMaterialsPlugin {
             (
                 hydrate_texture_materials,
                 watch_ball_type_changes,
-                set_texture_repeat_mode,
+                set_texture_repeat_mode.run_if(resource_exists::<Events<AssetEvent<Image>>>),
                 apply_canonical_materials_to_existing_entities,
             ),
         );
@@ -246,10 +246,15 @@ fn initialize_fallback_registry(
 }
 
 fn set_texture_repeat_mode(
-    mut images: ResMut<Assets<Image>>,
+    images: Option<ResMut<Assets<Image>>>,
     mut events: EventReader<AssetEvent<Image>>,
 ) {
     use bevy::image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor};
+
+    // Skip if Assets<Image> resource doesn't exist (e.g., in tests)
+    let Some(mut images) = images else {
+        return;
+    };
 
     for event in events.read() {
         if let AssetEvent::Added { id } | AssetEvent::LoadedWithDependencies { id } = event {
