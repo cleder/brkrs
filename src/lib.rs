@@ -48,12 +48,12 @@ const CAMERA_SHAKE_MAX_INTENSITY: f32 = 10.0;
 // Paddle growth animation duration
 const PADDLE_GROWTH_DURATION: f32 = 2.0;
 
-// Grid debug overlay constants (22x22 grid covering PLANE_H × PLANE_W)
-const GRID_WIDTH: usize = 22; // Columns (Z-axis)
-const GRID_HEIGHT: usize = 22; // Rows (X-axis)
-const CELL_WIDTH: f32 = PLANE_W / GRID_WIDTH as f32; // ~1.818 (Z dimension)
-const CELL_HEIGHT: f32 = PLANE_H / GRID_HEIGHT as f32; // ~1.364 (X dimension)
-                                                       // Cell aspect ratio: CELL_HEIGHT / CELL_WIDTH = 30/40 * 22/22 = 3/4 = 0.75
+// Grid debug overlay constants (20x20 grid covering PLANE_H × PLANE_W)
+const GRID_WIDTH: usize = 20; // Columns (Z-axis)
+const GRID_HEIGHT: usize = 20; // Rows (X-axis)
+const CELL_WIDTH: f32 = PLANE_W / GRID_WIDTH as f32; // 2.0 (Z dimension)
+const CELL_HEIGHT: f32 = PLANE_H / GRID_HEIGHT as f32; // 1.5 (X dimension)
+                                                       // Cell aspect ratio: CELL_HEIGHT / CELL_WIDTH = 30/40 * 20/20 = 3/4 = 0.75
 /// A marker component for our shapes so we can query them separately from the ground plane
 #[derive(Component)]
 pub struct Paddle;

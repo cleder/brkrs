@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use brkrs::level_loader::{set_spawn_points_only, LevelDefinition};
 use brkrs::systems::respawn::SpawnPoints;
 
-const GRID_DIM: usize = 22;
+const GRID_DIM: usize = 20;
 const PLANE_H: f32 = 30.0;
 const PLANE_W: f32 = 40.0;
 const CELL_HEIGHT: f32 = PLANE_H / GRID_DIM as f32;

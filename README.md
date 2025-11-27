@@ -29,7 +29,7 @@ Levels live in `assets/levels/` and are RON files parsed into `LevelDefinition`:
 LevelDefinition(
   number: 1,
   gravity: (2.0, 0.0, 0.0), // Optional per-level gravity (x,y,z)
-  matrix: [ /* 22 x 22 grid of u8 values */ ]
+  matrix: [ /* 20 x 20 grid of u8 values */ ]
 )
 ```
 

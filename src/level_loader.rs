@@ -32,7 +32,7 @@ pub struct LevelDefinition {
     pub number: u32,
     /// Optional gravity override for this level (x,y,z). If omitted the existing GravityConfig value is used.
     pub gravity: Option<(f32, f32, f32)>,
-    pub matrix: Vec<Vec<u8>>, // expect 22 x 22
+    pub matrix: Vec<Vec<u8>>, // expect 20 x 20
     #[cfg(feature = "texture_manifest")]
     #[serde(default)]
     pub presentation: Option<crate::systems::textures::loader::LevelTextureSet>,
@@ -123,6 +123,59 @@ fn ball_respawn_handle(position: Vec3) -> RespawnHandle {
     }
 }
 
+/// Normalize matrix to 20x20 dimensions with padding/truncation
+fn normalize_matrix(mut matrix: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
+    const TARGET_ROWS: usize = 20;
+    const TARGET_COLS: usize = 20;
+
+    let original_rows = matrix.len();
+    let original_cols = matrix.first().map_or(0, |r| r.len());
+
+    // Log warning if dimensions don't match
+    if original_rows != TARGET_ROWS || original_cols != TARGET_COLS {
+        warn!(
+            "Level matrix wrong dimensions; expected 20x20, got {}x{}",
+            original_rows, original_cols
+        );
+    }
+
+    // Pad rows if needed
+    while matrix.len() < TARGET_ROWS {
+        matrix.push(vec![0; TARGET_COLS]);
+    }
+
+    // Truncate rows if needed
+    if matrix.len() > TARGET_ROWS {
+        warn!(
+            "Level matrix has {} rows; truncating to {}",
+            matrix.len(),
+            TARGET_ROWS
+        );
+        matrix.truncate(TARGET_ROWS);
+    }
+
+    // Pad/truncate columns
+    for (i, row) in matrix.iter_mut().enumerate() {
+        let original_row_len = row.len();
+
+        // Pad columns if needed
+        while row.len() < TARGET_COLS {
+            row.push(0);
+        }
+
+        // Truncate columns if needed
+        if original_row_len > TARGET_COLS {
+            warn!(
+                "Row {} has {} columns; truncating to {}",
+                i, original_row_len, TARGET_COLS
+            );
+            row.truncate(TARGET_COLS);
+        }
+    }
+
+    matrix
+}
+
 fn ensure_lower_goal_sensor(commands: &mut Commands, existing: &Query<Entity, With<LowerGoal>>) {
     if !existing.is_empty() {
         return;
@@ -181,11 +234,9 @@ fn load_level(
     let level_str: &str = include_str!("../assets/levels/level_001.ron"); // initial level only; subsequent loads use embedded helper
 
     match from_str::<LevelDefinition>(level_str) {
-        Ok(def) => {
-            // basic validation
-            if def.matrix.len() != 22 || def.matrix.iter().any(|r| r.len() != 22) {
-                warn!("Level matrix wrong dimensions; expected 22x22");
-            }
+        Ok(mut def) => {
+            // Normalize matrix to 20x20 with padding/truncation
+            def.matrix = normalize_matrix(def.matrix);
             info!("Loaded level {}", def.number);
             // Apply per-level gravity if present
             if let Some((x, y, z)) = def.gravity {
