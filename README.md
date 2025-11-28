@@ -4,9 +4,9 @@
 
 The game area is divided into a 20×20 grid. Bricks occupy individual grid cells. Gameplay is rendered in 3D but constrained to a plane at `Y = 2.0`.
 
-## Retrospective & Migration Notes
+## Demo
 
-The 22×22 → 20×20 grid migration, rationale, and follow-up action items are documented in `specs/003-map-format/retrospective.md`.
+You can play a web version on [GitHub Pages](https://cleder.github.io/brkrs/)
 
 ## Core Systems
 
