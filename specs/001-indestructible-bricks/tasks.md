@@ -9,7 +9,7 @@
 
 This tasks file breaks the work into phases: Setup, Foundational (blocking), then three user story phases (P1, P2, P3) followed by a polish phase. Each story-phase is independently testable. The MVP is User Story 1 (gameplay: levels complete despite indestructible bricks).
 
-Total tasks: 18
+Total tasks: 21
 
 ---
 
@@ -42,10 +42,10 @@ Goal: Ensure indestructible bricks (index `90`) do not block level completion an
 
 Independent Test: Create a level with destructible + indestructible bricks and assert level completes when destructible bricks hit 0; test-level files under `assets/levels/test_mixed_indestructible.ron`.
 
-- [ ] T008 [US1] Add logic to LevelCompletionCounter to ignore bricks where `counts_towards_completion == false` in `src/level_loader.rs` and `src/systems/level_switch.rs`
-- [ ] T009 [US1] Add unit tests validating completion behaviour for mixed levels in `tests/level_definition.rs` (new tests focusing on runtime level completion)
-- [ ] T010 [US1] Add an integration test that loads a sample level from `assets/levels/test_mixed_indestructible.ron` and confirms completion (tests/integration/level_completion.rs)
-- [ ] T011 [US1] Add sample level `assets/levels/test_mixed_indestructible.ron` with comments describing expected behavior and add it to quickstart.md
+- [x] T008 [US1] Add logic to LevelCompletionCounter to ignore bricks where `counts_towards_completion == false` in `src/level_loader.rs` and `src/systems/level_switch.rs`
+- [x] T009 [US1] Add unit tests validating completion behaviour for mixed levels in `tests/level_definition.rs` (new tests focusing on runtime level completion)
+- [x] T010 [US1] Add an integration test that loads a sample level from `assets/levels/test_mixed_indestructible.ron` and confirms completion (tests/integration/level_completion.rs)
+- [x] T011 [US1] Add sample level `assets/levels/test_mixed_indestructible.ron` with comments describing expected behavior and add it to quickstart.md
 - [x] T008 [US1] Add logic to LevelCompletionCounter to ignore bricks where `counts_towards_completion == false` in `src/level_loader.rs` and `src/systems/level_switch.rs`
 - [x] T009 [US1] Add unit tests validating completion behaviour for mixed levels in `tests/level_definition.rs` (new tests focusing on runtime level completion)
 - [x] T010 [US1] Add an integration test that loads a sample level from `assets/levels/test_mixed_indestructible.ron` and confirms completion (tests/integration/level_completion.rs)
