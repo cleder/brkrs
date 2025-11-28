@@ -32,7 +32,7 @@ As a player, when all destructible bricks in a level are destroyed, the level sh
 **Acceptance Scenarios**:
 
 1. **Given** a level with one destructible brick and multiple indestructible bricks, **When** the player destroys the destructible brick, **Then** the level is marked complete and completion logic triggers.
-2. **Given** a level with zero destructible bricks (only indestructible bricks present), **When** the level starts, **Then** the level should be considered complete (or skipable) because there are no destructible bricks to clear.
+2. **Given** a level with zero destructible bricks (only indestructible bricks present), **When** the level starts, **Then** the level should be considered complete (or skippable) because there are no destructible bricks to clear.
 
 ---
 
