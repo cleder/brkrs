@@ -1,4 +1,5 @@
 use bevy::app::App;
+use bevy::ecs::entity::EntityRow;
 use bevy::ecs::event::Events;
 use bevy::prelude::*;
 use bevy::time::Time;
@@ -77,7 +78,7 @@ fn overlay_exists(app: &App) -> bool {
 fn overlay_spawns_and_clears_after_duration() {
     let mut app = test_app();
 
-    send_respawn_event(&mut app, Entity::from_raw(1), None);
+    send_respawn_event(&mut app, Entity::from_row(EntityRow::from_raw_u32(1).unwrap()), None);
     advance_time(&mut app, 0.016);
     app.update();
 

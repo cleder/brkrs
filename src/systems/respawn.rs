@@ -778,6 +778,7 @@ fn restore_paddle_control(
 mod tests {
     use super::*;
     use bevy::app::App;
+    use bevy::ecs::entity::EntityRow;
     use bevy::ecs::event::Events;
     use bevy::time::Time;
     use bevy::MinimalPlugins;
@@ -874,7 +875,7 @@ mod tests {
         {
             let mut schedule = app.world_mut().resource_mut::<RespawnSchedule>();
             schedule.pending = Some(RespawnRequest {
-                lost_ball: Entity::from_raw(999),
+                lost_ball: Entity::from_row(EntityRow::from_raw_u32(999).unwrap()),
                 tracked_paddle: Some(paddle),
                 remaining_lives: 2,
                 ball_spawn: Some(SpawnTransform::new(
@@ -926,7 +927,7 @@ mod tests {
         {
             let mut schedule = app.world_mut().resource_mut::<RespawnSchedule>();
             schedule.pending = Some(RespawnRequest {
-                lost_ball: Entity::from_raw(1),
+                lost_ball: Entity::from_row(EntityRow::from_raw_u32(1).unwrap()),
                 tracked_paddle: None,
                 remaining_lives: 1,
                 ball_spawn: Some(SpawnTransform::new(Vec3::ZERO, Quat::IDENTITY)),

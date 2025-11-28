@@ -1,5 +1,6 @@
 use super::tests::{advance_time, test_app};
 use super::*;
+use bevy::ecs::entity::EntityRow;
 use bevy::ecs::event::Events;
 use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
 use std::time::Duration;
@@ -11,7 +12,7 @@ fn overlay_spawns_on_respawn_schedule() {
     {
         let mut events = app.world_mut().resource_mut::<Events<RespawnScheduled>>();
         events.send(RespawnScheduled {
-            ball: Entity::from_raw(1),
+            ball: Entity::from_row(EntityRow::from_raw_u32(1).unwrap()),
             paddle: None,
             completes_at: 0.0,
             remaining_lives: 3,
