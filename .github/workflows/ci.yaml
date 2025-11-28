@@ -33,7 +33,7 @@ jobs:
           # cache correctness when dependencies change or different branches
           # modify Cargo.lock.
           shared-key: ${{ runner.os }}-ci-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
-          save-if: true
+          save-if: ${{ github.event_name == 'push' }}
       - name: Install Dependencies
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
       - name: Populate cache (compile tests)
@@ -61,7 +61,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           shared-key: ${{ runner.os }}-ci-clippy-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
-          save-if: true
+          save-if: ${{ github.event_name == 'push' }}
       - name: Install Dependencies
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
       - name: Populate cache (compile)

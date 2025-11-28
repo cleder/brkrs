@@ -29,18 +29,21 @@ jobs:
           targets: wasm32-unknown-unknown
 
       - name: Cache cargo registry
+        if: ${{ github.event_name == 'push' }}
         uses: actions/cache@v4
         with:
           path: ~/.cargo/registry
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
 
       - name: Cache cargo index
+        if: ${{ github.event_name == 'push' }}
         uses: actions/cache@v4
         with:
           path: ~/.cargo/git
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
 
       - name: Cache target directory
+        if: ${{ github.event_name == 'push' }}
         uses: actions/cache@v4
         with:
           path: target
