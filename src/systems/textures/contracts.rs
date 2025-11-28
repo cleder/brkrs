@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
-use bevy::prelude::{Color, Event, Vec2};
+use bevy::ecs::message::Message;
+use bevy::prelude::{Color, Vec2};
 use ron::Value as RonValue;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
@@ -211,12 +212,12 @@ fn ron_to_json(value: &RonValue) -> JsonValue {
 // Preview Asset Tooling Hook
 // ============================================================================
 
-/// Event to request a temporary texture profile preview.
+/// Message to request a temporary texture profile preview.
 ///
 /// Implements the `/visual-assets/preview` contract for tooling.
 /// When received, the system temporarily injects the profile into the manifest
 /// so artists can preview new art without rebuilding the game.
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct PreviewVisualAsset {
     /// The profile to preview. Must include a valid `id` field.
     pub profile: VisualAssetProfileContract,

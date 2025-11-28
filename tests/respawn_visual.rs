@@ -1,5 +1,6 @@
 use bevy::app::App;
-use bevy::ecs::event::Events;
+use bevy::ecs::entity::EntityRow;
+use bevy::ecs::message::Messages;
 use bevy::prelude::*;
 use bevy::time::Time;
 use bevy::MinimalPlugins;
@@ -18,7 +19,7 @@ fn test_app() -> App {
     app.add_plugins(MinimalPlugins)
         .insert_resource(Assets::<Mesh>::default())
         .insert_resource(Assets::<StandardMaterial>::default())
-        .add_event::<CollisionEvent>()
+        .add_message::<CollisionEvent>()
         .add_plugins(RespawnPlugin);
     {
         let mut spawn_points = app.world_mut().resource_mut::<SpawnPoints>();
@@ -34,8 +35,8 @@ fn advance_time(app: &mut App, delta_secs: f32) {
 }
 
 fn send_respawn_event(app: &mut App, ball: Entity, paddle: Option<Entity>) {
-    let mut events = app.world_mut().resource_mut::<Events<RespawnScheduled>>();
-    events.send(RespawnScheduled {
+    let mut events = app.world_mut().resource_mut::<Messages<RespawnScheduled>>();
+    events.write(RespawnScheduled {
         ball,
         paddle,
         completes_at: 0.0,
@@ -44,12 +45,15 @@ fn send_respawn_event(app: &mut App, ball: Entity, paddle: Option<Entity>) {
 }
 
 fn finish_overlay_timer(app: &mut App) {
-    let overlay_entity = app
-        .world()
-        .iter_entities()
-        .find(|entity| entity.contains::<RespawnFadeOverlay>())
-        .map(|entity| entity.id())
-        .expect("respawn overlay should exist");
+    let overlay_entity = {
+        let mut query = app
+            .world_mut()
+            .query_filtered::<Entity, With<RespawnFadeOverlay>>();
+        query
+            .iter(app.world())
+            .next()
+            .expect("respawn overlay should exist")
+    };
     let duration = {
         let world = app.world();
         world
@@ -67,28 +71,33 @@ fn finish_overlay_timer(app: &mut App) {
         .tick(duration + Duration::from_millis(100));
 }
 
-fn overlay_exists(app: &App) -> bool {
-    app.world()
-        .iter_entities()
-        .any(|entity| entity.contains::<RespawnFadeOverlay>())
+fn overlay_exists(app: &mut App) -> bool {
+    let mut query = app
+        .world_mut()
+        .query_filtered::<Entity, With<RespawnFadeOverlay>>();
+    query.iter(app.world()).next().is_some()
 }
 
 #[test]
 fn overlay_spawns_and_clears_after_duration() {
     let mut app = test_app();
 
-    send_respawn_event(&mut app, Entity::from_raw(1), None);
+    send_respawn_event(
+        &mut app,
+        Entity::from_row(EntityRow::from_raw_u32(1).unwrap()),
+        None,
+    );
     advance_time(&mut app, 0.016);
     app.update();
 
-    assert!(overlay_exists(&app));
+    assert!(overlay_exists(&mut app));
     assert!(app.world().resource::<RespawnVisualState>().is_active());
 
     finish_overlay_timer(&mut app);
     advance_time(&mut app, 0.0);
     app.update();
 
-    assert!(!overlay_exists(&app));
+    assert!(!overlay_exists(&mut app));
     assert!(
         !app.world().resource::<RespawnVisualState>().is_active(),
         "visual state should clear once overlay despawns",

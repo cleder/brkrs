@@ -32,7 +32,7 @@ fn initialize_level_systems(app: &mut App) {
 }
 
 fn trigger_level_switch(app: &mut App) {
-    app.world_mut().send_event(LevelSwitchRequested {
+    app.world_mut().write_message(LevelSwitchRequested {
         source: LevelSwitchSource::Keyboard,
     });
     // First update processes the event and queues commands.

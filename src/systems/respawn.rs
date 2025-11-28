@@ -1,3 +1,4 @@
+use bevy::ecs::message::{Message, MessageReader, MessageWriter};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use std::{collections::VecDeque, f32::consts::PI, time::Duration};
@@ -160,7 +161,7 @@ pub struct RespawnHandle {
 /// Plugin wiring the respawn flow through ordered system sets.
 pub struct RespawnPlugin;
 
-#[derive(Event, Debug, Clone, Copy)]
+#[derive(Message, Debug, Clone, Copy)]
 pub struct LifeLostEvent {
     pub ball: Entity,
     pub cause: LifeLossCause,
@@ -173,7 +174,7 @@ pub enum LifeLossCause {
 }
 
 #[allow(dead_code)]
-#[derive(Event, Debug, Clone, Copy)]
+#[derive(Message, Debug, Clone, Copy)]
 pub struct RespawnScheduled {
     pub ball: Entity,
     pub paddle: Option<Entity>,
@@ -182,7 +183,7 @@ pub struct RespawnScheduled {
 }
 
 #[allow(dead_code)]
-#[derive(Event, Debug, Clone, Copy)]
+#[derive(Message, Debug, Clone, Copy)]
 pub struct RespawnCompleted {
     pub ball: Entity,
     pub paddle: Option<Entity>,
@@ -190,7 +191,7 @@ pub struct RespawnCompleted {
 }
 
 #[allow(dead_code)]
-#[derive(Event, Debug, Clone, Copy)]
+#[derive(Message, Debug, Clone, Copy)]
 pub struct GameOverRequested {
     pub remaining_lives: u8,
 }
@@ -214,10 +215,10 @@ impl Plugin for RespawnPlugin {
             .init_resource::<LivesState>()
             .init_resource::<SpawnPoints>()
             .init_resource::<RespawnVisualState>()
-            .add_event::<LifeLostEvent>()
-            .add_event::<RespawnScheduled>()
-            .add_event::<RespawnCompleted>()
-            .add_event::<GameOverRequested>()
+            .add_message::<LifeLostEvent>()
+            .add_message::<RespawnScheduled>()
+            .add_message::<RespawnCompleted>()
+            .add_message::<GameOverRequested>()
             .configure_sets(
                 Update,
                 (
@@ -257,13 +258,13 @@ impl Plugin for RespawnPlugin {
 }
 
 fn detect_ball_loss(
-    mut collision_events: EventReader<CollisionEvent>,
+    mut collision_events: MessageReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
     ball_handles: Query<&RespawnHandle, With<Ball>>,
     lower_goals: Query<Entity, With<LowerGoal>>,
     spawn_points: Res<SpawnPoints>,
     mut commands: Commands,
-    mut life_lost_events: EventWriter<LifeLostEvent>,
+    mut life_lost_events: MessageWriter<LifeLostEvent>,
 ) {
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
@@ -297,7 +298,7 @@ fn detect_ball_loss(
     }
 }
 
-fn life_loss_logging(mut life_lost_events: EventReader<LifeLostEvent>) {
+fn life_loss_logging(mut life_lost_events: MessageReader<LifeLostEvent>) {
     for event in life_lost_events.read() {
         let spawn = event.ball_spawn.translation;
         info!(
@@ -313,7 +314,7 @@ fn life_loss_logging(mut life_lost_events: EventReader<LifeLostEvent>) {
     }
 }
 
-fn log_respawn_scheduled(mut events: EventReader<RespawnScheduled>) {
+fn log_respawn_scheduled(mut events: MessageReader<RespawnScheduled>) {
     for event in events.read() {
         info!(
             target: "respawn",
@@ -327,7 +328,7 @@ fn log_respawn_scheduled(mut events: EventReader<RespawnScheduled>) {
     }
 }
 
-fn log_game_over_requested(mut events: EventReader<GameOverRequested>) {
+fn log_game_over_requested(mut events: MessageReader<GameOverRequested>) {
     for event in events.read() {
         info!(
             target: "respawn",
@@ -372,7 +373,7 @@ fn start_pending_request(
     respawn_schedule: &mut RespawnSchedule,
     request: RespawnRequest,
     time: &Time,
-    respawn_scheduled_events: &mut EventWriter<RespawnScheduled>,
+    respawn_scheduled_events: &mut MessageWriter<RespawnScheduled>,
 ) {
     respawn_schedule.timer.reset();
     respawn_schedule.pending = Some(request);
@@ -413,11 +414,11 @@ fn hydrate_respawn_request(
 
 fn enqueue_respawn_requests(
     mut respawn_schedule: ResMut<RespawnSchedule>,
-    mut events: EventReader<LifeLostEvent>,
+    mut events: MessageReader<LifeLostEvent>,
     lives_state: Res<LivesState>,
     time: Res<Time>,
     spawn_points: Res<SpawnPoints>,
-    mut game_over_events: EventWriter<GameOverRequested>,
+    mut game_over_events: MessageWriter<GameOverRequested>,
     mut paddles: Query<(Entity, Option<&mut Velocity>), With<Paddle>>,
     paddle_handles: Query<&RespawnHandle, With<Paddle>>,
     mut commands: Commands,
@@ -471,7 +472,7 @@ fn process_respawn_queue(
     mut respawn_schedule: ResMut<RespawnSchedule>,
     time: Res<Time>,
     spawn_points: Res<SpawnPoints>,
-    mut respawn_scheduled_events: EventWriter<RespawnScheduled>,
+    mut respawn_scheduled_events: MessageWriter<RespawnScheduled>,
     mut paddles: Query<(Entity, Option<&mut Velocity>), With<Paddle>>,
     paddle_handles: Query<&RespawnHandle, With<Paddle>>,
     mut commands: Commands,
@@ -504,7 +505,7 @@ fn respawn_executor(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut paddles: Query<(Entity, &mut Transform, Option<&mut Velocity>), With<Paddle>>,
-    mut respawn_completed_events: EventWriter<RespawnCompleted>,
+    mut respawn_completed_events: MessageWriter<RespawnCompleted>,
     mut commands: Commands,
     #[cfg(feature = "texture_manifest")] canonical: Option<
         Res<crate::systems::textures::CanonicalMaterialHandles>,
@@ -518,7 +519,7 @@ fn respawn_executor(
     }
 
     respawn_schedule.timer.tick(time.delta());
-    if !respawn_schedule.timer.finished() {
+    if !respawn_schedule.timer.is_finished() {
         return;
     }
 
@@ -672,7 +673,7 @@ fn respawn_executor(
 }
 
 fn respawn_visual_trigger(
-    mut events: EventReader<RespawnScheduled>,
+    mut events: MessageReader<RespawnScheduled>,
     mut commands: Commands,
     mut visual_state: ResMut<RespawnVisualState>,
     overlay_query: Query<Entity, With<RespawnFadeOverlay>>,
@@ -730,7 +731,7 @@ fn animate_respawn_visual(
         };
         color.0 = Color::srgba(0.0, 0.0, 0.0, alpha.clamp(0.0, 0.6));
         visual_state.active = true;
-        if overlay.timer.finished() {
+        if overlay.timer.is_finished() {
             commands.entity(entity).despawn();
             visual_state.active = false;
         }
@@ -777,7 +778,8 @@ fn restore_paddle_control(
 mod tests {
     use super::*;
     use bevy::app::App;
-    use bevy::ecs::event::Events;
+    use bevy::ecs::entity::EntityRow;
+    use bevy::ecs::message::Messages;
     use bevy::time::Time;
     use bevy::MinimalPlugins;
     use bevy_rapier3d::prelude::CollisionEvent;
@@ -790,7 +792,7 @@ mod tests {
         app.add_plugins(MinimalPlugins)
             .insert_resource(Assets::<Mesh>::default())
             .insert_resource(Assets::<StandardMaterial>::default())
-            .add_event::<CollisionEvent>()
+            .add_message::<CollisionEvent>()
             .add_plugins(RespawnPlugin);
         {
             let mut spawn_points = app.world_mut().resource_mut::<SpawnPoints>();
@@ -838,8 +840,8 @@ mod tests {
             .id();
 
         app.world_mut()
-            .resource_mut::<Events<CollisionEvent>>()
-            .send(CollisionEvent::Started(
+            .resource_mut::<Messages<CollisionEvent>>()
+            .write(CollisionEvent::Started(
                 ball,
                 lower_goal,
                 CollisionEventFlags::SENSOR,
@@ -873,7 +875,7 @@ mod tests {
         {
             let mut schedule = app.world_mut().resource_mut::<RespawnSchedule>();
             schedule.pending = Some(RespawnRequest {
-                lost_ball: Entity::from_raw(999),
+                lost_ball: Entity::from_row(EntityRow::from_raw_u32(999).unwrap()),
                 tracked_paddle: Some(paddle),
                 remaining_lives: 2,
                 ball_spawn: Some(SpawnTransform::new(
@@ -898,10 +900,12 @@ mod tests {
         let paddle_transform = world.entity(paddle).get::<Transform>().unwrap();
         assert_eq!(paddle_transform.translation, Vec3::new(-1.0, 2.0, 0.0));
 
-        let ball_count = world
-            .iter_entities()
-            .filter(|entity| entity.contains::<Ball>() && entity.contains::<BallFrozen>())
-            .count();
+        let ball_count = {
+            let mut query = app
+                .world_mut()
+                .query_filtered::<Entity, (With<Ball>, With<BallFrozen>)>();
+            query.iter(app.world()).count()
+        };
         assert_eq!(ball_count, 1);
     }
 
@@ -925,7 +929,7 @@ mod tests {
         {
             let mut schedule = app.world_mut().resource_mut::<RespawnSchedule>();
             schedule.pending = Some(RespawnRequest {
-                lost_ball: Entity::from_raw(1),
+                lost_ball: Entity::from_row(EntityRow::from_raw_u32(1).unwrap()),
                 tracked_paddle: None,
                 remaining_lives: 1,
                 ball_spawn: Some(SpawnTransform::new(Vec3::ZERO, Quat::IDENTITY)),
@@ -1011,8 +1015,8 @@ mod tests {
         let lower_goal = app.world_mut().spawn(LowerGoal).id();
 
         app.world_mut()
-            .resource_mut::<Events<CollisionEvent>>()
-            .send(CollisionEvent::Started(
+            .resource_mut::<Messages<CollisionEvent>>()
+            .write(CollisionEvent::Started(
                 ball,
                 lower_goal,
                 CollisionEventFlags::SENSOR,
@@ -1024,7 +1028,7 @@ mod tests {
         let respawn_schedule = app.world().resource::<RespawnSchedule>();
         assert!(respawn_schedule.pending.is_none());
 
-        let events = app.world().resource::<Events<GameOverRequested>>();
+        let events = app.world().resource::<Messages<GameOverRequested>>();
         assert!(!events.is_empty());
     }
 
@@ -1054,8 +1058,8 @@ mod tests {
         ));
 
         app.world_mut()
-            .resource_mut::<Events<CollisionEvent>>()
-            .send(CollisionEvent::Started(
+            .resource_mut::<Messages<CollisionEvent>>()
+            .write(CollisionEvent::Started(
                 ball_a,
                 lower_goal,
                 CollisionEventFlags::SENSOR,
@@ -1071,8 +1075,8 @@ mod tests {
         }
 
         app.world_mut()
-            .resource_mut::<Events<CollisionEvent>>()
-            .send(CollisionEvent::Started(
+            .resource_mut::<Messages<CollisionEvent>>()
+            .write(CollisionEvent::Started(
                 ball_b,
                 lower_goal,
                 CollisionEventFlags::SENSOR,

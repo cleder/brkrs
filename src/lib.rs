@@ -23,14 +23,13 @@ use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::window::MonitorSelection;
 use bevy::{
+    asset::RenderAssetUsages,
     color::palettes::{basic::SILVER, css::RED},
+    ecs::message::{MessageReader, MessageWriter},
     input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
     prelude::*,
-    render::{
-        render_asset::RenderAssetUsages,
-        render_resource::{Extent3d, TextureDimension, TextureFormat},
-    },
-    window::{CursorGrabMode, PrimaryWindow, Window, WindowMode, WindowPlugin},
+    render::render_resource::{Extent3d, TextureDimension, TextureFormat},
+    window::{CursorGrabMode, CursorOptions, PrimaryWindow, Window, WindowMode, WindowPlugin},
 };
 use bevy_rapier3d::prelude::*;
 
@@ -318,7 +317,7 @@ fn update_camera_shake(
         if let Some(mut shake) = shake_opt {
             shake.timer.tick(time.delta());
 
-            if shake.timer.finished() {
+            if shake.timer.is_finished() {
                 // Restore original position and remove shake component
                 transform.translation = shake.original_position;
                 commands.entity(entity).remove::<CameraShake>();
@@ -339,7 +338,7 @@ fn update_camera_shake(
 
 /// Observer to start camera shake
 fn start_camera_shake(
-    trigger: Trigger<StartCameraShake>,
+    trigger: On<StartCameraShake>,
     mut cameras: Query<(Entity, &Transform), (With<Camera3d>, Without<CameraShake>)>,
     mut commands: Commands,
 ) {
@@ -369,7 +368,7 @@ fn update_paddle_growth(
     for (entity, mut transform, mut growing) in paddles.iter_mut() {
         growing.timer.tick(time.delta());
 
-        if growing.timer.finished() {
+        if growing.timer.is_finished() {
             // Growth complete: set final scale, enable gravity, remove component
             transform.scale = growing.target_scale;
             if let Ok(mut config) = rapier_config.single_mut() {
@@ -554,7 +553,7 @@ fn uv_debug_texture() -> Image {
 /// Mark bricks for despawn when hit by the ball
 /// This allows the physics collision response to complete before removal
 fn mark_brick_on_ball_collision(
-    mut collision_events: EventReader<CollisionEvent>,
+    mut collision_events: MessageReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
     bricks: Query<Entity, (With<Brick>, Without<MarkedForDespawn>)>,
     mut commands: Commands,
@@ -595,22 +594,23 @@ fn toggle_wireframe(
 }
 
 fn grab_mouse(
-    mut window: Single<&mut Window, With<PrimaryWindow>>,
+    window: Single<&Window, With<PrimaryWindow>>,
+    mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
     mouse: Res<ButtonInput<MouseButton>>,
     key: Res<ButtonInput<KeyCode>>,
-    mut app_exit: EventWriter<AppExit>,
+    mut app_exit: MessageWriter<AppExit>,
 ) {
     if !window.focused {
         return;
     }
     if mouse.just_pressed(MouseButton::Left) {
-        window.cursor_options.visible = false;
-        window.cursor_options.grab_mode = CursorGrabMode::Locked;
+        cursor_options.visible = false;
+        cursor_options.grab_mode = CursorGrabMode::Locked;
     }
 
     if key.just_pressed(KeyCode::Escape) {
-        window.cursor_options.visible = true;
-        window.cursor_options.grab_mode = CursorGrabMode::None;
+        cursor_options.visible = true;
+        cursor_options.grab_mode = CursorGrabMode::None;
     }
 
     if key.just_pressed(KeyCode::KeyQ) {
@@ -674,7 +674,7 @@ fn read_character_controller_collisions(
 }
 
 fn on_wall_hit(
-    trigger: Trigger<WallHit>,
+    trigger: On<WallHit>,
     mut balls: Query<&mut ExternalImpulse, With<Ball>>,
     mut controllers: Query<&mut KinematicCharacterController, With<Paddle>>,
     mut commands: Commands,
@@ -703,7 +703,7 @@ struct StartCameraShake {
 }
 
 fn on_brick_hit(
-    trigger: Trigger<BrickHit>,
+    trigger: On<BrickHit>,
     mut controllers: Query<&mut KinematicCharacterController, With<Paddle>>,
     mut commands: Commands,
 ) {
@@ -721,7 +721,7 @@ fn on_brick_hit(
 }
 
 fn on_paddle_ball_hit(
-    trigger: Trigger<BallHit>,
+    trigger: On<BallHit>,
     mut balls: Query<(Entity, &mut ExternalImpulse), With<Ball>>,
 ) {
     let event = trigger.event();

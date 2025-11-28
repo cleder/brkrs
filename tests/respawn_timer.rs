@@ -1,5 +1,5 @@
 use bevy::app::App;
-use bevy::ecs::event::Events;
+use bevy::ecs::message::Messages;
 use bevy::prelude::*;
 use bevy::MinimalPlugins;
 use bevy_rapier3d::prelude::{CollisionEvent, Velocity};
@@ -18,7 +18,7 @@ fn test_app() -> App {
     app.add_plugins(MinimalPlugins)
         .insert_resource(Assets::<Mesh>::default())
         .insert_resource(Assets::<StandardMaterial>::default())
-        .add_event::<CollisionEvent>()
+        .add_message::<CollisionEvent>()
         .add_plugins(RespawnPlugin);
     {
         let mut spawn_points = app.world_mut().resource_mut::<SpawnPoints>();
@@ -67,8 +67,8 @@ fn spawn_respawn_fixture(app: &mut App) -> (Entity, Entity, Entity) {
 
 fn trigger_life_loss(app: &mut App, ball: Entity, lower_goal: Entity) {
     app.world_mut()
-        .resource_mut::<Events<CollisionEvent>>()
-        .send(CollisionEvent::Started(
+        .resource_mut::<Messages<CollisionEvent>>()
+        .write(CollisionEvent::Started(
             ball,
             lower_goal,
             CollisionEventFlags::SENSOR,
@@ -92,7 +92,7 @@ fn respawn_timer_finishes_within_frame_tolerance() {
         let mut schedule = app.world_mut().resource_mut::<RespawnSchedule>();
         schedule.timer.tick(total_duration - frame_tolerance);
         assert!(
-            !schedule.timer.finished(),
+            !schedule.timer.is_finished(),
             "timer should remain pending right before frame tolerance boundary",
         );
     }
@@ -124,7 +124,7 @@ fn respawn_timer_finishes_within_frame_tolerance() {
         );
     }
 
-    let completions = app.world().resource::<Events<RespawnCompleted>>();
+    let completions = app.world().resource::<Messages<RespawnCompleted>>();
     assert!(
         !completions.is_empty(),
         "respawn completion event should fire when timer elapses",
@@ -151,12 +151,15 @@ fn ball_remains_frozen_until_launch_unlock() {
     advance_time(&mut app, 0.0);
     app.update();
 
-    let respawned_ball = app
-        .world()
-        .iter_entities()
-        .find(|entity| entity.contains::<Ball>() && entity.contains::<BallFrozen>())
-        .map(|entity| entity.id())
-        .expect("respawned ball should exist");
+    let respawned_ball = {
+        let mut query = app
+            .world_mut()
+            .query_filtered::<Entity, (With<Ball>, With<BallFrozen>)>();
+        query
+            .iter(app.world())
+            .next()
+            .expect("respawned ball should exist")
+    };
 
     {
         let world = app.world();
@@ -189,12 +192,16 @@ fn ball_remains_frozen_until_launch_unlock() {
     }
 
     {
+        let overlay_entity = {
+            let mut query = app
+                .world_mut()
+                .query_filtered::<Entity, With<RespawnFadeOverlay>>();
+            query
+                .iter(app.world())
+                .next()
+                .expect("respawn overlay should exist while fade is active")
+        };
         let world = app.world_mut();
-        let overlay_entity = world
-            .iter_entities()
-            .find(|entity| entity.contains::<RespawnFadeOverlay>())
-            .map(|entity| entity.id())
-            .expect("respawn overlay should exist while fade is active");
         {
             let mut entity = world.entity_mut(overlay_entity);
             let mut overlay = entity
