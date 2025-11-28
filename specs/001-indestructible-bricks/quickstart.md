@@ -11,16 +11,18 @@ git checkout 001-indestructible-bricks
 1. Run migration tooling (once implemented) against repository assets to update index `3` → `20`:
 
 ```bash
-# hypothetical helper script
+# hypothetical helper script (produces .bak backups)
 ./tools/migrate-level-indices --backup --from 3 --to 20 assets/levels/*.ron
 ```
 
 1. Run unit tests and integration tests:
 
 ```bash
+# full test-suite
 cargo test --all
-# or run a smaller focused test set
-cargo test --tests level_definition
+# focused tests (example): run the level_definition and indestructible_visual tests
+cargo test --test level_definition
+cargo test --test indestructible_visual
 ```
 
 1. Validate behavior manually in the game:

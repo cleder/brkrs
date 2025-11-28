@@ -3,7 +3,7 @@
 **Feature Branch**: `001-indestructible-bricks`
 **Created**: 2025-11-28
 **Status**: Draft
-**Input**: User description: "LevelDefinition create indestructable bricks, these will not count to level completion, the basic indistructable brick will have an index of 90 in the LevelDefinition matrix, for the exiting simple brick change the index from 3 to 20"
+**Input**: LevelDefinition should support indestructible bricks which do not count toward level completion. The indestructible brick uses tile index `90`. We are moving the canonical simple (destructible) brick index from `3` → `20` for newly authored levels; existing files using `3` are handled via a repository migration policy (see Clarifications).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -25,7 +25,7 @@
 
 As a player, when all destructible bricks in a level are destroyed, the level should complete even if indestructible bricks remain on screen.
 
-**Why this priority**: Ensures the new brick type does not prevent players from finishing a level — this is the primary user-facing behaviour change.
+**Why this priority**: Ensures the new brick type does not prevent players from finishing a level — this is the primary user-facing behavior change.
 
 **Independent Test**: Load a level containing a mixture of destructible and indestructible bricks, destroy all destructible bricks and verify the level completes immediately and rewards (if any) are granted.
 
@@ -40,7 +40,7 @@ As a player, when all destructible bricks in a level are destroyed, the level sh
 
 As a level designer, I can place indestructible bricks in the LevelDefinition matrix using a specific tile index so that I can create unbreakable obstacles and visual elements that do not affect level completion.
 
-**Why this priority**: Enables content creators to design new levels with both decorative/unbreakable areas and standard gameplay bricks without unintentionally blocking completion.
+**Why this priority**: Enables content creators to design levels with decorative/unbreakable areas and standard gameplay bricks without unintentionally blocking completion.
 
 **Independent Test**: Create or edit a level matrix and insert the indestructible index (90) — verify the editor/game renders an indestructible brick at that location and that it cannot be destroyed but otherwise behaves as a colliding brick.
 
@@ -55,7 +55,7 @@ As a level designer, I can place indestructible bricks in the LevelDefinition ma
 
 As a developer or content maintainer, the existing simple (destructible) brick index should move from `3` to `20` so that new index values (e.g., `90`) can be reserved for special brick types with clearer separation of ranges.
 
-**Why this priority**: Changing the simple brick index is an internal housekeeping step required to avoid index conflicts and reserve low-value and high-value spaces for distinct brick behaviours.
+**Why this priority**: Changing the simple brick index is an internal housekeeping step required to avoid index conflicts and reserve index ranges for distinct brick behaviours.
 
 **Independent Test**: Load a level that uses index `20` for simple bricks and verify they behave like the prior index `3` bricks. Also verify that any level file that still contains `3` behaves according to migration policy (see Clarifications).
 
@@ -74,9 +74,9 @@ As a developer or content maintainer, the existing simple (destructible) brick i
   Fill them out with the right edge cases.
 -->
 
--- Levels authored with only indestructible bricks (no destructible bricks): The system should treat the level as already satisfied and mark it as complete on start, or present a clear message to designers during authoring.
--- Levels authored before this change that encode simple bricks with index `3`: See Clarifications — the migration approach will determine runtime behaviour.
--- Collision interactions at tile boundaries when indestructible bricks abut destructible bricks: verify normal physics/bounce and no accidental destruction.
+- Levels authored with only indestructible bricks (no destructible bricks): The system should treat the level as already satisfied and mark it as complete on start, or present a clear message to designers during authoring.
+- Levels authored before this change that encode simple bricks with index `3`: See Clarifications — the migration approach will determine runtime behaviour.
+- Collision interactions at tile boundaries when indestructible bricks abut destructible bricks: verify normal physics/bounce and no accidental destruction.
 
 ## Requirements *(mandatory)*
 
@@ -130,4 +130,4 @@ Migration details and acceptance criteria:
 - The parser MUST continue to accept index `3` for the duration of an immediate compatibility window (if implemented) but the recommended canonical mapping will be `20` going forward. The migration script and README MUST document the choice and give designers guidance.
 - Acceptance: After running the migration script on repo assets, no files under `assets/levels/` should contain the standalone numeric tile `3` where it previously represented a simple brick; unit tests and a regression test run must validate that updated files behave identically to pre-migration behaviour.
 
-*We implemented Option A per the user selection; we've limited this decision to repository-level assets so external user-created levels are not automatically rewritten without explicit consent — this reduces risk while ensuring shipped levels are consistent.*
+We implemented the repository-level migration approach for existing assets: the migration script will convert index `3` → `20` in repository-owned level files and write backups (e.g., `level_###.ron.bak`). External levels (user-supplied or third-party assets) will not be modified by default and may be handled separately with explicit migration steps.
