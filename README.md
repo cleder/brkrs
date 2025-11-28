@@ -14,6 +14,16 @@ You can play a web version on [GitHub Pages](https://cleder.github.io/brkrs/)
 2. **Game State** – (planned) menu, playing, paused, game over, transitions.
 3. **Level Loader** – RON file parsing, entity spawning, per-level gravity.
 4. **Brick System** – Extensible brick behaviors via components & events.
+5. **Pause System** – ESC to pause, click to resume, with window mode switching (native).
+
+## Controls
+
+- **Mouse Movement** – Move paddle (during gameplay)
+- **Mouse Scroll** – Rotate paddle (during gameplay)
+- **ESC** – Pause game (freezes physics, shows overlay, hides during level transitions)
+- **Left Mouse Click** – Resume game (when paused)
+
+**Note**: Controls are keyboard and mouse only. Gamepad and touch support are not implemented.
 
 ## Technical Considerations
 
@@ -23,7 +33,15 @@ All gameplay bodies lock Y translation (`LockedAxes::TRANSLATION_LOCKED_Y`). Cam
 
 ### Collisions
 
-Rapier handles base reflection via restitution. Paddle imparts directional “english” using recent mouse movement. Bricks may later apply custom post-collision effects.
+Rapier handles base reflection via restitution. Paddle imparts directional "english" using recent mouse movement. Bricks may later apply custom post-collision effects.
+
+### Pause Behavior
+
+- **Physics**: Completely frozen when paused (velocities, positions preserved)
+- **Paddle**: Ignores input when paused
+- **Cursor**: Hidden during gameplay, visible when paused
+- **Window Mode** (Native only): Switches fullscreen→windowed on pause, restores on resume
+- **WASM**: Window mode unchanged (WASM doesn't support fullscreen switching)
 
 ## Level File Format
 

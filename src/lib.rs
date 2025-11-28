@@ -6,10 +6,13 @@
 //! - R: Restart current level
 //! - L: Switch to next level
 //! - K: Destroy all bricks (for testing level transitions)
+//! - ESC: Pause game (click to resume)
 
 pub mod level_format;
 pub mod level_loader;
+pub mod pause;
 pub mod systems;
+pub mod ui;
 
 #[cfg(feature = "texture_manifest")]
 use crate::systems::TextureManifestPlugin;
@@ -174,6 +177,7 @@ pub fn run() {
     app.add_plugins(crate::level_loader::LevelLoaderPlugin);
     // app.add_plugins(RapierDebugRenderPlugin::default());
     app.add_plugins(RespawnPlugin);
+    app.add_plugins(crate::pause::PausePlugin);
 
     #[cfg(feature = "texture_manifest")]
     {
@@ -187,7 +191,9 @@ pub fn run() {
     app.add_systems(
         Update,
         (
-            move_paddle.after(RespawnSystems::Control),
+            move_paddle
+                .after(RespawnSystems::Control)
+                .run_if(crate::pause::not_paused),
             limit_ball_velocity,
             update_camera_shake,
             update_paddle_growth,
