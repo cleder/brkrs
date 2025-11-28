@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
+use crate::level_format::{INDESTRUCTIBLE_BRICK, SIMPLE_BRICK};
 use crate::systems::textures::loader::ObjectClass;
 use crate::systems::textures::TypeVariantRegistry;
 use crate::{
@@ -74,7 +75,7 @@ pub fn ensure_palette_ui(
         // compute materials and colors ahead of mutably borrowing `commands`.
         let material_20 = registry
             .as_ref()
-            .and_then(|r| r.get(ObjectClass::Brick, 20));
+            .and_then(|r| r.get(ObjectClass::Brick, SIMPLE_BRICK));
         let base_color_20 = material_20.as_ref().and_then(|h| {
             materials_res
                 .as_ref()
@@ -83,7 +84,7 @@ pub fn ensure_palette_ui(
 
         let material_90 = registry
             .as_ref()
-            .and_then(|r| r.get(ObjectClass::Brick, 90));
+            .and_then(|r| r.get(ObjectClass::Brick, INDESTRUCTIBLE_BRICK));
         let base_color_90 = material_90.as_ref().and_then(|h| {
             materials_res
                 .as_ref()
@@ -105,7 +106,7 @@ pub fn ensure_palette_ui(
 
                 // Simple brick preview (type 20)
                 parent.spawn((
-                    Text::new("20 — Simple Brick"),
+                    Text::new(format!("{} — Simple Brick", SIMPLE_BRICK)),
                     TextFont {
                         font_size: 14.0,
                         ..default()
@@ -124,7 +125,7 @@ pub fn ensure_palette_ui(
                     },
                     BackgroundColor(base_color_20.unwrap_or(Color::srgba(0.5, 0.5, 0.5, 1.0))),
                     PalettePreview {
-                        type_id: 20,
+                        type_id: SIMPLE_BRICK,
                         material: material_20.clone(),
                     },
                     Button,
@@ -132,7 +133,10 @@ pub fn ensure_palette_ui(
 
                 // Indestructible preview (type 90)
                 parent.spawn((
-                    Text::new("90 — Indestructible (won't count toward completion)"),
+                    Text::new(format!(
+                        "{} — Indestructible (won't count toward completion)",
+                        INDESTRUCTIBLE_BRICK
+                    )),
                     TextFont {
                         font_size: 14.0,
                         ..default()
@@ -151,7 +155,7 @@ pub fn ensure_palette_ui(
                     },
                     BackgroundColor(base_color_90.unwrap_or(Color::srgba(0.5, 0.5, 0.5, 1.0))),
                     PalettePreview {
-                        type_id: 90,
+                        type_id: INDESTRUCTIBLE_BRICK,
                         material: material_90.clone(),
                     },
                     Button,
@@ -170,7 +174,7 @@ pub fn ensure_palette_ui(
                     MeshMaterial3d(mat.clone()),
                     Transform::from_xyz(0.0, 0.0, 0.0),
                     PreviewViewport {
-                        type_id: 20,
+                        type_id: SIMPLE_BRICK,
                         mesh: mesh_20.clone(),
                         material: Some(mat.clone()),
                     },
@@ -179,7 +183,7 @@ pub fn ensure_palette_ui(
                 commands.spawn((
                     Mesh3d(mesh_20.clone()),
                     PreviewViewport {
-                        type_id: 20,
+                        type_id: SIMPLE_BRICK,
                         mesh: mesh_20.clone(),
                         material: None,
                     },
@@ -193,7 +197,7 @@ pub fn ensure_palette_ui(
                     MeshMaterial3d(mat.clone()),
                     Transform::from_xyz(0.0, 0.0, 0.0),
                     PreviewViewport {
-                        type_id: 90,
+                        type_id: INDESTRUCTIBLE_BRICK,
                         mesh: mesh_90.clone(),
                         material: Some(mat.clone()),
                     },
@@ -202,7 +206,7 @@ pub fn ensure_palette_ui(
                 commands.spawn((
                     Mesh3d(mesh_90.clone()),
                     PreviewViewport {
-                        type_id: 90,
+                        type_id: INDESTRUCTIBLE_BRICK,
                         mesh: mesh_90.clone(),
                         material: None,
                     },

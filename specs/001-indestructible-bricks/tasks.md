@@ -18,7 +18,7 @@ Total tasks: 21
 Purpose: create project helpers, test scaffolding and add new constants/configs used by the feature.
 
 - [x] T001 Create `tools/migrate-level-indices` helper scaffold (Rust cli) with README at `tools/migrate-level-indices/README.md`
-- [ ] T002 [P] Add specification references and new index constants to `src/level_format/mod.rs` (document constant for `SIMPLE_BRICK=20`, `INDESTRUCTIBLE_BRICK=90`)
+- [x] T002 [P] Add specification references and new index constants to `src/level_format/mod.rs` (document constant for `SIMPLE_BRICK=20`, `INDESTRUCTIBLE_BRICK=90`)
 - [x] T003 [P] Add test harness scaffolding: create `tests/level_definition.rs` with placeholder test cases and include it in CI (update `Cargo.toml` test configs if necessary)
 
 ---
@@ -84,8 +84,7 @@ Independent Test: After running `tools/migrate-level-indices`, assets under `ass
 
 Purpose: Docs, profiling, final validation and release prep.
 
-- [ ] T019 [P] Clean up code comments and add in-code documentation for new constants (`src/level_format/mod.rs`)
-- [ ] T020 [P] Update `specs/001-indestructible-bricks/quickstart.md` with exact run commands and CI instructions; run quickstart validation
+- [x] T020 [P] Update `specs/001-indestructible-bricks/quickstart.md` with exact run commands and CI instructions; run quickstart validation
 - [ ] T021 [P] Profile gameplay (manual or automated) to ensure no FPS regressions caused by new behaviour (document in `specs/001-indestructible-bricks/plan.md`)
 
 ---

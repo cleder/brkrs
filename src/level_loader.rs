@@ -1,4 +1,4 @@
-use crate::level_format::normalize_matrix_simple;
+use crate::level_format::{normalize_matrix_simple, INDESTRUCTIBLE_BRICK};
 use crate::systems::level_switch::{LevelSwitchRequested, LevelSwitchState};
 use crate::systems::respawn::{RespawnEntityKind, RespawnHandle, SpawnPoints, SpawnTransform};
 #[cfg(feature = "texture_manifest")]
@@ -442,7 +442,7 @@ fn spawn_level_entities_impl(
                         Transform::from_xyz(x, 2.0, z),
                         Brick,
                         BrickTypeId(brick_type_id),
-                        // Brick counts towards level completion unless it's the indestructible tile (90).
+                        // Brick counts towards level completion unless it's the indestructible tile.
                         // Legacy index `3` is considered destructible (compatibility window); newly authored simple bricks should use 20.
                         RigidBody::Fixed,
                         Collider::cuboid(CELL_HEIGHT * 0.9 / 2.0, 0.25, CELL_WIDTH * 0.9 / 2.0),
@@ -453,7 +453,7 @@ fn spawn_level_entities_impl(
                         CollidingEntities::default(),
                         ActiveEvents::COLLISION_EVENTS,
                     ));
-                    if brick_type_id != 90 {
+                    if brick_type_id != INDESTRUCTIBLE_BRICK {
                         entity.insert(CountsTowardsCompletion);
                     }
                 }
@@ -604,7 +604,7 @@ fn spawn_bricks_only(
                 CollidingEntities::default(),
                 ActiveEvents::COLLISION_EVENTS,
             ));
-            if brick_type_id != 90 {
+            if brick_type_id != INDESTRUCTIBLE_BRICK {
                 entity.insert(crate::CountsTowardsCompletion);
             }
         }
