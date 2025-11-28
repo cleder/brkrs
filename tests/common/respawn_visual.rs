@@ -1,7 +1,7 @@
 use super::tests::{advance_time, test_app};
 use super::*;
 use bevy::ecs::entity::EntityRow;
-use bevy::ecs::event::Events;
+use bevy::ecs::message::Messages;
 use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
 use std::time::Duration;
 
@@ -10,8 +10,8 @@ fn overlay_spawns_on_respawn_schedule() {
     let mut app = test_app();
 
     {
-        let mut events = app.world_mut().resource_mut::<Events<RespawnScheduled>>();
-        events.send(RespawnScheduled {
+        let mut events = app.world_mut().resource_mut::<Messages<RespawnScheduled>>();
+        events.write(RespawnScheduled {
             ball: Entity::from_row(EntityRow::from_raw_u32(1).unwrap()),
             paddle: None,
             completes_at: 0.0,
@@ -21,10 +21,10 @@ fn overlay_spawns_on_respawn_schedule() {
 
     app.update();
 
-    let overlay_exists = app
-        .world()
-        .iter_entities()
-        .any(|entity| entity.contains::<RespawnFadeOverlay>());
+    let overlay_exists = {
+        let mut query = app.world_mut().query_filtered::<Entity, With<RespawnFadeOverlay>>();
+        query.iter(app.world()).next().is_some()
+    };
     assert!(
         overlay_exists,
         "respawn overlay should spawn when schedule event fires"
@@ -47,8 +47,8 @@ fn controls_wait_until_overlay_finishes() {
         .id();
 
     {
-        let mut events = app.world_mut().resource_mut::<Events<RespawnScheduled>>();
-        events.send(RespawnScheduled {
+        let mut events = app.world_mut().resource_mut::<Messages<RespawnScheduled>>();
+        events.write(RespawnScheduled {
             ball,
             paddle: Some(paddle),
             completes_at: 0.0,
@@ -73,12 +73,10 @@ fn controls_wait_until_overlay_finishes() {
     }
 
     // Finish overlay timer and ensure control unlocks afterwards.
-    let overlay_entity = app
-        .world()
-        .iter_entities()
-        .find(|entity| entity.contains::<RespawnFadeOverlay>())
-        .map(|entity| entity.id())
-        .expect("overlay entity should exist");
+    let overlay_entity = {
+        let mut query = app.world_mut().query_filtered::<Entity, With<RespawnFadeOverlay>>();
+        query.iter(app.world()).next().expect("overlay entity should exist")
+    };
     {
         let world = app.world_mut();
         let mut entity = world.entity_mut(overlay_entity);

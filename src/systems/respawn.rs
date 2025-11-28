@@ -779,7 +779,7 @@ mod tests {
     use super::*;
     use bevy::app::App;
     use bevy::ecs::entity::EntityRow;
-    use bevy::ecs::event::Events;
+    use bevy::ecs::message::Messages;
     use bevy::time::Time;
     use bevy::MinimalPlugins;
     use bevy_rapier3d::prelude::CollisionEvent;
@@ -792,7 +792,7 @@ mod tests {
         app.add_plugins(MinimalPlugins)
             .insert_resource(Assets::<Mesh>::default())
             .insert_resource(Assets::<StandardMaterial>::default())
-            .add_event::<CollisionEvent>()
+            .add_message::<CollisionEvent>()
             .add_plugins(RespawnPlugin);
         {
             let mut spawn_points = app.world_mut().resource_mut::<SpawnPoints>();
@@ -840,8 +840,8 @@ mod tests {
             .id();
 
         app.world_mut()
-            .resource_mut::<Events<CollisionEvent>>()
-            .send(CollisionEvent::Started(
+            .resource_mut::<Messages<CollisionEvent>>()
+            .write(CollisionEvent::Started(
                 ball,
                 lower_goal,
                 CollisionEventFlags::SENSOR,
@@ -900,10 +900,10 @@ mod tests {
         let paddle_transform = world.entity(paddle).get::<Transform>().unwrap();
         assert_eq!(paddle_transform.translation, Vec3::new(-1.0, 2.0, 0.0));
 
-        let ball_count = world
-            .iter_entities()
-            .filter(|entity| entity.contains::<Ball>() && entity.contains::<BallFrozen>())
-            .count();
+        let ball_count = {
+            let mut query = app.world_mut().query_filtered::<Entity, (With<Ball>, With<BallFrozen>)>();
+            query.iter(app.world()).count()
+        };
         assert_eq!(ball_count, 1);
     }
 
@@ -1013,8 +1013,8 @@ mod tests {
         let lower_goal = app.world_mut().spawn(LowerGoal).id();
 
         app.world_mut()
-            .resource_mut::<Events<CollisionEvent>>()
-            .send(CollisionEvent::Started(
+            .resource_mut::<Messages<CollisionEvent>>()
+            .write(CollisionEvent::Started(
                 ball,
                 lower_goal,
                 CollisionEventFlags::SENSOR,
@@ -1026,7 +1026,7 @@ mod tests {
         let respawn_schedule = app.world().resource::<RespawnSchedule>();
         assert!(respawn_schedule.pending.is_none());
 
-        let events = app.world().resource::<Events<GameOverRequested>>();
+        let events = app.world().resource::<Messages<GameOverRequested>>();
         assert!(!events.is_empty());
     }
 
@@ -1056,8 +1056,8 @@ mod tests {
         ));
 
         app.world_mut()
-            .resource_mut::<Events<CollisionEvent>>()
-            .send(CollisionEvent::Started(
+            .resource_mut::<Messages<CollisionEvent>>()
+            .write(CollisionEvent::Started(
                 ball_a,
                 lower_goal,
                 CollisionEventFlags::SENSOR,
@@ -1073,8 +1073,8 @@ mod tests {
         }
 
         app.world_mut()
-            .resource_mut::<Events<CollisionEvent>>()
-            .send(CollisionEvent::Started(
+            .resource_mut::<Messages<CollisionEvent>>()
+            .write(CollisionEvent::Started(
                 ball_b,
                 lower_goal,
                 CollisionEventFlags::SENSOR,

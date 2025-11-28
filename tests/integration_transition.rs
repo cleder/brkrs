@@ -1,7 +1,6 @@
 //! Integration test scaffolds for level transition and compatibility behaviors.
 //! Currently focuses on state resource evolution; future work will exercise full ECS flows.
 
-use bevy::prelude::*;
 use brkrs::level_loader::LevelAdvanceState;
 
 // NOTE: Full system invocation (advance_level_when_cleared -> handle_level_advance_delay -> finalize_level_advance)
@@ -27,7 +26,6 @@ fn transition_two_stage_unfreeze_future() {
     // 3. Step frames while checking LevelAdvanceState.unfreezing flag
     // 4. Assert ball entity loses BallFrozen then (next frame) has zeroed Velocity then impulse applied
     // For now, ignored.
-    assert!(true);
 }
 
 #[test]
@@ -35,5 +33,4 @@ fn transition_two_stage_unfreeze_future() {
 fn backward_compat_warning_future() {
     // Placeholder: will load synthetic 22x22 matrix via direct function call or temporary file
     // and capture logs using a tracing subscriber capturing warn! output.
-    assert!(true);
 }

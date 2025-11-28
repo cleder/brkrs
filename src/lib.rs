@@ -337,7 +337,7 @@ fn update_camera_shake(
 
 /// Observer to start camera shake
 fn start_camera_shake(
-    trigger: Trigger<StartCameraShake>,
+    trigger: On<StartCameraShake>,
     mut cameras: Query<(Entity, &Transform), (With<Camera3d>, Without<CameraShake>)>,
     mut commands: Commands,
 ) {
@@ -673,7 +673,7 @@ fn read_character_controller_collisions(
 }
 
 fn on_wall_hit(
-    trigger: Trigger<WallHit>,
+    trigger: On<WallHit>,
     mut balls: Query<&mut ExternalImpulse, With<Ball>>,
     mut controllers: Query<&mut KinematicCharacterController, With<Paddle>>,
     mut commands: Commands,
@@ -702,7 +702,7 @@ struct StartCameraShake {
 }
 
 fn on_brick_hit(
-    trigger: Trigger<BrickHit>,
+    trigger: On<BrickHit>,
     mut controllers: Query<&mut KinematicCharacterController, With<Paddle>>,
     mut commands: Commands,
 ) {
@@ -720,7 +720,7 @@ fn on_brick_hit(
 }
 
 fn on_paddle_ball_hit(
-    trigger: Trigger<BallHit>,
+    trigger: On<BallHit>,
     mut balls: Query<(Entity, &mut ExternalImpulse), With<Ball>>,
 ) {
     let event = trigger.event();
