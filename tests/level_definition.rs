@@ -74,3 +74,68 @@ fn spawn_marks_counts_for_non_indestructible_bricks() {
     // cleanup
     let _ = std::fs::remove_file(path);
 }
+
+#[test]
+fn completion_triggers_when_only_indestructible_bricks_remain() {
+    let mut app = level_test_app();
+
+    // Use the sample level file we added
+    let path = "assets/levels/test_mixed_indestructible.ron";
+    // Ensure the level exists (created by T011 earlier)
+    assert!(
+        std::path::Path::new(path).exists(),
+        "test level file must exist"
+    );
+
+    // Tell the loader to load this exact level file using force_load_level_from_path
+    // We use the same helper used in other tests by simulating a direct load via env var
+    std::env::set_var("BK_LEVEL", "997");
+
+    // Run startup systems to load the level
+    app.update();
+    app.update();
+
+    // Confirm that there is at least one destructible brick (CountsTowardsCompletion) initially
+    {
+        let world = &mut app.world_mut();
+        let mut q = world.query::<(Entity, Option<&CountsTowardsCompletion>)>();
+        let mut destructible_count = 0usize;
+        let mut to_despawn: Vec<Entity> = Vec::new();
+        for (e, marker) in q.iter(world) {
+            if marker.is_some() {
+                destructible_count += 1;
+                to_despawn.push(e);
+            }
+        }
+        for e in to_despawn {
+            world.despawn(e);
+        }
+        assert!(
+            destructible_count > 0,
+            "level must start with at least one destructible brick"
+        );
+    }
+
+    // Run the update loop to let the advance system detect clearance
+    app.update();
+    app.update();
+
+    // Since there is no level_998.ron (next level) the loader should mark game complete
+    // When the level completes with no next level, the systems despawn the paddle and ball
+    // as part of the completion flow. Assert paddle entities are gone to verify completion.
+    let mut paddle_count = 0usize;
+    {
+        let world = &mut app.world_mut();
+        let mut paddle_query = world.query::<(Entity, &brkrs::Paddle)>();
+        for (_e, _p) in paddle_query.iter(world) {
+            paddle_count += 1;
+        }
+    }
+    assert_eq!(
+        paddle_count, 0,
+        "No paddles should remain after level completion"
+    );
+
+    // cleanup
+    std::env::remove_var("BK_LEVEL");
+}
