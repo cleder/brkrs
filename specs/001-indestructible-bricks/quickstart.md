@@ -31,3 +31,5 @@ cargo test --tests level_definition
      - Indestructible bricks remain and do not count toward completion.
 
 1. Update docs and LevelDefinition samples in `assets/levels/` and commit them.
+
+Special test level: `assets/levels/test_mixed_indestructible.ron` — used by unit/integration tests to validate that clearing destructible bricks completes the level while indestructible bricks remain.
