@@ -45,18 +45,21 @@ impl Plugin for PausePlugin {
         // Hide cursor on startup
         app.add_systems(Startup, hide_cursor_on_startup);
 
-        // Register pause/resume systems
+        // Register pause/resume systems with explicit ordering
+        // Execution order: input handling → state effects (physics, window, cursor) → UI updates
         app.add_systems(
             Update,
             (
-                handle_pause_input,
-                handle_resume_input,
+                // Input handling systems (can run in parallel)
+                (handle_pause_input, handle_resume_input),
+                // State-dependent systems (run after input, before UI)
                 apply_pause_to_physics,
                 apply_pause_to_window_mode,
                 apply_pause_to_cursor,
-                spawn_pause_overlay,
-                despawn_pause_overlay,
-            ),
+                // UI systems (run last, after all state changes)
+                (spawn_pause_overlay, despawn_pause_overlay),
+            )
+                .chain(),
         );
     }
 }

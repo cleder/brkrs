@@ -132,19 +132,19 @@
 
 **Purpose**: Integration, edge case handling, documentation
 
-- [ ] T030 [P] Add system ordering constraints in `PausePlugin::build` in `src/pause.rs` (use .chain() to ensure: input → physics → window → UI)
-- [ ] T031 [P] Add graceful window mode switching failure handling in `apply_pause_to_window_mode` in `src/pause.rs` (FR-013: silently handle display limitations)
-- [ ] T032 Verify `just_pressed()` provides adequate debouncing for ESC key in `handle_pause_input` in `src/pause.rs` (FR-014: test rapid ESC presses)
-- [ ] T033 [P] Add inline documentation comments to `PauseState`, `PauseOverlay`, and all systems in `src/pause.rs` and `src/ui/pause_overlay.rs`
-- [ ] T034 [P] Update README.md with pause controls (ESC to pause, click to resume, keyboard/mouse only, native vs WASM differences)
+- [x] T030 [P] Add system ordering constraints in `PausePlugin::build` in `src/pause.rs` (use .chain() to ensure: input → physics → window → UI)
+- [x] T031 [P] Add graceful window mode switching failure handling in `apply_pause_to_window_mode` in `src/pause.rs` (FR-013: silently handle display limitations)
+- [x] T032 Verify `just_pressed()` provides adequate debouncing for ESC key in `handle_pause_input` in `src/pause.rs` (FR-014: test rapid ESC presses)
+- [x] T033 [P] Add inline documentation comments to `PauseState`, `PauseOverlay`, and all systems in `src/pause.rs` and `src/ui/pause_overlay.rs`
+- [x] T034 [P] Update README.md with pause controls (ESC to pause, click to resume, keyboard/mouse only, native vs WASM differences)
 - [ ] T035 Run full manual testing scenarios from `specs/004-pause-system/quickstart.md` (all user stories + edge cases)
-- [ ] T036 Run `cargo test` to verify no regressions in existing tests
-- [ ] T037 Run `cargo clippy --all-targets --all-features` to verify no linting issues
-- [ ] T038 Run `bevy lint` to verify Bevy-specific best practices
-- [ ] T039 [P] Test WASM build (`cargo build --target wasm32-unknown-unknown --release`) to verify platform compatibility
-- [ ] T040 Verify 10 consecutive pause/resume cycles work without state corruption (SC-009 validation)
-- [ ] T041 Verify physics state preservation by pausing for 10+ seconds and checking ball position unchanged (SC-005 validation)
-- [ ] T042 Update `.github/copilot-instructions.md` if not already updated by `update-agent-context.sh` script
+- [x] T036 Run `cargo test` to verify no regressions in existing tests
+- [x] T037 Run `cargo clippy --all-targets --all-features` to verify no linting issues
+- [x] T038 Run `bevy lint` to verify Bevy-specific best practices (N/A - bevy lint not available as standalone command)
+- [x] T039 [P] Test WASM build (`cargo build --target wasm32-unknown-unknown --release`) to verify platform compatibility
+- [ ] T040 Verify 10 consecutive pause/resume cycles work without state corruption (SC-009 validation) - MANUAL TEST REQUIRED
+- [ ] T041 Verify physics state preservation by pausing for 10+ seconds and checking ball position unchanged (SC-005 validation) - MANUAL TEST REQUIRED
+- [x] T042 Update `.github/copilot-instructions.md` if not already updated by `update-agent-context.sh` script
 
 ---
 
@@ -378,7 +378,7 @@ app.add_systems(Update, (
 ✅ All tasks follow required format: `- [ ] [ID] [P?] [Story?] Description with file path`
 ✅ Task IDs sequential (T001-T042)
 ✅ [P] markers on parallelizable tasks (different files, no dependencies)
-✅ [Story] labels on user story phase tasks (US1, US2, US3)
+✅ labels on user story phase tasks (US1, US2, US3)
 ✅ File paths included in all implementation task descriptions
 ✅ Tasks organized by user story for independent implementation
 ✅ Clear checkpoints after each user story phase
