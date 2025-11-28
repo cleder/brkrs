@@ -1,9 +1,11 @@
 use bevy::{app::App, prelude::*, MinimalPlugins};
-use brkrs::{Brick, BrickTypeId};
+use brkrs::BrickTypeId;
 
 fn test_app() -> App {
     let mut app = App::new();
     app.add_plugins((MinimalPlugins, bevy::input::InputPlugin));
+    // Collision events are delivered via the global CollisionEvent message resource
+    app.add_message::<bevy_rapier3d::prelude::CollisionEvent>();
     app.insert_resource(brkrs::GameProgress::default());
     app.insert_resource(brkrs::level_loader::LevelAdvanceState::default());
     app.insert_resource(brkrs::systems::respawn::SpawnPoints::default());
@@ -31,11 +33,9 @@ fn indestructible_bricks_have_material_component() {
     // Ensure at least one indestructible brick (type 90) has a MeshMaterial3d component.
     let world = &mut app.world_mut();
     let mut found = false;
-    let mut q = world
-        .query::<(&BrickTypeId, &bevy::render::mesh::MeshMaterial3d)>()
-        .into_iter();
+    // query exists below; no separate iterator required
     for (type_id, _mat) in world
-        .query::<(&BrickTypeId, &bevy::render::mesh::MeshMaterial3d)>()
+        .query::<(&BrickTypeId, &MeshMaterial3d<StandardMaterial>)>()
         .iter(world)
     {
         if type_id.0 == 90 {
