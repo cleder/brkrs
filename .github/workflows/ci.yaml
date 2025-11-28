@@ -35,7 +35,11 @@ jobs:
           shared-key: ${{ runner.os }}-ci-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
           save-if: ${{ github.event_name == 'push' }}
       - name: Install Dependencies
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+        run: |
+          sudo apt-get update
+          # Ensure pkg-config and development headers are available so native
+          # crates like wayland-sys can find system libraries (wayland-client.pc)
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
       - name: Populate cache (compile tests)
         # Precompile dependencies and tests without running them so target/ is populated
         run: |
@@ -63,7 +67,9 @@ jobs:
           shared-key: ${{ runner.os }}-ci-clippy-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
           save-if: ${{ github.event_name == 'push' }}
       - name: Install Dependencies
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
       - name: Populate cache (compile)
         run: |
           cargo fetch --workspace --locked
