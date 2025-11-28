@@ -88,7 +88,7 @@ pub struct LowerGoal;
 #[derive(Component)]
 pub struct GridOverlay;
 #[derive(Component)]
-struct Brick;
+pub struct Brick;
 
 /// Type ID for brick variants (used by texture manifest type_variants).
 /// Applied during brick spawn based on level matrix values.
@@ -159,6 +159,7 @@ pub fn run() {
     app.insert_resource(GameProgress::default());
     // designer palette UI state
     app.init_resource::<ui::palette::PaletteState>();
+    app.init_resource::<ui::palette::SelectedBrick>();
     app.insert_resource(level_loader::LevelAdvanceState::default());
     app.add_plugins((
         DefaultPlugins
@@ -216,6 +217,10 @@ pub fn run() {
             // designer palette - toggle with P
             ui::palette::toggle_palette,
             ui::palette::ensure_palette_ui,
+            ui::palette::handle_palette_selection,
+            ui::palette::update_palette_selection_feedback,
+            ui::palette::update_ghost_preview,
+            ui::palette::place_bricks_on_drag,
         ),
     );
     app.add_observer(on_wall_hit);

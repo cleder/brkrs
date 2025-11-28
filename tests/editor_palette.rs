@@ -240,3 +240,149 @@ fn pressing_p_opens_and_closes_palette() {
     assert!(!contains_text(world_ref, "20 — Simple Brick"));
     assert!(!contains_text(world_ref, "90 — Indestructible"));
 }
+
+#[test]
+fn click_selects_palette_item_and_updates_resource() {
+    let mut app = palette_test_app();
+
+    // Initialize SelectedBrick resource
+    app.init_resource::<brkrs::ui::palette::SelectedBrick>();
+    app.add_systems(
+        Update,
+        (
+            brkrs::ui::palette::handle_palette_selection,
+            brkrs::ui::palette::update_palette_selection_feedback
+                .after(brkrs::ui::palette::handle_palette_selection),
+        ),
+    );
+
+    // Open palette
+    {
+        let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+        input.press(KeyCode::KeyP);
+    }
+    app.update();
+
+    // Clear the input so just_pressed doesn't trigger again
+    {
+        let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+        input.clear();
+    }
+
+    app.update();
+
+    // Initially, nothing should be selected
+    {
+        let selected = app.world().resource::<brkrs::ui::palette::SelectedBrick>();
+        assert!(
+            selected.type_id.is_none(),
+            "Initially no brick should be selected"
+        );
+    }
+
+    // Initially, nothing should be selected
+    {
+        let selected = app.world().resource::<brkrs::ui::palette::SelectedBrick>();
+        assert!(
+            selected.type_id.is_none(),
+            "Initially no brick should be selected"
+        );
+    }
+
+    // Simulate clicking on type 20 preview by setting Interaction to Pressed
+    let preview_20_entity = {
+        let world = app.world_mut();
+        let mut query = world.query::<(Entity, &brkrs::ui::palette::PalettePreview)>();
+        query
+            .iter(&world)
+            .find(|(_e, p)| p.type_id == 20)
+            .map(|(e, _)| e)
+            .expect("Should find type 20 preview")
+    };
+
+    {
+        let world = app.world_mut();
+        world
+            .entity_mut(preview_20_entity)
+            .insert(Interaction::Pressed);
+    }
+    app.update();
+    app.update();
+
+    // Verify selection was updated
+    {
+        let selected = app.world().resource::<brkrs::ui::palette::SelectedBrick>();
+        assert_eq!(selected.type_id, Some(20), "Type 20 should be selected");
+    }
+
+    // Verify visual feedback - selected item should have yellow highlight
+    {
+        let world = app.world_mut();
+        let mut query = world.query::<(&brkrs::ui::palette::PalettePreview, &BackgroundColor)>();
+        let mut found_highlighted = false;
+        for (preview, bg) in query.iter(world) {
+            if preview.type_id == 20 {
+                assert_eq!(
+                    bg.0,
+                    Color::srgba(1.0, 1.0, 0.0, 1.0),
+                    "Selected item should be highlighted yellow"
+                );
+                found_highlighted = true;
+            }
+        }
+        assert!(found_highlighted, "Should find highlighted preview");
+    }
+
+    // Now click type 90
+    let preview_90_entity = {
+        let world = app.world_mut();
+        let mut query = world.query::<(Entity, &brkrs::ui::palette::PalettePreview)>();
+        query
+            .iter(&world)
+            .find(|(_e, p)| p.type_id == 90)
+            .map(|(e, _)| e)
+            .expect("Should find type 90 preview")
+    };
+
+    {
+        let world = app.world_mut();
+        // Reset type 20 interaction
+        world
+            .entity_mut(preview_20_entity)
+            .insert(Interaction::None);
+        // Click type 90
+        world
+            .entity_mut(preview_90_entity)
+            .insert(Interaction::Pressed);
+    }
+    app.update();
+    app.update(); // Run one more frame for visual feedback system
+
+    // Verify selection changed
+    {
+        let selected = app.world().resource::<brkrs::ui::palette::SelectedBrick>();
+        assert_eq!(selected.type_id, Some(90), "Type 90 should now be selected");
+    }
+
+    // Verify visual feedback updated
+    {
+        let world = app.world_mut();
+        let mut query = world.query::<(&brkrs::ui::palette::PalettePreview, &BackgroundColor)>();
+        for (preview, bg) in query.iter(world) {
+            if preview.type_id == 90 {
+                assert_eq!(
+                    bg.0,
+                    Color::srgba(1.0, 1.0, 0.0, 1.0),
+                    "Type 90 should be highlighted"
+                );
+            } else if preview.type_id == 20 {
+                // Type 20 should revert to its original color
+                assert_eq!(
+                    bg.0,
+                    Color::srgba(0.5, 0.5, 0.5, 1.0),
+                    "Type 20 should revert to original color"
+                );
+            }
+        }
+    }
+}
