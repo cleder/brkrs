@@ -48,5 +48,5 @@ fn profile_smoke_loop() {
     println!("profile_smoke: total={:?} avg_ms={:.3}", dur, avg_ms);
 
     // cleanup
-    let _ = std::env::remove_var("BK_LEVEL");
+    std::env::remove_var("BK_LEVEL");
 }

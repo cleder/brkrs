@@ -48,20 +48,7 @@ fn current_level_number(app: &App) -> u32 {
         .expect("current level should be set after startup")
 }
 
-fn assert_spawn_points_for_level(app: &App, level_number: u32) {
-    let def = load_level_definition(level_number);
-    let mut expected_points = SpawnPoints::default();
-    level_loader::set_spawn_points_only(&def, &mut expected_points);
-    let actual_points = app.world().resource::<SpawnPoints>();
-    assert_eq!(
-        actual_points.paddle, expected_points.paddle,
-        "paddle spawn should match level {level_number:03} definition"
-    );
-    assert_eq!(
-        actual_points.ball, expected_points.ball,
-        "ball spawn should match level {level_number:03} definition"
-    );
-}
+/* assert_spawn_points_for_level removed — not referenced in tests */
 
 fn load_level_definition(number: u32) -> LevelDefinition {
     let path = format!("assets/levels/level_{number:03}.ron");

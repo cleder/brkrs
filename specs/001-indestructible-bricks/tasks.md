@@ -46,10 +46,6 @@ Independent Test: Create a level with destructible + indestructible bricks and a
 - [x] T009 [US1] Add unit tests validating completion behaviour for mixed levels in `tests/level_definition.rs` (new tests focusing on runtime level completion)
 - [x] T010 [US1] Add an integration test that loads a sample level from `assets/levels/test_mixed_indestructible.ron` and confirms completion (tests/integration/level_completion.rs)
 - [x] T011 [US1] Add sample level `assets/levels/test_mixed_indestructible.ron` with comments describing expected behavior and add it to quickstart.md
-- [x] T008 [US1] Add logic to LevelCompletionCounter to ignore bricks where `counts_towards_completion == false` in `src/level_loader.rs` and `src/systems/level_switch.rs`
-- [x] T009 [US1] Add unit tests validating completion behaviour for mixed levels in `tests/level_definition.rs` (new tests focusing on runtime level completion)
-- [x] T010 [US1] Add an integration test that loads a sample level from `assets/levels/test_mixed_indestructible.ron` and confirms completion (tests/integration/level_completion.rs)
-- [x] T011 [US1] Add sample level `assets/levels/test_mixed_indestructible.ron` with comments describing expected behavior and add it to quickstart.md
 
 Checkpoint: The gameplay behaviour is independently verifiable and passes tests.
 
@@ -84,8 +80,9 @@ Independent Test: After running `tools/migrate-level-indices`, assets under `ass
 
 Purpose: Docs, profiling, final validation and release prep.
 
+- [x] T019 [P] Add in-code constants and documentation for SIMPLE_BRICK=20 and INDESTRUCTIBLE_BRICK=90 (files: `src/level_format/mod.rs`, `src/level_loader.rs`, `src/ui/palette.rs`)
 - [x] T020 [P] Update `specs/001-indestructible-bricks/quickstart.md` with exact run commands and CI instructions; run quickstart validation
-- [ ] T021 [P] Profile gameplay (manual or automated) to ensure no FPS regressions caused by new behaviour (document in `specs/001-indestructible-bricks/plan.md`)
+- [x] T021 [P] Profile gameplay (manual or automated) to ensure no FPS regressions caused by new behaviour (document in `specs/001-indestructible-bricks/plan.md`)
 
 ---
 

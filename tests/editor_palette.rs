@@ -294,7 +294,7 @@ fn click_selects_palette_item_and_updates_resource() {
         let world = app.world_mut();
         let mut query = world.query::<(Entity, &brkrs::ui::palette::PalettePreview)>();
         query
-            .iter(&world)
+            .iter(world)
             .find(|(_e, p)| p.type_id == 20)
             .map(|(e, _)| e)
             .expect("Should find type 20 preview")
@@ -338,7 +338,7 @@ fn click_selects_palette_item_and_updates_resource() {
         let world = app.world_mut();
         let mut query = world.query::<(Entity, &brkrs::ui::palette::PalettePreview)>();
         query
-            .iter(&world)
+            .iter(world)
             .find(|(_e, p)| p.type_id == 90)
             .map(|(e, _)| e)
             .expect("Should find type 90 preview")

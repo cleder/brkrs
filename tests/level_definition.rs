@@ -1,7 +1,7 @@
 use bevy::{app::App, prelude::*, MinimalPlugins};
 use bevy_rapier3d::prelude::CollisionEvent;
 use bevy_rapier3d::rapier::prelude::CollisionEventFlags;
-use brkrs::level_loader::LevelDefinition;
+// LevelDefinition import removed — test uses serialized LevelDefinition string, not the type
 use brkrs::{BrickTypeId, CountsTowardsCompletion};
 
 fn level_test_app() -> App {
@@ -293,11 +293,11 @@ fn k_key_only_destroys_destructible_bricks() {
     }
 
     assert!(
-        destructible.len() > 0,
+        !destructible.is_empty(),
         "expected some destructible bricks in level"
     );
     assert!(
-        indestructible.len() > 0,
+        !indestructible.is_empty(),
         "expected some indestructible bricks in level"
     );
 
