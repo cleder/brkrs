@@ -122,3 +122,51 @@ jobs:
           cache: true
       - name: Run `bevy_lint`
         run: bevy_lint --workspace
+
+  # Measure cold vs warm build times to validate cache warm-up improvement
+  cache_benchmark:
+    name: Cache benchmark (push only)
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' }}
+    timeout-minutes: 60
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Prepare environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev time
+      - name: Ensure clean build
+        run: rm -rf target || true
+
+      - name: Cold build (first run)
+        id: cold
+        run: |
+          start=$(date +%s)
+          # compile tests (no-run) to pre-populate build artifacts
+          time cargo test --no-run --all-features || true
+          end=$(date +%s)
+          dur=$((end-start))
+          echo "cold_build_seconds=${dur}" >> $GITHUB_ENV
+          echo "cold_build_seconds=${dur}" > cache_metrics.txt
+
+      - name: Warm build (second run)
+        id: warm
+        run: |
+          start=$(date +%s)
+          time cargo test --no-run --all-features || true
+          end=$(date +%s)
+          dur=$((end-start))
+          echo "warm_build_seconds=${dur}" >> $GITHUB_ENV
+          echo "warm_build_seconds=${dur}" >> cache_metrics.txt
+
+      - name: Print metrics
+        run: cat cache_metrics.txt || true
+
+      - name: Upload metrics artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: cache-benchmark-metrics
+          path: cache_metrics.txt
