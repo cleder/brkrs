@@ -17,9 +17,9 @@ Total tasks: 18
 
 Purpose: create project helpers, test scaffolding and add new constants/configs used by the feature.
 
-- [ ] T001 Create `tools/migrate-level-indices` helper scaffold (Rust cli) with README at `tools/migrate-level-indices/README.md`
+- [x] T001 Create `tools/migrate-level-indices` helper scaffold (Rust cli) with README at `tools/migrate-level-indices/README.md`
 - [ ] T002 [P] Add specification references and new index constants to `src/level_format/mod.rs` (document constant for `SIMPLE_BRICK=20`, `INDESTRUCTIBLE_BRICK=90`)
-- [ ] T003 [P] Add test harness scaffolding: create `tests/level_definition.rs` with placeholder test cases and include it in CI (update `Cargo.toml` test configs if necessary)
+- [x] T003 [P] Add test harness scaffolding: create `tests/level_definition.rs` with placeholder test cases and include it in CI (update `Cargo.toml` test configs if necessary)
 
 ---
 
@@ -27,10 +27,10 @@ Purpose: create project helpers, test scaffolding and add new constants/configs 
 
 Purpose: implement core parser + migration tooling used across user stories. All user stories depend on this phase.
 
-- [ ] T004 Implement LevelDefinition parser support for recognizing index `90` as indestructible in `src/level_loader.rs` and/or `src/level_format/mod.rs`
-- [ ] T005 [P] Update core Brick/BrickType runtime data structures to include `counts_towards_completion: bool` (files: `src/lib.rs`, `src/level_format/mod.rs`, `src/level_loader.rs`)
-- [ ] T006 [P] Implement migration CLI `tools/migrate-level-indices/src/main.rs` to update repository assets `assets/levels/*.ron` from `3` -> `20`, writing backups `*.ron.bak`
-- [ ] T007 Add unit tests for parser + BrickType semantics for indexes 3, 20, 90 in `tests/level_definition.rs` (assert parity/migration)
+- [x] T004 Implement LevelDefinition parser support for recognizing index `90` as indestructible in `src/level_loader.rs` and/or `src/level_format/mod.rs`
+- [x] T005 [P] Update core Brick/BrickType runtime data structures to include `counts_towards_completion: bool` (files: `src/lib.rs`, `src/level_format/mod.rs`, `src/level_loader.rs`)
+- [x] T006 [P] Implement migration CLI `tools/migrate-level-indices/src/main.rs` to update repository assets `assets/levels/*.ron` from `3` -> `20`, writing backups `*.ron.bak`
+- [x] T007 Add unit tests for parser + BrickType semantics for indexes 3, 20, 90 in `tests/level_definition.rs` (assert parity/migration)
 
 Checkpoint: Foundation complete — runtime understands index 90, canonical simple brick index is 20, and migration tooling exists for repo assets.
 
