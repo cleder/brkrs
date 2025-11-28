@@ -52,7 +52,7 @@ jobs:
       - name: Populate WASM cache (compile)
         # Precompile the wasm target so the target/ cache gets populated
         run: |
-          cargo fetch --workspace --locked
+          cargo fetch --locked
           cargo build --release --target wasm32-unknown-unknown
 
       - name: Install wasm-bindgen

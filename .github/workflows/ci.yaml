@@ -43,7 +43,7 @@ jobs:
       - name: Populate cache (compile tests)
         # Precompile dependencies and tests without running them so target/ is populated
         run: |
-          cargo fetch --workspace --locked
+          cargo fetch --locked
           cargo test --no-run --all-features || true
       - name: Run cargo test
         run: cargo test --all-features
@@ -72,7 +72,7 @@ jobs:
           sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
       - name: Populate cache (compile)
         run: |
-          cargo fetch --workspace --locked
+          cargo fetch --locked
           cargo check --all-features || true
       - name: Run clippy
         run: cargo clippy --all-features -- -D warnings
