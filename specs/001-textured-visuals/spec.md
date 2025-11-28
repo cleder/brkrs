@@ -8,16 +8,17 @@
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
-  IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
-  Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
-  you should still have a viable MVP (Minimum Viable Product) that delivers value.
+IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
+Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
+you should still have a viable MVP (Minimum Viable Product) that delivers value.
 
-  Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
-  Think of each story as a standalone slice of functionality that can be:
-  - Developed independently
-  - Tested independently
-  - Deployed independently
-  - Demonstrated to users independently
+Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
+Think of each story as a standalone slice of functionality that can be:
+
+- Developed independently
+- Tested independently
+- Deployed independently
+- Demonstrated to users independently
 -->
 
 ### User Story 1 - Textured Baseline Objects (Priority: P1)
@@ -122,76 +123,17 @@ Artists and QA can cycle through levels in sequence by pressing the **L** key so
 
 **Implementation Note**: A dedicated system monitors when `CanonicalMaterialHandles` becomes ready and triggers once to update all existing paddle and brick materials. Queries must be disjoint using `Without<T>` to avoid conflicts.
 
-### Respawn System Integration
+<!--
+IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
+Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
+you should still have a viable MVP (Minimum Viable Product) that delivers value.
 
-**Learning**: The ball respawn system creates new entities from scratch and was using hardcoded debug materials, causing respawned balls to appear red regardless of texture settings.
+Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
+Think of each story as a standalone slice of functionality that can be:
 
-**Impact**: Lost balls now respawn with their proper textured material, maintaining visual consistency throughout gameplay.
-
-**Implementation Note**: Respawn executor must query the texture system's canonical material handles at respawn time and use them instead of hardcoded debug materials.
-
-### Feature Flag Coordination
-
-**Learning**: The texture system was behind a feature flag (`texture_manifest`) but not enabled by default, making it invisible during normal development workflow.
-
+- Developed independently
+- Tested independently
+- Deployed independently
+- Demonstrated to users independently
+-->
 **Impact**: Feature is now active by default, allowing immediate testing and iteration without remembering to add `--features texture_manifest` to every cargo command.
-
-**Implementation Note**: Set `default = ["texture_manifest"]` in `Cargo.toml` features section to make the system opt-out rather than opt-in.
-
-### UV Transform Application
-
-**Learning**: The manifest defined `uv_scale` and `uv_offset` fields but the material baking function didn't apply them, causing all textures to stretch to fill the entire mesh regardless of intended tiling.
-
-**Impact**: Artists can now control texture repetition via manifest entries without touching code. Ground planes tile naturally, brick patterns repeat at intended frequencies.
-
-**Implementation Note**: Use `StandardMaterial::uv_transform` with `Affine2::from_scale_angle_translation()` to apply scale/offset from profile data during material creation and updates.
-
-## Requirements *(mandatory)*
-
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right functional requirements.
--->
-
-### Functional Requirements
-
-- **FR-001**: System MUST define a canonical texture manifest that lists default textures (albedo, optional normal/roughness) for ball, paddle, bricks, sidewalls, ground plane, and background.
-- **FR-002**: System MUST allow each level definition to reference a `LevelTextureSet` that overrides ground plane, background, and sidewall textures without affecting other levels. This is optional, if not present fall back to a default.
-- **FR-003**: System MUST map every ball type id to a material profile and swap the active texture within 0.1 seconds whenever the type changes.
-- **FR-004**: System MUST map every brick type (as defined in the level matrix or data model) to a texture so that mixed brick fields render the correct art simultaneously.
-- **FR-005**: System MUST provide fallback textures for each object class and automatically apply them whenever a custom asset is missing, unreadable, or incompatible with the current platform.
-- **FR-006**: System MUST expose simple asset-swapping (e.g., replace a file or update a manifest entry) so artists can introduce new textures without touching code, with changes taking effect on the next level load.
-- **FR-007**: System MUST validate texture references during asset loading and emit actionable warnings/errors that identify the offending level, object class, and asset path.
-- **FR-008**: System MUST support UV scaling/offset metadata per object to prevent stretching when textures with different resolutions are swapped in.
-- **FR-009**: System MUST ensure textured materials load within the first gameplay frame after a level becomes active (or gracefully stream in while hiding placeholder flashes).
-- **FR-010**: System MUST allow QA or tools to trigger a "visual audit" mode that lists any objects rendered with fallback textures so that missing art can be tracked before release.
-- **FR-011**: System MUST register the **L** key as a level-switch shortcut that loads the next level (wrapping when necessary) while reapplying the correct texture sets and ensuring state cleanup between transitions.
-
-### Key Entities
-
-- **VisualAssetProfile**: Describes the default texture set for each object class (file path, supported platforms, fallback links, UV settings).
-- **LevelTextureSet**: Optional overrides referenced by a level definition that specify the ground plane, background, and sidewall textures plus metadata like tiling and tint.
-- **TypeVariantDefinition**: Maps a gameplay type id (ball variant or brick type) to a texture/material profile and behavior notes (e.g., emissive bricks, animated ball glow).
-- **FallbackRegistry**: Tracks which fallback textures have been invoked during a session so QA can review missing art without duplicate logs.
-
-## Assumptions
-
-- Existing asset pipeline continues to use PNG-based textures stored under `assets/textures/` and can be extended with additional metadata files.
-- Level files can reference new texture identifiers without breaking backward compatibility for existing levels.
-- Runtime memory budgets can support loading the default texture pack plus one additional level-specific override pack simultaneously.
-
-## Success Criteria *(mandatory)*
-
-<!--
-  ACTION REQUIRED: Define measurable success criteria.
-  These must be technology-agnostic and measurable.
--->
-
-### Measurable Outcomes
-
-- **SC-001**: 100% of tracked objects (ball, paddle, bricks, sidewalls, ground, background) render with a textured material in the first gameplay frame across 5 consecutive level loads.
-- **SC-002**: Missing or invalid texture references apply fallback art within one frame and log a single warning per session; zero crashes or gameplay blocks are tolerated.
-- **SC-003**: Artists can replace any texture file and see the new art in-game after no more than one application restart or hot reload, confirmed by swapping assets on two sample levels.
-- **SC-004**: At least three campaign levels ship with unique ground plane and background combinations that QA can distinguish visually without reading level names.
-- **SC-005**: Ball or brick type changes produce visible texture updates within 0.1 seconds during manual testing, with no more than one dropped frame during the swap.
-- **SC-006**: Pressing **L** cycles through all available levels in under 2 seconds per switch, with each level showing its intended textures and no more than one logged warning during a full cycle.

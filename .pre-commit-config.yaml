@@ -16,3 +16,7 @@ repos:
     rev: v0.0.162
     hooks:
     - id: rumdl
+      # The repository includes templates and internal prompt files that contain
+      # placeholders which intentionally fail rumdl checks. Skip rumdl for those
+      # directories so CI doesn't fail on template placeholders.
+      exclude: '(^\.specify/templates/|^\.github/prompts/).*'

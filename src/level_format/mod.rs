@@ -135,18 +135,18 @@ mod tests {
         assert_eq!(result.metrics.truncated_cols, 0);
 
         // Original data preserved in leading rows/cols
-        for r in 0..18 {
-            for c in 0..19 {
-                assert_eq!(result.matrix[r][c], 1);
+        for (r, row) in result.matrix.iter().enumerate().take(18) {
+            for (c, &val) in row.iter().enumerate().take(19) {
+                assert_eq!(val, 1, "row {r} col {c} should preserve value 1");
             }
         }
         // Padded cells zeroed
-        for r in 0..18 {
-            assert_eq!(result.matrix[r][19], 0);
+        for (r, row) in result.matrix.iter().enumerate().take(18) {
+            assert_eq!(row[19], 0, "row {r} col 19 should be padded zero");
         }
-        for r in 18..20 {
-            for c in 0..20 {
-                assert_eq!(result.matrix[r][c], 0);
+        for (r, row) in result.matrix.iter().enumerate().skip(18).take(2) {
+            for (c, &val) in row.iter().enumerate() {
+                assert_eq!(val, 0, "row {r} col {c} should be padded zero");
             }
         }
     }
@@ -198,11 +198,11 @@ mod tests {
                 _ => 20,
             };
             let preserved = original_len.min(20);
-            for c in 0..preserved {
-                assert_eq!(row[c], 3, "row {r} col {c} should preserve value 3");
+            for (c, &val) in row.iter().enumerate().take(preserved) {
+                assert_eq!(val, 3, "row {r} col {c} should preserve value 3");
             }
-            for c in preserved..20 {
-                assert_eq!(row[c], 0, "row {r} col {c} should be padded zero");
+            for (c, &val) in row.iter().enumerate().skip(preserved).take(20 - preserved) {
+                assert_eq!(val, 0, "row {r} col {c} should be padded zero");
             }
         }
         // Check metrics
@@ -244,9 +244,9 @@ mod tests {
         }
         assert_eq!(result.matrix[0][0], 7);
         // Ensure no unintended zeroing
-        for r in 0..20 {
-            for c in 0..20 {
-                assert_eq!(result.matrix[r][c], input[r][c]);
+        for (r, row) in result.matrix.iter().enumerate().take(20) {
+            for (c, &val) in row.iter().enumerate().take(20) {
+                assert_eq!(val, input[r][c]);
             }
         }
         // Check metrics - no changes

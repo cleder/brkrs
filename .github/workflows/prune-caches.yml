@@ -1,0 +1,54 @@
+name: Prune branch caches on delete
+
+on:
+  # Run when a branch is deleted (not tags)
+  delete:
+    branches: true
+
+permissions:
+  # allow modifying workflows/caches via actions API
+  contents: read
+  actions: write
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Find caches for deleted branch
+        id: find
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          echo "Looking for caches containing branch: $BRANCH"
+          TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          PAGE=1
+          rm -f /tmp/cache_ids.txt
+          while :; do
+            echo "Fetching caches page $PAGE"
+            RESP=$(curl -s -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${{ github.repository }}/actions/caches?per_page=100&page=$PAGE")
+            IDS=$(echo "$RESP" | jq -r --arg BRANCH "$BRANCH" '.actions_caches[]? | select(.key | contains($BRANCH)) | .id')
+            if [ -z "$IDS" ]; then
+              break
+            fi
+            echo "$IDS" >> /tmp/cache_ids.txt
+            PAGE=$((PAGE+1))
+          done
+          if [ -s /tmp/cache_ids.txt ]; then
+            echo "found_ids=$(tr '\n' ',' < /tmp/cache_ids.txt)" >> $GITHUB_OUTPUT
+          else
+            echo "found_ids=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Delete caches for branch
+        if: steps.find.outputs.found_ids != ''
+        run: |
+          TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          echo "Deleting caches for branch ${{ github.ref_name }}"
+          while read -r id; do
+            if [ -n "$id" ]; then
+              echo "Deleting cache id $id"
+              curl -s -X DELETE -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${{ github.repository }}/actions/caches/$id"
+            fi
+          done < /tmp/cache_ids.txt || true

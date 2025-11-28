@@ -28,12 +28,29 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: "ci-test"
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          # Build cache key from Cargo.lock checksum and branch name so each
+          # branch + lockfile combination gets its own cache. This improves
+          # cache correctness when dependencies change or different branches
+          # modify Cargo.lock.
+          shared-key: ${{ runner.os }}-ci-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
+          save-if: ${{ github.event_name == 'push' }}
       - name: Install Dependencies
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+        run: |
+          sudo apt-get update
+          # Ensure pkg-config and development headers are available so native
+          # crates like wayland-sys can find system libraries (wayland-client.pc)
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Set PKG_CONFIG_PATH for native libs
+        run: echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig" >> $GITHUB_ENV
+
+      - name: Populate cache (compile tests)
+        # Precompile dependencies and tests without running them so target/ is populated
+        run: |
+          cargo fetch --locked
+          cargo test --no-run --all-features || true
       - name: Run cargo test
         run: cargo test --all-features
+
 
   # Run cargo clippy -- -D warnings
   clippy_check:
@@ -50,10 +67,19 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: "ci-clippy"
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          shared-key: ${{ runner.os }}-ci-clippy-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
+          save-if: ${{ github.event_name == 'push' }}
       - name: Install Dependencies
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Set PKG_CONFIG_PATH for native libs
+        run: echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig" >> $GITHUB_ENV
+
+      - name: Populate cache (compile)
+        run: |
+          cargo fetch --locked
+          cargo check --all-features || true
       - name: Run clippy
         run: cargo clippy --all-features -- -D warnings
 
@@ -71,3 +97,76 @@ jobs:
           components: rustfmt
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
+
+  lint:
+    name: Bevy Lint
+    # Re-enable bevy_lint now that libwayland-dev is installed on runners
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+
+      - name: Set PKG_CONFIG_PATH for native libs
+        run: echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig" >> $GITHUB_ENV
+
+      - name: Install `bevy_lint`
+        uses: TheBevyFlock/bevy_cli/bevy_lint@lint-v0.4.0
+        with:
+          cache: true
+      - name: Run `bevy_lint`
+        run: bevy_lint --workspace
+
+  # Measure cold vs warm build times to validate cache warm-up improvement
+  cache_benchmark:
+    name: Cache benchmark (push only)
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' }}
+    timeout-minutes: 60
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Prepare environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev time
+      - name: Ensure clean build
+        run: rm -rf target || true
+
+      - name: Cold build (first run)
+        id: cold
+        run: |
+          start=$(date +%s)
+          # compile tests (no-run) to pre-populate build artifacts
+          time cargo test --no-run --all-features || true
+          end=$(date +%s)
+          dur=$((end-start))
+          echo "cold_build_seconds=${dur}" >> $GITHUB_ENV
+          echo "cold_build_seconds=${dur}" > cache_metrics.txt
+
+      - name: Warm build (second run)
+        id: warm
+        run: |
+          start=$(date +%s)
+          time cargo test --no-run --all-features || true
+          end=$(date +%s)
+          dur=$((end-start))
+          echo "warm_build_seconds=${dur}" >> $GITHUB_ENV
+          echo "warm_build_seconds=${dur}" >> cache_metrics.txt
+
+      - name: Print metrics
+        run: cat cache_metrics.txt || true
+
+      - name: Upload metrics artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: cache-benchmark-metrics
+          path: cache_metrics.txt
