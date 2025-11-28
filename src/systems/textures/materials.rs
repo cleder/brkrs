@@ -3,6 +3,7 @@
 use super::loader::ObjectClass;
 use std::collections::{HashMap, HashSet};
 
+use bevy::ecs::message::{MessageReader, Messages};
 use bevy::prelude::*;
 use tracing::{debug, info, warn};
 
@@ -23,7 +24,7 @@ impl Plugin for TextureMaterialsPlugin {
             (
                 hydrate_texture_materials,
                 watch_ball_type_changes,
-                set_texture_repeat_mode.run_if(resource_exists::<Events<AssetEvent<Image>>>),
+                set_texture_repeat_mode.run_if(resource_exists::<Messages<AssetEvent<Image>>>),
                 apply_canonical_materials_to_existing_entities,
             ),
         );
@@ -247,7 +248,7 @@ fn initialize_fallback_registry(
 
 fn set_texture_repeat_mode(
     images: Option<ResMut<Assets<Image>>>,
-    mut events: EventReader<AssetEvent<Image>>,
+    mut events: MessageReader<AssetEvent<Image>>,
 ) {
     use bevy::image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor};
 

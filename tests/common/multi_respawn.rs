@@ -1,6 +1,6 @@
 use super::tests::{advance_time, ball_handle_at, paddle_handle_at, test_app};
 use super::*;
-use bevy::ecs::event::Events;
+use bevy::ecs::message::Messages;
 use bevy_rapier3d::prelude::CollisionEvent;
 use bevy_rapier3d::rapier::prelude::CollisionEventFlags;
 use std::time::Duration;
@@ -25,8 +25,8 @@ fn sequential_life_losses_complete_in_order() {
     ));
 
     {
-        let mut collisions = app.world_mut().resource_mut::<Events<CollisionEvent>>();
-        collisions.send(CollisionEvent::Started(
+        let mut collisions = app.world_mut().resource_mut::<Messages<CollisionEvent>>();
+        collisions.write(CollisionEvent::Started(
             ball_a,
             lower_goal,
             CollisionEventFlags::SENSOR,
@@ -43,8 +43,8 @@ fn sequential_life_losses_complete_in_order() {
     }
 
     {
-        let mut collisions = app.world_mut().resource_mut::<Events<CollisionEvent>>();
-        collisions.send(CollisionEvent::Started(
+        let mut collisions = app.world_mut().resource_mut::<Messages<CollisionEvent>>();
+        collisions.write(CollisionEvent::Started(
             ball_b,
             lower_goal,
             CollisionEventFlags::SENSOR,
@@ -78,7 +78,7 @@ fn sequential_life_losses_complete_in_order() {
         assert_eq!(schedule.pending.as_ref().unwrap().lost_ball, ball_b);
     }
 
-    let completions = app.world().resource::<Events<RespawnCompleted>>();
+    let completions = app.world().resource::<Messages<RespawnCompleted>>();
     assert!(
         !completions.is_empty(),
         "expected at least one respawn completion event"
@@ -110,8 +110,8 @@ fn game_over_halts_additional_respawns() {
     ));
 
     {
-        let mut collisions = app.world_mut().resource_mut::<Events<CollisionEvent>>();
-        collisions.send(CollisionEvent::Started(
+        let mut collisions = app.world_mut().resource_mut::<Messages<CollisionEvent>>();
+        collisions.write(CollisionEvent::Started(
             ball_a,
             lower_goal,
             CollisionEventFlags::SENSOR,
@@ -126,8 +126,8 @@ fn game_over_halts_additional_respawns() {
     }
 
     {
-        let mut collisions = app.world_mut().resource_mut::<Events<CollisionEvent>>();
-        collisions.send(CollisionEvent::Started(
+        let mut collisions = app.world_mut().resource_mut::<Messages<CollisionEvent>>();
+        collisions.write(CollisionEvent::Started(
             ball_b,
             lower_goal,
             CollisionEventFlags::SENSOR,
@@ -144,7 +144,7 @@ fn game_over_halts_additional_respawns() {
         assert_eq!(schedule.pending.as_ref().unwrap().lost_ball, ball_a);
     }
 
-    let game_over_events = app.world().resource::<Events<GameOverRequested>>();
+    let game_over_events = app.world().resource::<Messages<GameOverRequested>>();
     assert!(
         !game_over_events.is_empty(),
         "expected GameOverRequested to fire when lives hit zero"

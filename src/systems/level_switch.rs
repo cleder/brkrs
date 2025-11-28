@@ -1,11 +1,12 @@
+use bevy::ecs::message::{Message, MessageWriter};
 use bevy::prelude::*;
 use std::path::{Path, PathBuf};
 use tracing::info;
 #[cfg(not(target_arch = "wasm32"))]
 use tracing::warn;
 
-/// Event emitted when any source requests a level switch.
-#[derive(Event, Debug, Clone, Copy, PartialEq, Eq)]
+/// Message emitted when any source requests a level switch.
+#[derive(Message, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LevelSwitchRequested {
     pub source: LevelSwitchSource,
 }
@@ -131,7 +132,7 @@ pub struct LevelSwitchPlugin;
 
 impl Plugin for LevelSwitchPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<LevelSwitchRequested>()
+        app.add_message::<LevelSwitchRequested>()
             .init_resource::<LevelSwitchState>()
             .add_systems(Update, (queue_keyboard_requests, poll_contract_trigger));
     }
@@ -139,7 +140,7 @@ impl Plugin for LevelSwitchPlugin {
 
 fn queue_keyboard_requests(
     keyboard: Res<ButtonInput<KeyCode>>,
-    mut events: EventWriter<LevelSwitchRequested>,
+    mut events: MessageWriter<LevelSwitchRequested>,
 ) {
     if keyboard.just_pressed(KeyCode::KeyL) {
         events.write(LevelSwitchRequested {
@@ -150,7 +151,7 @@ fn queue_keyboard_requests(
 
 fn poll_contract_trigger(
     #[cfg(not(target_arch = "wasm32"))] state: Res<LevelSwitchState>,
-    #[cfg(not(target_arch = "wasm32"))] mut events: EventWriter<LevelSwitchRequested>,
+    #[cfg(not(target_arch = "wasm32"))] mut events: MessageWriter<LevelSwitchRequested>,
 ) {
     #[cfg(not(target_arch = "wasm32"))]
     {
