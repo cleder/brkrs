@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::ecs::message::{Message, MessageReader, MessageWriter};
 use bevy_rapier3d::prelude::*;
 use std::{collections::VecDeque, f32::consts::PI, time::Duration};
 use tracing::{info, warn};
@@ -160,7 +161,7 @@ pub struct RespawnHandle {
 /// Plugin wiring the respawn flow through ordered system sets.
 pub struct RespawnPlugin;
 
-#[derive(Event, Debug, Clone, Copy)]
+#[derive(Message, Debug, Clone, Copy)]
 pub struct LifeLostEvent {
     pub ball: Entity,
     pub cause: LifeLossCause,
@@ -173,7 +174,7 @@ pub enum LifeLossCause {
 }
 
 #[allow(dead_code)]
-#[derive(Event, Debug, Clone, Copy)]
+#[derive(Message, Debug, Clone, Copy)]
 pub struct RespawnScheduled {
     pub ball: Entity,
     pub paddle: Option<Entity>,
@@ -182,7 +183,7 @@ pub struct RespawnScheduled {
 }
 
 #[allow(dead_code)]
-#[derive(Event, Debug, Clone, Copy)]
+#[derive(Message, Debug, Clone, Copy)]
 pub struct RespawnCompleted {
     pub ball: Entity,
     pub paddle: Option<Entity>,
@@ -190,7 +191,7 @@ pub struct RespawnCompleted {
 }
 
 #[allow(dead_code)]
-#[derive(Event, Debug, Clone, Copy)]
+#[derive(Message, Debug, Clone, Copy)]
 pub struct GameOverRequested {
     pub remaining_lives: u8,
 }
@@ -214,10 +215,10 @@ impl Plugin for RespawnPlugin {
             .init_resource::<LivesState>()
             .init_resource::<SpawnPoints>()
             .init_resource::<RespawnVisualState>()
-            .add_event::<LifeLostEvent>()
-            .add_event::<RespawnScheduled>()
-            .add_event::<RespawnCompleted>()
-            .add_event::<GameOverRequested>()
+            .add_message::<LifeLostEvent>()
+            .add_message::<RespawnScheduled>()
+            .add_message::<RespawnCompleted>()
+            .add_message::<GameOverRequested>()
             .configure_sets(
                 Update,
                 (
@@ -263,7 +264,7 @@ fn detect_ball_loss(
     lower_goals: Query<Entity, With<LowerGoal>>,
     spawn_points: Res<SpawnPoints>,
     mut commands: Commands,
-    mut life_lost_events: EventWriter<LifeLostEvent>,
+    mut life_lost_events: MessageWriter<LifeLostEvent>,
 ) {
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
@@ -297,7 +298,7 @@ fn detect_ball_loss(
     }
 }
 
-fn life_loss_logging(mut life_lost_events: EventReader<LifeLostEvent>) {
+fn life_loss_logging(mut life_lost_events: MessageReader<LifeLostEvent>) {
     for event in life_lost_events.read() {
         let spawn = event.ball_spawn.translation;
         info!(
@@ -313,7 +314,7 @@ fn life_loss_logging(mut life_lost_events: EventReader<LifeLostEvent>) {
     }
 }
 
-fn log_respawn_scheduled(mut events: EventReader<RespawnScheduled>) {
+fn log_respawn_scheduled(mut events: MessageReader<RespawnScheduled>) {
     for event in events.read() {
         info!(
             target: "respawn",
@@ -327,7 +328,7 @@ fn log_respawn_scheduled(mut events: EventReader<RespawnScheduled>) {
     }
 }
 
-fn log_game_over_requested(mut events: EventReader<GameOverRequested>) {
+fn log_game_over_requested(mut events: MessageReader<GameOverRequested>) {
     for event in events.read() {
         info!(
             target: "respawn",
@@ -372,7 +373,7 @@ fn start_pending_request(
     respawn_schedule: &mut RespawnSchedule,
     request: RespawnRequest,
     time: &Time,
-    respawn_scheduled_events: &mut EventWriter<RespawnScheduled>,
+    respawn_scheduled_events: &mut MessageWriter<RespawnScheduled>,
 ) {
     respawn_schedule.timer.reset();
     respawn_schedule.pending = Some(request);
@@ -413,11 +414,11 @@ fn hydrate_respawn_request(
 
 fn enqueue_respawn_requests(
     mut respawn_schedule: ResMut<RespawnSchedule>,
-    mut events: EventReader<LifeLostEvent>,
+    mut events: MessageReader<LifeLostEvent>,
     lives_state: Res<LivesState>,
     time: Res<Time>,
     spawn_points: Res<SpawnPoints>,
-    mut game_over_events: EventWriter<GameOverRequested>,
+    mut game_over_events: MessageWriter<GameOverRequested>,
     mut paddles: Query<(Entity, Option<&mut Velocity>), With<Paddle>>,
     paddle_handles: Query<&RespawnHandle, With<Paddle>>,
     mut commands: Commands,
@@ -471,7 +472,7 @@ fn process_respawn_queue(
     mut respawn_schedule: ResMut<RespawnSchedule>,
     time: Res<Time>,
     spawn_points: Res<SpawnPoints>,
-    mut respawn_scheduled_events: EventWriter<RespawnScheduled>,
+    mut respawn_scheduled_events: MessageWriter<RespawnScheduled>,
     mut paddles: Query<(Entity, Option<&mut Velocity>), With<Paddle>>,
     paddle_handles: Query<&RespawnHandle, With<Paddle>>,
     mut commands: Commands,
@@ -504,7 +505,7 @@ fn respawn_executor(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut paddles: Query<(Entity, &mut Transform, Option<&mut Velocity>), With<Paddle>>,
-    mut respawn_completed_events: EventWriter<RespawnCompleted>,
+    mut respawn_completed_events: MessageWriter<RespawnCompleted>,
     mut commands: Commands,
     #[cfg(feature = "texture_manifest")] canonical: Option<
         Res<crate::systems::textures::CanonicalMaterialHandles>,
@@ -518,7 +519,7 @@ fn respawn_executor(
     }
 
     respawn_schedule.timer.tick(time.delta());
-    if !respawn_schedule.timer.finished() {
+    if !respawn_schedule.timer.is_finished() {
         return;
     }
 
@@ -672,7 +673,7 @@ fn respawn_executor(
 }
 
 fn respawn_visual_trigger(
-    mut events: EventReader<RespawnScheduled>,
+    mut events: MessageReader<RespawnScheduled>,
     mut commands: Commands,
     mut visual_state: ResMut<RespawnVisualState>,
     overlay_query: Query<Entity, With<RespawnFadeOverlay>>,
@@ -730,7 +731,7 @@ fn animate_respawn_visual(
         };
         color.0 = Color::srgba(0.0, 0.0, 0.0, alpha.clamp(0.0, 0.6));
         visual_state.active = true;
-        if overlay.timer.finished() {
+        if overlay.timer.is_finished() {
             commands.entity(entity).despawn();
             visual_state.active = false;
         }

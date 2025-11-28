@@ -4,6 +4,7 @@
 //! It provides functions to spawn and despawn the "PAUSED\nClick to Resume" message.
 
 use bevy::prelude::*;
+use bevy::text::Justify;
 
 use crate::pause::PauseState;
 
@@ -31,7 +32,7 @@ pub fn spawn_pause_overlay(
                 ..default()
             },
             TextColor(Color::WHITE),
-            TextLayout::new_with_justify(JustifyText::Center),
+            TextLayout::new_with_justify(Justify::Center),
             Node {
                 position_type: PositionType::Absolute,
                 width: Val::Percent(100.0),

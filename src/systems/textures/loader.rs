@@ -4,6 +4,7 @@ use std::fmt::{Display, Formatter};
 use bevy::asset::io::Reader;
 use bevy::asset::{AssetEvent, AssetLoader, LoadContext};
 use bevy::prelude::*;
+use bevy::ecs::message::MessageReader;
 use bevy::tasks::ConditionalSendFuture;
 use ron::Value as RonValue;
 use serde::Deserialize;
@@ -25,7 +26,7 @@ impl Plugin for TextureManifestPlugin {
         app.init_asset::<RawTextureManifest>();
         app.register_asset_loader(TextureManifestLoader);
         app.init_resource::<TextureManifest>();
-        app.add_event::<PreviewVisualAsset>();
+        app.add_message::<PreviewVisualAsset>();
         app.add_systems(Startup, load_texture_manifest);
         app.add_systems(
             Update,
@@ -238,7 +239,7 @@ fn hydrate_manifest_resource(
     handle: Option<Res<TextureManifestHandle>>,
     assets: Res<Assets<RawTextureManifest>>,
     mut manifest: ResMut<TextureManifest>,
-    mut events: EventReader<AssetEvent<RawTextureManifest>>,
+    mut events: MessageReader<AssetEvent<RawTextureManifest>>,
     mut ready_once: Local<bool>,
 ) {
     let Some(handle) = handle else {
@@ -278,7 +279,7 @@ fn hydrate_manifest_resource(
 /// profiles into the manifest. This allows artists to preview new textures
 /// without modifying the manifest file.
 fn process_preview_requests(
-    mut events: EventReader<PreviewVisualAsset>,
+    mut events: MessageReader<PreviewVisualAsset>,
     mut manifest: ResMut<TextureManifest>,
 ) {
     for event in events.read() {
@@ -315,7 +316,7 @@ fn process_preview_requests(
 
 fn log_manifest_removal(
     handle: Option<Res<TextureManifestHandle>>,
-    mut events: EventReader<AssetEvent<RawTextureManifest>>,
+    mut events: MessageReader<AssetEvent<RawTextureManifest>>,
 ) {
     let Some(handle) = handle else {
         return;

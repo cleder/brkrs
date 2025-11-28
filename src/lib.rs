@@ -23,14 +23,12 @@ use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::window::MonitorSelection;
 use bevy::{
+    asset::RenderAssetUsages,
     color::palettes::{basic::SILVER, css::RED},
     input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
     prelude::*,
-    render::{
-        render_asset::RenderAssetUsages,
-        render_resource::{Extent3d, TextureDimension, TextureFormat},
-    },
-    window::{CursorGrabMode, PrimaryWindow, Window, WindowMode, WindowPlugin},
+    render::render_resource::{Extent3d, TextureDimension, TextureFormat},
+    window::{CursorGrabMode, CursorOptions, PrimaryWindow, Window, WindowMode, WindowPlugin},
 };
 use bevy_rapier3d::prelude::*;
 
@@ -318,7 +316,7 @@ fn update_camera_shake(
         if let Some(mut shake) = shake_opt {
             shake.timer.tick(time.delta());
 
-            if shake.timer.finished() {
+            if shake.timer.is_finished() {
                 // Restore original position and remove shake component
                 transform.translation = shake.original_position;
                 commands.entity(entity).remove::<CameraShake>();
@@ -369,7 +367,7 @@ fn update_paddle_growth(
     for (entity, mut transform, mut growing) in paddles.iter_mut() {
         growing.timer.tick(time.delta());
 
-        if growing.timer.finished() {
+        if growing.timer.is_finished() {
             // Growth complete: set final scale, enable gravity, remove component
             transform.scale = growing.target_scale;
             if let Ok(mut config) = rapier_config.single_mut() {
@@ -595,7 +593,8 @@ fn toggle_wireframe(
 }
 
 fn grab_mouse(
-    mut window: Single<&mut Window, With<PrimaryWindow>>,
+    window: Single<&Window, With<PrimaryWindow>>,
+    mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
     mouse: Res<ButtonInput<MouseButton>>,
     key: Res<ButtonInput<KeyCode>>,
     mut app_exit: EventWriter<AppExit>,
@@ -604,13 +603,13 @@ fn grab_mouse(
         return;
     }
     if mouse.just_pressed(MouseButton::Left) {
-        window.cursor_options.visible = false;
-        window.cursor_options.grab_mode = CursorGrabMode::Locked;
+        cursor_options.visible = false;
+        cursor_options.grab_mode = CursorGrabMode::Locked;
     }
 
     if key.just_pressed(KeyCode::Escape) {
-        window.cursor_options.visible = true;
-        window.cursor_options.grab_mode = CursorGrabMode::None;
+        cursor_options.visible = true;
+        cursor_options.grab_mode = CursorGrabMode::None;
     }
 
     if key.just_pressed(KeyCode::KeyQ) {

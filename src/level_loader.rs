@@ -55,15 +55,19 @@ impl Plugin for LevelLoaderPlugin {
         app.add_systems(
             Update,
             (
-                advance_level_when_cleared,
-                handle_level_advance_delay,
-                finalize_level_advance.after(handle_level_advance_delay),
-                spawn_fade_overlay_if_needed,
-                update_fade_overlay,
-                restart_level_on_key,
-                destroy_all_bricks_on_key,
-                process_level_switch_requests,
-                sync_level_presentation,
+                (
+                    advance_level_when_cleared,
+                    handle_level_advance_delay,
+                    finalize_level_advance.after(handle_level_advance_delay),
+                    spawn_fade_overlay_if_needed,
+                ),
+                (
+                    update_fade_overlay,
+                    restart_level_on_key,
+                    destroy_all_bricks_on_key,
+                    process_level_switch_requests,
+                    sync_level_presentation,
+                ),
             )
                 .in_set(LevelAdvanceSet),
         );
@@ -71,14 +75,18 @@ impl Plugin for LevelLoaderPlugin {
         app.add_systems(
             Update,
             (
-                advance_level_when_cleared,
-                handle_level_advance_delay,
-                finalize_level_advance.after(handle_level_advance_delay),
-                spawn_fade_overlay_if_needed,
-                update_fade_overlay,
-                restart_level_on_key,
-                destroy_all_bricks_on_key,
-                process_level_switch_requests,
+                (
+                    advance_level_when_cleared,
+                    handle_level_advance_delay,
+                    finalize_level_advance.after(handle_level_advance_delay),
+                    spawn_fade_overlay_if_needed,
+                ),
+                (
+                    update_fade_overlay,
+                    restart_level_on_key,
+                    destroy_all_bricks_on_key,
+                    process_level_switch_requests,
+                ),
             ),
         );
     }
@@ -774,7 +782,7 @@ fn destroy_all_bricks_on_key(
 }
 
 pub(crate) fn process_level_switch_requests(
-    mut requests: EventReader<LevelSwitchRequested>,
+    mut requests: bevy::ecs::message::MessageReader<LevelSwitchRequested>,
     mut switch_state: ResMut<LevelSwitchState>,
     current_level: Option<Res<CurrentLevel>>,
     mut commands: Commands,
@@ -862,7 +870,7 @@ fn handle_level_advance_delay(
         return;
     }
     level_advance.timer.tick(time.delta());
-    if !level_advance.timer.finished() {
+    if !level_advance.timer.is_finished() {
         return;
     }
     let def = level_advance.pending.as_ref().unwrap();

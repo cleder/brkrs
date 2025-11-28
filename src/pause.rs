@@ -11,7 +11,7 @@
 use bevy::prelude::*;
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::window::WindowMode;
-use bevy::window::{PrimaryWindow, Window};
+use bevy::window::{CursorOptions, PrimaryWindow, Window};
 use bevy_rapier3d::prelude::*;
 
 use crate::level_loader::LevelAdvanceState;
@@ -200,7 +200,7 @@ fn apply_pause_to_window_mode(_pause_state: Res<PauseState>) {
 /// Hides cursor during active gameplay, shows cursor when paused.
 fn apply_pause_to_cursor(
     pause_state: Res<PauseState>,
-    mut window: Single<&mut Window, With<PrimaryWindow>>,
+    mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
     // Only run when pause state changes
     if !pause_state.is_changed() {
@@ -210,18 +210,18 @@ fn apply_pause_to_cursor(
     match *pause_state {
         PauseState::Active => {
             // Game active - hide cursor for gameplay
-            window.cursor_options.visible = false;
+            cursor_options.visible = false;
         }
         PauseState::Paused { .. } => {
             // Game paused - show cursor for UI interaction
-            window.cursor_options.visible = true;
+            cursor_options.visible = true;
         }
     }
 }
 
 /// Startup system to hide cursor when game launches.
-fn hide_cursor_on_startup(mut window: Single<&mut Window, With<PrimaryWindow>>) {
-    window.cursor_options.visible = false;
+fn hide_cursor_on_startup(mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>) {
+    cursor_options.visible = false;
 }
 
 /// Run condition that returns true when the game is not paused.
