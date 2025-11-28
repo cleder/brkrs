@@ -780,11 +780,18 @@ fn restart_level_on_key(
 /// Destroy all bricks when K is pressed (for testing level transitions).
 fn destroy_all_bricks_on_key(
     keyboard: Res<ButtonInput<KeyCode>>,
-    bricks: Query<Entity, With<Brick>>,
+    // Only destroy bricks that count towards completion. Indestructible bricks (no
+    // CountsTowardsCompletion) should remain in the scene even when testing with K.
+    bricks: Query<Entity, (With<Brick>, With<crate::CountsTowardsCompletion>)>,
     mut commands: Commands,
 ) {
     // Simple key press - just K to destroy all bricks for testing
-    if keyboard.just_pressed(KeyCode::KeyK) {
+    // Input state is consumed below; nothing to log in production.
+
+    // Accept either a single-frame `just_pressed` or continuous `pressed` state so
+    // test harnesses and interactive play both trigger the test-delete behaviour.
+    if keyboard.just_pressed(KeyCode::KeyK) || keyboard.pressed(KeyCode::KeyK) {
+        // KeyK detected — destroy destructible bricks for testing
         for entity in bricks.iter() {
             commands.entity(entity).despawn();
         }

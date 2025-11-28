@@ -87,6 +87,27 @@ Use `type_variants` to map gameplay types to visual profiles:
 )
 ```
 
+### New type mappings for designers
+
+Two new brick indices are introduced for designers:
+
+- `20` — canonical "simple" brick type going forward (legacy index `3` is still recognized during a compatibility window)
+- `90` — indestructible brick (designer-visible; will never count toward level completion)
+
+Add profiles for `brick/type20` and `brick/indestructible` in `manifest.ron` and map them in `type_variants` to ensure the in-game editor and runtime render the correct visuals for these indices.
+
+Example:
+
+```ron
+(
+  // ... profiles ...
+  type_variants: [
+    ( object_class: Brick, type_id: 20, profile_id: "brick/type20", emissive_color: None, animation: None ),
+    ( object_class: Brick, type_id: 90, profile_id: "brick/indestructible", emissive_color: None, animation: None ),
+  ]
+)
+```
+
 #### Per-Level Texture Overrides
 
 Customize ground, background, and sidewall textures for specific levels:

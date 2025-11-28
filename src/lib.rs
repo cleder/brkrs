@@ -559,10 +559,19 @@ fn uv_debug_texture() -> Image {
 fn mark_brick_on_ball_collision(
     mut collision_events: MessageReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
-    bricks: Query<Entity, (With<Brick>, Without<MarkedForDespawn>)>,
+    // Only bricks that count towards completion should be considered destructible
+    bricks: Query<
+        Entity,
+        (
+            With<Brick>,
+            With<CountsTowardsCompletion>,
+            Without<MarkedForDespawn>,
+        ),
+    >,
     mut commands: Commands,
 ) {
     for event in collision_events.read() {
+        // collision event processed
         if let CollisionEvent::Started(e1, e2, _) = event {
             let e1_is_ball = balls.get(*e1).is_ok();
             let e2_is_ball = balls.get(*e2).is_ok();
@@ -585,6 +594,15 @@ fn despawn_marked_entities(marked: Query<Entity, With<MarkedForDespawn>>, mut co
     for entity in marked.iter() {
         commands.entity(entity).despawn();
     }
+}
+
+/// Public helper to register the brick collision + despawn systems on an arbitrary App.
+/// Tests can call this to mimic the runtime configuration used by the main app.
+pub fn register_brick_collision_systems(app: &mut App) {
+    app.add_systems(
+        Update,
+        (mark_brick_on_ball_collision, despawn_marked_entities),
+    );
 }
 
 #[cfg(not(target_arch = "wasm32"))]

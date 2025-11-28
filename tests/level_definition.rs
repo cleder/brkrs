@@ -1,10 +1,14 @@
 use bevy::{app::App, prelude::*, MinimalPlugins};
+use bevy_rapier3d::prelude::CollisionEvent;
+use bevy_rapier3d::rapier::prelude::CollisionEventFlags;
 use brkrs::level_loader::LevelDefinition;
 use brkrs::{BrickTypeId, CountsTowardsCompletion};
 
 fn level_test_app() -> App {
     let mut app = App::new();
     app.add_plugins((MinimalPlugins, bevy::input::InputPlugin));
+    // Collision events are delivered via the global CollisionEvent message resource
+    app.add_message::<CollisionEvent>();
     app.insert_resource(brkrs::GameProgress::default());
     app.insert_resource(brkrs::level_loader::LevelAdvanceState::default());
     app.insert_resource(brkrs::systems::respawn::SpawnPoints::default());
@@ -16,6 +20,9 @@ fn level_test_app() -> App {
         .spawn(bevy_rapier3d::prelude::RapierConfiguration::new(1.0));
     app.add_plugins(brkrs::systems::LevelSwitchPlugin);
     app.add_plugins(brkrs::level_loader::LevelLoaderPlugin);
+    // Register the brick collision/despawn systems used by the runtime so collision events
+    // are processed during tests (these are normally added by run()).
+    brkrs::register_brick_collision_systems(&mut app);
     app
 }
 
@@ -73,6 +80,7 @@ fn spawn_marks_counts_for_non_indestructible_bricks() {
 
     // cleanup
     let _ = std::fs::remove_file(path);
+    std::env::remove_var("BK_LEVEL");
 }
 
 #[test]
@@ -137,5 +145,187 @@ fn completion_triggers_when_only_indestructible_bricks_remain() {
     );
 
     // cleanup
+    std::env::remove_var("BK_LEVEL");
+}
+
+#[test]
+fn destructible_brick_marked_and_despawned_on_ball_collision() {
+    let mut app = level_test_app();
+
+    // Ensure level with mixed bricks is loaded (has both types) and has bricks spawned
+    std::env::set_var("BK_LEVEL", "997");
+    app.update();
+    app.update();
+
+    // Find an entity representing a destructible brick (BrickTypeId == 20)
+    let world = &mut app.world_mut();
+    let mut target: Option<Entity> = None;
+    let mut q = world.query::<(
+        Entity,
+        &brkrs::BrickTypeId,
+        Option<&brkrs::CountsTowardsCompletion>,
+    )>();
+    for (e, type_id, marker) in q.iter(world) {
+        if type_id.0 == 20 && marker.is_some() {
+            target = Some(e);
+            break;
+        }
+    }
+    let brick = target.expect("expected at least one destructible (20) brick in test level");
+
+    // spawn a ball for the collision
+    let ball = app.world_mut().spawn((brkrs::Ball,)).id();
+
+    // Ensure both entities exist and brick is destructible
+    assert!(
+        app.world().entities().contains(ball),
+        "ball entity must exist"
+    );
+    assert!(
+        app.world().entities().contains(brick),
+        "brick entity must exist"
+    );
+    {
+        let world = &mut app.world_mut();
+        let mut q = world.query::<(Entity, Option<&brkrs::CountsTowardsCompletion>)>();
+        let mut found = false;
+        for (e, marker) in q.iter(world) {
+            if e == brick {
+                found = marker.is_some();
+                break;
+            }
+        }
+        assert!(found, "brick must be destructible before collision test");
+    }
+
+    // Simulate collision event between ball and brick
+    let mut collisions = app.world_mut().resource_mut::<Messages<CollisionEvent>>();
+    collisions.write(CollisionEvent::Started(
+        ball,
+        brick,
+        CollisionEventFlags::empty(),
+    ));
+
+    // Run update to process marking + despawn systems
+    app.update();
+    app.update();
+
+    // Brick should be despawned by the despawn_marked_entities system
+    assert!(
+        !app.world().entities().contains(brick),
+        "destructible brick should be removed on collision"
+    );
+    std::env::remove_var("BK_LEVEL");
+}
+
+#[test]
+fn indestructible_brick_not_marked_on_ball_collision() {
+    let mut app = level_test_app();
+
+    // Ensure level with mixed bricks is loaded (has both types) and has bricks spawned
+    std::env::set_var("BK_LEVEL", "997");
+    app.update();
+    app.update();
+
+    // Find an entity representing an indestructible brick (BrickTypeId == 90), which must NOT count
+    let world = &mut app.world_mut();
+    let mut target: Option<Entity> = None;
+    let mut q = world.query::<(
+        Entity,
+        &brkrs::BrickTypeId,
+        Option<&brkrs::CountsTowardsCompletion>,
+    )>();
+    for (e, type_id, marker) in q.iter(world) {
+        if type_id.0 == 90 && marker.is_none() {
+            target = Some(e);
+            break;
+        }
+    }
+    let brick = target.expect("expected at least one indestructible (90) brick in test level");
+
+    // spawn a ball for the collision
+    let ball = app.world_mut().spawn((brkrs::Ball,)).id();
+
+    // Simulate collision event between ball and brick
+    let mut collisions = app.world_mut().resource_mut::<Messages<CollisionEvent>>();
+    collisions.write(CollisionEvent::Started(
+        ball,
+        brick,
+        CollisionEventFlags::empty(),
+    ));
+
+    // Run update to process marking + despawn systems
+    app.update();
+    app.update();
+
+    // Brick should still exist
+    assert!(
+        app.world().entities().contains(brick),
+        "indestructible brick should not be despawned on collision"
+    );
+    std::env::remove_var("BK_LEVEL");
+}
+
+#[test]
+fn k_key_only_destroys_destructible_bricks() {
+    let mut app = level_test_app();
+
+    // Load the mixed test level
+    std::env::set_var("BK_LEVEL", "997");
+    app.update();
+    app.update();
+
+    // Collect entities
+    let world = &mut app.world_mut();
+    let mut destructible: Vec<Entity> = Vec::new();
+    let mut indestructible: Vec<Entity> = Vec::new();
+    let mut q = world.query::<(
+        Entity,
+        &brkrs::BrickTypeId,
+        Option<&brkrs::CountsTowardsCompletion>,
+    )>();
+    for (e, _type_id, marker) in q.iter(world) {
+        if marker.is_some() {
+            destructible.push(e);
+        } else {
+            indestructible.push(e);
+        }
+    }
+
+    assert!(
+        destructible.len() > 0,
+        "expected some destructible bricks in level"
+    );
+    assert!(
+        indestructible.len() > 0,
+        "expected some indestructible bricks in level"
+    );
+
+    // Allow input systems to settle, then simulate pressing K and run two frames so
+    // the InputPlugin updates `just_pressed` and the destruction system runs.
+    app.update();
+    {
+        let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+        input.press(KeyCode::KeyK);
+    }
+
+    // Update to process destruction (two frames to stabilize input state)
+    app.update();
+    app.update();
+
+    // All destructible bricks should be gone; indestructible remain
+    let world_ref = app.world();
+    for e in destructible {
+        assert!(
+            !world_ref.entities().contains(e),
+            "destructible brick should be removed by K"
+        );
+    }
+    for e in indestructible {
+        assert!(
+            world_ref.entities().contains(e),
+            "indestructible brick should remain after K"
+        );
+    }
     std::env::remove_var("BK_LEVEL");
 }

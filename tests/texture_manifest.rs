@@ -82,6 +82,21 @@ fn runtime_manifest_indexes_profiles_and_variants() {
         .find(|variant| variant.object_class == ObjectClass::Ball && variant.type_id == 0)
         .expect("expected a ball/default variant entry");
     assert_eq!(resolved_variant.profile_id, "ball/default");
+
+    // Ensure new brick variants for the feature are present (simple -> 20 and indestructible -> 90)
+    let brick_simple = manifest
+        .type_variants
+        .iter()
+        .find(|variant| variant.object_class == ObjectClass::Brick && variant.type_id == 20)
+        .expect("expected a brick/type20 variant entry");
+    assert_eq!(brick_simple.profile_id, "brick/type20");
+
+    let brick_indestruct = manifest
+        .type_variants
+        .iter()
+        .find(|variant| variant.object_class == ObjectClass::Brick && variant.type_id == 90)
+        .expect("expected a brick/indestructible variant entry");
+    assert_eq!(brick_indestruct.profile_id, "brick/indestructible");
 }
 
 #[test]

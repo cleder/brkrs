@@ -5,6 +5,9 @@ use brkrs::systems::textures::{
     FallbackRegistry, ProfileMaterialBank, TextureMaterialsPlugin, TypeVariantRegistry,
 };
 
+use brkrs::systems::textures::loader::RawTextureManifest as DiskTextureManifest;
+use std::fs;
+
 fn app_with_variant_registry() -> App {
     let mut app = App::new();
     app.add_plugins(MinimalPlugins);
@@ -12,6 +15,67 @@ fn app_with_variant_registry() -> App {
     app.add_plugins(TextureMaterialsPlugin);
     app.update();
     app
+}
+
+#[test]
+fn disk_manifest_populates_registry_for_new_bricks() {
+    let mut app = app_with_variant_registry();
+
+    // Prepare two distinct materials that will serve as profile outputs
+    let (handle_a, handle_b) = {
+        let mut materials = app.world_mut().resource_mut::<Assets<StandardMaterial>>();
+        (
+            materials.add(StandardMaterial {
+                base_color: Color::srgba(0.5, 0.5, 0.5, 1.0),
+                unlit: true,
+                ..default()
+            }),
+            materials.add(StandardMaterial {
+                base_color: Color::srgba(0.9, 0.2, 0.2, 1.0),
+                unlit: true,
+                ..default()
+            }),
+        )
+    };
+
+    // Populate profile material bank with the profile ids used by the on-disk manifest
+    {
+        let mut bank = app.world_mut().resource_mut::<ProfileMaterialBank>();
+        bank.insert_for_tests("brick/type20", handle_a.clone());
+        bank.insert_for_tests("brick/indestructible", handle_b.clone());
+    }
+
+    // Read manifest.ron from disk and build the runtime manifest
+    let contents = fs::read_to_string("assets/textures/manifest.ron").expect("read manifest");
+    // Deserialize into the disk manifest type used across the systems
+    let raw_manifest: DiskTextureManifest =
+        ron::de::from_str(&contents).expect("parse manifest ron");
+    let manifest = brkrs::systems::textures::loader::TextureManifest::from_raw(raw_manifest);
+
+    // Rebuild registry using the real manifest
+    {
+        let world = app.world_mut();
+        world.resource_scope(|world, mut registry: Mut<TypeVariantRegistry>| {
+            world.resource_scope(|world, bank: Mut<ProfileMaterialBank>| {
+                world.resource_scope(|_world, mut fallback: Mut<FallbackRegistry>| {
+                    registry.rebuild(&manifest, &bank, &mut fallback);
+                });
+            });
+        });
+    }
+
+    // Ensure registry now contains mappings for the new brick types
+    let reg = app.world().resource::<TypeVariantRegistry>();
+    assert_eq!(
+        reg.get(brkrs::systems::textures::loader::ObjectClass::Brick, 20)
+            .unwrap(),
+        handle_a
+    );
+    assert_eq!(
+        reg.get(brkrs::systems::textures::loader::ObjectClass::Brick, 90)
+            .unwrap(),
+        handle_b
+    );
 }
 
 #[test]
