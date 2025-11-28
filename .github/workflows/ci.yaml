@@ -39,7 +39,7 @@ jobs:
           sudo apt-get update
           # Ensure pkg-config and development headers are available so native
           # crates like wayland-sys can find system libraries (wayland-client.pc)
-          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev  libxkbcommon-dev
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
       - name: Set PKG_CONFIG_PATH for native libs
         run: echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig" >> $GITHUB_ENV
 
@@ -72,7 +72,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libxkbcommon-dev
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
       - name: Set PKG_CONFIG_PATH for native libs
         run: echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig" >> $GITHUB_ENV
 
@@ -100,10 +100,7 @@ jobs:
 
   lint:
     name: Bevy Lint
-    # Temporarily disabled to avoid CI failures while we resolve native deps
-    # (installing wayland packages on hosted runners can vary). Set `if: true`
-    # to re-enable when ready.
-    if: false
+    # Re-enable bevy_lint now that libwayland-dev is installed on runners
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
