@@ -46,6 +46,10 @@ Independent Test: Create a level with destructible + indestructible bricks and a
 - [ ] T009 [US1] Add unit tests validating completion behaviour for mixed levels in `tests/level_definition.rs` (new tests focusing on runtime level completion)
 - [ ] T010 [US1] Add an integration test that loads a sample level from `assets/levels/test_mixed_indestructible.ron` and confirms completion (tests/integration/level_completion.rs)
 - [ ] T011 [US1] Add sample level `assets/levels/test_mixed_indestructible.ron` with comments describing expected behavior and add it to quickstart.md
+- [x] T008 [US1] Add logic to LevelCompletionCounter to ignore bricks where `counts_towards_completion == false` in `src/level_loader.rs` and `src/systems/level_switch.rs`
+- [x] T009 [US1] Add unit tests validating completion behaviour for mixed levels in `tests/level_definition.rs` (new tests focusing on runtime level completion)
+- [x] T010 [US1] Add an integration test that loads a sample level from `assets/levels/test_mixed_indestructible.ron` and confirms completion (tests/integration/level_completion.rs)
+- [x] T011 [US1] Add sample level `assets/levels/test_mixed_indestructible.ron` with comments describing expected behavior and add it to quickstart.md
 
 Checkpoint: The gameplay behaviour is independently verifiable and passes tests.
 
