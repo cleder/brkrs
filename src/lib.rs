@@ -157,6 +157,8 @@ pub fn run() {
 
     app.insert_resource(GravityConfig::default());
     app.insert_resource(GameProgress::default());
+    // designer palette UI state
+    app.init_resource::<ui::palette::PaletteState>();
     app.insert_resource(level_loader::LevelAdvanceState::default());
     app.add_plugins((
         DefaultPlugins
@@ -210,7 +212,10 @@ pub fn run() {
             read_character_controller_collisions,
             mark_brick_on_ball_collision,
             despawn_marked_entities, // Runs after marking, allowing physics to resolve
-                                     // display_events,
+            // display_events,
+            // designer palette - toggle with P
+            ui::palette::toggle_palette,
+            ui::palette::ensure_palette_ui,
         ),
     );
     app.add_observer(on_wall_hit);
