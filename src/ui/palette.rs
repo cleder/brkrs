@@ -286,7 +286,7 @@ fn cursor_to_grid(
     let x_normalized = (intersection.x + PLANE_H / 2.0) / PLANE_H;
     let z_normalized = (intersection.z + PLANE_W / 2.0) / PLANE_W;
 
-    if x_normalized < 0.0 || x_normalized >= 1.0 || z_normalized < 0.0 || z_normalized >= 1.0 {
+    if !(0.0..1.0).contains(&x_normalized) || !(0.0..1.0).contains(&z_normalized) {
         return None; // Outside play area
     }
 
