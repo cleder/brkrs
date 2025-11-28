@@ -66,7 +66,7 @@ app.add_systems(Update, gameplay_system.run_if(is_active));
 **Execution Schedule**: `Update` (runs every frame)
 **Module**: `src/pause.rs`
 
-#### Parameters
+#### handle_pause_input — Parameters
 
 ```rust
 fn handle_pause_input(
@@ -77,7 +77,7 @@ fn handle_pause_input(
 ) -> ()
 ```
 
-#### Behavior Guarantees
+#### handle_pause_input — Behavior Guarantees
 
 1. **Input Check**: Processes `KeyCode::Escape` via `just_pressed()` (frame-level debouncing)
 2. **State Guard**: Only transitions if `pause_state.is_active()` (ignores ESC when paused)
@@ -85,12 +85,12 @@ fn handle_pause_input(
 4. **Window Snapshot**: Captures current `window.mode` before transition (native only)
 5. **No Side Effects**: Does not mutate window, physics, or UI directly
 
-#### Preconditions
+#### handle_pause_input — Preconditions
 
 - Window must exist (guaranteed by Bevy's `PrimaryWindow` marker)
 - `LevelAdvanceState` resource must exist (initialized by `LevelLoaderPlugin`)
 
-#### Postconditions
+#### handle_pause_input — Postconditions
 
 - If conditions met: `PauseState::Active → PauseState::Paused`
 - Window mode captured in `Paused` variant (native only)
@@ -109,7 +109,7 @@ fn handle_pause_input(
 **Execution Schedule**: `Update` (runs every frame)
 **Module**: `src/pause.rs`
 
-#### Parameters
+#### handle_resume_input — Parameters
 
 ```rust
 fn handle_resume_input(
@@ -118,18 +118,18 @@ fn handle_resume_input(
 ) -> ()
 ```
 
-#### Behavior Guarantees
+#### handle_resume_input — Behavior Guarantees
 
 1. **Input Check**: Processes `MouseButton::Left` via `just_pressed()`
 2. **State Guard**: Only transitions if `pause_state.is_paused()` (ignores clicks when active)
 3. **Unconditional**: Accepts clicks anywhere in window (FR-011)
 4. **No Side Effects**: Does not mutate window, physics, or UI directly
 
-#### Preconditions
+#### handle_resume_input — Preconditions
 
 - None (mouse input always available)
 
-#### Postconditions
+#### handle_resume_input — Postconditions
 
 - If conditions met: `PauseState::Paused → PauseState::Active`
 - State change triggers dependent systems via Bevy change detection
@@ -144,7 +144,7 @@ fn handle_resume_input(
 **Execution Schedule**: `Update` (runs on `PauseState` change)
 **Module**: `src/pause.rs`
 
-#### Parameters
+#### apply_pause_to_physics — Parameters
 
 ```rust
 fn apply_pause_to_physics(
@@ -153,18 +153,18 @@ fn apply_pause_to_physics(
 ) -> ()
 ```
 
-#### Behavior Guarantees
+#### apply_pause_to_physics — Behavior Guarantees
 
 1. **Freeze on Pause**: Sets `physics_pipeline_active = false` when `PauseState::Paused`
 2. **Resume on Active**: Sets `physics_pipeline_active = true` when `PauseState::Active`
 3. **State Preservation**: Velocities, positions, forces preserved during freeze (FR-006)
 4. **Immediate Effect**: Physics freeze takes effect on the same frame as state change
 
-#### Preconditions
+#### apply_pause_to_physics — Preconditions
 
 - `RapierConfiguration` resource must exist (initialized by `RapierPhysicsPlugin`)
 
-#### Postconditions
+#### apply_pause_to_physics — Postconditions
 
 - Physics pipeline state synchronized with pause state
 - No physics simulation steps occur while paused
@@ -186,7 +186,7 @@ fn apply_pause_to_physics(
 **Execution Schedule**: `Update` (runs on `PauseState` change)
 **Module**: `src/pause.rs`
 
-#### Parameters
+#### apply_pause_to_window_mode — Parameters
 
 ```rust
 #[cfg(not(target_arch = "wasm32"))]
@@ -207,23 +207,23 @@ fn apply_pause_to_window_mode(
 
 - **No-Op**: System not compiled on WASM (window mode switching unsupported)
 
-#### Preconditions
+#### apply_pause_to_window_mode — Preconditions
 
 - Window must exist (guaranteed by `PrimaryWindow` marker)
 - `PauseState::Paused` variant must contain `window_mode_before_pause` (native only)
 
-#### Postconditions
+#### apply_pause_to_window_mode — Postconditions
 
 - Window mode synchronized with pause state
 - User can interact with OS during pause (windowed mode)
 - Fullscreen restored on resume (if was fullscreen originally)
 
-#### Error Handling
+#### apply_pause_to_window_mode — Error Handling
 
 - Display does not support fullscreen: Window manager silently rejects → remain windowed (no crash)
 - Manual window mode change during pause: Respected (user override honored)
 
-#### Performance Contract
+#### apply_pause_to_window_mode — Performance Contract
 
 - **Frame Impact**: <100ms (window mode switching latency - FR-006, FR-007)
 - **Memory Impact**: Zero allocations
@@ -239,7 +239,7 @@ fn apply_pause_to_window_mode(
 **Execution Schedule**: `Update` (runs when entering `PauseState::Paused`)
 **Module**: `src/ui/pause_overlay.rs`
 
-#### Parameters
+#### spawn_pause_overlay — Parameters
 
 ```rust
 fn spawn_pause_overlay(
@@ -248,7 +248,7 @@ fn spawn_pause_overlay(
 ) -> ()
 ```
 
-#### Behavior Guarantees
+#### spawn_pause_overlay — Behavior Guarantees
 
 1. **Idempotency**: Only spawns if no overlay exists (prevents duplicates)
 2. **Message Content**: Displays "PAUSED\nClick to Resume" (FR-002)
@@ -256,18 +256,18 @@ fn spawn_pause_overlay(
 4. **Immediate Visibility**: Appears within 1 frame (<16ms at 60 FPS - SC-003)
 5. **Marker Component**: Entity tagged with `PauseOverlay` for later cleanup
 
-#### Preconditions
+#### spawn_pause_overlay — Preconditions
 
 - Bevy UI plugin initialized (guaranteed by `DefaultPlugins`)
 - Default font available (embedded in Bevy 0.16)
 
-#### Postconditions
+#### spawn_pause_overlay — Postconditions
 
 - UI entity spawned with `PauseOverlay` marker
 - Text visible at center of screen
 - Entity queryable by `Query<Entity, With<PauseOverlay>>`
 
-#### Performance Contract
+#### spawn_pause_overlay — Performance Contract
 
 - **Frame Impact**: <1ms (single entity spawn)
 - **Memory Impact**: ~100 bytes (UI entity archetype)
@@ -281,7 +281,7 @@ fn spawn_pause_overlay(
 **Execution Schedule**: `Update` (runs when entering `PauseState::Active`)
 **Module**: `src/ui/pause_overlay.rs`
 
-#### Parameters
+#### despawn_pause_overlay — Parameters
 
 ```rust
 fn despawn_pause_overlay(
@@ -290,24 +290,24 @@ fn despawn_pause_overlay(
 ) -> ()
 ```
 
-#### Behavior Guarantees
+#### despawn_pause_overlay — Behavior Guarantees
 
 1. **Complete Cleanup**: Despawns all entities with `PauseOverlay` marker
 2. **Recursive**: Uses `despawn_recursive()` to clean up child entities
 3. **Immediate Effect**: Overlay disappears within 1 frame (<16ms at 60 FPS - SC-004)
 4. **No Leaks**: All UI entities removed (no dangling entities)
 
-#### Preconditions
+#### despawn_pause_overlay — Preconditions
 
 - `PauseOverlay` entities exist (spawned by `spawn_pause_overlay`)
 
-#### Postconditions
+#### despawn_pause_overlay — Postconditions
 
 - No entities with `PauseOverlay` marker remain
 - UI overlay invisible
 - Memory reclaimed (entity archetype freed)
 
-#### Performance Contract
+#### despawn_pause_overlay — Performance Contract
 
 - **Frame Impact**: <1ms (single entity despawn)
 - **Memory Impact**: ~100 bytes freed
