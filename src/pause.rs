@@ -47,13 +47,15 @@ impl Plugin for PausePlugin {
 
         // Register pause/resume systems with explicit ordering
         // Execution order: input handling → state effects (physics, window, cursor) → UI updates
+        // Physics control runs after level loader systems to ensure pause state takes precedence
         app.add_systems(
             Update,
             (
                 // Input handling systems (can run in parallel)
                 (handle_pause_input, handle_resume_input),
                 // State-dependent systems (run after input, before UI)
-                apply_pause_to_physics,
+                // Physics control runs after LevelAdvanceSet to avoid race conditions
+                apply_pause_to_physics.after(crate::level_loader::LevelAdvanceSet),
                 apply_pause_to_window_mode,
                 apply_pause_to_cursor,
                 // UI systems (run last, after all state changes)
