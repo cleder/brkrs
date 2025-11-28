@@ -19,9 +19,9 @@ pub struct NormalizationMetrics {
     pub padded_rows: usize,
     /// Number of rows that were truncated (removed from end).
     pub truncated_rows: usize,
-    /// Number of columns that were padded (per-row tracking, total count).
+    /// Total number of columns padded across all rows (cumulative count).
     pub padded_cols: usize,
-    /// Number of columns that were truncated (per-row tracking, total count).
+    /// Total number of columns truncated across all rows (cumulative count).
     pub truncated_cols: usize,
 }
 
