@@ -98,6 +98,10 @@ pub struct BrickTypeId(pub u8);
 #[derive(Component)]
 struct MarkedForDespawn;
 #[derive(Component)]
+/// Marker component attached to bricks that should count toward level completion
+/// (i.e. destructible bricks). Indestructible bricks MUST NOT have this component.
+pub struct CountsTowardsCompletion;
+#[derive(Component)]
 struct CameraShake {
     timer: Timer,
     intensity: f32,

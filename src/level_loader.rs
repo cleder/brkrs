@@ -14,8 +14,9 @@ use ron::de::from_str;
 use serde::Deserialize;
 
 use crate::{
-    Ball, BallTypeId, Brick, BrickTypeId, GameProgress, GravityConfig, LowerGoal, Paddle,
-    BALL_RADIUS, CELL_HEIGHT, CELL_WIDTH, PADDLE_HEIGHT, PADDLE_RADIUS, PLANE_H, PLANE_W,
+    Ball, BallTypeId, Brick, BrickTypeId, CountsTowardsCompletion, GameProgress, GravityConfig,
+    LowerGoal, Paddle, BALL_RADIUS, CELL_HEIGHT, CELL_WIDTH, PADDLE_HEIGHT, PADDLE_RADIUS, PLANE_H,
+    PLANE_W,
 };
 use bevy_rapier3d::prelude::*;
 
@@ -435,12 +436,14 @@ fn spawn_level_entities_impl(
                     #[cfg(not(feature = "texture_manifest"))]
                     let brick_mat = brick_material.clone();
 
-                    commands.spawn((
+                    let mut entity = commands.spawn((
                         Mesh3d(meshes.add(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9))),
                         MeshMaterial3d(brick_mat),
                         Transform::from_xyz(x, 2.0, z),
                         Brick,
                         BrickTypeId(brick_type_id),
+                        // Brick counts towards level completion unless it's the indestructible tile (90).
+                        // Legacy index `3` is considered destructible (compatibility window); newly authored simple bricks should use 20.
                         RigidBody::Fixed,
                         Collider::cuboid(CELL_HEIGHT * 0.9 / 2.0, 0.25, CELL_WIDTH * 0.9 / 2.0),
                         Restitution {
@@ -450,6 +453,9 @@ fn spawn_level_entities_impl(
                         CollidingEntities::default(),
                         ActiveEvents::COLLISION_EVENTS,
                     ));
+                    if brick_type_id != 90 {
+                        entity.insert(CountsTowardsCompletion);
+                    }
                 }
             }
         }
@@ -583,7 +589,7 @@ fn spawn_bricks_only(
             #[cfg(not(feature = "texture_manifest"))]
             let brick_mat = brick_material.clone();
 
-            commands.spawn((
+            let mut entity = commands.spawn((
                 Mesh3d(meshes.add(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9))),
                 MeshMaterial3d(brick_mat),
                 Transform::from_xyz(x, 2.0, z),
@@ -598,6 +604,9 @@ fn spawn_bricks_only(
                 CollidingEntities::default(),
                 ActiveEvents::COLLISION_EVENTS,
             ));
+            if brick_type_id != 90 {
+                entity.insert(crate::CountsTowardsCompletion);
+            }
         }
     }
 }
@@ -639,7 +648,8 @@ pub fn set_spawn_points_only(def: &LevelDefinition, spawn_points: &mut SpawnPoin
 
 /// Advance to the next level when all bricks have been cleared.
 fn advance_level_when_cleared(
-    bricks: Query<Entity, With<Brick>>,
+    // Only consider bricks that count towards completion
+    destructible_bricks: Query<Entity, (With<Brick>, With<crate::CountsTowardsCompletion>)>,
     paddle_q: Query<Entity, With<Paddle>>,
     ball_q: Query<Entity, With<Ball>>,
     current_level: Option<Res<CurrentLevel>>,
@@ -650,8 +660,8 @@ fn advance_level_when_cleared(
     let Some(curr) = current_level else {
         return;
     };
-    if !bricks.is_empty() {
-        return; // still bricks remaining
+    if !destructible_bricks.is_empty() {
+        return; // still destructible bricks remaining
     }
     // If already transitioning, don't restart it.
     if level_advance.active {
