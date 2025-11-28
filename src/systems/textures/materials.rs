@@ -3,8 +3,8 @@
 use super::loader::ObjectClass;
 use std::collections::{HashMap, HashSet};
 
-use bevy::prelude::*;
 use bevy::ecs::message::{MessageReader, Messages};
+use bevy::prelude::*;
 use tracing::{debug, info, warn};
 
 use super::loader::{TextureManifest, VisualAssetProfile};

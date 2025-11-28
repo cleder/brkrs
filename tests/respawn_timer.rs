@@ -152,8 +152,13 @@ fn ball_remains_frozen_until_launch_unlock() {
     app.update();
 
     let respawned_ball = {
-        let mut query = app.world_mut().query_filtered::<Entity, (With<Ball>, With<BallFrozen>)>();
-        query.iter(app.world()).next().expect("respawned ball should exist")
+        let mut query = app
+            .world_mut()
+            .query_filtered::<Entity, (With<Ball>, With<BallFrozen>)>();
+        query
+            .iter(app.world())
+            .next()
+            .expect("respawned ball should exist")
     };
 
     {
@@ -188,8 +193,13 @@ fn ball_remains_frozen_until_launch_unlock() {
 
     {
         let overlay_entity = {
-            let mut query = app.world_mut().query_filtered::<Entity, With<RespawnFadeOverlay>>();
-            query.iter(app.world()).next().expect("respawn overlay should exist while fade is active")
+            let mut query = app
+                .world_mut()
+                .query_filtered::<Entity, With<RespawnFadeOverlay>>();
+            query
+                .iter(app.world())
+                .next()
+                .expect("respawn overlay should exist while fade is active")
         };
         let world = app.world_mut();
         {

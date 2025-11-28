@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use bevy::ecs::message::{Message, MessageWriter};
+use bevy::prelude::*;
 use std::path::{Path, PathBuf};
 use tracing::info;
 #[cfg(not(target_arch = "wasm32"))]

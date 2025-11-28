@@ -46,8 +46,13 @@ fn send_respawn_event(app: &mut App, ball: Entity, paddle: Option<Entity>) {
 
 fn finish_overlay_timer(app: &mut App) {
     let overlay_entity = {
-        let mut query = app.world_mut().query_filtered::<Entity, With<RespawnFadeOverlay>>();
-        query.iter(app.world()).next().expect("respawn overlay should exist")
+        let mut query = app
+            .world_mut()
+            .query_filtered::<Entity, With<RespawnFadeOverlay>>();
+        query
+            .iter(app.world())
+            .next()
+            .expect("respawn overlay should exist")
     };
     let duration = {
         let world = app.world();
@@ -67,7 +72,9 @@ fn finish_overlay_timer(app: &mut App) {
 }
 
 fn overlay_exists(app: &mut App) -> bool {
-    let mut query = app.world_mut().query_filtered::<Entity, With<RespawnFadeOverlay>>();
+    let mut query = app
+        .world_mut()
+        .query_filtered::<Entity, With<RespawnFadeOverlay>>();
     query.iter(app.world()).next().is_some()
 }
 
@@ -75,7 +82,11 @@ fn overlay_exists(app: &mut App) -> bool {
 fn overlay_spawns_and_clears_after_duration() {
     let mut app = test_app();
 
-    send_respawn_event(&mut app, Entity::from_row(EntityRow::from_raw_u32(1).unwrap()), None);
+    send_respawn_event(
+        &mut app,
+        Entity::from_row(EntityRow::from_raw_u32(1).unwrap()),
+        None,
+    );
     advance_time(&mut app, 0.016);
     app.update();
 

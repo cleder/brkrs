@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use bevy::ecs::message::{Message, MessageReader, MessageWriter};
+use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use std::{collections::VecDeque, f32::consts::PI, time::Duration};
 use tracing::{info, warn};
@@ -901,7 +901,9 @@ mod tests {
         assert_eq!(paddle_transform.translation, Vec3::new(-1.0, 2.0, 0.0));
 
         let ball_count = {
-            let mut query = app.world_mut().query_filtered::<Entity, (With<Ball>, With<BallFrozen>)>();
+            let mut query = app
+                .world_mut()
+                .query_filtered::<Entity, (With<Ball>, With<BallFrozen>)>();
             query.iter(app.world()).count()
         };
         assert_eq!(ball_count, 1);

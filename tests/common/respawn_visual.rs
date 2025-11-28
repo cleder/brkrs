@@ -22,7 +22,9 @@ fn overlay_spawns_on_respawn_schedule() {
     app.update();
 
     let overlay_exists = {
-        let mut query = app.world_mut().query_filtered::<Entity, With<RespawnFadeOverlay>>();
+        let mut query = app
+            .world_mut()
+            .query_filtered::<Entity, With<RespawnFadeOverlay>>();
         query.iter(app.world()).next().is_some()
     };
     assert!(
@@ -74,8 +76,13 @@ fn controls_wait_until_overlay_finishes() {
 
     // Finish overlay timer and ensure control unlocks afterwards.
     let overlay_entity = {
-        let mut query = app.world_mut().query_filtered::<Entity, With<RespawnFadeOverlay>>();
-        query.iter(app.world()).next().expect("overlay entity should exist")
+        let mut query = app
+            .world_mut()
+            .query_filtered::<Entity, With<RespawnFadeOverlay>>();
+        query
+            .iter(app.world())
+            .next()
+            .expect("overlay entity should exist")
     };
     {
         let world = app.world_mut();

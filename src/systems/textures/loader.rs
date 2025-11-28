@@ -3,8 +3,8 @@ use std::fmt::{Display, Formatter};
 
 use bevy::asset::io::Reader;
 use bevy::asset::{AssetEvent, AssetLoader, LoadContext};
-use bevy::prelude::*;
 use bevy::ecs::message::MessageReader;
+use bevy::prelude::*;
 use bevy::tasks::ConditionalSendFuture;
 use ron::Value as RonValue;
 use serde::Deserialize;
