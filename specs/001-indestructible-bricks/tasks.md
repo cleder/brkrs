@@ -74,9 +74,9 @@ Goal: Move the canonical simple brick index from `3` → `20` for newly authored
 
 Independent Test: After running `tools/migrate-level-indices`, assets under `assets/levels/` no longer contain `3` for simple bricks; runtime behaves the same.
 
-- [ ] T016 [US3] Implement migration script execution in repository landing steps (add instructions to README and add `scripts/migrate-assets.sh` wrapper that calls `tools/migrate-level-indices`)
-- [ ] T017 [US3] Add regression tests confirming migration keeps visual/layout parity for example levels (tests/integration/migration_parity.rs)
-- [ ] T018 [US3] Update any CI job to run migration tests on PRs that touch `assets/levels/` (CI config: `.github/workflows/*`)
+- [x] T016 [US3] Implement migration script execution in repository landing steps (add instructions to README and add `scripts/migrate-assets.sh` wrapper that calls `tools/migrate-level-indices`)
+- [x] T017 [US3] Add regression tests confirming migration keeps visual/layout parity for example levels (tests/migration_parity.rs)
+- [x] T018 [US3] Update any CI job to run migration tests on PRs that touch `assets/levels/` (CI config: `.github/workflows/*`)
 
 ---
 
