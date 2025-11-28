@@ -25,6 +25,7 @@ use bevy::window::MonitorSelection;
 use bevy::{
     asset::RenderAssetUsages,
     color::palettes::{basic::SILVER, css::RED},
+    ecs::message::{MessageReader, MessageWriter},
     input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
@@ -552,7 +553,7 @@ fn uv_debug_texture() -> Image {
 /// Mark bricks for despawn when hit by the ball
 /// This allows the physics collision response to complete before removal
 fn mark_brick_on_ball_collision(
-    mut collision_events: EventReader<CollisionEvent>,
+    mut collision_events: MessageReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
     bricks: Query<Entity, (With<Brick>, Without<MarkedForDespawn>)>,
     mut commands: Commands,
@@ -597,7 +598,7 @@ fn grab_mouse(
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
     mouse: Res<ButtonInput<MouseButton>>,
     key: Res<ButtonInput<KeyCode>>,
-    mut app_exit: EventWriter<AppExit>,
+    mut app_exit: MessageWriter<AppExit>,
 ) {
     if !window.focused {
         return;
