@@ -61,10 +61,10 @@ Goal: Provide clear editor / level-format support and documentation so designers
 
 Independent Test: Editor/loader renders tile index `90` as indestructible in a sample level; docs updated.
 
-- [ ] T012 [US2] Add rendering/behaviour hook to spawn indestructible bricks when parsing index `90` in `src/level_loader.rs` and any `src/systems/*` that spawn bricks (e.g., `src/systems/respawn.rs` or new `src/systems/indestructible.rs`)
-- [ ] T013 [US2] Update `assets/textures/manifest.ron` or texture mapping docs if a new sprite/visual is required (path: `assets/textures/`)
-- [ ] T014 [US2] Update documentation (docs/ or `specs/001-indestructible-bricks/quickstart.md`) showing how to author `90` and update `assets/levels/README.md` with examples
-- [ ] T015 [US2] Add rendering test / manual verification steps to `tests/visual_manual.md` (or integration test that asserts a brick entity exists with the right properties after load)
+- [x] T012 [US2] Add rendering/behaviour hook to spawn indestructible bricks when parsing index `90` in `src/level_loader.rs` and any `src/systems/*` that spawn bricks (e.g., `src/systems/respawn.rs` or new `src/systems/indestructible.rs`)
+- [x] T013 [US2] Update `assets/textures/manifest.ron` or texture mapping docs if a new sprite/visual is required (path: `assets/textures/`)
+- [x] T014 [US2] Update documentation (docs/ or `specs/001-indestructible-bricks/quickstart.md`) showing how to author `90` and update `assets/levels/README.md` with examples
+- [x] T015 [US2] Add rendering test / manual verification steps to `tests/visual_manual.md` (or integration test that asserts a brick entity exists with the right properties after load)
 
 ---
 
