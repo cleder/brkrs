@@ -88,7 +88,7 @@ pub struct LowerGoal;
 #[derive(Component)]
 pub struct GridOverlay;
 #[derive(Component)]
-struct Brick;
+pub struct Brick;
 
 /// Type ID for brick variants (used by texture manifest type_variants).
 /// Applied during brick spawn based on level matrix values.
@@ -97,6 +97,10 @@ pub struct BrickTypeId(pub u8);
 
 #[derive(Component)]
 struct MarkedForDespawn;
+#[derive(Component)]
+/// Marker component attached to bricks that should count toward level completion
+/// (i.e. destructible bricks). Indestructible bricks MUST NOT have this component.
+pub struct CountsTowardsCompletion;
 #[derive(Component)]
 struct CameraShake {
     timer: Timer,
@@ -153,6 +157,9 @@ pub fn run() {
 
     app.insert_resource(GravityConfig::default());
     app.insert_resource(GameProgress::default());
+    // designer palette UI state
+    app.init_resource::<ui::palette::PaletteState>();
+    app.init_resource::<ui::palette::SelectedBrick>();
     app.insert_resource(level_loader::LevelAdvanceState::default());
     app.add_plugins((
         DefaultPlugins
@@ -206,7 +213,14 @@ pub fn run() {
             read_character_controller_collisions,
             mark_brick_on_ball_collision,
             despawn_marked_entities, // Runs after marking, allowing physics to resolve
-                                     // display_events,
+            // display_events,
+            // designer palette - toggle with P
+            ui::palette::toggle_palette,
+            ui::palette::ensure_palette_ui,
+            ui::palette::handle_palette_selection,
+            ui::palette::update_palette_selection_feedback,
+            ui::palette::update_ghost_preview,
+            ui::palette::place_bricks_on_drag,
         ),
     );
     app.add_observer(on_wall_hit);
@@ -555,10 +569,19 @@ fn uv_debug_texture() -> Image {
 fn mark_brick_on_ball_collision(
     mut collision_events: MessageReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
-    bricks: Query<Entity, (With<Brick>, Without<MarkedForDespawn>)>,
+    // Only bricks that count towards completion should be considered destructible
+    bricks: Query<
+        Entity,
+        (
+            With<Brick>,
+            With<CountsTowardsCompletion>,
+            Without<MarkedForDespawn>,
+        ),
+    >,
     mut commands: Commands,
 ) {
     for event in collision_events.read() {
+        // collision event processed
         if let CollisionEvent::Started(e1, e2, _) = event {
             let e1_is_ball = balls.get(*e1).is_ok();
             let e2_is_ball = balls.get(*e2).is_ok();
@@ -581,6 +604,15 @@ fn despawn_marked_entities(marked: Query<Entity, With<MarkedForDespawn>>, mut co
     for entity in marked.iter() {
         commands.entity(entity).despawn();
     }
+}
+
+/// Public helper to register the brick collision + despawn systems on an arbitrary App.
+/// Tests can call this to mimic the runtime configuration used by the main app.
+pub fn register_brick_collision_systems(app: &mut App) {
+    app.add_systems(
+        Update,
+        (mark_brick_on_ball_collision, despawn_marked_entities),
+    );
 }
 
 #[cfg(not(target_arch = "wasm32"))]

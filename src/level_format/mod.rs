@@ -9,6 +9,14 @@ use bevy::prelude::*;
 pub const TARGET_ROWS: usize = 20;
 pub const TARGET_COLS: usize = 20;
 
+/// Canonical tile index used for simple (destructible) bricks when authoring new levels.
+/// Historically the project used `3` for a simple brick; new levels should prefer `20`.
+pub const SIMPLE_BRICK: u8 = 20;
+
+/// Tile index reserved for indestructible bricks. Indestructible bricks collide and render
+/// like regular bricks but do NOT count toward level completion.
+pub const INDESTRUCTIBLE_BRICK: u8 = 90;
+
 /// Metrics collected during matrix normalization.
 ///
 /// These metrics indicate how the input matrix was adjusted to fit

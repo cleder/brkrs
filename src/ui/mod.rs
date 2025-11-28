@@ -2,4 +2,5 @@
 //!
 //! Contains UI components including the pause overlay.
 
+pub mod palette;
 pub mod pause_overlay;

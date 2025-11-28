@@ -1,0 +1,40 @@
+openapi: 3.0.3
+info:
+  title: LevelDefinition Format (schema)
+  version: '1.0'
+  description: >-
+    Contract describing the LevelDefinition structure used by the engine and tooling.
+
+components:
+  schemas:
+    LevelDefinition:
+      type: object
+      required: [id, matrix]
+      properties:
+        id:
+          type: string
+          description: File or level identifier
+        matrix:
+          type: array
+          description: Two-dimensional matrix of integer tile indexes
+          items:
+            type: array
+            items:
+              type: integer
+              description: A tile index (see BrickIndexMapping for semantics)
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+
+    BrickIndexMapping:
+      type: object
+      properties:
+        20:
+          description: "Simple destructible brick (counts toward level completion)"
+          type: object
+        90:
+          description: "Indestructible brick (does NOT count toward level completion)"
+          type: object
+
+paths: {}
