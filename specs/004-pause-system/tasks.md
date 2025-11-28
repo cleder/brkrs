@@ -21,12 +21,12 @@
 
 **Purpose**: Create new module structure for pause system
 
-- [ ] T001 [P] Create `src/pause.rs` module file for pause system core logic
-- [ ] T002 [P] Create `src/ui/` directory for UI components
-- [ ] T003 [P] Create `src/ui/pause_overlay.rs` module file for overlay UI
-- [ ] T004 [P] Create `src/ui/mod.rs` to export pause_overlay module
-- [ ] T005 Add `pub mod pause;` declaration to `src/lib.rs`
-- [ ] T006 Add `pub mod ui;` declaration to `src/lib.rs`
+- [x] T001 [P] Create `src/pause.rs` module file for pause system core logic
+- [x] T002 [P] Create `src/ui/` directory for UI components
+- [x] T003 [P] Create `src/ui/pause_overlay.rs` module file for overlay UI
+- [x] T004 [P] Create `src/ui/mod.rs` to export pause_overlay module
+- [x] T005 Add `pub mod pause;` declaration to `src/lib.rs`
+- [x] T006 Add `pub mod ui;` declaration to `src/lib.rs`
 
 ---
 
@@ -36,12 +36,12 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T007 Define `PauseState` enum resource in `src/pause.rs` (Active | Paused with platform-specific window mode storage)
-- [ ] T008 Implement `Default` trait for `PauseState` in `src/pause.rs` (defaults to Active)
-- [ ] T009 Define `PausePlugin` struct in `src/pause.rs`
-- [ ] T010 Implement `Plugin` trait for `PausePlugin` in `src/pause.rs` (register resource, systems)
-- [ ] T011 Define `PauseOverlay` marker component in `src/ui/pause_overlay.rs`
-- [ ] T012 Add `PausePlugin` to app in `src/lib.rs` or `src/main.rs` (app.add_plugins(PausePlugin))
+- [x] T007 Define `PauseState` enum resource in `src/pause.rs` (Active | Paused with platform-specific window mode storage)
+- [x] T008 Implement `Default` trait for `PauseState` in `src/pause.rs` (defaults to Active)
+- [x] T009 Define `PausePlugin` struct in `src/pause.rs`
+- [x] T010 Implement `Plugin` trait for `PausePlugin` in `src/pause.rs` (register resource, systems)
+- [x] T011 Define `PauseOverlay` marker component in `src/ui/pause_overlay.rs`
+- [x] T012 Add `PausePlugin` to app in `src/lib.rs` or `src/main.rs` (app.add_plugins(PausePlugin))
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -55,13 +55,13 @@
 
 ### Implementation for User Story 1
 
-- [ ] T013 [US1] Implement `handle_pause_input` system in `src/pause.rs` (detects ESC key, transitions to Paused state, captures window mode on native)
-- [ ] T014 [US1] Implement `apply_pause_to_physics` system in `src/pause.rs` (sets RapierConfiguration::physics_pipeline_active based on PauseState)
-- [ ] T015 [US1] Implement `spawn_pause_overlay` function in `src/ui/pause_overlay.rs` (spawns UI entity with "PAUSED\\nClick to Resume" text)
-- [ ] T016 [US1] Register `handle_pause_input` system in `PausePlugin::build` in `src/pause.rs` (Update schedule)
-- [ ] T017 [US1] Register `apply_pause_to_physics` system in `PausePlugin::build` in `src/pause.rs` (Update schedule, after input handling)
-- [ ] T018 [US1] Register `spawn_pause_overlay` system in `PausePlugin::build` in `src/pause.rs` (Update schedule, run_if paused)
-- [ ] T019 [US1] Add run condition to `handle_pause_input` to check `LevelAdvanceState` in `src/pause.rs` (FR-012: prevent pause during level transitions)
+- [x] T013 [US1] Implement `handle_pause_input` system in `src/pause.rs` (detects ESC key, transitions to Paused state, captures window mode on native)
+- [x] T014 [US1] Implement `apply_pause_to_physics` system in `src/pause.rs` (sets RapierConfiguration::physics_pipeline_active based on PauseState)
+- [x] T015 [US1] Implement `spawn_pause_overlay` function in `src/ui/pause_overlay.rs` (spawns UI entity with "PAUSED\\nClick to Resume" text)
+- [x] T016 [US1] Register `handle_pause_input` system in `PausePlugin::build` in `src/pause.rs` (Update schedule)
+- [x] T017 [US1] Register `apply_pause_to_physics` system in `PausePlugin::build` in `src/pause.rs` (Update schedule, after input handling)
+- [x] T018 [US1] Register `spawn_pause_overlay` system in `PausePlugin::build` in `src/pause.rs` (Update schedule, run_if paused)
+- [x] T019 [US1] Add run condition to `handle_pause_input` to check `LevelAdvanceState` in `src/pause.rs` (FR-012: prevent pause during level transitions)
 
 **Manual Test (from quickstart.md)**:
 
@@ -81,10 +81,10 @@
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Implement `handle_resume_input` system in `src/pause.rs` (detects left mouse click, transitions to Active state when paused)
-- [ ] T021 [US2] Implement `despawn_pause_overlay` function in `src/ui/pause_overlay.rs` (queries and despawns entities with PauseOverlay marker)
-- [ ] T022 [US2] Register `handle_resume_input` system in `PausePlugin::build` in `src/pause.rs` (Update schedule)
-- [ ] T023 [US2] Register `despawn_pause_overlay` system in `PausePlugin::build` in `src/pause.rs` (Update schedule, run_if active)
+- [x] T020 [US2] Implement `handle_resume_input` system in `src/pause.rs` (detects left mouse click, transitions to Active state when paused)
+- [x] T021 [US2] Implement `despawn_pause_overlay` function in `src/ui/pause_overlay.rs` (queries and despawns entities with PauseOverlay marker)
+- [x] T022 [US2] Register `handle_resume_input` system in `PausePlugin::build` in `src/pause.rs` (Update schedule)
+- [x] T023 [US2] Register `despawn_pause_overlay` system in `PausePlugin::build` in `src/pause.rs` (Update schedule, run_if active)
 
 **Manual Test (from quickstart.md)**:
 
@@ -105,12 +105,12 @@
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Implement `apply_pause_to_window_mode` system in `src/pause.rs` (switches window mode based on PauseState, native only via #[cfg])
-- [ ] T025 [US3] Add conditional compilation for native window mode switching in `apply_pause_to_window_mode` in `src/pause.rs` (#[cfg(not(target_arch = "wasm32"))])
-- [ ] T026 [US3] Add WASM no-op variant for `apply_pause_to_window_mode` in `src/pause.rs` (#[cfg(target_arch = "wasm32")])
-- [ ] T027 [US3] Register `apply_pause_to_window_mode` system in `PausePlugin::build` in `src/pause.rs` (Update schedule, after state change, before overlay)
-- [ ] T028 [US3] Add logic to restore window mode from `PauseState::Paused { window_mode_before_pause }` in `apply_pause_to_window_mode` in `src/pause.rs`
-- [ ] T029 [US3] Add logic to handle windowed→windowed case (no change per FR-010) in `apply_pause_to_window_mode` in `src/pause.rs`
+- [x] T024 [US3] Implement `apply_pause_to_window_mode` system in `src/pause.rs` (switches window mode based on PauseState, native only via #[cfg])
+- [x] T025 [US3] Add conditional compilation for native window mode switching in `apply_pause_to_window_mode` in `src/pause.rs` (#[cfg(not(target_arch = "wasm32"))])
+- [x] T026 [US3] Add WASM no-op variant for `apply_pause_to_window_mode` in `src/pause.rs` (#[cfg(target_arch = "wasm32")])
+- [x] T027 [US3] Register `apply_pause_to_window_mode` system in `PausePlugin::build` in `src/pause.rs` (Update schedule, after state change, before overlay)
+- [x] T028 [US3] Add logic to restore window mode from `PauseState::Paused { window_mode_before_pause }` in `apply_pause_to_window_mode` in `src/pause.rs`
+- [x] T029 [US3] Add logic to handle windowed→windowed case (no change per FR-010) in `apply_pause_to_window_mode` in `src/pause.rs`
 
 **Manual Test (from quickstart.md - Native)**:
 
