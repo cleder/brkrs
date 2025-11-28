@@ -32,22 +32,24 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
 
       - name: Cache cargo index
         uses: actions/cache@v4
         with:
           path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
 
       - name: Cache target directory
         uses: actions/cache@v4
         with:
           path: target
-          key: ${{ runner.os }}-target-wasm-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-target-wasm-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
 
-      - name: Build WASM
+      - name: Populate WASM cache (compile)
+        # Precompile the wasm target so the target/ cache gets populated
         run: |
+          cargo fetch --all --locked
           cargo build --release --target wasm32-unknown-unknown
 
       - name: Install wasm-bindgen

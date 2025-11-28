@@ -28,12 +28,22 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: "ci-test"
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          # Build cache key from Cargo.lock checksum and branch name so each
+          # branch + lockfile combination gets its own cache. This improves
+          # cache correctness when dependencies change or different branches
+          # modify Cargo.lock.
+          shared-key: ${{ runner.os }}-ci-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
+          save-if: true
       - name: Install Dependencies
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Populate cache (compile tests)
+        # Precompile dependencies and tests without running them so target/ is populated
+        run: |
+          cargo fetch --all --locked
+          cargo test --no-run --all-features || true
       - name: Run cargo test
         run: cargo test --all-features
+
 
   # Run cargo clippy -- -D warnings
   clippy_check:
@@ -50,10 +60,14 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: "ci-clippy"
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          shared-key: ${{ runner.os }}-ci-clippy-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
+          save-if: true
       - name: Install Dependencies
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Populate cache (compile)
+        run: |
+          cargo fetch --all --locked
+          cargo check --all-features || true
       - name: Run clippy
         run: cargo clippy --all-features -- -D warnings
 
@@ -71,3 +85,19 @@ jobs:
           components: rustfmt
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
+
+  lint:
+    name: Bevy Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install `bevy_lint`
+        uses: TheBevyFlock/bevy_cli/bevy_lint@lint-v0.4.0
+        with:
+          cache: true
+      - name: Run `bevy_lint`
+        run: bevy_lint --workspace
