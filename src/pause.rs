@@ -9,7 +9,9 @@
 //! The pause system is implemented as a Bevy plugin that can be added to the app.
 
 use bevy::prelude::*;
-use bevy::window::{PrimaryWindow, Window, WindowMode};
+#[cfg(not(target_arch = "wasm32"))]
+use bevy::window::WindowMode;
+use bevy::window::{PrimaryWindow, Window};
 use bevy_rapier3d::prelude::*;
 
 use crate::level_loader::LevelAdvanceState;
@@ -93,7 +95,7 @@ fn handle_pause_input(
         }
         #[cfg(target_arch = "wasm32")]
         {
-            *pause_state = PauseState::Paused;
+            *pause_state = PauseState::Paused {};
         }
     }
 }
