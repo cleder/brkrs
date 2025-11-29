@@ -10,8 +10,8 @@ from pathlib import Path
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "brkrs"
-copyright = "2025, brkrs contributors"
-author = "brkrs contributors"
+copyright = "2025, Christian Ledermann"
+author = "Christian Ledermann"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
