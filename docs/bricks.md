@@ -156,26 +156,4 @@ Some levels use Conway's Game of Life algorithm (2-3-3 variant):
 
 ## Sound Effects
 
-Each brick type triggers a specific sound when hit:
-
-- Sound 2: Solid bricks
-- Sound 3: Simple bricks, magnet bricks
-- Sound 4: Wall collision
-- Sound 6: Gravity bricks
-- Sound 8: Apple
-- Sound 9: Donut
-- Sound 10: Bat brick
-- Sound 11: Killer
-- Sound 12: Score multiplier
-- Sound 14: Extra ball
-- Sound 15: Direction bricks
-- Sound 18: Paddle killed by solid die/killer
-- Sound 19: Bomb
-- Sound 20: Enemy spawn (skull/rotor) - loops
-- Sound 21: Ball size change
-- Sound 22: Ball lost / Level change
-- Sound 25: Red bricks (ball count)
-- Sound 26: Phone
-- Sound 29: Multi-hit bricks
-- Sound 32: Teleport
-- Sound 33: Smiley (Level Up)
+Each brick type triggers a specific sound when hit
