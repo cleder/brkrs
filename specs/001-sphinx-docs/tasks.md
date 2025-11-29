@@ -106,12 +106,14 @@
 
 **Purpose**: Improvements affecting all user stories and final validation
 
-- [ ] T024 [P] Add FAQ page with common questions in docs/faq.md
-- [ ] T025 [P] Demonstrate MyST features (admonitions, cross-refs, code-blocks) in at least one page in docs/developer-guide.md
-- [ ] T026 Run sphinx-linkcheck to validate all internal and external links
-- [ ] T027 Run local quickstart.md validation steps from specs/001-sphinx-docs/quickstart.md
-- [ ] T028 Verify mobile/desktop responsiveness of published furo-themed site
-- [ ] T029 Final review: ensure all pages render, rustdoc embedded, RTD version selector works
+- [x] T024 [P] Add FAQ page with common questions in docs/faq.md
+- [x] T025 [P] Demonstrate MyST features (admonitions, cross-refs, code-blocks) in at least one page in docs/developer-guide.md
+- [x] T026 Run sphinx-linkcheck to validate all internal and external links
+- [x] T027 Run local quickstart.md validation steps from specs/001-sphinx-docs/quickstart.md
+- [x] T028 Verify mobile/desktop responsiveness of published furo-themed site
+- [x] T029 Final review: ensure all pages render, rustdoc embedded, RTD version selector works
+
+**Checkpoint**: All phases complete — Documentation system fully implemented
 
 ---
 

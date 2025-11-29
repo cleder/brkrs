@@ -10,7 +10,10 @@ Before you start developing, ensure you have:
 - **Git** for version control
 - **A code editor** (VS Code with rust-analyzer recommended)
 
-See {doc}`quickstart` for platform-specific dependencies.
+```{note}
+See {doc}`quickstart` for platform-specific dependencies like build-essential on Linux
+or Xcode Command Line Tools on macOS.
+```
 
 ## Repository structure
 
@@ -89,6 +92,11 @@ cargo test -- --nocapture
 
 Before submitting a PR, run all quality checks:
 
+```{warning}
+All checks must pass before your PR can be merged. The CI will run these
+automatically, but running them locally saves time.
+```
+
 ```bash
 # Format code
 cargo fmt --all
@@ -102,8 +110,6 @@ bevy lint
 # Run tests
 cargo test
 ```
-
-All checks must pass for PR approval.
 
 ## Adding content
 
@@ -180,6 +186,11 @@ See {doc}`contributing` for the full contribution workflow.
 
 ### Debugging physics
 
+```{tip}
+Physics debug rendering is invaluable for understanding collision issues.
+Enable it when ball behavior seems unexpected.
+```
+
 Enable physics debug rendering:
 
 ```rust
@@ -201,10 +212,15 @@ fn debug_system(query: Query<(Entity, &Transform), With<Brick>>) {
 
 ### Hot reloading assets
 
+```{important}
+Hot reloading only works in debug builds. Release builds bake assets
+at compile time for performance.
+```
+
 Assets support hot reloading in debug builds. Edit a level file and see changes immediately.
 
 ## Getting help
 
 - **Issues**: [GitHub Issues](https://github.com/cleder/brkrs/issues)
-- **Documentation**: This site
+- **Documentation**: This site and the {doc}`api-reference`
 - **Code**: Read the source — it's well-documented

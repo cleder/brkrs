@@ -6,7 +6,7 @@ The brkrs API documentation is generated from source code using rustdoc.
 
 The full Rust API documentation is embedded within this documentation site:
 
-**[Browse the Rust API →](rustdoc/brkrs/index.html)**
+**[Browse the Rust API →](brkrs/index.html)**
 
 The rustdoc includes:
 
