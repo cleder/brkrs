@@ -3,6 +3,9 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import os
+from pathlib import Path
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
@@ -48,5 +51,16 @@ html_theme_options = {
     "source_directory": "docs/",
 }
 
-# Include rustdoc output in the build
-html_extra_path = ["_static/rustdoc"]
+# Include rustdoc output in the build (only if directory exists)
+# Set SPHINX_SKIP_RUSTDOC=1 to skip rustdoc embedding (for fast PR builds)
+_rustdoc_path = Path(__file__).parent / "_static" / "rustdoc"
+if not os.environ.get("SPHINX_SKIP_RUSTDOC") and _rustdoc_path.exists():
+    html_extra_path = ["_static/rustdoc"]
+
+# Suppress expected warnings
+suppress_warnings = [
+    # RON syntax not recognized by Pygments (expected)
+    "misc.highlighting_failure",
+    # MyST cross-reference warnings for external HTML files (rustdoc links)
+    "myst.xref_missing",
+]
