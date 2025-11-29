@@ -26,10 +26,10 @@
 
 **Purpose**: Create docs directory structure and install dependencies
 
-- [ ] T001 Create docs/ directory structure with conf.py, index.md, requirements.txt in docs/
-- [ ] T002 [P] Configure Sphinx conf.py with MyST-Parser and furo theme in docs/conf.py
-- [ ] T003 [P] Add Python dependencies (sphinx, myst-parser, furo, sphinx-copybutton) in docs/requirements.txt
-- [ ] T004 [P] Create .gitignore entries for docs/_build/ and docs/_static/rustdoc/ in .gitignore
+- [x] T001 Create docs/ directory structure with conf.py, index.md, requirements.txt in docs/
+- [x] T002 [P] Configure Sphinx conf.py with MyST-Parser and furo theme in docs/conf.py
+- [x] T003 [P] Add Python dependencies (sphinx, myst-parser, furo, sphinx-copybutton) in docs/requirements.txt
+- [x] T004 [P] Create .gitignore entries for docs/_build/ and docs/_static/rustdoc/ in .gitignore
 
 ---
 
