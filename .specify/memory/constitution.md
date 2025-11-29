@@ -132,7 +132,7 @@ All public modules, functions, types, and traits MUST have rustdoc documentation
 - **Module-level docs** (`//!`): Explain the module's purpose, when to use
   it, and how it fits into the overall architecture
 - **Function docs** (`///`): Describe WHY the function exists and WHEN to
-  use it, not HOW it is implemented
+  use it, NOT HOW it is implemented
 - **Type docs** (`///`): Explain what the type represents and its role in
   the system
 - **Examples**: Include usage examples for non-trivial public APIs
@@ -140,7 +140,7 @@ All public modules, functions, types, and traits MUST have rustdoc documentation
 
 **Focus on Intent, Not Implementation**:
 
-- Document the problem being solved, not the algorithm used
+- Document the problem being solved, NOT the algorithm used
 - Explain when callers should choose this function over alternatives
 - Describe preconditions, postconditions, and invariants
 - Implementation details belong in code comments (`//`), not rustdoc

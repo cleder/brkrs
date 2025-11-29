@@ -18,7 +18,7 @@
 
 - Q: How should docs be validated and published? → A: Both — CI validates docs on PRs and Read the Docs publishes the versioned site
 
-- Q: What is the fast docs build / validation target for CI? → A: Keep 60s (PR validation must complete in under 60s)
+- Q: What is the fast docs build / validation target for CI? → B:3 minutes — CI/docs build target
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -91,7 +91,7 @@ As a release manager or maintainer, I want documentation to be published automat
 
 ### Non-functional Requirements
 
-- **NFR-001**: The PR docs validation job (fast check) MUST complete successfully in under 60 seconds in CI under normal conditions. This job should avoid heavy work (full rustdoc generation) where possible and instead run incremental, cached checks to provide fast feedback.
+- **NFR-001**: The PR docs validation job (fast check) MUST complete successfully in under 3 minutes under normal conditions. This job should avoid heavy work (full rustdoc generation) where possible and instead run incremental, cached checks to provide fast feedback.
 - **NFR-002**: The published docs page MUST be accessible and render correctly on mobile and desktop screen widths.
 - **NFR-003**: Docs content MUST be kept up to date in the repository and clearly indicate the version of the project it documents.
 
