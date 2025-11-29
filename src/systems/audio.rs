@@ -182,10 +182,10 @@ pub struct AudioPlugin;
 
 impl Plugin for AudioPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<AudioConfig>()
-            .init_resource::<AudioAssets>()
+        app.init_resource::<AudioAssets>()
             .init_resource::<ActiveSounds>()
-            .add_systems(Startup, load_audio_assets)
+            .add_systems(Startup, (load_audio_config, load_audio_assets).chain())
+            .add_systems(Update, save_audio_config_on_change)
             .add_observer(on_multi_hit_brick_sound)
             .add_observer(on_brick_destroyed_sound)
             .add_observer(on_ball_wall_hit_sound)
@@ -194,6 +194,119 @@ impl Plugin for AudioPlugin {
             .add_observer(on_paddle_brick_hit_sound)
             .add_observer(on_level_started_sound)
             .add_observer(on_level_complete_sound);
+    }
+}
+
+/// Path to the audio config file.
+const AUDIO_CONFIG_PATH: &str = "config/audio.ron";
+
+/// Load audio configuration from disk or use defaults.
+fn load_audio_config(mut commands: Commands) {
+    #[cfg(not(target_arch = "wasm32"))]
+    let config = {
+        match std::fs::read_to_string(AUDIO_CONFIG_PATH) {
+            Ok(content) => match ron::de::from_str::<AudioConfig>(&content) {
+                Ok(mut loaded) => {
+                    // Ensure volume is in valid range
+                    loaded.master_volume = loaded.master_volume.clamp(0.0, 1.0);
+                    info!(
+                        target: "audio",
+                        volume = loaded.master_volume,
+                        muted = loaded.muted,
+                        "Loaded audio config"
+                    );
+                    loaded
+                }
+                Err(e) => {
+                    warn!(
+                        target: "audio",
+                        error = %e,
+                        "Failed to parse audio config, using defaults"
+                    );
+                    AudioConfig::default()
+                }
+            },
+            Err(_) => {
+                info!(
+                    target: "audio",
+                    "Audio config not found, using defaults"
+                );
+                AudioConfig::default()
+            }
+        }
+    };
+
+    #[cfg(target_arch = "wasm32")]
+    let config = {
+        // On WASM, try to load from localStorage
+        // For now, just use defaults (localStorage integration would require web-sys)
+        info!(
+            target: "audio",
+            "Using default audio config (WASM)"
+        );
+        AudioConfig::default()
+    };
+
+    commands.insert_resource(config);
+}
+
+/// Save audio configuration when it changes.
+fn save_audio_config_on_change(config: Res<AudioConfig>) {
+    if !config.is_changed() {
+        return;
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // Ensure config directory exists
+        if let Some(parent) = std::path::Path::new(AUDIO_CONFIG_PATH).parent() {
+            if let Err(e) = std::fs::create_dir_all(parent) {
+                warn!(
+                    target: "audio",
+                    error = %e,
+                    "Failed to create config directory"
+                );
+                return;
+            }
+        }
+
+        // Serialize and save
+        let content = match ron::ser::to_string_pretty(&*config, ron::ser::PrettyConfig::default())
+        {
+            Ok(s) => s,
+            Err(e) => {
+                warn!(
+                    target: "audio",
+                    error = %e,
+                    "Failed to serialize audio config"
+                );
+                return;
+            }
+        };
+
+        if let Err(e) = std::fs::write(AUDIO_CONFIG_PATH, content) {
+            warn!(
+                target: "audio",
+                error = %e,
+                "Failed to save audio config"
+            );
+        } else {
+            debug!(
+                target: "audio",
+                volume = config.master_volume,
+                muted = config.muted,
+                "Saved audio config"
+            );
+        }
+    }
+
+    // On WASM, localStorage saving would go here
+    #[cfg(target_arch = "wasm32")]
+    {
+        debug!(
+            target: "audio",
+            "Audio config save skipped (WASM)"
+        );
     }
 }
 

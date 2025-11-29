@@ -89,7 +89,11 @@ fn sound_type_has_all_expected_variants() {
     for (i, a) in variants.iter().enumerate() {
         for (j, b) in variants.iter().enumerate() {
             if i != j {
-                assert_ne!(a, b, "Sound types at index {} and {} should be different", i, j);
+                assert_ne!(
+                    a, b,
+                    "Sound types at index {} and {} should be different",
+                    i, j
+                );
             }
         }
     }

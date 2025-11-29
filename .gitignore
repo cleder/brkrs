@@ -47,3 +47,6 @@ Thumbs.db
 # Sphinx documentation build artifacts
 /docs/_build/
 /docs/_static/rustdoc/
+
+# User configuration files (persisted locally, not in repo)
+/config/
