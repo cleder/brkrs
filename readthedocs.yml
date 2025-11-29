@@ -12,8 +12,11 @@ build:
   apt_packages:
     - clang
     - lld
+    - pkg-config
     - libasound2-dev
     - libudev-dev
+    - libwayland-dev
+    - libxkbcommon-dev
   jobs:
     pre_build:
       # Generate rustdoc before Sphinx build
