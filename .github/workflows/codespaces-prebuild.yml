@@ -1,0 +1,40 @@
+name: Codespaces Prebuild
+
+on:
+  push:
+    branches: [main]
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  prebuild:
+    name: Prebuild Codespaces
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            pkg-config \
+            libasound2-dev \
+            libudev-dev \
+            libwayland-dev \
+            libxkbcommon-dev
+
+      - name: Set PKG_CONFIG_PATH for native libs
+        run: echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig" >> $GITHUB_ENV
+
+      - name: Fetch dependencies
+        run: cargo fetch --locked
+
+      - name: Pre-compile dependencies
+        run: cargo test --no-run --all-features || true

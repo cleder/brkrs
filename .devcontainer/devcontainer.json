@@ -1,0 +1,23 @@
+{
+    "name": "brkrs Development",
+    "image": "mcr.microsoft.com/devcontainers/rust:1-bullseye",
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {},
+        "ghcr.io/devcontainers/features/git:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "rust-lang.rust-analyzer",
+                "fill-labs.dependi",
+                "tamasfe.even-better-toml",
+                "vadimcn.vscode-lldb"
+            ],
+            "settings": {
+                "rust-analyzer.checkOnSave.command": "clippy"
+            }
+        }
+    },
+    "postCreateCommand": ".devcontainer/post-create.sh",
+    "remoteUser": "vscode"
+}
