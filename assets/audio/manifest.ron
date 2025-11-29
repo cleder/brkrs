@@ -1,0 +1,24 @@
+// Audio Manifest - Maps sound types to audio asset files
+// Format: { "SoundType": "path/to/sound.ogg" }
+// 
+// Sound types:
+//   - BrickDestroy: Standard brick destruction sound
+//   - MultiHitImpact: Multi-hit brick (indices 10-13) impact sound
+//   - WallBounce: Ball bouncing off walls
+//   - PaddleHit: Ball bouncing off paddle
+//   - PaddleWallHit: Paddle colliding with wall
+//   - PaddleBrickHit: Paddle colliding with brick
+//   - LevelStart: Level beginning
+//   - LevelComplete: Level completion
+
+{
+    // Placeholder entries - replace with actual sound file paths when assets are available
+    // "BrickDestroy": "audio/brick_destroy.ogg",
+    // "MultiHitImpact": "audio/multi_hit_impact.ogg",
+    // "WallBounce": "audio/wall_bounce.ogg",
+    // "PaddleHit": "audio/paddle_hit.ogg",
+    // "PaddleWallHit": "audio/paddle_wall_hit.ogg",
+    // "PaddleBrickHit": "audio/paddle_brick_hit.ogg",
+    // "LevelStart": "audio/level_start.ogg",
+    // "LevelComplete": "audio/level_complete.ogg",
+}
