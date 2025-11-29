@@ -129,8 +129,8 @@ pub struct BallWallHit {
 /// Event emitted when a level starts.
 #[derive(Event, Debug, Clone)]
 pub struct LevelStarted {
-    /// The index of the level that started.
-    pub level_index: usize,
+    /// The number of the level that started.
+    pub level_number: u32,
 }
 
 /// Audio system plugin that registers resources and systems.
@@ -175,19 +175,18 @@ fn load_config_from_file() -> Option<AudioConfig> {
 
     #[cfg(target_arch = "wasm32")]
     {
-        // WASM: Try localStorage
-        if let Some(window) = web_sys::window() {
-            if let Ok(Some(storage)) = window.local_storage() {
-                if let Ok(Some(data)) = storage.get_item("brkrs_audio_config") {
-                    return ron::from_str(&data).ok();
-                }
-            }
-        }
+        // WASM: localStorage persistence would require web-sys dependency
+        // For now, return None to use default config
+        // TODO: Add web-sys dependency and implement localStorage persistence
         None
     }
 }
 
 /// Load audio assets from the manifest file.
+///
+/// TODO: Implement actual asset loading from the manifest file.
+/// For now, this is a placeholder that gracefully handles missing assets.
+/// The play_sound helper will log warnings when assets are not loaded.
 fn load_audio_assets(_asset_server: Res<AssetServer>, _audio_assets: ResMut<AudioAssets>) {
     // Try to load manifest, gracefully handle missing file
     let manifest_path = "audio/manifest.ron";
@@ -196,8 +195,11 @@ fn load_audio_assets(_asset_server: Res<AssetServer>, _audio_assets: ResMut<Audi
     // we'll load what we can and log warnings for missing assets
     debug!(target: "audio", "Attempting to load audio manifest from {}", manifest_path);
 
-    // For now, register placeholder entries - actual loading happens when assets are available
-    // The play_sound helper will gracefully handle missing assets
+    // TODO: Parse manifest.ron and load audio assets:
+    // 1. Load manifest file using asset_server
+    // 2. Parse RON format to get sound type -> file path mappings
+    // 3. Load each audio file and store handles in audio_assets.sounds
+    // For now, the play_sound helper will gracefully handle missing assets
 }
 
 /// Play a sound of the specified type if conditions are met.
@@ -240,6 +242,9 @@ pub fn play_sound(
     };
 
     // Spawn audio player
+    // Note: Handle::clone() is a lightweight reference count operation in Bevy,
+    // which is idiomatic for sharing asset handles. Using weak handles would
+    // risk the asset being unloaded during playback.
     commands.spawn((
         AudioPlayer(handle.clone()),
         PlaybackSettings {
@@ -415,8 +420,8 @@ fn on_level_started_sound(
     let event = trigger.event();
     debug!(
         target: "audio",
-        "Level started: index {}",
-        event.level_index
+        "Level started: level {}",
+        event.level_number
     );
 
     play_sound(
@@ -534,7 +539,7 @@ mod tests {
 
     #[test]
     fn level_started_event_fields() {
-        let event = LevelStarted { level_index: 3 };
-        assert_eq!(event.level_index, 3);
+        let event = LevelStarted { level_number: 3 };
+        assert_eq!(event.level_number, 3);
     }
 }
