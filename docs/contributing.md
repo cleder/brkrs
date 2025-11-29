@@ -73,6 +73,27 @@ Thank you for your interest in contributing to brkrs! This guide covers the cont
 - Include examples for non-trivial functions
 - Use complete sentences in doc comments
 
+#### Code Block Syntax Highlighting
+
+For RON (Rusty Object Notation) files, use `rust` as the language identifier
+instead of `ron`. Pygments (used by Sphinx) doesn't have a RON lexer, but
+RON syntax is Rust-like so `rust` provides good highlighting:
+
+```markdown
+<!-- Do this -->
+` ` `rust
+LevelDefinition(
+  number: 1,
+  matrix: [...],
+)
+` ` `
+
+<!-- Not this (will cause build warnings) -->
+` ` `ron
+LevelDefinition(...)
+` ` `
+```
+
 Example:
 
 ```rust
