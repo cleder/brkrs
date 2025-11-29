@@ -11,6 +11,7 @@ build:
     rust: "1.91"
   apt_packages:
     - clang
+    - lld
     - libasound2-dev
     - libudev-dev
   jobs:
