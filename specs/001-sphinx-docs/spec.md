@@ -3,7 +3,14 @@
 **Feature Branch**: `001-sphinx-docs`
 **Created**: 2025-11-29
 **Status**: Draft
+
 **Input**: User description: "create Documentation with Sphinx, MyST, and Read the Docs using the furo theme"
+
+## Clarifications
+
+### Session 2025-11-29
+
+- Q: Where should the published documentation be hosted? → A: Read the Docs (preferred)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -65,7 +72,7 @@ As a release manager or maintainer, I want documentation to be published automat
 - **FR-001**: The project MUST include a single, human-readable documentation website that covers Quickstart, Developer Guide, Contribution Checklist, Level/Asset documentation, and a Project Overview.
 - **FR-002**: Documentation authoring MUST use Sphinx and MyST so that content can be written in Markdown while using Sphinx features (cross-references, admonitions, numbering).
 - **FR-003**: The visual site presentation MUST use the furo theme (or equivalent with similar accessibility & responsive layout) and provide a modern, readable look.
-- **FR-004**: Documentation MUST be published to a public Read the Docs project endpoint (or equivalent hosting) with a stable URL for `main`/`stable` and versioned builds for tags.
+- **FR-004**: Documentation MUST be published to Read the Docs (preferred) with a public project endpoint, a stable URL for `main`/`stable`, and versioned builds for tags. If Read the Docs is unavailable the implementation MAY use an equivalent hosting target with identical versioning behavior.
 - **FR-005**: Documentation source MUST include a small set of canonical pages: Quickstart, Getting Started for developers, Contributing, Architecture Overview, Level & Asset Format Guide, Troubleshooting, and FAQ.
 - **FR-006**: The repository MUST include a small CI step or Read the Docs configuration that ensures docs build cleanly on push/merge for `main` and for tags/branches that are published.
 - **FR-007**: At least one sample page MUST demonstrate a MyST feature (e.g., code-blocks, admonitions, cross-references) and include images from `assets/` or `textures/` for visual examples.
@@ -97,7 +104,7 @@ As a release manager or maintainer, I want documentation to be published automat
 - The repository will host the documentation source under a `docs/` directory (or a path agreed at implementation time); the spec favors `docs/` as a single source-of-truth.
 - The docs site will be written primarily in MyST/Markdown, supported by Sphinx extensions where necessary.
 - This feature will link to any auto-generated Rust API docs (rustdoc or docs.rs) rather than attempting to import or duplicate those generated outputs inside Sphinx.
-- The default scope for publishing is Read the Docs or an equivalent static hosting target; creating PDF/epub artifacts is optional and considered a follow-up if requested.
+- The default and preferred publishing target is Read the Docs; creating PDF/epub artifacts is optional and considered a follow-up if requested.
 
 ## Testing & Verification
 
@@ -113,4 +120,4 @@ As a release manager or maintainer, I want documentation to be published automat
 
 ## Readiness
 
-This spec is ready for planning once the team confirms the publishing target (Read the Docs project settings / owner) and whether PDF/epub artifacts are desired in the first iteration.
+This spec is ready for planning — Read the Docs has been chosen as the preferred publishing target. If you want PDF/epub artifacts or an alternate hosting target, add that as a follow-up clarification.
