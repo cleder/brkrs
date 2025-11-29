@@ -92,11 +92,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T019 [US3] Configure RTD version selector and branch/tag builds in readthedocs.yml
-- [ ] T020 [P] [US3] Add API reference landing page that links to embedded rustdoc in docs/api-reference.md
-- [ ] T021 [P] [US3] Ensure rustdoc artifacts are discoverable via navigation in docs/conf.py (html_extra_path or similar)
-- [ ] T022 [US3] Update README.md with link to published Read the Docs URL in README.md
-- [ ] T023 [US3] Add version badge and docs link to project README in README.md
+- [x] T019 [US3] Configure RTD version selector and branch/tag builds in readthedocs.yml
+- [x] T020 [P] [US3] Add API reference landing page that links to embedded rustdoc in docs/api-reference.md
+- [x] T021 [P] [US3] Ensure rustdoc artifacts are discoverable via navigation in docs/conf.py (html_extra_path or similar)
+- [x] T022 [US3] Update README.md with link to published Read the Docs URL in README.md
+- [x] T023 [US3] Add version badge and docs link to project README in README.md
 
 **Checkpoint**: User Story 3 complete — RTD publishing verified, versioned docs accessible
 

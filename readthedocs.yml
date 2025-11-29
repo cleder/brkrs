@@ -30,3 +30,10 @@ python:
 # Build documentation for these formats
 formats:
   - htmlzip
+
+# Version selector: build from tags and main branch
+# RTD automatically builds:
+# - All tags matching semantic versioning (v*.*.*)
+# - The default branch (main)
+# - Any branches/tags activated in the RTD dashboard
+# The version selector flyout appears automatically when multiple versions exist
