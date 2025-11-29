@@ -221,12 +221,15 @@ pub fn run() {
             ui::palette::update_palette_selection_feedback,
             ui::palette::update_ghost_preview,
             ui::palette::place_bricks_on_drag,
+            #[cfg(feature = "texture_manifest")]
+            systems::multi_hit::watch_brick_type_changes,
         ),
     );
     app.add_observer(on_wall_hit);
     app.add_observer(on_paddle_ball_hit);
     app.add_observer(on_brick_hit);
     app.add_observer(start_camera_shake);
+    app.add_observer(systems::multi_hit::on_multi_hit_brick_sound);
     app.run();
 }
 
@@ -564,14 +567,19 @@ fn uv_debug_texture() -> Image {
     )
 }
 
-/// Mark bricks for despawn when hit by the ball
-/// This allows the physics collision response to complete before removal
+/// Mark bricks for despawn when hit by the ball, or transition multi-hit bricks.
+///
+/// Multi-hit bricks (indices 10-13) transition to the next lower index instead of
+/// being despawned immediately. When a multi-hit brick at index 10 is hit, it
+/// transitions to index 20 (simple stone), which can then be destroyed on the next hit.
+///
+/// This allows the physics collision response to complete before removal.
 fn mark_brick_on_ball_collision(
     mut collision_events: MessageReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
-    // Only bricks that count towards completion should be considered destructible
-    bricks: Query<
-        Entity,
+    // Query bricks with their type ID for multi-hit handling
+    mut bricks: Query<
+        (Entity, &mut BrickTypeId),
         (
             With<Brick>,
             With<CountsTowardsCompletion>,
@@ -580,20 +588,54 @@ fn mark_brick_on_ball_collision(
     >,
     mut commands: Commands,
 ) {
+    use crate::level_format::{is_multi_hit_brick, MULTI_HIT_BRICK_1, SIMPLE_BRICK};
+
     for event in collision_events.read() {
         // collision event processed
         if let CollisionEvent::Started(e1, e2, _) = event {
             let e1_is_ball = balls.get(*e1).is_ok();
             let e2_is_ball = balls.get(*e2).is_ok();
-            let e1_is_brick = bricks.get(*e1).is_ok();
-            let e2_is_brick = bricks.get(*e2).is_ok();
 
-            // If collision is between a Ball and a Brick, mark the brick for despawn
-            // This ensures the physics collision response happens first
-            if e1_is_ball && e2_is_brick {
-                commands.entity(*e2).insert(MarkedForDespawn);
-            } else if e2_is_ball && e1_is_brick {
-                commands.entity(*e1).insert(MarkedForDespawn);
+            // Determine which entity is the brick (if any)
+            let brick_entity = if e1_is_ball {
+                bricks.get_mut(*e2).ok()
+            } else if e2_is_ball {
+                bricks.get_mut(*e1).ok()
+            } else {
+                None
+            };
+
+            if let Some((entity, mut brick_type)) = brick_entity {
+                let current_type = brick_type.0;
+
+                if is_multi_hit_brick(current_type) {
+                    // Multi-hit brick: transition to next state
+                    let new_type = if current_type == MULTI_HIT_BRICK_1 {
+                        // Index 10 transitions to index 20 (simple stone)
+                        SIMPLE_BRICK
+                    } else {
+                        // Index 13, 12, 11 transition to index - 1
+                        current_type - 1
+                    };
+
+                    // Emit event for audio/scoring integration
+                    commands.trigger(systems::MultiHitBrickHit {
+                        entity,
+                        previous_type: current_type,
+                        new_type,
+                    });
+
+                    // Update the brick type (this triggers watch_brick_type_changes for visual update)
+                    brick_type.0 = new_type;
+
+                    debug!(
+                        "Multi-hit brick {:?} transitioned: {} -> {}",
+                        entity, current_type, new_type
+                    );
+                } else {
+                    // Regular brick: mark for despawn
+                    commands.entity(entity).insert(MarkedForDespawn);
+                }
             }
         }
     }

@@ -24,10 +24,10 @@
 
 **Purpose**: Add multi-hit brick constants and module structure
 
-- [ ] T001 Add multi-hit brick constants in `src/level_format/mod.rs`
-- [ ] T002 [P] Create `src/systems/multi_hit.rs` module file with module documentation
-- [ ] T003 [P] Export multi_hit module in `src/systems/mod.rs`
-- [ ] T004 [P] Create test level `assets/levels/test_multi_hit.ron` with bricks at indices 10, 11, 12, 13
+- [x] T001 Add multi-hit brick constants in `src/level_format/mod.rs`
+- [x] T002 [P] Create `src/systems/multi_hit.rs` module file with module documentation
+- [x] T003 [P] Export multi_hit module in `src/systems/mod.rs`
+- [x] T004 [P] Create test level `assets/levels/test_multi_hit.ron` with bricks at indices 10, 11, 12, 13
 
 ---
 
@@ -37,9 +37,9 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Define `MultiHitBrickHit` event struct in `src/systems/multi_hit.rs`
-- [ ] T006 Register `MultiHitBrickHit` event in app builder (in `src/lib.rs` or plugin)
-- [ ] T007 Add `is_multi_hit_brick()` helper function in `src/level_format/mod.rs`
+- [x] T005 Define `MultiHitBrickHit` event struct in `src/systems/multi_hit.rs`
+- [x] T006 Register `MultiHitBrickHit` event in app builder (in `src/lib.rs` or plugin)
+- [x] T007 Add `is_multi_hit_brick()` helper function in `src/level_format/mod.rs`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -53,20 +53,20 @@
 
 ### Tests for User Story 1
 
-- [ ] T008 [P] [US1] Create integration test file `tests/multi_hit_bricks.rs`
-- [ ] T009 [P] [US1] Add test `multi_hit_brick_transitions_on_collision` in `tests/multi_hit_bricks.rs`
-- [ ] T010 [P] [US1] Add test `multi_hit_brick_13_to_12_transition` in `tests/multi_hit_bricks.rs`
-- [ ] T011 [P] [US1] Add test `multi_hit_brick_10_to_20_transition` in `tests/multi_hit_bricks.rs`
+- [x] T008 [P] [US1] Create integration test file `tests/multi_hit_bricks.rs`
+- [x] T009 [P] [US1] Add test `multi_hit_brick_transitions_on_collision` in `tests/multi_hit_bricks.rs`
+- [x] T010 [P] [US1] Add test `multi_hit_brick_13_to_12_transition` in `tests/multi_hit_bricks.rs`
+- [x] T011 [P] [US1] Add test `multi_hit_brick_10_to_20_transition` in `tests/multi_hit_bricks.rs`
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Modify `mark_brick_on_ball_collision` in `src/lib.rs` to check for multi-hit bricks before marking for despawn
-- [ ] T013 [US1] Add `BrickTypeId` mutation logic for indices 10-13 in `src/lib.rs` collision handler
-- [ ] T014 [US1] Handle special case: index 10 transitions to index 20 (simple stone) in `src/lib.rs`
-- [ ] T015 [US1] Emit `MultiHitBrickHit` event when multi-hit brick is damaged in `src/lib.rs`
-- [ ] T016 [P] [US1] Implement `update_brick_material` system in `src/systems/multi_hit.rs` using `Changed<BrickTypeId>`
-- [ ] T017 [US1] Register `update_brick_material` system in app Update schedule
-- [ ] T018 [P] [US1] Add type_variants for indices 10, 11, 12, 13 in `assets/textures/manifest.ron`
+- [x] T012 [US1] Modify `mark_brick_on_ball_collision` in `src/lib.rs` to check for multi-hit bricks before marking for despawn
+- [x] T013 [US1] Add `BrickTypeId` mutation logic for indices 10-13 in `src/lib.rs` collision handler
+- [x] T014 [US1] Handle special case: index 10 transitions to index 20 (simple stone) in `src/lib.rs`
+- [x] T015 [US1] Emit `MultiHitBrickHit` event when multi-hit brick is damaged in `src/lib.rs`
+- [x] T016 [P] [US1] Implement `update_brick_material` system in `src/systems/multi_hit.rs` using `Changed<BrickTypeId>`
+- [x] T017 [US1] Register `update_brick_material` system in app Update schedule
+- [x] T018 [P] [US1] Add type_variants for indices 10, 11, 12, 13 in `assets/textures/manifest.ron`
 
 **Checkpoint**: Multi-hit bricks transition visually on each hit (13→12→11→10→20)
 
@@ -80,14 +80,14 @@
 
 ### Tests for User Story 2
 
-- [ ] T019 [P] [US2] Add test `simple_stone_destroyed_after_multi_hit` in `tests/multi_hit_bricks.rs`
-- [ ] T020 [P] [US2] Add test `multi_hit_to_stone_keeps_counts_towards_completion` in `tests/multi_hit_bricks.rs`
+- [x] T019 [P] [US2] Add test `simple_stone_destroyed_after_multi_hit` in `tests/multi_hit_bricks.rs`
+- [x] T020 [P] [US2] Add test `multi_hit_to_stone_keeps_counts_towards_completion` in `tests/multi_hit_bricks.rs`
 
 ### Implementation for User Story 2
 
-- [ ] T021 [US2] Verify existing despawn logic handles index 20 correctly in `src/lib.rs`
-- [ ] T022 [US2] Ensure `CountsTowardsCompletion` component is preserved during BrickTypeId mutation
-- [ ] T023 [US2] Add rustdoc comments for multi-hit collision handling in `src/lib.rs`
+- [x] T021 [US2] Verify existing despawn logic handles index 20 correctly in `src/lib.rs`
+- [x] T022 [US2] Ensure `CountsTowardsCompletion` component is preserved during BrickTypeId mutation
+- [x] T023 [US2] Add rustdoc comments for multi-hit collision handling in `src/lib.rs`
 
 **Checkpoint**: Multi-hit bricks can be fully destroyed (transition to 20, then destroyed)
 
@@ -101,12 +101,12 @@
 
 ### Tests for User Story 3
 
-- [ ] T024 [P] [US3] Add test `multi_hit_event_emitted_on_collision` in `tests/multi_hit_bricks.rs`
+- [x] T024 [P] [US3] Add test `multi_hit_event_emitted_on_collision` in `tests/multi_hit_bricks.rs`
 
 ### Implementation for User Story 3
 
-- [ ] T025 [US3] Document `MultiHitBrickHit` event for audio system integration in `src/systems/multi_hit.rs`
-- [ ] T026 [US3] Add placeholder observer/system for audio playback in `src/systems/multi_hit.rs` (stub if audio not implemented)
+- [x] T025 [US3] Document `MultiHitBrickHit` event for audio system integration in `src/systems/multi_hit.rs`
+- [x] T026 [US3] Add placeholder observer/system for audio playback in `src/systems/multi_hit.rs` (stub if audio not implemented)
 
 **Checkpoint**: Audio event is emitted on multi-hit collision (audio playback when audio system ready)
 
@@ -120,13 +120,13 @@
 
 ### Tests for User Story 4
 
-- [ ] T027 [P] [US4] Add test `level_not_complete_with_partial_multi_hit_bricks` in `tests/multi_hit_bricks.rs`
-- [ ] T028 [P] [US4] Add test `level_completes_after_all_multi_hit_destroyed` in `tests/multi_hit_bricks.rs`
+- [x] T027 [P] [US4] Add test `level_not_complete_with_partial_multi_hit_bricks` in `tests/multi_hit_bricks.rs`
+- [x] T028 [P] [US4] Add test `level_completes_after_all_multi_hit_destroyed` in `tests/multi_hit_bricks.rs`
 
 ### Implementation for User Story 4
 
-- [ ] T029 [US4] Verify bricks with indices 10-13 spawn with `CountsTowardsCompletion` in `src/level_loader.rs`
-- [ ] T030 [US4] Verify `advance_level_when_cleared` works correctly with multi-hit lifecycle in `src/level_loader.rs`
+- [x] T029 [US4] Verify bricks with indices 10-13 spawn with `CountsTowardsCompletion` in `src/level_loader.rs`
+- [x] T030 [US4] Verify `advance_level_when_cleared` works correctly with multi-hit lifecycle in `src/level_loader.rs`
 
 **Checkpoint**: Level completion logic works correctly with multi-hit bricks
 
@@ -136,12 +136,12 @@
 
 **Purpose**: Documentation, cleanup, and validation
 
-- [ ] T031 [P] Add rustdoc module documentation to `src/systems/multi_hit.rs`
-- [ ] T032 [P] Update `docs/bricks.md` if implementation differs from spec
-- [ ] T033 Run `cargo fmt --all` and `cargo clippy --all-targets --all-features`
-- [ ] T034 Run `bevy lint` for Bevy-specific checks
-- [ ] T035 Run all tests with `cargo test`
-- [ ] T036 Manual validation: Run `BK_LEVEL=997 cargo run` with test level per `quickstart.md`
+- [x] T031 [P] Add rustdoc module documentation to `src/systems/multi_hit.rs`
+- [x] T032 [P] Update `docs/bricks.md` if implementation differs from spec
+- [x] T033 Run `cargo fmt --all` and `cargo clippy --all-targets --all-features`
+- [x] T034 Run `bevy lint` for Bevy-specific checks
+- [x] T035 Run all tests with `cargo test`
+- [x] T036 Manual validation: Run `BK_LEVEL=998 cargo run` with test level per `quickstart.md`
 
 ---
 

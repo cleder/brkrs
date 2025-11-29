@@ -17,6 +17,38 @@ pub const SIMPLE_BRICK: u8 = 20;
 /// like regular bricks but do NOT count toward level completion.
 pub const INDESTRUCTIBLE_BRICK: u8 = 90;
 
+/// Multi-hit brick index 10: needs 1 more hit to become simple stone (index 20).
+pub const MULTI_HIT_BRICK_1: u8 = 10;
+
+/// Multi-hit brick index 11: needs 2 more hits to be destroyed.
+pub const MULTI_HIT_BRICK_2: u8 = 11;
+
+/// Multi-hit brick index 12: needs 3 more hits to be destroyed.
+pub const MULTI_HIT_BRICK_3: u8 = 12;
+
+/// Multi-hit brick index 13: needs 4 more hits to be destroyed (maximum durability).
+pub const MULTI_HIT_BRICK_4: u8 = 13;
+
+/// Returns `true` if the given type ID represents a multi-hit brick (indices 10-13).
+///
+/// Multi-hit bricks require multiple ball collisions to destroy. Each hit decrements
+/// the index by 1, until reaching index 10 which transitions to a simple stone (index 20).
+///
+/// # Examples
+///
+/// ```
+/// use brkrs::level_format::{is_multi_hit_brick, MULTI_HIT_BRICK_1, MULTI_HIT_BRICK_4};
+///
+/// assert!(is_multi_hit_brick(10));
+/// assert!(is_multi_hit_brick(13));
+/// assert!(!is_multi_hit_brick(20)); // Simple stone
+/// assert!(!is_multi_hit_brick(90)); // Indestructible
+/// ```
+#[inline]
+pub fn is_multi_hit_brick(type_id: u8) -> bool {
+    (MULTI_HIT_BRICK_1..=MULTI_HIT_BRICK_4).contains(&type_id)
+}
+
 /// Metrics collected during matrix normalization.
 ///
 /// These metrics indicate how the input matrix was adjusted to fit

@@ -53,7 +53,7 @@ LevelDefinition(
 ### 3. Run Game with Test Level
 
 ```bash
-BK_LEVEL=997 cargo run
+BK_LEVEL=998 cargo run
 ```
 
 ### 4. Test Multi-Hit Behavior
