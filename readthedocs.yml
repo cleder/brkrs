@@ -9,6 +9,10 @@ build:
   tools:
     python: "3.13"
     rust: "1.91"
+  apt_packages:
+    - clang
+    - libasound2-dev
+    - libudev-dev
   jobs:
     pre_build:
       # Generate rustdoc before Sphinx build
