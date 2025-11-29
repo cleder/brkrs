@@ -59,8 +59,6 @@ if not os.environ.get("SPHINX_SKIP_RUSTDOC") and _rustdoc_path.exists():
 
 # Suppress expected warnings
 suppress_warnings = [
-    # RON syntax not recognized by Pygments (expected)
-    "misc.highlighting_failure",
     # MyST cross-reference warnings for external HTML files (rustdoc links)
     "myst.xref_missing",
 ]

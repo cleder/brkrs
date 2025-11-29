@@ -13,7 +13,7 @@ Levels are defined in RON (Rusty Object Notation) files located in `assets/level
 
 ### Level Definition Structure
 
-```ron
+```rust
 LevelDefinition(
   number: 1,                         // Level number (must match filename)
   gravity: Some((2.0, 0.0, 0.0)),    // Optional: custom gravity vector (x, y, z)
@@ -67,7 +67,7 @@ The game uses a 20×20 grid:
 
 The `gravity` field is optional:
 
-```ron
+```rust
 // No gravity override (uses default)
 gravity: None,
 
@@ -80,7 +80,7 @@ During ball respawn, gravity is temporarily set to zero while the paddle grows b
 
 ### Example: Complete Level
 
-```ron
+```rust
 LevelDefinition(
   number: 1,
   gravity: Some((2.0, 0.0, 0.0)),
@@ -117,7 +117,7 @@ Textures are stored in `assets/textures/` with a manifest file.
 
 The `manifest.ron` file maps texture identifiers to file paths:
 
-```ron
+```rust
 // assets/textures/manifest.ron
 TextureManifest(
   textures: {
