@@ -9,6 +9,8 @@ The API documentation is generated locally using `cargo doc`. See [Building Docu
 :::{note}
 The embedded rustdoc is available when viewing documentation built by CI (see the [GitHub Actions artifacts](https://github.com/cleder/brkrs/actions/workflows/docs-main.yml)).
 On Read the Docs, generate the docs locally using the instructions below.
+
+**Browse the embedded rustdoc → [https://cleder.github.io/brkrs/docs/brkrs/index.html](https://cleder.github.io/brkrs/docs/brkrs/index.html)**
 :::
 
 The rustdoc includes:
