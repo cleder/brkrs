@@ -12,6 +12,8 @@
 
 - Q: Where should the published documentation be hosted? → A: Read the Docs (preferred)
 
+- Q: Should the site embed the project's full rustdoc output (not just link to docs.rs)? → A: Yes — full rustdoc embedding requested by the maintainer
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 — Quickstart for new players (Priority: P1)
@@ -76,7 +78,7 @@ As a release manager or maintainer, I want documentation to be published automat
 - **FR-005**: Documentation source MUST include a small set of canonical pages: Quickstart, Getting Started for developers, Contributing, Architecture Overview, Level & Asset Format Guide, Troubleshooting, and FAQ.
 - **FR-006**: The repository MUST include a small CI step or Read the Docs configuration that ensures docs build cleanly on push/merge for `main` and for tags/branches that are published.
 - **FR-007**: At least one sample page MUST demonstrate a MyST feature (e.g., code-blocks, admonitions, cross-references) and include images from `assets/` or `textures/` for visual examples.
-- **FR-008**: The docs MUST include a short section that points to the authoritative API reference (for Rust or other outputs) and clearly documents how to regenerate or link to it. (The spec assumes linking rather than embedding full rustdoc output inside Sphinx.)
+- **FR-008**: The docs MUST embed the project's full rustdoc output in the documentation site (not only link to external rustdoc/docs.rs). The spec requires a reproducible build step that generates rustdoc artifacts and integrates them into the Sphinx build so the API reference is searchable, versioned, and visible within the site.
 
 ### Non-functional Requirements
 
@@ -113,11 +115,5 @@ As a release manager or maintainer, I want documentation to be published automat
 
 ## Out of scope
 
-- Embedding or converting the full Rust API doc output into Sphinx pages is out-of-scope for this initial feature — docs will link to the authoritative rustdoc/docs.rs output instead.
-- Generating non-HTML output (PDF/epub) is out-of-scope in the first iteration unless requested.
-
----
-
-## Readiness
-
-This spec is ready for planning — Read the Docs has been chosen as the preferred publishing target. If you want PDF/epub artifacts or an alternate hosting target, add that as a follow-up clarification.
+- Conversion or re-authoring of rustdoc content into hand-written Sphinx pages is out-of-scope — instead the project will integrate actual rustdoc-generated artifacts as-is.
+- Generate no non-HTML output (PDF/epub).
