@@ -3,8 +3,6 @@ name: Codespaces Prebuild
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   # Allow manual triggering
   workflow_dispatch:
 
@@ -13,6 +11,8 @@ jobs:
     name: Prebuild Codespaces
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4

@@ -11,6 +11,7 @@ sudo apt-get install --no-install-recommends -y \
     libxkbcommon-dev
 
 # Set PKG_CONFIG_PATH for native libraries
+export PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig"
 echo 'export PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig"' >> ~/.bashrc
 
 # Fetch dependencies to pre-populate the cache
