@@ -16,6 +16,8 @@
 
 - Q: How should rustdoc artifacts be produced & integrated into the site? → A: Pre-generate rustdoc artifacts in CI and copy them into the Sphinx build step
 
+- Q: How should docs be validated and published? → A: Both — CI validates docs on PRs and Read the Docs publishes the versioned site
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 — Quickstart for new players (Priority: P1)
@@ -79,6 +81,7 @@ As a release manager or maintainer, I want documentation to be published automat
 - **FR-004**: Documentation MUST be published to Read the Docs (preferred) with a public project endpoint, a stable URL for `main`/`stable`, and versioned builds for tags. If Read the Docs is unavailable the implementation MAY use an equivalent hosting target with identical versioning behavior.
 - **FR-005**: Documentation source MUST include a small set of canonical pages: Quickstart, Getting Started for developers, Contributing, Architecture Overview, Level & Asset Format Guide, Troubleshooting, and FAQ.
 - **FR-006**: The repository MUST include a small CI step or Read the Docs configuration that ensures docs build cleanly on push/merge for `main` and for tags/branches that are published.
+- **FR-006**: The repository MUST include a docs validation job in CI (runs on PRs/branches) that builds the Sphinx site and validates links and markup, AND a Read the Docs publishing configuration that builds and publishes the authoritative, versioned site for `main`/tags.
 - **FR-007**: At least one sample page MUST demonstrate a MyST feature (e.g., code-blocks, admonitions, cross-references) and include images from `assets/` or `textures/` for visual examples.
 - **FR-008**: The docs MUST embed the project's full rustdoc output in the documentation site (not only link to external rustdoc/docs.rs). The spec requires a reproducible build step that generates rustdoc artifacts and integrates them into the Sphinx build so the API reference is searchable, versioned, and visible within the site.
 
@@ -114,7 +117,7 @@ As a release manager or maintainer, I want documentation to be published automat
 
 ## Testing & Verification
 
-- Unit/CI tests will include a docs build job that runs `sphinx-build` (or equivalent) and a rustdoc generation step (e.g., `cargo doc --no-deps`) to ensure there are no broken links, rustdoc build errors, or markup problems on `main`. The CI docs job will stage and integrate rustdoc artifacts into the Sphinx build so the combined site can be published to Read the Docs.
+- Unit/CI tests will include a docs validation job that runs on PRs (fast check) and a docs build job on `main` that runs `sphinx-build` and a rustdoc generation step (e.g., `cargo doc --no-deps`) to ensure there are no broken links, rustdoc build errors, or markup problems. The CI docs job will stage and integrate rustdoc artifacts into the Sphinx build so the combined site can be published to Read the Docs.
 - Manual verification steps include: (1) follow Quickstart on a clean system, (2) follow Developer Guide to run tests and add an asset, (3) verify the published Read the Docs URL for `main` and for a sample tag.
 
 ## Out of scope
