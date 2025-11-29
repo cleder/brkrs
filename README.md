@@ -1,5 +1,7 @@
 # Brkrs
 
+[![Documentation Status](https://readthedocs.org/projects/brkrs/badge/?version=latest)](https://brkrs.readthedocs.io/en/latest/?badge=latest)
+
 `Brkrs` is a Breakout/Arkanoid style game implemented in Rust with the Bevy engine. It extends the classic formula with richer physics, paddle rotation, and per-level configuration.
 
 The game area is divided into a 20×20 grid. Bricks occupy individual grid cells. Gameplay is rendered in 3D but constrained to a plane at `Y = 2.0`.
@@ -7,6 +9,14 @@ The game area is divided into a 20×20 grid. Bricks occupy individual grid cells
 ## Demo
 
 You can play a web version on [GitHub Pages](https://cleder.github.io/brkrs/)
+
+## Documentation
+
+Full documentation is available at **[brkrs.readthedocs.io](https://brkrs.readthedocs.io/)**:
+
+- [Quickstart Guide](https://brkrs.readthedocs.io/en/latest/quickstart.html) — Get running in 10 minutes
+- [Developer Guide](https://brkrs.readthedocs.io/en/latest/developer-guide.html) — Set up a development environment
+- [API Reference](https://brkrs.readthedocs.io/en/latest/api-reference.html) — Rust API documentation
 
 ## Core Systems
 

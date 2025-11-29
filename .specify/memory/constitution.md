@@ -116,7 +116,7 @@ expensive to fix.
 - Test both native and WASM builds before releases
 - every function should be unit tested
 
-## - Performance profiling for new systems
+- Performance profiling for new systems
 
 **Documentation**:
 
@@ -124,6 +124,31 @@ expensive to fix.
 - Feature specifications in `.specify/` for complex additions
 - In-code documentation for public APIs
 - Update documentation when behavior changes
+
+### VI. Comprehensive Rustdoc Documentation
+
+All public modules, functions, types, and traits MUST have rustdoc documentation:
+
+- **Module-level docs** (`//!`): Explain the module's purpose, when to use
+  it, and how it fits into the overall architecture
+- **Function docs** (`///`): Describe WHY the function exists and WHEN to
+  use it, NOT HOW it is implemented
+- **Type docs** (`///`): Explain what the type represents and its role in
+  the system
+- **Examples**: Include usage examples for non-trivial public APIs
+- **Panics/Errors**: Document panic conditions and error cases
+
+**Focus on Intent, Not Implementation**:
+
+- Document the problem being solved, NOT the algorithm used
+- Explain when callers should choose this function over alternatives
+- Describe preconditions, postconditions, and invariants
+- Implementation details belong in code comments (`//`), not rustdoc
+
+**Rationale**: Rustdoc is embedded in the published documentation site.
+Clear, purpose-focused documentation enables developers to understand the
+codebase without reading implementation code. It supports onboarding,
+code review, and long-term maintainability.
 
 ## Governance
 
@@ -151,4 +176,4 @@ the Brkrs project. All contributions MUST comply with these principles.
 - Performance targets may be adjusted based on platform evolution
 - Development workflow may be optimized as team/tools evolve
 
-**Version**: 1.0.0 | **Ratified**: 2025-10-30 | **Last Amended**: 2025-10-30
+**Version**: 1.1.0 | **Ratified**: 2025-10-30 | **Last Amended**: 2025-11-29

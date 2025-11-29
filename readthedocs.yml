@@ -1,0 +1,39 @@
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html
+
+version: 2
+
+# Set the OS, Python version, and other tools
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.13"
+    rust: "1.81"
+  jobs:
+    pre_build:
+      # Generate rustdoc before Sphinx build
+      - cargo doc --no-deps --all-features
+      - chmod +x scripts/stage-rustdoc.sh
+      - ./scripts/stage-rustdoc.sh
+
+# Build documentation in the docs/ directory with Sphinx
+sphinx:
+  configuration: docs/conf.py
+  builder: html
+  fail_on_warning: true
+
+# Python requirements for Sphinx
+python:
+  install:
+    - requirements: docs/requirements.txt
+
+# Build documentation for these formats
+formats:
+  - htmlzip
+
+# Version selector: build from tags and main branch
+# RTD automatically builds:
+# - All tags matching semantic versioning (v*.*.*)
+# - The default branch (main)
+# - Any branches/tags activated in the RTD dashboard
+# The version selector flyout appears automatically when multiple versions exist
