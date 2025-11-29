@@ -170,6 +170,25 @@ Key systems:
 | Pause System | Game state management |
 | Respawn | Ball respawn after falling |
 | Multi-Hit | Brick damage states, material transitions |
+| Textures | Asset loading and material management |
+
+### Multi-Hit Bricks
+
+Multi-hit bricks (indices 10-13) require multiple ball collisions to destroy. Each hit transitions the brick to a lower index until it becomes a simple stone (index 20), which can then be destroyed.
+
+**Lifecycle**: `13 → 12 → 11 → 10 → 20 → destroyed`
+
+The [`MultiHitBrickHit`] event is emitted on each transition, allowing systems to react for audio feedback or scoring:
+
+```rust
+use brkrs::systems::multi_hit::MultiHitBrickHit;
+
+fn on_brick_hit(trigger: On<MultiHitBrickHit>) {
+    let event = trigger.event();
+    info!("Brick hit: {} → {}", event.previous_type, event.new_type);
+    // Play sound, update score, etc.
+}
+```
 
 ### Event handling with observers
 
@@ -261,7 +280,39 @@ use bevy::prelude::*;
 \`\`\`
 ```
 
-## Getting help
+### Working with Events and Observers
+
+Bevy 0.17 uses the **observer pattern** for custom events. Events are structs that derive `Event`:
+
+```rust
+#[derive(Event)]
+pub struct MyEvent {
+    pub data: String,
+}
+```
+
+Create observers to react to events:
+
+```rust
+fn my_observer(trigger: On<MyEvent>) {
+    let event = trigger.event();
+    // Handle the event
+}
+```
+
+Register observers in your plugin:
+
+```rust
+app.add_observer(my_observer);
+```
+
+Events can be emitted from systems:
+
+```rust
+commands.trigger(MyEvent { data: "hello".to_string() });
+```
+
+See the multi-hit brick system for a complete example.
 
 - **Issues**: [GitHub Issues](https://github.com/cleder/brkrs/issues)
 - **Documentation**: This site and the {doc}`api-reference`
