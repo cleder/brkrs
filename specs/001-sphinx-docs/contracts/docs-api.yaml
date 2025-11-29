@@ -1,0 +1,53 @@
+openapi: 3.0.0
+info:
+  title: Docs Control API (Internal)
+  version: "1.0.0"
+  description: API for automation hooks to control docs CI, build status, and publishing actions.
+
+paths:
+  /build:
+    post:
+      summary: Request a docs build
+      requestBody:
+        description: Build options
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target:
+                  type: string
+                  enum: [pr, main]
+                skip_rustdoc:
+                  type: boolean
+      responses:
+        '202':
+          description: Build scheduled
+  /build/{id}:
+    get:
+      summary: Get build status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Build status
+  /publish:
+    post:
+      summary: Request publishing to Read the Docs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                version:
+                  type: string
+      responses:
+        '200':
+          description: Publish triggered
