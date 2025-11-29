@@ -104,7 +104,7 @@ The `Index` column refers to the brick's identifier in the map file.
 | Index | Image | Name | Score | Description |
 |-------|-------|------|-------|-------------|
 | 49 | ![Teleport](Stoneteleport.gif) | Teleport | 150 | Teleports ball to another random teleport brick |
-| 50 | ![Level Up](Stonelevelup.gif) | Smily/Level Up | 300 | Advances to next level |
+| 50 | ![Level Up](Stonelevelup.gif) | Smiley/Level Up | 300 | Advances to next level |
 | 51 | ![Slow](Stoneslow.gif) | Hourglass/Slow | 30 | Slows down ball and mouse |
 | 52 | ![Phone](Stonephone.gif) | Phone | 40 | Randomizes ball velocity |
 | 53 | ![Question](Stonequestion.gif) | Question | Random | Transforms into a random brick type |
@@ -178,4 +178,4 @@ Each brick type triggers a specific sound when hit:
 - Sound 26: Phone
 - Sound 29: Multi-hit bricks
 - Sound 32: Teleport
-- Sound 33: Smily (Level Up)
+- Sound 33: Smiley (Level Up)

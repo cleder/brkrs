@@ -35,6 +35,7 @@ developer-guide
 contributing
 asset-format
 architecture
+bricks
 ```
 
 ## API Reference
