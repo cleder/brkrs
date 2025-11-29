@@ -74,11 +74,11 @@
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Create Developer Guide page covering repo structure, tests, adding content in docs/developer-guide.md
-- [ ] T015 [P] [US2] Create Contributing page with PR workflow, checklist, and code style in docs/contributing.md
-- [ ] T016 [P] [US2] Document level and asset format with examples in docs/asset-format.md
-- [ ] T017 [P] [US2] Add architecture overview diagram or description in docs/architecture.md
-- [ ] T018 [US2] Add all US2 pages to toctree and cross-reference from index.md in docs/index.md
+- [x] T014 [US2] Create Developer Guide page covering repo structure, tests, adding content in docs/developer-guide.md
+- [x] T015 [P] [US2] Create Contributing page with PR workflow, checklist, and code style in docs/contributing.md
+- [x] T016 [P] [US2] Document level and asset format with examples in docs/asset-format.md
+- [x] T017 [P] [US2] Add architecture overview diagram or description in docs/architecture.md
+- [x] T018 [US2] Add all US2 pages to toctree and cross-reference from index.md in docs/index.md
 
 **Checkpoint**: User Story 2 complete — Developer onboarding docs published and independently verifiable
 
