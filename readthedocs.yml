@@ -1,20 +1,20 @@
 # Read the Docs configuration file
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html
 
+build:
 version: 2
 
 # Note: Rustdoc generation is skipped on RTD due to Bevy's complex build dependencies.
 # The CI workflow (docs-main.yml) generates full docs with embedded rustdoc as an artifact.
 # RTD builds use SPHINX_SKIP_RUSTDOC=1 and link to docs.rs for API reference instead.
 
+
+# Build documentation in the docs/ directory with Sphinx
+
 build:
   os: ubuntu-22.04
   tools:
     python: "3.13"
-  environment:
-    SPHINX_SKIP_RUSTDOC: "1"
-
-# Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
   builder: html
