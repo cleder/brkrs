@@ -4,9 +4,12 @@ The brkrs API documentation is generated from source code using rustdoc.
 
 ## Rust API (rustdoc)
 
-The full Rust API documentation is embedded within this documentation site:
+The API documentation is generated locally using `cargo doc`. See [Building Documentation Locally](#building-documentation-locally) below.
 
-**[Browse the Rust API →](brkrs/index.html)**
+:::{note}
+The embedded rustdoc is available when viewing documentation built by CI (see the [GitHub Actions artifacts](https://github.com/cleder/brkrs/actions/workflows/docs-main.yml)).
+On Read the Docs, generate the docs locally using the instructions below.
+:::
 
 The rustdoc includes:
 
