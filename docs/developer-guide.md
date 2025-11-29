@@ -28,6 +28,7 @@ brkrs/
 │   ├── systems/            # Bevy ECS systems
 │   │   ├── grid_debug.rs   # Debug grid visualization
 │   │   ├── level_switch.rs # Level transition logic
+│   │   ├── multi_hit.rs    # Multi-hit brick events and systems
 │   │   ├── respawn.rs      # Ball respawn system
 │   │   └── textures/       # Texture loading systems
 │   └── ui/                 # User interface components
@@ -86,6 +87,17 @@ cargo test test_name
 
 ```bash
 cargo test -- --nocapture
+```
+
+### Single-threaded (for env var tests)
+
+```bash
+cargo test -- --test-threads=1
+```
+
+```{note}
+Tests that use environment variables (like `BK_LEVEL`) can conflict when run
+in parallel. Use `--test-threads=1` if you see flaky test failures.
 ```
 
 ## Code quality checks
@@ -152,11 +164,29 @@ brkrs follows Bevy's Entity-Component-System (ECS) architecture:
 Key systems:
 
 | System | Purpose |
-|--------|---------|
+|--------|----------|
 | Physics (Rapier3D) | Collision detection, physics simulation |
 | Level Loader | Parse RON files, spawn entities |
 | Pause System | Game state management |
 | Respawn | Ball respawn after falling |
+| Multi-Hit | Brick damage states, material transitions |
+
+### Event handling with observers
+
+Bevy 0.17 uses the **observer pattern** for custom events:
+
+```rust
+#[derive(Event)]
+pub struct MyEvent { /* fields */ }
+
+pub fn my_observer(trigger: On<MyEvent>) {
+    let event = trigger.event();
+    // Handle event
+}
+
+// In app setup:
+app.add_observer(my_observer);
+```
 
 See {doc}`architecture` for a detailed breakdown.
 
@@ -218,6 +248,18 @@ at compile time for performance.
 ```
 
 Assets support hot reloading in debug builds. Edit a level file and see changes immediately.
+
+### Writing doctests
+
+```{note}
+Bevy-dependent doctests often fail in CI due to shared library loading issues.
+Use `no_run` to compile-check without executing:
+
+\`\`\`rust,no_run
+use bevy::prelude::*;
+// Your example code
+\`\`\`
+```
 
 ## Getting help
 
