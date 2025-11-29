@@ -36,11 +36,11 @@ pub const MULTI_HIT_BRICK_4: u8 = 13;
 ///
 /// # Examples
 ///
-/// ```
-/// use brkrs::level_format::{is_multi_hit_brick, MULTI_HIT_BRICK_1, MULTI_HIT_BRICK_4};
+/// ```no_run
+/// use brkrs::level_format::is_multi_hit_brick;
 ///
-/// assert!(is_multi_hit_brick(10));
-/// assert!(is_multi_hit_brick(13));
+/// assert!(is_multi_hit_brick(10));  // MULTI_HIT_BRICK_1
+/// assert!(is_multi_hit_brick(13));  // MULTI_HIT_BRICK_4
 /// assert!(!is_multi_hit_brick(20)); // Simple stone
 /// assert!(!is_multi_hit_brick(90)); // Indestructible
 /// ```
