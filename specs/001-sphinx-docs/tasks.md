@@ -57,10 +57,10 @@
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Create Quickstart page with prerequisites, build, and run steps in docs/quickstart.md
-- [ ] T011 [P] [US1] Add troubleshooting section with common issues and solutions in docs/troubleshooting.md
-- [ ] T012 [P] [US1] Add sample screenshot or GIF from assets/ to demonstrate running game in docs/_static/images/
-- [ ] T013 [US1] Cross-reference quickstart from index.md and add to toctree in docs/index.md
+- [x] T010 [US1] Create Quickstart page with prerequisites, build, and run steps in docs/quickstart.md
+- [x] T011 [P] [US1] Add troubleshooting section with common issues and solutions in docs/troubleshooting.md
+- [x] T012 [P] [US1] Add sample screenshot or GIF from assets/ to demonstrate running game in docs/_static/images/
+- [x] T013 [US1] Cross-reference quickstart from index.md and add to toctree in docs/index.md
 
 **Checkpoint**: User Story 1 complete — Quickstart page published and independently verifiable
 
