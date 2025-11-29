@@ -117,19 +117,26 @@ pub struct PaddleGrowing {
 #[derive(Component)]
 pub struct BallFrozen;
 
+/// Event emitted when the paddle collides with a wall.
 #[derive(Event)]
-struct WallHit {
+pub struct WallHit {
+    /// The collision impulse vector.
     pub impulse: Vec3,
 }
 
+/// Event emitted when the paddle collides with a brick.
 #[derive(Event)]
-struct BrickHit {
+pub struct BrickHit {
+    /// The collision impulse vector.
     pub impulse: Vec3,
 }
 
+/// Event emitted when the paddle collides with the ball.
 #[derive(Event)]
-struct BallHit {
+pub struct BallHit {
+    /// The collision impulse vector.
     pub impulse: Vec3,
+    /// The ball entity that was hit.
     pub ball: Entity,
 }
 
@@ -184,6 +191,7 @@ pub fn run() {
     // app.add_plugins(RapierDebugRenderPlugin::default());
     app.add_plugins(RespawnPlugin);
     app.add_plugins(crate::pause::PausePlugin);
+    app.add_plugins(crate::systems::AudioPlugin);
 
     #[cfg(feature = "texture_manifest")]
     {
