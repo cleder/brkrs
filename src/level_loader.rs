@@ -252,6 +252,11 @@ fn spawn_level_entities(
         #[cfg(feature = "texture_manifest")]
         type_registry.as_deref(),
     );
+
+    // Emit LevelStarted event for audio system
+    commands.trigger(crate::systems::LevelStarted {
+        level_index: level.0.number,
+    });
 }
 
 fn spawn_level_entities_impl(
@@ -667,6 +672,12 @@ fn advance_level_when_cleared(
     if level_advance.active {
         return;
     }
+
+    // Emit LevelCompleted event for audio system
+    commands.trigger(crate::systems::LevelCompleted {
+        level_index: curr.0.number,
+    });
+
     let next_number = curr.0.number + 1;
     let path = format!("assets/levels/level_{:03}.ron", next_number);
     #[cfg(not(target_arch = "wasm32"))]

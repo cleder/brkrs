@@ -2,6 +2,7 @@
 /target
 debug/
 release/
+/tools/*/target/
 
 # Local tooling environments
 /.venv

@@ -16,7 +16,7 @@ pub mod ui;
 
 #[cfg(feature = "texture_manifest")]
 use crate::systems::TextureManifestPlugin;
-use crate::systems::{InputLocked, LevelSwitchPlugin, RespawnPlugin, RespawnSystems};
+use crate::systems::{AudioPlugin, InputLocked, LevelSwitchPlugin, RespawnPlugin, RespawnSystems};
 
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
@@ -117,19 +117,29 @@ pub struct PaddleGrowing {
 #[derive(Component)]
 pub struct BallFrozen;
 
+/// Emitted when the paddle collides with a wall boundary.
+/// Used by the audio system to play paddle-wall collision sounds.
 #[derive(Event)]
-struct WallHit {
+pub struct WallHit {
+    /// The collision impulse.
     pub impulse: Vec3,
 }
 
+/// Emitted when the paddle collides with a brick.
+/// Used by the audio system to play paddle-brick collision sounds.
 #[derive(Event)]
-struct BrickHit {
+pub struct BrickHit {
+    /// The collision impulse.
     pub impulse: Vec3,
 }
 
+/// Emitted when the paddle collides with the ball.
+/// Used by the audio system to play paddle hit sounds.
 #[derive(Event)]
-struct BallHit {
+pub struct BallHit {
+    /// The collision impulse.
     pub impulse: Vec3,
+    /// The ball entity that was hit.
     pub ball: Entity,
 }
 
@@ -184,6 +194,7 @@ pub fn run() {
     // app.add_plugins(RapierDebugRenderPlugin::default());
     app.add_plugins(RespawnPlugin);
     app.add_plugins(crate::pause::PausePlugin);
+    app.add_plugins(AudioPlugin);
 
     #[cfg(feature = "texture_manifest")]
     {
@@ -211,6 +222,7 @@ pub fn run() {
             systems::grid_debug::toggle_grid_visibility,
             grab_mouse,
             read_character_controller_collisions,
+            detect_ball_wall_collisions,
             mark_brick_on_ball_collision,
             despawn_marked_entities, // Runs after marking, allowing physics to resolve
             // display_events,
@@ -229,7 +241,7 @@ pub fn run() {
     app.add_observer(on_paddle_ball_hit);
     app.add_observer(on_brick_hit);
     app.add_observer(start_camera_shake);
-    app.add_observer(systems::multi_hit::on_multi_hit_brick_sound);
+    // Note: Multi-hit brick sound observer is now registered by AudioPlugin
     app.run();
 }
 
@@ -641,9 +653,44 @@ fn mark_brick_on_ball_collision(
     }
 }
 
-/// Despawn entities marked for removal (runs after physics step)
-fn despawn_marked_entities(marked: Query<Entity, With<MarkedForDespawn>>, mut commands: Commands) {
-    for entity in marked.iter() {
+/// Detect ball-wall collisions and emit BallWallHit events for audio.
+fn detect_ball_wall_collisions(
+    mut collision_events: MessageReader<CollisionEvent>,
+    balls: Query<(Entity, &Velocity), With<Ball>>,
+    borders: Query<Entity, With<Border>>,
+    mut commands: Commands,
+) {
+    for event in collision_events.read() {
+        if let CollisionEvent::Started(e1, e2, _) = event {
+            // Check if one entity is a ball and the other is a border
+            let ball_data = balls.get(*e1).ok().or_else(|| balls.get(*e2).ok());
+            let is_border = borders.get(*e1).is_ok() || borders.get(*e2).is_ok();
+
+            if let (Some((ball_entity, velocity)), true) = (ball_data, is_border) {
+                // Emit BallWallHit event for audio system
+                commands.trigger(systems::BallWallHit {
+                    entity: ball_entity,
+                    impulse: velocity.linvel,
+                });
+            }
+        }
+    }
+}
+
+/// Despawn entities marked for removal (runs after physics step).
+/// Emits BrickDestroyed events for audio system integration.
+fn despawn_marked_entities(
+    marked: Query<(Entity, Option<&BrickTypeId>), With<MarkedForDespawn>>,
+    mut commands: Commands,
+) {
+    for (entity, brick_type) in marked.iter() {
+        // Emit BrickDestroyed event for audio system
+        if let Some(brick_type) = brick_type {
+            commands.trigger(systems::BrickDestroyed {
+                entity,
+                brick_type: brick_type.0,
+            });
+        }
         commands.entity(entity).despawn();
     }
 }
