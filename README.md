@@ -4,11 +4,15 @@ A Breakout/Arkanoid-style game built with **Rust** 🦀 and the **Bevy engine** 
 
 ## What It Does
 
-A 2D Breakout/Arkanoid-style game where players control a paddle to bounce a ball and break bricks.
+A 2D Breakout/Arkanoid-style game where players control a paddle to bounce a ball and break bricks arranged in a grid.
 
 ## Why It Exists
 
-This project demonstrates game development with Rust and Bevy.
+This project demonstrates game development with Rust and Bevy, showcasing how modern Rust tooling and the Bevy engine can be used to build performant games.
+
+## Demo
+
+Play the web version on [GitHub Pages](https://cleder.github.io/brkrs/).
 
 ## How to Run
 
