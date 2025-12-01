@@ -1,8 +1,8 @@
 # Brkrs
 
-[![CI](https://github.com/cleder/brkrs/workflows/CI/badge.svg)](https://github.com/cleder/brkrs/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/SairajJadhav08/brkrs/ci.yaml?branch=main&label=CI)](https://github.com/SairajJadhav08/brkrs/actions/workflows/ci.yaml)
 [![Documentation Status](https://readthedocs.org/projects/brkrs/badge/?version=latest)](https://brkrs.readthedocs.io/en/latest/?badge=latest)
-[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](https://github.com/cleder/brkrs)
+[![License: AGPL 3.0](https://img.shields.io/badge/license-AGPL%203.0-blue.svg)](./LICENSE-AGPL-3.0)
 
 A Breakout/Arkanoid-style game built with **Rust** 🦀 and the **Bevy** 🐥 engine. This project is intended to be published on [crates.io](https://crates.io).
 
