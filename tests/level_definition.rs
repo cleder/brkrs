@@ -30,13 +30,17 @@ fn level_test_app() -> App {
 fn spawn_marks_counts_for_non_indestructible_bricks() {
     let mut app = level_test_app();
 
-    // Prepare a temporary level file under assets/levels
-    let path = "assets/levels/level_999.ron";
-    let contents = r#"LevelDefinition(number:999,matrix:[[90,20,3]])"#;
-    std::fs::write(path, contents).expect("write test level");
+    // Prepare a temporary level file under assets/levels using a per-process unique
+    // numeric suffix to avoid collisions when tests run in parallel.
+    let pid = std::process::id();
+    // Keep index in the 900-989 range to avoid colliding with reserved test files.
+    let level_index: u32 = 900 + (pid % 90);
+    let path = format!("assets/levels/level_{:03}.ron", level_index);
+    let contents = format!("LevelDefinition(number:{},matrix:[[90,20,3]])", level_index);
+    std::fs::write(&path, contents).expect("write test level");
 
     // Set env so loader picks the test file
-    std::env::set_var("BK_LEVEL", "999");
+    std::env::set_var("BK_LEVEL", level_index.to_string());
 
     // Run startup systems (load_level) and let systems settle
     app.update();
