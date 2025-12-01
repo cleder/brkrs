@@ -43,6 +43,8 @@ use bevy::prelude::*;
 use ron::de::from_str;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+#[cfg(target_arch = "wasm32")]
+use web_sys;
 
 /// Maximum number of concurrent sounds of the same type.
 const MAX_CONCURRENT_SOUNDS: u8 = 4;
@@ -238,13 +240,45 @@ fn load_audio_config(mut commands: Commands) {
 
     #[cfg(target_arch = "wasm32")]
     let config = {
-        // On WASM, try to load from localStorage
-        // For now, just use defaults (localStorage integration would require web-sys)
-        info!(
-            target: "audio",
-            "Using default audio config (WASM)"
-        );
-        AudioConfig::default()
+        // On WASM, try to load from `localStorage` under the key `brkrs_audio`.
+        // We store the serialized RON string in localStorage to keep parity
+        // with the native `config/audio.ron` format.
+        let storage_key = "brkrs_audio";
+        if let Some(window) = web_sys::window() {
+            if let Ok(Some(storage)) = window.local_storage() {
+                if let Ok(Some(item)) = storage.get_item(storage_key) {
+                    match ron::de::from_str::<AudioConfig>(&item) {
+                        Ok(mut loaded) => {
+                            loaded.master_volume = loaded.master_volume.clamp(0.0, 1.0);
+                            info!(
+                                target: "audio",
+                                volume = loaded.master_volume,
+                                muted = loaded.muted,
+                                "Loaded audio config from localStorage"
+                            );
+                            loaded
+                        }
+                        Err(e) => {
+                            warn!(
+                                target: "audio",
+                                error = %e,
+                                "Failed to parse audio config from localStorage, using defaults"
+                            );
+                            AudioConfig::default()
+                        }
+                    }
+                } else {
+                    info!(target: "audio", "No audio config in localStorage, using defaults");
+                    AudioConfig::default()
+                }
+            } else {
+                warn!(target: "audio", "localStorage unavailable, using defaults");
+                AudioConfig::default()
+            }
+        } else {
+            warn!(target: "audio", "window object unavailable (WASM), using defaults");
+            AudioConfig::default()
+        }
     };
 
     commands.insert_resource(config);
@@ -303,20 +337,69 @@ fn save_audio_config_on_change(config: Res<AudioConfig>) {
     // On WASM, localStorage saving would go here
     #[cfg(target_arch = "wasm32")]
     {
-        debug!(
-            target: "audio",
-            "Audio config save skipped (WASM)"
-        );
+        // Serialize to RON and store in localStorage under `brkrs_audio`.
+        let storage_key = "brkrs_audio";
+        match ron::ser::to_string_pretty(&*config, ron::ser::PrettyConfig::default()) {
+            Ok(serialized) => {
+                if let Some(window) = web_sys::window() {
+                    match window.local_storage() {
+                        Ok(Some(storage)) => {
+                            if let Err(e) = storage.set_item(storage_key, &serialized) {
+                                warn!(
+                                    target: "audio",
+                                    error = %e,
+                                    "Failed to save audio config to localStorage"
+                                );
+                            } else {
+                                debug!(
+                                    target: "audio",
+                                    volume = config.master_volume,
+                                    muted = config.muted,
+                                    "Saved audio config to localStorage"
+                                );
+                            }
+                        }
+                        _ => warn!(target: "audio", "localStorage unavailable, config not saved"),
+                    }
+                } else {
+                    warn!(target: "audio", "window object unavailable, config not saved");
+                }
+            }
+            Err(e) => warn!(
+                target: "audio",
+                error = %e,
+                "Failed to serialize audio config for localStorage"
+            ),
+        }
     }
 }
 
 /// Load audio assets from the manifest file.
-fn load_audio_assets(asset_server: Res<AssetServer>, mut audio_assets: ResMut<AudioAssets>) {
+/// If an `AssetServer` resource is not available (e.g., in minimal test setups),
+/// gracefully skip loading and leave `AudioAssets` empty.
+fn load_audio_assets(
+    asset_server: Option<Res<AssetServer>>,
+    mut audio_assets: ResMut<AudioAssets>,
+) {
+    // If there's no AssetServer available, skip loading (graceful degradation).
+    let asset_server = match asset_server {
+        Some(s) => s,
+        None => {
+            warn!(target: "audio", "AssetServer missing; skipping audio asset loading");
+            return;
+        }
+    };
     // Try to read the manifest file
     #[cfg(not(target_arch = "wasm32"))]
     let manifest_content = std::fs::read_to_string("assets/audio/manifest.ron");
     #[cfg(target_arch = "wasm32")]
-    let manifest_content: Result<&str, &str> = Ok(include_str!("../../assets/audio/manifest.ron"));
+    // Use an absolute path based on the crate root so moving this file doesn't
+    // break the include. `env!("CARGO_MANIFEST_DIR")` is evaluated at compile
+    // time and `concat!` produces a literal suitable for `include_str!`.
+    let manifest_content: Result<&str, &str> = Ok(include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/assets/audio/manifest.ron"
+    )));
 
     match manifest_content {
         Ok(content) => {

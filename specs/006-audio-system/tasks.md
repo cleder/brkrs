@@ -55,7 +55,7 @@
 - [X] T016 [US1] Implement `on_brick_destroyed_sound` observer in `src/systems/audio.rs` to play BrickDestroy sound
 - [X] T017 [US1] Implement `on_multi_hit_brick_sound` observer in `src/systems/audio.rs` to play MultiHitImpact sound
 - [X] T018 [US1] Register brick audio observers in `AudioPlugin` in `src/systems/audio.rs`
-- [ ] T019 [US1] Update existing `on_multi_hit_brick_sound` placeholder in `src/systems/multi_hit.rs` to remove placeholder code (observer now in audio.rs)
+- [X] T019 [US1] Update existing `on_multi_hit_brick_sound` placeholder in `src/systems/multi_hit.rs` to remove placeholder code (observer now in audio.rs)
 
 **Checkpoint**: Ball hitting multi-hit bricks plays impact sound; brick destruction plays destroy sound
 
@@ -126,7 +126,7 @@
 - [X] T035 [US5] Implement `save_audio_config` system in `src/systems/audio.rs` to persist config on change
 - [X] T036 [US5] Add `set_volume` and `toggle_mute` methods to `AudioConfig` in `src/systems/audio.rs`
 - [X] T037 [US5] Create config directory at `config/` if it doesn't exist during save
-- [ ] T038 [US5] Add WASM-specific localStorage persistence in `src/systems/audio.rs` using conditional compilation
+- [X] T038 [US5] Add WASM-specific localStorage persistence in `src/systems/audio.rs` using conditional compilation
 
 **Checkpoint**: Volume and mute settings work and persist across sessions
 
@@ -249,3 +249,8 @@ Then sequentially: US4 → US5 → US6 → Polish
 - Placeholder audio files needed for testing (silent OGG files work)
 - WASM requires user interaction before audio plays - handled by existing restart-audio-context.js
 - Config persistence: RON file on native, localStorage on WASM
+
+- **T038 implemented**: WASM persistence now stores `AudioConfig` (RON) in browser `localStorage`
+    under the key `brkrs_audio` (implemented via `web-sys` and gate-compiled for `wasm32`).
+    `specs/006-audio-system/quickstart.md` documents how to reset the key. Native behavior
+    (file `config/audio.ron`) remains unchanged.

@@ -47,6 +47,15 @@ specs/006-audio-system/
 └── tasks.md             # Phase 2 output (/speckit.tasks command)
 ```
 
+### WASM Persistence
+
+The audio configuration uses `config/audio.ron` on native platforms and
+persists to `localStorage` on WASM builds for parity. The WASM persistence
+stores the RON-serialized `AudioConfig` under the key `brkrs_audio` in the
+browser's `localStorage`. This was implemented as task `T038` and is
+gate-compiled under `target_arch = "wasm32"` using `web-sys` for storage
+access. Native file-based behavior remains unchanged.
+
 ### Source Code (repository root)
 
 ```text

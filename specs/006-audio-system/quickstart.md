@@ -92,6 +92,21 @@ AudioConfig(
 
 To test muted mode, edit the file or use in-game controls (when implemented).
 
+### WASM Persistence Note
+
+On WASM builds the audio configuration is persisted to the browser's
+`localStorage` under the key `brkrs_audio`. The value is the RON-serialized
+`AudioConfig` (the same structure used by the native `config/audio.ron`). To
+reset the audio configuration in a browser session, run the following in the
+DevTools console:
+
+```js
+localStorage.removeItem('brkrs_audio');
+```
+
+This ensures parity between native and WASM persistence and makes it easy to
+inspect or reset settings during development.
+
 ## Verification Checklist
 
 - [ ] Game starts without audio-related errors

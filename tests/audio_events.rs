@@ -3,7 +3,10 @@
 //! Tests for audio event types and graceful degradation behavior.
 
 use bevy::prelude::*;
-use brkrs::systems::{AudioConfig, BallWallHit, BrickDestroyed, LevelCompleted, LevelStarted};
+use brkrs::systems::audio::AudioAssets;
+use brkrs::systems::{
+    AudioConfig, AudioPlugin, BallWallHit, BrickDestroyed, LevelCompleted, LevelStarted,
+};
 
 #[test]
 fn brick_destroyed_event_has_correct_fields() {
@@ -97,4 +100,25 @@ fn audio_events_are_cloneable() {
     let level_completed = LevelCompleted { level_index: 7 };
     let cloned = level_completed.clone();
     assert_eq!(cloned.level_index, 7);
+}
+
+#[test]
+fn graceful_degradation_app_initializes_without_audio_assets() {
+    // Ensure that initializing the app with the AudioPlugin does not panic
+    // when the audio manifest or assets are missing. This mirrors the
+    // graceful-degradation behavior specified in the feature plan.
+    let mut app = App::new();
+
+    app.add_plugins(MinimalPlugins)
+        .add_plugins(AudioPlugin)
+        .init_resource::<AudioConfig>();
+
+    // Run update to execute startup systems that load config/assets
+    app.update();
+
+    // AudioAssets resource should exist even if empty
+    let assets = app.world().resource::<AudioAssets>();
+    // AudioAssets resource should exist even if empty; accessing its fields
+    // must be safe and deterministic.
+    assert!(assets.sounds.is_empty());
 }

@@ -190,6 +190,10 @@ app.add_observer(my_observer);
 
 See {doc}`architecture` for a detailed breakdown.
 
+Note: The audio observers for multi-hit brick events have been centralized in the audio system.
+If you are following older documentation that references a placeholder observer in `systems::multi_hit`,
+see `systems::audio::on_multi_hit_brick_sound` for the current implementation.
+
 ## Development workflow
 
 1. **Create a feature branch**:

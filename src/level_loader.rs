@@ -23,6 +23,15 @@ use bevy_rapier3d::prelude::*;
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LevelAdvanceSystems;
 
+/// Deprecated compatibility alias.
+///
+/// Previously this project exported `LevelAdvanceSet`. It was renamed to
+/// `LevelAdvanceSystems` for clarity; provide a deprecated type alias so
+/// external code (or older branches) can still compile while maintainers
+/// migrate callers.
+#[deprecated(note = "Use LevelAdvanceSystems instead")]
+pub type LevelAdvanceSet = LevelAdvanceSystems;
+
 /// Bundled texture-related resources to reduce system parameter count.
 #[cfg(feature = "texture_manifest")]
 #[derive(SystemParam)]
