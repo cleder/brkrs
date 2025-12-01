@@ -173,6 +173,13 @@ impl ActiveSounds {
     }
 }
 
+/// Tracks active audio entity instances so we can decrement counts when playback ends.
+#[derive(Resource, Debug, Default)]
+pub struct ActiveAudioInstances {
+    /// Map from spawned audio entity -> SoundType
+    pub instances: HashMap<Entity, SoundType>,
+}
+
 /// Audio manifest for deserializing the audio configuration file.
 #[derive(Debug, Deserialize)]
 struct AudioManifest {
@@ -186,8 +193,10 @@ impl Plugin for AudioPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<AudioAssets>()
             .init_resource::<ActiveSounds>()
+            .init_resource::<ActiveAudioInstances>()
             .add_systems(Startup, (load_audio_config, load_audio_assets).chain())
             .add_systems(Update, save_audio_config_on_change)
+            .add_systems(Update, cleanup_finished_sounds)
             .add_observer(on_multi_hit_brick_sound)
             .add_observer(on_brick_destroyed_sound)
             .add_observer(on_ball_wall_hit_sound)
@@ -196,6 +205,20 @@ impl Plugin for AudioPlugin {
             .add_observer(on_paddle_brick_hit_sound)
             .add_observer(on_level_started_sound)
             .add_observer(on_level_complete_sound);
+    }
+}
+
+/// Decrement counts for audio entities that have finished playback.
+fn cleanup_finished_sounds(
+    mut removed: RemovedComponents<AudioPlayer>,
+    mut active_instances: ResMut<ActiveAudioInstances>,
+    mut active_sounds: ResMut<ActiveSounds>,
+) {
+    for removed_entity in removed.read() {
+        if let Some(sound_type) = active_instances.instances.remove(&removed_entity) {
+            active_sounds.decrement(sound_type);
+            debug!(target: "audio", ?sound_type, entity = ?removed_entity, "Audio instance finished, decremented count");
+        }
     }
 }
 
@@ -451,6 +474,7 @@ fn play_sound(
     config: &AudioConfig,
     assets: &AudioAssets,
     active_sounds: &mut ActiveSounds,
+    active_instances: &mut ActiveAudioInstances,
     commands: &mut Commands,
 ) {
     // Check if muted
@@ -484,15 +508,22 @@ fn play_sound(
         return;
     };
 
-    // Spawn the audio player
-    commands.spawn((
-        AudioPlayer::new(handle.clone()),
-        PlaybackSettings {
-            mode: bevy::audio::PlaybackMode::Despawn,
-            volume: bevy::audio::Volume::Linear(config.master_volume),
-            ..default()
-        },
-    ));
+    // Spawn the audio player and record the spawned entity so we can
+    // decrement the concurrent-count when playback finishes (entity despawn).
+    let entity = commands
+        .spawn((
+            AudioPlayer::new(handle.clone()),
+            PlaybackSettings {
+                mode: bevy::audio::PlaybackMode::Despawn,
+                volume: bevy::audio::Volume::Linear(config.master_volume),
+                ..default()
+            },
+        ))
+        .id();
+
+    // Register the spawned entity so we can detect when it is removed
+    // (playback finished or entity despawned) and decrement the count.
+    active_instances.instances.insert(entity, sound_type);
 
     debug!(
         target: "audio",
@@ -552,6 +583,7 @@ fn on_multi_hit_brick_sound(
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
     mut active_sounds: ResMut<ActiveSounds>,
+    mut active_instances: ResMut<ActiveAudioInstances>,
     mut commands: Commands,
 ) {
     let event = trigger.event();
@@ -567,6 +599,7 @@ fn on_multi_hit_brick_sound(
         &config,
         &assets,
         &mut active_sounds,
+        &mut active_instances,
         &mut commands,
     );
 }
@@ -577,6 +610,7 @@ fn on_brick_destroyed_sound(
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
     mut active_sounds: ResMut<ActiveSounds>,
+    mut active_instances: ResMut<ActiveAudioInstances>,
     mut commands: Commands,
 ) {
     let event = trigger.event();
@@ -595,6 +629,7 @@ fn on_brick_destroyed_sound(
         &config,
         &assets,
         &mut active_sounds,
+        &mut active_instances,
         &mut commands,
     );
 }
@@ -605,6 +640,7 @@ fn on_ball_wall_hit_sound(
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
     mut active_sounds: ResMut<ActiveSounds>,
+    mut active_instances: ResMut<ActiveAudioInstances>,
     mut commands: Commands,
 ) {
     let event = trigger.event();
@@ -619,6 +655,7 @@ fn on_ball_wall_hit_sound(
         &config,
         &assets,
         &mut active_sounds,
+        &mut active_instances,
         &mut commands,
     );
 }
@@ -629,6 +666,7 @@ fn on_paddle_ball_hit_sound(
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
     mut active_sounds: ResMut<ActiveSounds>,
+    mut active_instances: ResMut<ActiveAudioInstances>,
     mut commands: Commands,
 ) {
     let event = trigger.event();
@@ -643,6 +681,7 @@ fn on_paddle_ball_hit_sound(
         &config,
         &assets,
         &mut active_sounds,
+        &mut active_instances,
         &mut commands,
     );
 }
@@ -653,6 +692,7 @@ fn on_paddle_wall_hit_sound(
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
     mut active_sounds: ResMut<ActiveSounds>,
+    mut active_instances: ResMut<ActiveAudioInstances>,
     mut commands: Commands,
 ) {
     let event = trigger.event();
@@ -666,6 +706,7 @@ fn on_paddle_wall_hit_sound(
         &config,
         &assets,
         &mut active_sounds,
+        &mut active_instances,
         &mut commands,
     );
 }
@@ -676,6 +717,7 @@ fn on_paddle_brick_hit_sound(
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
     mut active_sounds: ResMut<ActiveSounds>,
+    mut active_instances: ResMut<ActiveAudioInstances>,
     mut commands: Commands,
 ) {
     let event = trigger.event();
@@ -689,6 +731,7 @@ fn on_paddle_brick_hit_sound(
         &config,
         &assets,
         &mut active_sounds,
+        &mut active_instances,
         &mut commands,
     );
 }
@@ -699,6 +742,7 @@ fn on_level_started_sound(
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
     mut active_sounds: ResMut<ActiveSounds>,
+    mut active_instances: ResMut<ActiveAudioInstances>,
     mut commands: Commands,
 ) {
     let event = trigger.event();
@@ -712,6 +756,7 @@ fn on_level_started_sound(
         &config,
         &assets,
         &mut active_sounds,
+        &mut active_instances,
         &mut commands,
     );
 }
@@ -722,6 +767,7 @@ fn on_level_complete_sound(
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
     mut active_sounds: ResMut<ActiveSounds>,
+    mut active_instances: ResMut<ActiveAudioInstances>,
     mut commands: Commands,
 ) {
     let event = trigger.event();
@@ -735,6 +781,7 @@ fn on_level_complete_sound(
         &config,
         &assets,
         &mut active_sounds,
+        &mut active_instances,
         &mut commands,
     );
 }
