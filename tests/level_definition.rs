@@ -3,6 +3,7 @@ use bevy_rapier3d::prelude::CollisionEvent;
 use bevy_rapier3d::rapier::prelude::CollisionEventFlags;
 // LevelDefinition import removed — test uses serialized LevelDefinition string, not the type
 use brkrs::{BrickTypeId, CountsTowardsCompletion};
+use tempfile::NamedTempFile;
 
 fn level_test_app() -> App {
     let mut app = App::new();
@@ -30,17 +31,17 @@ fn level_test_app() -> App {
 fn spawn_marks_counts_for_non_indestructible_bricks() {
     let mut app = level_test_app();
 
-    // Prepare a temporary level file under assets/levels using a per-process unique
-    // numeric suffix to avoid collisions when tests run in parallel.
-    let pid = std::process::id();
-    // Keep index in the 900-989 range to avoid colliding with reserved test files.
-    let level_index: u32 = 900 + (pid % 90);
-    let path = format!("assets/levels/level_{:03}.ron", level_index);
-    let contents = format!("LevelDefinition(number:{},matrix:[[90,20,3]])", level_index);
-    std::fs::write(&path, contents).expect("write test level");
+    // Create a temporary level file using `tempfile` and instruct the loader to
+    // load it via `BK_LEVEL_PATH`. This avoids writing into the repo `assets/`
+    // tree and prevents collisions when tests run in parallel.
+    let mut tmp = NamedTempFile::new().expect("create temp level file");
+    let contents = "LevelDefinition(number:999,matrix:[[90,20,3]])";
+    use std::io::Write;
+    tmp.write_all(contents.as_bytes())
+        .expect("write temp level");
 
-    // Set env so loader picks the test file
-    std::env::set_var("BK_LEVEL", level_index.to_string());
+    // Set env so loader picks the exact temp file path
+    std::env::set_var("BK_LEVEL_PATH", tmp.path().to_str().unwrap());
 
     // Run startup systems (load_level) and let systems settle
     app.update();
@@ -82,9 +83,8 @@ fn spawn_marks_counts_for_non_indestructible_bricks() {
         "All three brick types should be present in spawned bricks"
     );
 
-    // cleanup
-    let _ = std::fs::remove_file(path);
-    std::env::remove_var("BK_LEVEL");
+    // cleanup - remove env var; temp file removed on drop
+    std::env::remove_var("BK_LEVEL_PATH");
 }
 
 #[test]

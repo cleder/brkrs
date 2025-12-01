@@ -214,7 +214,7 @@ pub fn run() {
             limit_ball_velocity,
             update_camera_shake,
             update_paddle_growth,
-            stabilize_frozen_balls.before(crate::level_loader::LevelAdvanceSet),
+            stabilize_frozen_balls.before(crate::level_loader::LevelAdvanceSystems),
             restore_gravity_post_growth,
             #[cfg(not(target_arch = "wasm32"))]
             toggle_wireframe,

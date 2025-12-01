@@ -92,17 +92,12 @@ pub fn watch_brick_type_changes(
     }
 }
 
-/// Observer for audio playback on multi-hit brick damage.
-///
-/// This observer listens for [`MultiHitBrickHit`] events and logs them.
-/// Audio playback (Sound 29) will be implemented when the audio system is ready.
-pub fn on_multi_hit_brick_sound(trigger: On<MultiHitBrickHit>) {
-    let event = trigger.event();
-    debug!(
-        "Multi-hit brick sound: entity {:?}, {} -> {} (Sound 29 placeholder)",
-        event.entity, event.previous_type, event.new_type
-    );
-}
+// NOTE: Audio observer for `MultiHitBrickHit` events has been moved to
+// `src/systems/audio.rs` and is registered via `AudioPlugin`.
+//
+// The old placeholder logging observer was intentionally removed to avoid
+// duplicate audio handlers. If you need to add non-audio side-effects for
+// multi-hit events, add a separate observer here with a distinct name.
 
 #[cfg(test)]
 mod tests {

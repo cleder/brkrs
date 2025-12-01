@@ -29,6 +29,3 @@ All notable changes to this project are documented here.
 - GitHub Actions CI/CD with caching and WASM deployment
 - GitHub Codespaces prebuild configuration
 
-## Notes for Maintainers
-
-- When landing a PR that modifies `assets/levels/` or changes the canonical simple brick, run `scripts/migrate-assets.sh` locally or in the landing workflow. This will update files with a safe backup and tests will validate parity.
