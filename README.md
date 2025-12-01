@@ -1,6 +1,6 @@
 # Brkrs
 
-[![CI](https://img.shields.io/github/actions/workflow/status/SairajJadhav08/brkrs/ci.yaml?branch=main&label=CI)](https://github.com/SairajJadhav08/brkrs/actions/workflows/ci.yaml)
+[![CI](https://img.shields.io/github/actions/workflow/status/cleder/brkrs/ci.yaml?branch=main&label=CI)](https://github.com/cleder/brkrs/actions/workflows/ci.yaml)
 [![Documentation Status](https://readthedocs.org/projects/brkrs/badge/?version=latest)](https://brkrs.readthedocs.io/en/latest/?badge=latest)
 [![License: AGPL 3.0](https://img.shields.io/badge/license-AGPL%203.0-blue.svg)](./LICENSE-AGPL-3.0)
 
