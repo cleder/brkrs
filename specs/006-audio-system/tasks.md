@@ -15,10 +15,10 @@
 
 **Purpose**: Project initialization, audio plugin structure, and asset directory
 
-- [ ] T001 Create audio assets directory structure at `assets/audio/`
-- [ ] T002 [P] Create placeholder audio manifest at `assets/audio/manifest.ron`
-- [ ] T003 [P] Create audio module file at `src/systems/audio.rs` with module doc and imports
-- [ ] T004 Export audio module from `src/systems/mod.rs`
+- [X] T001 Create audio assets directory structure at `assets/audio/`
+- [X] T002 [P] Create placeholder audio manifest at `assets/audio/manifest.ron`
+- [X] T003 [P] Create audio module file at `src/systems/audio.rs` with module doc and imports
+- [X] T004 Export audio module from `src/systems/mod.rs`
 
 ---
 
@@ -28,15 +28,15 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Define `SoundType` enum in `src/systems/audio.rs` with all 8 variants (BrickDestroy, MultiHitImpact, WallBounce, PaddleHit, PaddleWallHit, PaddleBrickHit, LevelStart, LevelComplete)
-- [ ] T006 [P] Define `AudioConfig` resource struct in `src/systems/audio.rs` with master_volume (f32) and muted (bool) fields, derive Serialize/Deserialize
-- [ ] T007 [P] Define `AudioAssets` resource struct in `src/systems/audio.rs` with `HashMap<SoundType, Handle<AudioSource>>`
-- [ ] T008 [P] Define `ActiveSounds` resource struct in `src/systems/audio.rs` with `HashMap<SoundType, u8>` for concurrent tracking
-- [ ] T009 Implement `AudioPlugin` struct in `src/systems/audio.rs` that registers resources and systems
-- [ ] T010 Implement `load_audio_assets` startup system in `src/systems/audio.rs` to load sounds from manifest
-- [ ] T011 Implement `play_sound` helper function in `src/systems/audio.rs` that checks muted, concurrent limits, spawns AudioPlayer
-- [ ] T012 Register `AudioPlugin` in `src/lib.rs` run() function
-- [ ] T013 Add unit tests for `AudioConfig` validation in `tests/audio_config.rs`
+- [X] T005 Define `SoundType` enum in `src/systems/audio.rs` with all 8 variants (BrickDestroy, MultiHitImpact, WallBounce, PaddleHit, PaddleWallHit, PaddleBrickHit, LevelStart, LevelComplete)
+- [X] T006 [P] Define `AudioConfig` resource struct in `src/systems/audio.rs` with master_volume (f32) and muted (bool) fields, derive Serialize/Deserialize
+- [X] T007 [P] Define `AudioAssets` resource struct in `src/systems/audio.rs` with `HashMap<SoundType, Handle<AudioSource>>`
+- [X] T008 [P] Define `ActiveSounds` resource struct in `src/systems/audio.rs` with `HashMap<SoundType, u8>` for concurrent tracking
+- [X] T009 Implement `AudioPlugin` struct in `src/systems/audio.rs` that registers resources and systems
+- [X] T010 Implement `load_audio_assets` startup system in `src/systems/audio.rs` to load sounds from manifest
+- [X] T011 Implement `play_sound` helper function in `src/systems/audio.rs` that checks muted, concurrent limits, spawns AudioPlayer
+- [X] T012 Register `AudioPlugin` in `src/lib.rs` run() function
+- [X] T013 Add unit tests for `AudioConfig` validation in `tests/audio_config.rs`
 
 **Checkpoint**: Foundation ready - audio plugin registered, assets loading, play_sound helper works
 
@@ -50,11 +50,11 @@
 
 ### Implementation for User Story 1
 
-- [ ] T014 [US1] Define `BrickDestroyed` event struct in `src/lib.rs` with entity and brick_type fields
-- [ ] T015 [US1] Emit `BrickDestroyed` event in `despawn_marked_entities` system in `src/lib.rs` before despawning
-- [ ] T016 [US1] Implement `on_brick_destroyed_sound` observer in `src/systems/audio.rs` to play BrickDestroy sound
-- [ ] T017 [US1] Implement `on_multi_hit_brick_sound` observer in `src/systems/audio.rs` to play MultiHitImpact sound
-- [ ] T018 [US1] Register brick audio observers in `AudioPlugin` in `src/systems/audio.rs`
+- [X] T014 [US1] Define `BrickDestroyed` event struct in `src/lib.rs` with entity and brick_type fields
+- [X] T015 [US1] Emit `BrickDestroyed` event in `despawn_marked_entities` system in `src/lib.rs` before despawning
+- [X] T016 [US1] Implement `on_brick_destroyed_sound` observer in `src/systems/audio.rs` to play BrickDestroy sound
+- [X] T017 [US1] Implement `on_multi_hit_brick_sound` observer in `src/systems/audio.rs` to play MultiHitImpact sound
+- [X] T018 [US1] Register brick audio observers in `AudioPlugin` in `src/systems/audio.rs`
 - [ ] T019 [US1] Update existing `on_multi_hit_brick_sound` placeholder in `src/systems/multi_hit.rs` to remove placeholder code (observer now in audio.rs)
 
 **Checkpoint**: Ball hitting multi-hit bricks plays impact sound; brick destruction plays destroy sound
@@ -69,12 +69,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Define `BallWallHit` event struct in `src/lib.rs` with entity and impulse fields
-- [ ] T021 [US2] Add ball-wall collision detection in `src/lib.rs` (detect ball-border collisions via rapier events)
-- [ ] T022 [US2] Emit `BallWallHit` event when ball collides with border in `src/lib.rs`
-- [ ] T023 [US2] Implement `on_ball_wall_hit_sound` observer in `src/systems/audio.rs` to play WallBounce sound
-- [ ] T024 [US2] Implement `on_paddle_ball_hit_sound` observer in `src/systems/audio.rs` to play PaddleHit sound (observe existing BallHit event)
-- [ ] T025 [US2] Register ball bounce audio observers in `AudioPlugin` in `src/systems/audio.rs`
+- [X] T020 [US2] Define `BallWallHit` event struct in `src/lib.rs` with entity and impulse fields
+- [X] T021 [US2] Add ball-wall collision detection in `src/lib.rs` (detect ball-border collisions via rapier events)
+- [X] T022 [US2] Emit `BallWallHit` event when ball collides with border in `src/lib.rs`
+- [X] T023 [US2] Implement `on_ball_wall_hit_sound` observer in `src/systems/audio.rs` to play WallBounce sound
+- [X] T024 [US2] Implement `on_paddle_ball_hit_sound` observer in `src/systems/audio.rs` to play PaddleHit sound (observe existing BallHit event)
+- [X] T025 [US2] Register ball bounce audio observers in `AudioPlugin` in `src/systems/audio.rs`
 
 **Checkpoint**: Ball bouncing off walls and paddle produces distinct sounds
 
@@ -88,9 +88,9 @@
 
 ### Implementation for User Story 3
 
-- [ ] T026 [US3] Implement `on_paddle_wall_hit_sound` observer in `src/systems/audio.rs` to play PaddleWallHit sound (observe existing WallHit event)
-- [ ] T027 [US3] Implement `on_paddle_brick_hit_sound` observer in `src/systems/audio.rs` to play PaddleBrickHit sound (observe existing BrickHit event)
-- [ ] T028 [US3] Register paddle collision audio observers in `AudioPlugin` in `src/systems/audio.rs`
+- [X] T026 [US3] Implement `on_paddle_wall_hit_sound` observer in `src/systems/audio.rs` to play PaddleWallHit sound (observe existing WallHit event)
+- [X] T027 [US3] Implement `on_paddle_brick_hit_sound` observer in `src/systems/audio.rs` to play PaddleBrickHit sound (observe existing BrickHit event)
+- [X] T028 [US3] Register paddle collision audio observers in `AudioPlugin` in `src/systems/audio.rs`
 
 **Checkpoint**: Paddle collisions with walls and bricks produce distinct sounds
 
@@ -104,11 +104,11 @@
 
 ### Implementation for User Story 4
 
-- [ ] T029 [US4] Define `LevelStarted` event struct in `src/level_loader.rs` with level_index field
-- [ ] T030 [US4] Emit `LevelStarted` event when level finishes loading in `src/level_loader.rs`
-- [ ] T031 [US4] Implement `on_level_started_sound` observer in `src/systems/audio.rs` to play LevelStart sound
-- [ ] T032 [US4] Implement `on_level_complete_sound` observer in `src/systems/audio.rs` to play LevelComplete sound (observe LevelSwitchRequested when source is completion)
-- [ ] T033 [US4] Register level transition audio observers in `AudioPlugin` in `src/systems/audio.rs`
+- [X] T029 [US4] Define `LevelStarted` event struct in `src/level_loader.rs` with level_index field
+- [X] T030 [US4] Emit `LevelStarted` event when level finishes loading in `src/level_loader.rs`
+- [X] T031 [US4] Implement `on_level_started_sound` observer in `src/systems/audio.rs` to play LevelStart sound
+- [X] T032 [US4] Implement `on_level_complete_sound` observer in `src/systems/audio.rs` to play LevelComplete sound (observe LevelSwitchRequested when source is completion)
+- [X] T033 [US4] Register level transition audio observers in `AudioPlugin` in `src/systems/audio.rs`
 
 **Checkpoint**: Level transitions have distinct audio cues
 
@@ -122,10 +122,10 @@
 
 ### Implementation for User Story 5
 
-- [ ] T034 [US5] Implement `load_audio_config` startup system in `src/systems/audio.rs` to load from `config/audio.ron` or use defaults
-- [ ] T035 [US5] Implement `save_audio_config` system in `src/systems/audio.rs` to persist config on change
-- [ ] T036 [US5] Add `set_volume` and `toggle_mute` methods to `AudioConfig` in `src/systems/audio.rs`
-- [ ] T037 [US5] Create config directory at `config/` if it doesn't exist during save
+- [X] T034 [US5] Implement `load_audio_config` startup system in `src/systems/audio.rs` to load from `config/audio.ron` or use defaults
+- [X] T035 [US5] Implement `save_audio_config` system in `src/systems/audio.rs` to persist config on change
+- [X] T036 [US5] Add `set_volume` and `toggle_mute` methods to `AudioConfig` in `src/systems/audio.rs`
+- [X] T037 [US5] Create config directory at `config/` if it doesn't exist during save
 - [ ] T038 [US5] Add WASM-specific localStorage persistence in `src/systems/audio.rs` using conditional compilation
 
 **Checkpoint**: Volume and mute settings work and persist across sessions
@@ -140,8 +140,8 @@
 
 ### Implementation for User Story 6
 
-- [ ] T039 [US6] Update `load_audio_assets` in `src/systems/audio.rs` to handle missing manifest gracefully (log warning, use empty map)
-- [ ] T040 [US6] Update `play_sound` helper in `src/systems/audio.rs` to log warning and return early if asset handle missing
+- [X] T039 [US6] Update `load_audio_assets` in `src/systems/audio.rs` to handle missing manifest gracefully (log warning, use empty map)
+- [X] T040 [US6] Update `play_sound` helper in `src/systems/audio.rs` to log warning and return early if asset handle missing
 - [ ] T041 [US6] Add integration test for graceful degradation in `tests/audio_events.rs`
 
 **Checkpoint**: Game runs without crashes when audio assets are missing
@@ -152,19 +152,19 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T042 [P] Add rustdoc documentation to all public types and functions in `src/systems/audio.rs`
-- [ ] T043 [P] Add placeholder OGG audio files to `assets/audio/` (silent 0.1s files for testing)
-- [ ] T044 Update `src/systems/mod.rs` to export AudioPlugin and audio-related types
-- [ ] T045 Run `cargo clippy` and `cargo fmt` on audio module
-- [ ] T046 Run `cargo test` to verify all audio tests pass
-- [ ] T047 Run quickstart.md validation checklist manually
-- [ ] T048 [P] Update README.md with audio system documentation
-
----
-
 ## Dependencies & Execution Order
 
-### Phase Dependencies
+## CI Note: Test Isolation Recommendation
+
+Some integration tests create temporary files under `assets/levels/` which can collide when the test
+suite runs in parallel. To avoid intermittent failures in CI we recommend one of the following:
+
+- Run tests single-threaded in CI: set `RUST_TEST_THREADS=1` in the CI job environment.
+- Prefer test-local temporary files/directories (e.g., `tempfile`/`tempdir`) for any tests that
+    write to shared paths like `assets/levels/`.
+
+Either option will make the test runs more deterministic; using both (temp files + single-threaded CI)
+is the most robust approach.
 
 - **Setup (Phase 1)**: No dependencies - can start immediately
 - **Foundational (Phase 2)**: Depends on Setup - BLOCKS all user stories

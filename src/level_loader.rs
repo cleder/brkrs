@@ -21,7 +21,7 @@ use crate::{
 use bevy_rapier3d::prelude::*;
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct LevelAdvanceSet;
+pub struct LevelAdvanceSystems;
 
 /// Bundled texture-related resources to reduce system parameter count.
 #[cfg(feature = "texture_manifest")]
@@ -70,7 +70,7 @@ impl Plugin for LevelLoaderPlugin {
                     sync_level_presentation,
                 ),
             )
-                .in_set(LevelAdvanceSet),
+                .in_set(LevelAdvanceSystems),
         );
         #[cfg(not(feature = "texture_manifest"))]
         app.add_systems(
@@ -169,7 +169,11 @@ fn load_level(
     #[cfg(not(target_arch = "wasm32"))]
     let chosen_path = {
         use std::env;
-        if let Ok(num) = env::var("BK_LEVEL") {
+        // Allow tests to provide an explicit path via BK_LEVEL_PATH. If set, use it
+        // directly (this helps tests avoid writing to repo assets/levels/).
+        if let Ok(path) = env::var("BK_LEVEL_PATH") {
+            path
+        } else if let Ok(num) = env::var("BK_LEVEL") {
             let trimmed = num.trim();
             if let Ok(n) = trimmed.parse::<u32>() {
                 format!("assets/levels/level_{:03}.ron", n)
@@ -252,6 +256,11 @@ fn spawn_level_entities(
         #[cfg(feature = "texture_manifest")]
         type_registry.as_deref(),
     );
+
+    // Emit LevelStarted event for audio system
+    commands.trigger(crate::systems::LevelStarted {
+        level_index: level.0.number,
+    });
 }
 
 fn spawn_level_entities_impl(
@@ -667,6 +676,12 @@ fn advance_level_when_cleared(
     if level_advance.active {
         return;
     }
+
+    // Emit LevelCompleted event for audio system
+    commands.trigger(crate::systems::LevelCompleted {
+        level_index: curr.0.number,
+    });
+
     let next_number = curr.0.number + 1;
     let path = format!("assets/levels/level_{:03}.ron", next_number);
     #[cfg(not(target_arch = "wasm32"))]
