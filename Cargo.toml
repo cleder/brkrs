@@ -27,8 +27,14 @@ ron = "0.8"
 serde_json = "1.0"
 tracing = "0.1"
 
+[dev-dependencies]
+tempfile = "3"
+
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 bevy = { version = "0.17.3", features = ["file_watcher"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+web-sys = { version = "0.3", features = ["Window", "Storage"] }
 
 # These lints may be important signals about code quality, but normal Bevy code
 # commonly triggers them and the CI workflow treats them as errors, so we've

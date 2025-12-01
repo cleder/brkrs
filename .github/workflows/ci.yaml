@@ -20,6 +20,8 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      RUST_TEST_THREADS: 1
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4

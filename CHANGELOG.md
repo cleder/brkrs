@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+### Changed
+
+- Add compatibility alias `LevelAdvanceSet = LevelAdvanceSystems` (deprecated) to avoid breaking external callers after renaming the system set.
+- Made core event types (`WallHit`, `BrickHit`, `BallHit`) public to allow external systems (e.g., the audio plugin) to observe them; review for API compatibility.
+
+### Added
+
+- Audio system (`006-audio-system`): event-driven audio plugin, WASM localStorage persistence for `AudioConfig`, graceful degradation when audio assets are missing, and test hardening (tempfile-backed tests).
+- CI: enforce single-threaded test execution in `ci.yaml` (`RUST_TEST_THREADS=1`) to avoid test races on shared files.
+
 ## [0.0.1] - 2025-11-29
 
 ### Added
@@ -29,6 +41,3 @@ All notable changes to this project are documented here.
 - GitHub Actions CI/CD with caching and WASM deployment
 - GitHub Codespaces prebuild configuration
 
-## Notes for Maintainers
-
-- When landing a PR that modifies `assets/levels/` or changes the canonical simple brick, run `scripts/migrate-assets.sh` locally or in the landing workflow. This will update files with a safe backup and tests will validate parity.
