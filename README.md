@@ -1,22 +1,70 @@
-# Brkrs
+# brkrs — a fun, playable brick-breaker game & learning playground
 
+[![Crates.io](https://img.shields.io/crates/v/brkrs?color=blue\&logo=rust\&logoColor=white)](https://crates.io/crates/brkrs)
+[![Docs.rs](https://img.shields.io/docsrs/brkrs)](https://docs.rs/brkrs)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.XX+-orange?logo=rust\&logoColor=white)](https://www.rust-lang.org/)
+[![Build](https://img.shields.io/github/actions/workflow/status/cleder/brkrs/rust.yml?branch=main)](https://github.com/cleder/brkrs/actions)
 [![Documentation Status](https://readthedocs.org/projects/brkrs/badge/?version=latest)](https://brkrs.readthedocs.io/en/latest/?badge=latest)
 
-`Brkrs` is a Breakout/Arkanoid style game implemented in Rust with the Bevy engine. It extends the classic formula with richer physics, paddle rotation, and per-level configuration.
+**brkrs** is a real, playable Breakout/Arkanoid-style game written in [**Rust** 🦀](https://rust-lang.org/) using the [**Bevy**](https://bevy.org/) engine.
+It’s also a **hands-on learning project**, letting you explore:
 
-The game area is divided into a 20×20 grid. Bricks occupy individual grid cells. Gameplay is rendered in 3D but constrained to a plane at `Y = 2.0`.
+* **Spec-first development** with GitHub **speckit**
+* Incremental feature development through issues & PRs
+* AI-assisted and agentic coding experiments
 
-## Demo
+Every feature starts as a spec, flows through an issue or PR, and ends as working Rust code. You can **play the game, explore the code, and learn modern Rust/Bevy workflows all at the same time**.
+
+> Linus Torvalds said: **“Talk is cheap. Show me the code.”**
+> brkrs lets you play, tinker, and see the specs come alive in a real game.
+
+---
+
+## The Story Behind brkrs
+
+I always wanted to **rewrite my old Arcanoid/Breakout-style game, YaAC 🐧**, in a modern game framework.
+
+I began by **manually implementing the core gameplay foundations**: reading documentation, following examples, and building a basic proof-of-concept with the essential mechanics (ball, paddle, bricks).
+
+It quickly became clear that doing everything manually would involve **a steep learning curve and a lot of time**.
+
+brkrs was born as a solution: a way to **learn modern Rust game development**, apply **spec-first workflows**, and experiment with **AI-assisted coding**, all while still having fun playing a real game.
+
+---
+
+## Try it now
 
 You can play a web version on [GitHub Pages](https://cleder.github.io/brkrs/)
 
-## Documentation
+## Key Features
 
-Full documentation is available at **[brkrs.readthedocs.io](https://brkrs.readthedocs.io/)**:
+`Brkrs` is a Breakout/Arkanoid style game implemented in Rust with the Bevy engine. It extends the classic formula with richer physics, paddle rotation, and per-level configuration.
 
-- [Quickstart Guide](https://brkrs.readthedocs.io/en/latest/quickstart.html) — Get running in 10 minutes
-- [Developer Guide](https://brkrs.readthedocs.io/en/latest/developer-guide.html) — Set up a development environment
-- [API Reference](https://brkrs.readthedocs.io/en/latest/api-reference.html) — Rust API documentation
+* Classic Breakout-style gameplay: paddle, ball, bricks, and levels
+* Levels are human-readable and easy to modify
+* Spec-first workflow: every feature begins as a spec and ends as working Rust code
+* Small, incremental PRs demonstrate the development workflow and learning path
+* Crate-ready and cross-platform (desktop + WebAssembly builds)
+* A **fun, approachable way to learn Rust, Bevy, and modern coding practices**
+
+---
+
+## Quickstart (play & learn)
+
+Prerequisites: Rust + Cargo + Git
+
+```bash
+git clone https://github.com/cleder/brkrs.git
+cd brkrs
+cargo run --release
+```
+
+Controls: move paddle with mouse, scroll wheel to rotate (if enabled), ESC to pause.
+
+Play, tweak, and learn — modify levels, bricks, or mechanics to see specs turn into features.
+
+---
 
 ## Core Systems
 
@@ -26,61 +74,38 @@ Full documentation is available at **[brkrs.readthedocs.io](https://brkrs.readth
 4. **Brick System** – Extensible brick behaviors via components & events.
 5. **Pause System** – ESC to pause, click to resume, with window mode switching (native).
 
-## Controls
+## Learning Path & Contribution
 
-- **Mouse Movement** – Move paddle (during gameplay)
-- **Mouse Scroll** – Rotate paddle (during gameplay)
-- **ESC** – Pause game (freezes physics, shows overlay, hides during level transitions)
-- **Left Mouse Click** – Resume game (when paused)
+This project is intended to be **fun and educational**. Suggested learning steps:
 
-**Note**: Controls are keyboard and mouse only. Gamepad and touch support are not implemented.
+1. **Read a spec** in the repo or wiki
+2. **Pick a small issue** to implement
+3. **Submit a PR** that fulfills the spec
+4. **Experiment** with AI-assisted features or gameplay tweaks
 
-## Technical Considerations
+## Documentation
 
-### Plane Constraint
+Full documentation is available at **[brkrs.readthedocs.io](https://brkrs.readthedocs.io/)**:
 
-All gameplay bodies lock Y translation (`LockedAxes::TRANSLATION_LOCKED_Y`). Camera sits above looking down, allowing lighting & shadows for 3D feel.
+* [Quickstart Guide](https://brkrs.readthedocs.io/en/latest/quickstart.html) — Get running in 10 minutes
+* [Developer Guide](https://brkrs.readthedocs.io/en/latest/developer-guide.html) — Set up a development environment
+* [API Reference](https://brkrs.readthedocs.io/en/latest/api-reference.html) — Rust API documentation
 
-### Collisions
+---
 
-Rapier handles base reflection via restitution. Paddle imparts directional "english" using recent mouse movement. Bricks may later apply custom post-collision effects.
+## Why You’ll Enjoy It
 
-### Pause Behavior
+* Play a real game while learning coding practices
+* Watch specs transform into working features
+* Experiment safely with Rust, Bevy, and AI-assisted workflows
+* Learn by doing in a **hands-on, playful way**
 
-- **Physics**: Completely frozen when paused (velocities, positions preserved)
-- **Paddle**: Ignores input when paused
-- **Cursor**: Hidden during gameplay, visible when paused
-- **Window Mode** (Native only): Switches fullscreen→windowed on pause, restores on resume
-- **WASM**: Window mode unchanged (WASM doesn't support fullscreen switching)
-
-## Level File Format
-
-Levels live in `assets/levels/` and are RON files parsed into `LevelDefinition`:
-
-```ron
-LevelDefinition(
-  number: 1,
-  gravity: (2.0, 0.0, 0.0), // Optional per-level gravity (x,y,z)
-  matrix: [ /* 20 x 20 grid of u8 values */ ]
-)
-```
-
-### Gravity Override
-
-If `gravity` is present it sets `GravityConfig.normal` and `RapierConfiguration.gravity` on load. During paddle growth after respawn gravity is temporarily set to zero and restored afterward.
-
-### Matrix Cell Values
-
-- `0` empty
-- `1` paddle (first occurrence only)
-- `2` ball (first occurrence only)
-- `3` brick
-
-Matrix must be 20×20. Missing paddle or ball results in fallback spawns.
+---
 
 ## License
 
-The GNU Affero General Public License is a free, copyleft license for software and other kinds of works, specifically designed to ensure cooperation with the community in the case of network server software.
+The GNU Affero General Public License is a free, copyleft license for software and other kinds of works, specifically designed to ensure cooperation with the community.
+It ensures that any code snippet developed by the open source community stays available and prevents others from repackaging and selling open-source software.
 
 This guarantees your freedom to share and change all versions of this program and makes sure it remains free software for all its users.
 
