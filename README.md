@@ -77,3 +77,11 @@ If `gravity` is present it sets `GravityConfig.normal` and `RapierConfiguration.
 - `3` brick
 
 Matrix must be 20×20. Missing paddle or ball results in fallback spawns.
+
+## License
+
+The GNU Affero General Public License is a free, copyleft license for software and other kinds of works, specifically designed to ensure cooperation with the community in the case of network server software.
+
+This guarantees your freedom to share and change all versions of this program and makes sure it remains free software for all its users.
+
+[![AGPLv3](docs/_static/images/agplv3-with-text-162x68.png)](https://www.gnu.org/licenses/agpl-3.0.en.html)
