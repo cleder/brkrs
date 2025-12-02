@@ -17,13 +17,14 @@ It’s also a **hands-on learning project**, letting you explore:
 Every feature starts as a spec, flows through an issue or PR, and ends as working Rust code. You can **play the game, explore the code, and learn modern Rust/Bevy workflows all at the same time**.
 
 > Linus Torvalds said: **“Talk is cheap. Show me the code.”**
-> brkrs lets you play, tinker, and see the specs come alive in a real game.
+
+brkrs lets you play, tinker, and see the specs come alive in a real game.
 
 ---
 
 ## The Story Behind brkrs
 
-I always wanted to **rewrite my old Arkanoid/Breakout-style game, YaAC 🐧**, in a modern game framework.
+I always wanted to **rewrite my old [Arkanoid/Breakout-style game, YaAC 🐧](https://github.com/cleder/yaac)**, in a modern game framework.
 
 I began by **manually implementing the core gameplay foundations**: reading documentation, following examples, and building a basic proof-of-concept with the essential mechanics (ball, paddle, bricks).
 
