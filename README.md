@@ -23,7 +23,7 @@ Every feature starts as a spec, flows through an issue or PR, and ends as workin
 
 ## The Story Behind brkrs
 
-I always wanted to **rewrite my old Arcanoid/Breakout-style game, YaAC 🐧**, in a modern game framework.
+I always wanted to **rewrite my old Arkanoid/Breakout-style game, YaAC 🐧**, in a modern game framework.
 
 I began by **manually implementing the core gameplay foundations**: reading documentation, following examples, and building a basic proof-of-concept with the essential mechanics (ball, paddle, bricks).
 
