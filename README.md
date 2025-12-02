@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/brkrs?color=blue\&logo=rust\&logoColor=white)](https://crates.io/crates/brkrs)
 [![Docs.rs](https://img.shields.io/docsrs/brkrs)](https://docs.rs/brkrs)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE-agpl-3.0.md)
 [![Rust](https://img.shields.io/badge/rust-1.XX+-orange?logo=rust\&logoColor=white)](https://www.rust-lang.org/)
 [![Build](https://img.shields.io/github/actions/workflow/status/cleder/brkrs/rust.yml?branch=main)](https://github.com/cleder/brkrs/actions)
 [![Documentation Status](https://readthedocs.org/projects/brkrs/badge/?version=latest)](https://brkrs.readthedocs.io/en/latest/?badge=latest)
@@ -39,7 +39,7 @@ You can play a web version on [GitHub Pages](https://cleder.github.io/brkrs/)
 
 ## Key Features
 
-`Brkrs` is a Breakout/Arkanoid style game implemented in Rust with the Bevy engine. It extends the classic formula with richer physics, paddle rotation, and per-level configuration.
+`brkrs` is a Breakout/Arkanoid style game implemented in Rust with the Bevy engine. It extends the classic formula with richer physics, paddle rotation, and per-level configuration.
 
 * Classic Breakout-style gameplay: paddle, ball, bricks, and levels
 * Levels are human-readable and easy to modify
