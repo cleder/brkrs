@@ -1,7 +1,4 @@
-# GNU AFFERO GENERAL PUBLIC LICENSE
-
-Version 3, 19 November 2007
-
+Rename the file to `LICENSE` or `LICENSE.txt` for broader tooling compatibility, while keeping the AGPL-3.0 text.
 Copyright (C) 2007 Free Software Foundation, Inc.
 <https://fsf.org/>
 
