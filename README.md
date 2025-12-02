@@ -106,7 +106,7 @@ Full documentation is available at **[brkrs.readthedocs.io](https://brkrs.readth
 ## License
 
 The GNU Affero General Public License is a free, copyleft license for software and other kinds of works, specifically designed to ensure cooperation with the community.
-It ensures that any code snippet developed by the open-source community stays available and prevents others from repackaging and selling open-source software.
+It ensures that any code snippet developed by the open-source community stays available and prevents others from repackaging and selling open-source software without giving back.
 
 This guarantees your freedom to share and change all versions of this program and makes sure it remains free software for all its users.
 
