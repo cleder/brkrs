@@ -4,6 +4,7 @@ name = "brkrs"
 version = "0.0.1"
 edition = "2021"
 license = "AGPL-3.0-or-later"
+description = "Breakout/Arkanoid-style game built in Rust using the Bevy engine, with physics powered by bevy_rapier3d"
 
 [features]
 default = ["texture_manifest"]
