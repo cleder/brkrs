@@ -40,16 +40,18 @@ You can play a web version on [GitHub Pages](https://cleder.github.io/brkrs/)
 
 **Gameplay snapshot:**
 
-<div style="display: flex; gap: 20px;">
-  <div style="flex: 1;">
-    <img src="docs/_static/images/gameplay-current.png" alt="Current level gameplay" style="width: 100%; max-width: 500px;">
-    <p style="text-align: center;"><em>Current level gameplay</em></p>
-  </div>
-  <div style="flex: 1;">
-    <img src="docs/_static/images/gameplay-next.png" alt="Next level preview" style="width: 100%; max-width: 500px;">
-    <p style="text-align: center;"><em>Next level preview</em></p>
-  </div>
-</div>
+<table>
+<tr>
+<td width="50%">
+<img src="docs/_static/images/gameplay-current.png" alt="Current level gameplay" style="width: 100%;">
+<p style="text-align: center;"><em>Current level gameplay</em></p>
+</td>
+<td width="50%">
+<img src="docs/_static/images/gameplay-next.png" alt="Next level preview" style="width: 100%;">
+<p style="text-align: center;"><em>Next level preview</em></p>
+</td>
+</tr>
+</table>
 
 ## Key Features
 
