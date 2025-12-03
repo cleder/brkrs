@@ -38,6 +38,8 @@ brkrs was born as a solution: a way to **learn modern Rust game development**, a
 
 You can play a web version on [GitHub Pages](https://cleder.github.io/brkrs/)
 
+Gameplay snapshot:
+
 ## Key Features
 
 `brkrs` is a Breakout/Arkanoid style game implemented in Rust with the Bevy engine. It extends the classic formula with richer physics, paddle rotation, and per-level configuration.
