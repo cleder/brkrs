@@ -34,6 +34,21 @@ brkrs was born as a solution: a way to **learn modern Rust game development**, a
 
 You can play a web version on [GitHub Pages](https://cleder.github.io/brkrs/)
 
+**Gameplay snapshot:**
+
+<table>
+<tr>
+<td width="50%">
+<img src="docs/_static/images/gameplay-current.png" alt="Current level gameplay" style="width: 100%;">
+<p style="text-align: center;"><em>Current level gameplay</em></p>
+</td>
+<td width="50%">
+<img src="docs/_static/images/gameplay-next.png" alt="Next level preview" style="width: 100%;">
+<p style="text-align: center;"><em>Next level preview</em></p>
+</td>
+</tr>
+</table>
+
 ## Key Features
 
 `brkrs` is a Breakout/Arkanoid style game implemented in Rust with the Bevy engine.
