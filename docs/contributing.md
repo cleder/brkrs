@@ -154,3 +154,5 @@ When opening an issue, include:
 
 - Check existing [GitHub Issues](https://github.com/cleder/brkrs/issues)
 - Open a new issue with the "question" label
+
+[Contributors](contributors.md)

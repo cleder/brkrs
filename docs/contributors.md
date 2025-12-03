@@ -1,0 +1,58 @@
+# Contributors
+
+👋 Welcome!
+If you’ve contributed to this project, please add yourself to the list below.  
+To do so:
+
+- Add a new row in the table.
+- Fill in **either your GitHub User ID** (e.g., `@octocat`) **or your Name** (or both).
+- If you’d like to include your email, wrap your name in a `mailto:` link (e.g., `[Alice Smith](mailto:alice@example.com)`).
+- Provide your **Role** (choose from the common roles listed below).
+- Add a short **Description** of your contribution.
+
+---
+
+## Format description
+
+| Field              | Required | Notes                                                                 |
+|--------------------|----------|----------------------------------------------------------------------|
+
+| **GitHub User ID** | Optional | Use backticks around your handle, e.g. ``@octocat`` -  One of this or Name must be filled. |
+| **Name**           | Optional | If you include an email, use a `mailto:` link. Example: `[Alice Smith](mailto:alice@example.com)` |
+| **Role**           | Required | Pick from the predefined list of roles below. |
+| **Description**    | Required | A short sentence about what you did or do. |
+
+---
+
+## Common roles
+
+- **Maintainer** → Oversees project direction, reviews PRs, manages releases.  
+- **Developer** → Implements new features, fixes bugs, writes code.  
+- **Designer** → Creates UI/UX designs, graphics, and visual assets.  
+- **Documentation** → Writes and maintains project docs, tutorials, and guides.  
+- **Tester** → Tests features, reports bugs, ensures quality.  
+- **Community** → Helps with discussions, support, outreach, and moderation.  
+
+---
+
+## Contributors list
+
+| GitHub User ID | Name | Role | Description |
+|----------------|------|------|-------------|
+| `@cleder`     | [Christian Ledermann](christian.ledermann@gmail.com) | Maintainer, Developer | Main Developer, Oversees project direction and reviews PRs |
+
+---
+
+✍️ **Starter row templates** (copy-paste one of these and edit):
+
+With email:
+
+```text
+| `@yourhandle`  | [Your Name](mailto:your@email.com) | Your Role | Brief description of your contribution |
+```
+
+Without email:
+
+```text
+| `@yourhandle`  | Your Name | Your Role | Brief description of your contribution |
+```
