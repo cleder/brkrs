@@ -40,6 +40,7 @@ To do so:
 | GitHub User ID | Name | Role | Description |
 |----------------|------|------|-------------|
 | `@cleder`     | [Christian Ledermann](christian.ledermann@gmail.com) | Maintainer, Developer | Main Developer, Oversees project direction and reviews PRs |
+| | drummyfish | Artwork/Textures | [Big pack of hand painted tiling textures](https://opengameart.org/content/big-pack-of-hand-painted-tiling-textures) |
 
 ---
 
