@@ -14,11 +14,10 @@ To do so:
 
 ## Format description
 
-| Field              | Required | Notes                                                                 |
-|--------------------|----------|----------------------------------------------------------------------|
-
-| **GitHub User ID** | Optional | Use backticks around your handle, e.g. ``@octocat`` -  One of this or Name must be filled. |
-| **Name**           | Optional | If you include an email, use a `mailto:` link. Example: `[Alice Smith](mailto:alice@example.com)` |
+| Field              | Required | Notes   |
+|--------------------|----------|---------|
+| **GitHub User ID** | Optional | Use backticks around your handle, e.g. ``@octocat``; One of this or Name must be filled. |
+| **Name**           | Optional | If you include an email, use a `mailto:` link; Example: `[Alice Smith](mailto:alice@example.com)` |
 | **Role**           | Required | Pick from the predefined list of roles below. |
 | **Description**    | Required | A short sentence about what you did or do. |
 

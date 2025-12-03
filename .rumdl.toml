@@ -34,6 +34,7 @@ exclude = [
 # Disable specific rules for specific files
 [per-file-ignores]
 "specs/**/*.md" = ["MD036"] 
+"docs/contributors.md" = ["MD058"]
 
 # Respect .gitignore files when scanning directories (default: true)
 respect_gitignore = true
