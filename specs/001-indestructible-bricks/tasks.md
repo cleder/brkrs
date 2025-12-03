@@ -1,13 +1,14 @@
 # Tasks: Indestructible bricks (LevelDefinition)
 
-**Input**: Design documents from `/home/christian/devel/bevy/brkrs/specs/001-indestructible-bricks/`
-**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
+**Input**: Design documents from `/home/christian/devel/bevy/brkrs/specs/001-indestructible-bricks/` **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
 
 ---
 
 ## Summary
 
-This tasks file breaks the work into phases: Setup, Foundational (blocking), then three user story phases (P1, P2, P3) followed by a polish phase. Each story-phase is independently testable. The MVP is User Story 1 (gameplay: levels complete despite indestructible bricks).
+This tasks file breaks the work into phases: Setup, Foundational (blocking), then three user story phases (P1, P2, P3) followed by a polish phase.
+Each story-phase is independently testable.
+The MVP is User Story 1 (gameplay: levels complete despite indestructible bricks).
 
 Total tasks: 21
 
@@ -25,7 +26,8 @@ Purpose: create project helpers, test scaffolding and add new constants/configs 
 
 ## Phase 2: Foundational (Blocking prerequisites)
 
-Purpose: implement core parser + migration tooling used across user stories. All user stories depend on this phase.
+Purpose: implement core parser + migration tooling used across user stories.
+All user stories depend on this phase.
 
 - [x] T004 Implement LevelDefinition parser support for recognizing index `90` as indestructible in `src/level_loader.rs` and/or `src/level_format/mod.rs`
 - [x] T005 [P] Update core Brick/BrickType runtime data structures to include `counts_towards_completion: bool` (files: `src/lib.rs`, `src/level_format/mod.rs`, `src/level_loader.rs`)
@@ -88,7 +90,8 @@ Purpose: Docs, profiling, final validation and release prep.
 
 ## Dependencies & Execution Order
 
-- Setup (T001–T003) can run immediately. T002/T003 are parallelizable.
+- Setup (T001–T003) can run immediately.
+  T002/T003 are parallelizable.
 - Foundational (T004–T007) blocks user story work — must finish before T008–T018.
 - User Story phases (T008–T015) can run in parallel after foundation completes but follow HUD/test dependencies inside each story (e.g., tests -> implementation -> integration tests).
 - Polish (T019–T021) runs last and can be partially parallel.
@@ -111,4 +114,5 @@ Purpose: Docs, profiling, final validation and release prep.
 
 ## MVP Suggestion
 
-Focus on User Story 1 first (T008–T011) after completing the Foundational phase (T004–T007). That yields a small, demonstrable feature (gameplay unaffected by indestructible bricks) and enables further updates.
+Focus on User Story 1 first (T008–T011) after completing the Foundational phase (T004–T007).
+That yields a small, demonstrable feature (gameplay unaffected by indestructible bricks) and enables further updates.

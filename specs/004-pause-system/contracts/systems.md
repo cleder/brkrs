@@ -1,7 +1,6 @@
 # System Contracts: Pause and Resume System
 
-**Feature**: `004-pause-system`
-**Date**: 2025-11-28
+**Feature**: `004-pause-system` **Date**: 2025-11-28
 
 ## Overview
 
@@ -11,8 +10,7 @@ This document defines the contracts (interfaces, behaviors, guarantees) for the 
 
 ## PauseState Resource Contract
 
-**Type**: `Resource`
-**Module**: `src/pause.rs`
+**Type**: `Resource` **Module**: `src/pause.rs`
 
 ### Interface
 
@@ -62,9 +60,7 @@ app.add_systems(Update, gameplay_system.run_if(is_active));
 
 ### handle_pause_input
 
-**System Type**: Input Handler
-**Execution Schedule**: `Update` (runs every frame)
-**Module**: `src/pause.rs`
+**System Type**: Input Handler **Execution Schedule**: `Update` (runs every frame) **Module**: `src/pause.rs`
 
 #### handle_pause_input — Parameters
 
@@ -105,9 +101,7 @@ fn handle_pause_input(
 
 ### handle_resume_input
 
-**System Type**: Input Handler
-**Execution Schedule**: `Update` (runs every frame)
-**Module**: `src/pause.rs`
+**System Type**: Input Handler **Execution Schedule**: `Update` (runs every frame) **Module**: `src/pause.rs`
 
 #### handle_resume_input — Parameters
 
@@ -140,9 +134,7 @@ fn handle_resume_input(
 
 ### apply_pause_to_physics
 
-**System Type**: State Reactor
-**Execution Schedule**: `Update` (runs on `PauseState` change)
-**Module**: `src/pause.rs`
+**System Type**: State Reactor **Execution Schedule**: `Update` (runs on `PauseState` change) **Module**: `src/pause.rs`
 
 #### apply_pause_to_physics — Parameters
 
@@ -182,9 +174,7 @@ fn apply_pause_to_physics(
 
 ### apply_pause_to_window_mode
 
-**System Type**: State Reactor (Native Only)
-**Execution Schedule**: `Update` (runs on `PauseState` change)
-**Module**: `src/pause.rs`
+**System Type**: State Reactor (Native Only) **Execution Schedule**: `Update` (runs on `PauseState` change) **Module**: `src/pause.rs`
 
 #### apply_pause_to_window_mode — Parameters
 
@@ -235,9 +225,7 @@ fn apply_pause_to_window_mode(
 
 ### spawn_pause_overlay
 
-**System Type**: UI Spawner
-**Execution Schedule**: `Update` (runs when entering `PauseState::Paused`)
-**Module**: `src/ui/pause_overlay.rs`
+**System Type**: UI Spawner **Execution Schedule**: `Update` (runs when entering `PauseState::Paused`) **Module**: `src/ui/pause_overlay.rs`
 
 #### spawn_pause_overlay — Parameters
 
@@ -277,9 +265,7 @@ fn spawn_pause_overlay(
 
 ### despawn_pause_overlay
 
-**System Type**: UI Cleanup
-**Execution Schedule**: `Update` (runs when entering `PauseState::Active`)
-**Module**: `src/ui/pause_overlay.rs`
+**System Type**: UI Cleanup **Execution Schedule**: `Update` (runs when entering `PauseState::Active`) **Module**: `src/ui/pause_overlay.rs`
 
 #### despawn_pause_overlay — Parameters
 

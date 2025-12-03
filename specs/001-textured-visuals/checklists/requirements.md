@@ -1,8 +1,6 @@
 # Specification Quality Checklist: Textured Visuals Overhaul
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2025-11-26
-**Feature**: specs/001-textured-visuals/spec.md
+**Purpose**: Validate specification completeness and quality before proceeding to planning **Created**: 2025-11-26 **Feature**: specs/001-textured-visuals/spec.md
 
 ## Content Quality
 

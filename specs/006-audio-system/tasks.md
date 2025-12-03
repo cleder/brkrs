@@ -1,7 +1,6 @@
 # Tasks: Audio System
 
-**Input**: Design documents from `/specs/006-audio-system/`
-**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
+**Input**: Design documents from `/specs/006-audio-system/` **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -156,15 +155,14 @@
 
 ## CI Note: Test Isolation Recommendation
 
-Some integration tests create temporary files under `assets/levels/` which can collide when the test
-suite runs in parallel. To avoid intermittent failures in CI we recommend one of the following:
+Some integration tests create temporary files under `assets/levels/` which can collide when the test suite runs in parallel.
+To avoid intermittent failures in CI we recommend one of the following:
 
 - Run tests single-threaded in CI: set `RUST_TEST_THREADS=1` in the CI job environment.
 - Prefer test-local temporary files/directories (e.g., `tempfile`/`tempdir`) for any tests that
     write to shared paths like `assets/levels/`.
 
-Either option will make the test runs more deterministic; using both (temp files + single-threaded CI)
-is the most robust approach.
+Either option will make the test runs more deterministic; using both (temp files + single-threaded CI) is the most robust approach.
 
 - **Setup (Phase 1)**: No dependencies - can start immediately
 - **Foundational (Phase 2)**: Depends on Setup - BLOCKS all user stories
@@ -250,7 +248,5 @@ Then sequentially: US4 → US5 → US6 → Polish
 - WASM requires user interaction before audio plays - handled by existing restart-audio-context.js
 - Config persistence: RON file on native, localStorage on WASM
 
-- **T038 implemented**: WASM persistence now stores `AudioConfig` (RON) in browser `localStorage`
-    under the key `brkrs_audio` (implemented via `web-sys` and gate-compiled for `wasm32`).
-    `specs/006-audio-system/quickstart.md` documents how to reset the key. Native behavior
-    (file `config/audio.ron`) remains unchanged.
+- **T038 implemented**: WASM persistence now stores `AudioConfig` (RON) in browser `localStorage` under the key `brkrs_audio` (implemented via `web-sys` and gate-compiled for `wasm32`). `specs/006-audio-system/quickstart.md` documents how to reset the key.
+    Native behavior (file `config/audio.ron`) remains unchanged.

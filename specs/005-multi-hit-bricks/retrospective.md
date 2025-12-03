@@ -1,12 +1,11 @@
 # Retrospective: Multi-Hit Bricks (005-multi-hit-bricks)
 
-**Date**: 2025-11-29
-**Duration**: Single session
-**Status**: ✅ Complete (pending PR merge)
+**Date**: 2025-11-29 **Duration**: Single session **Status**: ✅ Complete (pending PR merge)
 
 ## Summary
 
-Implemented multi-hit bricks (indices 10-13) that require multiple ball collisions to destroy. Each hit transitions the brick to the next lower index until it becomes a simple stone (index 20), which is then destroyed on the next hit.
+Implemented multi-hit bricks (indices 10-13) that require multiple ball collisions to destroy.
+Each hit transitions the brick to the next lower index until it becomes a simple stone (index 20), which is then destroyed on the next hit.
 
 ## What Was Delivered
 

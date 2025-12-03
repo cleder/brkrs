@@ -1,8 +1,6 @@
 # Research: Map Format Change (22x22 to 20x20)
 
-**Feature**: 003-map-format
-**Created**: 2025-11-27
-**Purpose**: Identify technical unknowns and establish best practices for grid dimension changes
+**Feature**: 003-map-format **Created**: 2025-11-27 **Purpose**: Identify technical unknowns and establish best practices for grid dimension changes
 
 ## Phase 0: Knowledge Gaps
 

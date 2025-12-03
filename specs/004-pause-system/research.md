@@ -1,12 +1,11 @@
 # Research: Pause and Resume System
 
-**Feature**: `004-pause-system`
-**Date**: 2025-11-28
-**Status**: Complete
+**Feature**: `004-pause-system` **Date**: 2025-11-28 **Status**: Complete
 
 ## Overview
 
-This document consolidates research findings for implementing a pause/resume system in Bevy 0.16 with bevy_rapier3d 0.31. All NEEDS CLARIFICATION items from Technical Context have been resolved.
+This document consolidates research findings for implementing a pause/resume system in Bevy 0.16 with bevy_rapier3d 0.31.
+All NEEDS CLARIFICATION items from Technical Context have been resolved.
 
 ---
 
@@ -50,7 +49,9 @@ fn switch_to_fullscreen(mut window: Single<&mut Window, With<PrimaryWindow>>) {
 **Platform Constraints**:
 
 - **Native**: Full support for `BorderlessFullscreen(MonitorSelection::Current)` and `Windowed` modes
-- **WASM**: `MonitorSelection` enum not available (requires platform-specific imports). Browser fullscreen requires user gesture for security. Recommend staying in `Windowed` mode on WASM and documenting browser F11 as fullscreen method.
+- **WASM**: `MonitorSelection` enum not available (requires platform-specific imports).
+  Browser fullscreen requires user gesture for security.
+  Recommend staying in `Windowed` mode on WASM and documenting browser F11 as fullscreen method.
 
 **Codebase Precedent**: Project already uses conditional window mode compilation in `src/lib.rs:162-164` and `grab_mouse` function demonstrates Window mutation pattern.
 
@@ -148,7 +149,8 @@ fn handle_pause_input_with_cooldown(
 }
 ```
 
-**Recommendation**: Start with `just_pressed()` alone (simpler, meets FR-014). Add cooldown timer only if testing reveals need for explicit rate-limiting.
+**Recommendation**: Start with `just_pressed()` alone (simpler, meets FR-014).
+Add cooldown timer only if testing reveals need for explicit rate-limiting.
 
 **Codebase Precedent**: All keyboard input in project uses `just_pressed()` (see `grab_mouse`, `toggle_wireframe`, level switching at lines 586, 600, 605, 610, 732, 769).
 
@@ -266,7 +268,8 @@ fn pause_with_window_switch(
 - Attempting fullscreen without gesture results in browser denying the request
 - Better UX to skip window mode switching on WASM than show failed attempts
 
-**Codebase Precedent**: Project already uses `#[cfg(target_arch = "wasm32")]` for platform-specific behavior (window mode initialization, wireframe support, level loading). See `src/lib.rs:162-164`, `src/systems/grid_debug.rs:82-85`.
+**Codebase Precedent**: Project already uses `#[cfg(target_arch = "wasm32")]` for platform-specific behavior (window mode initialization, wireframe support, level loading).
+See `src/lib.rs:162-164`, `src/systems/grid_debug.rs:82-85`.
 
 ---
 
@@ -298,7 +301,8 @@ impl PauseState {
 }
 ```
 
-**Rationale**: Aligns with Constitution Principle I (ECS-First). State stored in resource, systems query and mutate.
+**Rationale**: Aligns with Constitution Principle I (ECS-First).
+State stored in resource, systems query and mutate.
 
 ---
 
@@ -373,10 +377,12 @@ app.add_systems(Update, (
 
 ## Open Questions / Future Enhancements
 
-1. **Custom pause overlay styling**: Current design uses default font and simple text. Future: custom font, animations, semi-transparent background.
+1. **Custom pause overlay styling**: Current design uses default font and simple text.
+   Future: custom font, animations, semi-transparent background.
 2. **Gamepad support**: Out of scope (FR-015), but could be added by listening to gamepad button events (e.g., Start button).
 3. **Touch support**: Out of scope (FR-015), but could be added by listening to touch events.
-4. **Pause during level transitions**: FR-012 requires blocking pause during transitions. Implementation: add run condition checking `LevelAdvanceState` resource.
+4. **Pause during level transitions**: FR-012 requires blocking pause during transitions.
+   Implementation: add run condition checking `LevelAdvanceState` resource.
 
 ---
 

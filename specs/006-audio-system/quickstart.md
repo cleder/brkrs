@@ -1,7 +1,6 @@
 # Quickstart: Audio System
 
-**Feature Branch**: `006-audio-system`
-**Date**: 2025-11-29
+**Feature Branch**: `006-audio-system` **Date**: 2025-11-29
 
 ## Prerequisites
 
@@ -68,7 +67,8 @@ Audio should play on:
 
 ## Testing Without Audio
 
-The audio system gracefully degrades. To test without assets:
+The audio system gracefully degrades.
+To test without assets:
 
 ```bash
 # Remove audio directory
@@ -94,18 +94,15 @@ To test muted mode, edit the file or use in-game controls (when implemented).
 
 ### WASM Persistence Note
 
-On WASM builds the audio configuration is persisted to the browser's
-`localStorage` under the key `brkrs_audio`. The value is the RON-serialized
-`AudioConfig` (the same structure used by the native `config/audio.ron`). To
-reset the audio configuration in a browser session, run the following in the
-DevTools console:
+On WASM builds the audio configuration is persisted to the browser's `localStorage` under the key `brkrs_audio`.
+The value is the RON-serialized `AudioConfig` (the same structure used by the native `config/audio.ron`).
+To reset the audio configuration in a browser session, run the following in the DevTools console:
 
 ```js
 localStorage.removeItem('brkrs_audio');
 ```
 
-This ensures parity between native and WASM persistence and makes it easy to
-inspect or reset settings during development.
+This ensures parity between native and WASM persistence and makes it easy to inspect or reset settings during development.
 
 ## Verification Checklist
 
@@ -125,11 +122,14 @@ inspect or reset settings during development.
 
 ### No Sound on WASM
 
-Click anywhere in the game window first. Browser autoplay restrictions require user interaction before audio can play. The `wasm/restart-audio-context.js` script handles this automatically.
+Click anywhere in the game window first.
+Browser autoplay restrictions require user interaction before audio can play.
+The `wasm/restart-audio-context.js` script handles this automatically.
 
 ### Audio Clipping During Chain Reactions
 
-Expected behavior: System limits to 4 concurrent sounds of the same type. Excess sounds are dropped to prevent distortion.
+Expected behavior: System limits to 4 concurrent sounds of the same type.
+Excess sounds are dropped to prevent distortion.
 
 ### Missing Asset Warnings
 

@@ -4,7 +4,8 @@ This guide explains how to add, modify, and manage textures for the Brkrs breako
 
 ## Overview
 
-The game uses a **texture manifest system** (`manifest.ron`) to define all visual materials for gameplay objects. Textures can be customized globally or overridden per-level for unique visual themes.
+The game uses a **texture manifest system** (`manifest.ron`) to define all visual materials for gameplay objects.
+Textures can be customized globally or overridden per-level for unique visual themes.
 
 ## Quick Start
 

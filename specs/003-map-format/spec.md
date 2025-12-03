@@ -1,15 +1,13 @@
 # Feature Specification: Map Format Change (22x22 to 20x20)
 
-**Feature Branch**: `003-map-format`
-**Created**: 2025-11-27
-**Status**: Implemented
-**Input**: User description: "change the map format from 22 x 22 to 20 x 20 and modify the the map loading behaviour"
+**Feature Branch**: `003-map-format` **Created**: 2025-11-27 **Status**: Implemented **Input**: User description: "change the map format from 22 x 22 to 20 x 20 and modify the the map loading behaviour"
 
 ## Clarifications
 
 ### Session 2025-11-27
 
-- Q: Current behavior when level finishes - ball spawns and starts moving under gravity before level loads, creating empty-field motion. Should level load first and be displayed before ball physics begin? → A: Yes - level (including bricks) should load and be fully visible first, ball remains frozen until paddle growth animation completes, then gameplay begins
+- Q: Current behavior when level finishes - ball spawns and starts moving under gravity before level loads, creating empty-field motion.
+  Should level load first and be displayed before ball physics begin? → A: Yes - level (including bricks) should load and be fully visible first, ball remains frozen until paddle growth animation completes, then gameplay begins
 - Q: Level Transition Visual Feedback - Should there be a visual transition effect when switching levels? → A: Players see a brief fade-to-black transition (current behavior) then bricks appear before fade-out completes
 - Q: Paddle Growth Animation Duration - How long should the paddle growth animation take during level transitions? → A: Keep current 1-second duration
 - Q: Cell Size Adjustment Impact - How should brick visual size change when moving from 22x22 to 20x20 grid? → A: Keep exact mathematical cell size (PLANE_H/20 × PLANE_W/20) even if bricks appear slightly different
@@ -22,7 +20,8 @@
 
 Game developers can create and load level files using a 20x20 grid instead of the current 22x22 format, enabling more compact level designs and reducing memory footprint.
 
-**Why this priority**: This is the core functionality change - without migrating the grid format, all other aspects of the feature cannot function. Existing levels must continue to work after the change.
+**Why this priority**: This is the core functionality change - without migrating the grid format, all other aspects of the feature cannot function.
+Existing levels must continue to work after the change.
 
 **Independent Test**: Can be fully tested by loading an existing level file (level_001.ron, level_002.ron) after updating their matrix dimensions to 20x20, and verifying that the game loads without errors and entities spawn in correct positions.
 
@@ -38,7 +37,8 @@ Game developers can create and load level files using a 20x20 grid instead of th
 
 Players and developers can toggle the debug grid overlay and see a 20x20 grid that accurately represents the new play area dimensions.
 
-**Why this priority**: Visual debugging tools must match the new grid format to maintain developer productivity and help with level design. This is secondary to the core loading functionality.
+**Why this priority**: Visual debugging tools must match the new grid format to maintain developer productivity and help with level design.
+This is secondary to the core loading functionality.
 
 **Independent Test**: Can be tested by enabling wireframe mode (Space key) and verifying that exactly 20 horizontal and 20 vertical grid lines are drawn, matching the play area boundaries.
 
@@ -53,7 +53,8 @@ Players and developers can toggle the debug grid overlay and see a 20x20 grid th
 
 Players experience smooth level transitions where the new level is fully loaded and visible before gameplay begins, preventing premature ball movement on empty fields.
 
-**Why this priority**: Critical for user experience - without proper sequencing, players see confusing behavior (ball moving in empty space before level appears). This affects gameplay clarity and professional polish.
+**Why this priority**: Critical for user experience - without proper sequencing, players see confusing behavior (ball moving in empty space before level appears).
+This affects gameplay clarity and professional polish.
 
 **Independent Test**: Can be tested by clearing all bricks in a level and observing that: (1) bricks for the next level appear before ball physics begin, (2) ball remains frozen during paddle growth animation, (3) gameplay only starts after paddle growth completes.
 
@@ -70,7 +71,8 @@ Players experience smooth level transitions where the new level is fully loaded 
 
 Level designers receive clear feedback when attempting to load legacy 22x22 level files, helping them understand what needs to be updated.
 
-**Why this priority**: Provides helpful migration guidance but doesn't block core functionality. Users can manually update their level files based on clear error messages.
+**Why this priority**: Provides helpful migration guidance but doesn't block core functionality.
+Users can manually update their level files based on clear error messages.
 
 **Independent Test**: Can be tested by attempting to load an old 22x22 level file and verifying that a descriptive error message is logged explaining the format change and expected dimensions.
 
@@ -148,7 +150,10 @@ Level designers receive clear feedback when attempting to load legacy 22x22 leve
 
 ### Implementation Summary
 
-Migration from 22×22 to 20×20 grid completed across constants, level assets, transition sequencing, and WASM embedding. Backward compatibility implemented via dimension normalization (padding/truncation) with clear warnings. Level transitions now stage brick visibility before ball physics using BallFrozen marker and a two-phase activation (removal + wake impulse). All user stories (US1–US4) and polish tasks are complete.
+Migration from 22×22 to 20×20 grid completed across constants, level assets, transition sequencing, and WASM embedding.
+Backward compatibility implemented via dimension normalization (padding/truncation) with clear warnings.
+Level transitions now stage brick visibility before ball physics using BallFrozen marker and a two-phase activation (removal + wake impulse).
+All user stories (US1–US4) and polish tasks are complete.
 
 ### Retrospective
 

@@ -1,24 +1,19 @@
 # Event Contracts: Brkrs Complete Game
 
-**Feature**: 001-complete-game
-**Created**: 2025-10-31
-**Purpose**: Define all custom events and observers for game communication
+**Feature**: 001-complete-game **Created**: 2025-10-31 **Purpose**: Define all custom events and observers for game communication
 
 ## Overview
 
-This document specifies the event-driven communication patterns in the Brkrs
-game. Events enable loose coupling between systems and provide clear
-contracts for feature interactions.
+This document specifies the event-driven communication patterns in the Brkrs game.
+Events enable loose coupling between systems and provide clear contracts for feature interactions.
 
 ## Collision Events
 
 ### BallHit
 
-Triggered when the ball collides with the paddle, allowing steering impulse
-application.
+Triggered when the ball collides with the paddle, allowing steering impulse application.
 
-**Trigger Condition**: Paddle's `KinematicCharacterControllerOutput` detects
-collision with ball entity
+**Trigger Condition**: Paddle's `KinematicCharacterControllerOutput` detects collision with ball entity
 
 **Event Data**:
 
@@ -61,11 +56,9 @@ fn on_paddle_ball_hit(
 
 ### WallHit
 
-Triggered when the paddle collides with a wall, providing bounce-back effect
-and optional screen shake.
+Triggered when the paddle collides with a wall, providing bounce-back effect and optional screen shake.
 
-**Trigger Condition**: Paddle's `KinematicCharacterControllerOutput` detects
-collision with border entity
+**Trigger Condition**: Paddle's `KinematicCharacterControllerOutput` detects collision with border entity
 
 **Event Data**:
 
@@ -118,11 +111,9 @@ fn on_wall_hit(
 
 ### BrickHit
 
-Triggered when the ball collides with a brick, allowing brick-specific
-behavior.
+Triggered when the ball collides with a brick, allowing brick-specific behavior.
 
-**Trigger Condition**: Rapier `CollisionEvent::Started` between ball and
-brick entities
+**Trigger Condition**: Rapier `CollisionEvent::Started` between ball and brick entities
 
 **Event Data**:
 
@@ -371,8 +362,7 @@ pub struct PauseRequested;
 
 Triggered when player resumes from pause menu.
 
-**Trigger Condition**: Resume button clicked or key pressed in
-`GameState::Paused`
+**Trigger Condition**: Resume button clicked or key pressed in `GameState::Paused`
 
 **Event Data**:
 

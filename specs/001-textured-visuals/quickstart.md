@@ -39,21 +39,27 @@ cargo build --target wasm32-unknown-unknown --release
 ## Manual Verification
 
 1. **Baseline textured spawn**
-   - Launch the game (`cargo run`). Load level 001 and confirm ball, paddle, bricks, sidewalls, and backdrop are textured on the first frame.
+   - Launch the game (`cargo run`).
+     Load level 001 and confirm ball, paddle, bricks, sidewalls, and backdrop are textured on the first frame.
    - Temporarily rename a texture referenced in `manifest.ron`; restart and verify the entity uses the fallback material while a single warning appears in logs.
 2. **Type-driven visuals**
-   - Use an in-game debug command (or scripted test) to flip ball type ids; watch the material swap without popping. Repeat with at least two brick types in level 002.
+   - Use an in-game debug command (or scripted test) to flip ball type ids; watch the material swap without popping.
+     Repeat with at least two brick types in level 002.
 3. **Per-level overrides**
-   - Edit `assets/levels/level_002.ron` to reference a distinct `LevelTextureSet`. Reload via `cargo run` and ensure only that level’s ground/background change.
+   - Edit `assets/levels/level_002.ron` to reference a distinct `LevelTextureSet`.
+     Reload via `cargo run` and ensure only that level’s ground/background change.
 4. **Level switch shortcut**
-   - Press **L** repeatedly during play. Each press should load the next level within two seconds and reapply the correct texture manifest entries, wrapping after the last level.
-   - **Automation contract**: For external tooling/QA scripts, create a `.level-switch-next` file in the project root to trigger the same behavior as pressing L. The engine polls for this file each frame and removes it after triggering the switch (see `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml` for the `POST /levels/next` contract definition).
+   - Press **L** repeatedly during play.
+     Each press should load the next level within two seconds and reapply the correct texture manifest entries, wrapping after the last level.
+   - **Automation contract**: For external tooling/QA scripts, create a `.level-switch-next` file in the project root to trigger the same behavior as pressing L.
+     The engine polls for this file each frame and removes it after triggering the switch (see `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml` for the `POST /levels/next` contract definition).
 5. **WASM sanity**
    - Serve the `wasm/` folder (e.g., `python -m http.server`), open in Chrome/Firefox, and confirm textures load along with the **L** shortcut.
 
 ## Troubleshooting
 
-- **Blank/white meshes**: Most likely `manifest.ron` failed to parse. Run `cargo test texture_manifest` and inspect logs for Serde errors.
+- **Blank/white meshes**: Most likely `manifest.ron` failed to parse.
+  Run `cargo test texture_manifest` and inspect logs for Serde errors.
 - **Repeated fallback warnings**: Ensure `FallbackRegistry::log_once` is used when reporting missing assets; duplicate logs indicate the registry resource was not initialized before spawns.
 - **Level switch ignores input**: Verify the `LevelSwitchPlugin` system is added to the appropriate schedule and that `KeyCode::L` is not consumed by another input handler.
 - **WASM build missing textures**: Confirm assets are copied to the web build output (`wasm/run.sh` or bespoke pipeline) and that texture formats are browser-compatible (PNG/KTX2 only).

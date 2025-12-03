@@ -1,13 +1,11 @@
 # Data Model: Pause and Resume System
 
-**Feature**: `004-pause-system`
-**Date**: 2025-11-28
-**Spec**: [spec.md](spec.md)
-**Research**: [research.md](research.md)
+**Feature**: `004-pause-system` **Date**: 2025-11-28 **Spec**: [spec.md](spec.md) **Research**: [research.md](research.md)
 
 ## Overview
 
-This document defines the data structures, components, resources, and their relationships for the pause/resume system. All entities follow Bevy's ECS architecture (Constitution Principle I).
+This document defines the data structures, components, resources, and their relationships for the pause/resume system.
+All entities follow Bevy's ECS architecture (Constitution Principle I).
 
 ---
 

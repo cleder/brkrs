@@ -5,8 +5,7 @@ description: "Task list for Ball Respawn System"
 
 # Tasks: Ball Respawn System
 
-**Input**: Design documents from `/specs/002-ball-respawn/`
-**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
+**Input**: Design documents from `/specs/002-ball-respawn/` **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
 
 **Tests**: Automated tests are included where they materially reduce regressions for respawn timing; additional manual verification steps live in quickstart.md.
 

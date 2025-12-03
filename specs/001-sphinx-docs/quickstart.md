@@ -1,6 +1,7 @@
 # Quickstart: Building and previewing docs locally
 
-This quickstart explains how to build the Sphinx + MyST documentation locally and preview the site. It also covers generating rustdoc and bundling it into the Sphinx build for local verification.
+This quickstart explains how to build the Sphinx + MyST documentation locally and preview the site.
+It also covers generating rustdoc and bundling it into the Sphinx build for local verification.
 
 Prerequisites
 
@@ -43,4 +44,5 @@ python -m http.server --directory docs/_build/html 8000
 
 1. Fast PR checks
 
-When authoring smaller doc changes, prefer running a fast check instead of a full rustdoc build. Use the `docs-pr` script or CI job that validates links and runs `sphinx-build` with incremental builds.
+When authoring smaller doc changes, prefer running a fast check instead of a full rustdoc build.
+Use the `docs-pr` script or CI job that validates links and runs `sphinx-build` with incremental builds.

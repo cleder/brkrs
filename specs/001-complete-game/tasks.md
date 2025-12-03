@@ -5,8 +5,7 @@ description: "Task list for Brkrs Complete Game - User Story 1 breakdown"
 
 # Tasks: Brkrs Complete Game
 
-**Input**: Design documents from `/specs/001-complete-game/`
-**Prerequisites**: plan.md (required), spec.md (required for user stories), data-model.md, contracts/events.md, research.md, quickstart.md
+**Input**: Design documents from `/specs/001-complete-game/` **Prerequisites**: plan.md (required), spec.md (required for user stories), data-model.md, contracts/events.md, research.md, quickstart.md
 
 **Tests**:Every function should be comprehensibly unit tested.
 

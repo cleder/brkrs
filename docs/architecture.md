@@ -196,7 +196,8 @@ GameState::Playing
 
 ### Asset Embedding
 
-For WASM builds, assets are embedded at compile time. The build process:
+For WASM builds, assets are embedded at compile time.
+The build process:
 
 1. Compiles to `wasm32-unknown-unknown` target
 2. Runs `wasm-bindgen` for JS interop

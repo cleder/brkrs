@@ -26,7 +26,8 @@ xcode-select --install
 
 ### Compilation takes too long
 
-The first build compiles all dependencies (Bevy, Rapier, etc.) which takes several minutes. This is normal.
+The first build compiles all dependencies (Bevy, Rapier, etc.) which takes several minutes.
+This is normal.
 
 **Tips to speed up development builds**:
 
@@ -36,7 +37,8 @@ The first build compiles all dependencies (Bevy, Rapier, etc.) which takes sever
 
 ### Out of memory during compilation
 
-Bevy is a large framework. If you run out of RAM during compilation:
+Bevy is a large framework.
+If you run out of RAM during compilation:
 
 1. Close other applications
 2. Reduce parallel compilation jobs:
@@ -91,7 +93,8 @@ aplay -l
 
 ### Performance is poor in the browser
 
-WASM builds are slower than native builds. For best web performance:
+WASM builds are slower than native builds.
+For best web performance:
 
 - Use Chrome or Firefox (best WASM support)
 - Close other browser tabs

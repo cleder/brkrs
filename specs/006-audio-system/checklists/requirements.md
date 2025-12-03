@@ -1,9 +1,6 @@
 # Specification Quality Checklist: Audio System
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2025-11-29
-**Feature**: [spec.md](../spec.md)
-**Related Issues**: [#10](https://github.com/cleder/brkrs/issues/10), [#23](https://github.com/cleder/brkrs/issues/23)
+**Purpose**: Validate specification completeness and quality before proceeding to planning **Created**: 2025-11-29 **Feature**: [spec.md](../spec.md) **Related Issues**: [#10](https://github.com/cleder/brkrs/issues/10), [#23](https://github.com/cleder/brkrs/issues/23)
 
 ## Content Quality
 
@@ -40,6 +37,4 @@
 
 ## Validation Summary
 
-**Status**: ✅ PASSED
-**Validated**: 2025-11-29
-**Ready for**: `/speckit.clarify` or `/speckit.plan`
+**Status**: ✅ PASSED **Validated**: 2025-11-29 **Ready for**: `/speckit.clarify` or `/speckit.plan`

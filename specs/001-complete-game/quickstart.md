@@ -1,8 +1,6 @@
 # Quickstart: Brkrs Complete Game
 
-**Feature**: 001-complete-game
-**Created**: 2025-10-31
-**Purpose**: Build, run, and test the Brkrs game
+**Feature**: 001-complete-game **Created**: 2025-10-31 **Purpose**: Build, run, and test the Brkrs game
 
 ## Prerequisites
 
@@ -46,8 +44,7 @@ cargo build
 
 Build artifacts: `target/debug/brkrs`
 
-**Build Time**: ~30s incremental, ~5min clean build (with opt-level=3 for
-deps)
+**Build Time**: ~30s incremental, ~5min clean build (with opt-level=3 for deps)
 
 ### Native Build (Release)
 
@@ -95,7 +92,9 @@ Or run the compiled binary:
 ./target/release/brkrs      # Release
 ```
 
-**Window Behavior**: The game launches in borderless fullscreen mode by default for an immersive experience. Press Escape to unlock the cursor and access window controls. Press Alt+Enter to toggle between windowed and fullscreen modes (native platforms).
+**Window Behavior**: The game launches in borderless fullscreen mode by default for an immersive experience.
+Press Escape to unlock the cursor and access window controls.
+Press Alt+Enter to toggle between windowed and fullscreen modes (native platforms).
 
 ### WASM Execution
 
@@ -129,17 +128,16 @@ Or run the compiled binary:
 - **F5**: Reload current level
 - **F12**: Toggle debug physics rendering
 
-**Debug Grid Overlay**: When wireframe mode is enabled (Space key on native
-platforms), a 22x22 grid overlay becomes visible. This grid aligns with the
-game's logical grid cells and helps with:
+**Debug Grid Overlay**: When wireframe mode is enabled (Space key on native platforms), a 22x22 grid overlay becomes visible.
+This grid aligns with the game's logical grid cells and helps with:
 
 - Verifying brick alignment
 - Debugging paddle/ball positioning
 - Understanding coordinate mapping
 - Visual confirmation of play area boundaries
 
-The grid is automatically hidden when wireframe mode is disabled. Note: WASM
-builds do not support wireframe mode, so the grid overlay remains hidden.
+The grid is automatically hidden when wireframe mode is disabled.
+Note: WASM builds do not support wireframe mode, so the grid overlay remains hidden.
 
 ## Testing
 
@@ -213,8 +211,7 @@ cargo flamegraph --root
 3. **Observe behavior** in game
 4. **Iterate**
 
-**Fast Recompilation**: Debug build with `opt-level=3` for dependencies
-provides good runtime performance with fast compile times.
+**Fast Recompilation**: Debug build with `opt-level=3` for dependencies provides good runtime performance with fast compile times.
 
 ### Code Formatting
 
@@ -294,8 +291,7 @@ sudo dnf install gcc
 
 **Issue**: Audio not working
 
-**Solution**: User interaction required before audio starts (browser
-security)
+**Solution**: User interaction required before audio starts (browser security)
 
 ## File Locations
 

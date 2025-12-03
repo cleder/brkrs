@@ -34,8 +34,7 @@ Suggested next actions
 
 How you can post this as a PR comment
 
-1) Copy the contents of this file and paste into the PR comment box, or
-2) If you prefer to do this from the CLI and have `gh` authenticated locally, run:
+1) Copy the contents of this file and paste into the PR comment box, or 2) If you prefer to do this from the CLI and have `gh` authenticated locally, run:
 
 ```bash
 gh pr comment 57 --body-file specs/006-audio-system/pr_followup.md

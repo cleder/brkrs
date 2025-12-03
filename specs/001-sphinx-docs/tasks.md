@@ -1,7 +1,6 @@
 # Tasks: Create Sphinx / MyST docs + rustdoc embed (001-sphinx-docs)
 
-**Input**: Design documents from `/specs/001-sphinx-docs/`
-**Prerequisites**: plan.md ✓, spec.md ✓, research.md ✓, data-model.md ✓, contracts/ ✓, quickstart.md ✓
+**Input**: Design documents from `/specs/001-sphinx-docs/` **Prerequisites**: plan.md ✓, spec.md ✓, research.md ✓, data-model.md ✓, contracts/ ✓, quickstart.md ✓
 
 **Tests**: Not explicitly requested in spec — omitted per task generation rules.
 

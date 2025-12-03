@@ -1,6 +1,7 @@
 # [PROJECT NAME] Development Guidelines
 
-Auto-generated from all feature plans. Last updated: [DATE]
+Auto-generated from all feature plans.
+Last updated: [DATE]
 
 ## Active Technologies
 

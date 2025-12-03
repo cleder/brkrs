@@ -3,23 +3,17 @@
 **Branch**: `001-textured-visuals` | **Date**: 2025-11-26 | **Spec**: `/specs/001-textured-visuals/spec.md`
 **Input**: Feature specification from `/specs/001-textured-visuals/spec.md`
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**Note**: This template is filled in by the `/speckit.plan` command.
+See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-Deliver fully textured materials for all major gameplay objects by ingesting a RON-based texture manifest, mapping ball/brick types to `VisualAssetProfile`s, honoring per-level overrides, and exposing a Level Switch shortcut (Key **L**) so artists can audit each level’s presentation quickly. Reliability hinges on the new `FallbackRegistry` resource that guarantees canonical materials load within one frame and logs each missing asset only once per session.
+Deliver fully textured materials for all major gameplay objects by ingesting a RON-based texture manifest, mapping ball/brick types to `VisualAssetProfile`s, honoring per-level overrides, and exposing a Level Switch shortcut (Key **L**) so artists can audit each level’s presentation quickly.
+Reliability hinges on the new `FallbackRegistry` resource that guarantees canonical materials load within one frame and logs each missing asset only once per session.
 
 ## Technical Context
 
-**Language/Version**: Rust 1.81 (Rust 2021 edition)
-**Primary Dependencies**: Bevy 0.16 (rendering + ECS), bevy_rapier3d 0.31 (physics-driven entities), serde/ron (manifest parsing), tracing (structured logs)
-**Storage**: File-based RON assets under `assets/textures/` plus existing `assets/levels/` definitions
-**Testing**: `cargo test`, targeted module tests for manifest + fallback behavior, `cargo clippy --all-targets --all-features`, `bevy lint`, manual + WASM smoke runs via `cargo build --target wasm32-unknown-unknown --release`
-**Target Platform**: Native desktop (Linux/macOS/Windows) and WASM (Chrome/Firefox)
-**Project Type**: Single Bevy game crate (binary)
-**Performance Goals**: Maintain 60 FPS with zero visible “untextured” frames during loads; level switches complete in <2s
-**Constraints**: ECS-only state management, physics-driven gameplay, logging-only fallback handling, memory budget must fit baseline + one override pack simultaneously
-**Scale/Scope**: Two shipping levels today (001/002) with roadmap for multi-level campaigns; manifests target <50 profiles initially
+**Language/Version**: Rust 1.81 (Rust 2021 edition) **Primary Dependencies**: Bevy 0.16 (rendering + ECS), bevy_rapier3d 0.31 (physics-driven entities), serde/ron (manifest parsing), tracing (structured logs) **Storage**: File-based RON assets under `assets/textures/` plus existing `assets/levels/` definitions **Testing**: `cargo test`, targeted module tests for manifest + fallback behavior, `cargo clippy --all-targets --all-features`, `bevy lint`, manual + WASM smoke runs via `cargo build --target wasm32-unknown-unknown --release` **Target Platform**: Native desktop (Linux/macOS/Windows) and WASM (Chrome/Firefox) **Project Type**: Single Bevy game crate (binary) **Performance Goals**: Maintain 60 FPS with zero visible “untextured” frames during loads; level switches complete in <2s **Constraints**: ECS-only state management, physics-driven gameplay, logging-only fallback handling, memory budget must fit baseline + one override pack simultaneously **Scale/Scope**: Two shipping levels today (001/002) with roadmap for multi-level campaigns; manifests target <50 profiles initially
 
 ## Constitution Check
 

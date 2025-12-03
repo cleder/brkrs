@@ -1,12 +1,12 @@
 # Quickstart: Map Format Change (Completed Migration to 20×20 Grid)
 
-**Feature**: 003-map-format
-**Created**: 2025-11-27
-**Purpose**: Developer guide for implementing and testing grid dimension changes
+**Feature**: 003-map-format **Created**: 2025-11-27 **Purpose**: Developer guide for implementing and testing grid dimension changes
 
 ## Overview
 
-This feature migrated the game grid from 22×22 to 20×20. The change is complete and reflected across code, assets, and documentation. Key updates included:
+This feature migrated the game grid from 22×22 to 20×20.
+The change is complete and reflected across code, assets, and documentation.
+Key updates included:
 
 - Grid constants (GRID_WIDTH, GRID_HEIGHT)
 - Level asset files (level_001.ron, level_002.ron)
@@ -659,7 +659,8 @@ If issues arise in production:
    # Re-deploy WASM
    ```
 
-**Note**: Grid dimension changes are backward-incompatible for level files. Keep backups of 22x22 level files if needed.
+**Note**: Grid dimension changes are backward-incompatible for level files.
+Keep backups of 22x22 level files if needed.
 
 ---
 

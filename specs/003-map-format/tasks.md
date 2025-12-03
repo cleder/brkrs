@@ -1,7 +1,6 @@
 # Tasks: Map Format Change (22x22 to 20x20)
 
-**Input**: Design documents from `/specs/003-map-format/`
-**Prerequisites**: plan.md, spec.md, research.md, data-model.md, quickstart.md
+**Input**: Design documents from `/specs/003-map-format/` **Prerequisites**: plan.md, spec.md, research.md, data-model.md, quickstart.md
 
 **Tests**: Tests are NOT explicitly requested in this specification - tasks focus on implementation only.
 
@@ -70,7 +69,8 @@
 - [x] T021 [US1] Run cargo run and manually load level_001 to verify entities spawn correctly
 - [x] T022 [US1] Run cargo run and progress to level_002 to verify second level loads correctly
 
-**✅ Checkpoint Complete**: User Story 1 fully functional - levels load with 20x20 format, normalize_matrix() provides backward compatibility, validation works, both native and WASM builds succeed. Test suite updated (tests/respawn_spawn_points.rs: GRID_DIM 22→20).
+**✅ Checkpoint Complete**: User Story 1 fully functional - levels load with 20x20 format, normalize_matrix() provides backward compatibility, validation works, both native and WASM builds succeed.
+Test suite updated (tests/respawn_spawn_points.rs: GRID_DIM 22→20).
 
 ---
 
@@ -91,7 +91,8 @@
 - [x] T029 [US2] Run cargo run, press Space to enable grid overlay, manually count 20 horizontal lines (verified via code: 0..=GRID_HEIGHT creates 21 lines)
 - [x] T030 [US2] Verify entities align with grid cell centers when overlay is visible (verified: spawn calculations use CELL_WIDTH/HEIGHT with 0.5 offset)
 
-**✅ Checkpoint Complete**: User Stories 1 AND 2 fully functional - levels load correctly with 20x20 format AND debug overlay shows accurate 20x20 grid. All entities properly aligned to grid cells.
+**✅ Checkpoint Complete**: User Stories 1 AND 2 fully functional - levels load correctly with 20x20 format AND debug overlay shows accurate 20x20 grid.
+All entities properly aligned to grid cells.
 
 ---
 
@@ -146,7 +147,8 @@
 - [x] T058 [US4] Verify game loads 22x22 level with padding/truncation (doesn't crash)
 - [x] T059 [US4] Delete temporary test level file after verification
 
-**✅ Checkpoint Complete**: All user stories complete - backward compatibility warnings provide clear migration guidance for legacy levels. Verified with 22x22 test file: warnings display expected vs actual dimensions, truncation messages for rows and columns, game loads successfully without crashes.
+**✅ Checkpoint Complete**: All user stories complete - backward compatibility warnings provide clear migration guidance for legacy levels.
+Verified with 22x22 test file: warnings display expected vs actual dimensions, truncation messages for rows and columns, game loads successfully without crashes.
 
 ---
 
@@ -168,7 +170,8 @@
 - [x] T071 Update spec.md status from "Draft" to "Implemented"
 - [x] T072 Commit all changes with descriptive message following conventional commits format
 
-**✅ Checkpoint Complete**: Phase 7 polish tasks T060–T072 validated (commit performed: feat(map-format): finalize Phase 7 polish & verification). All success criteria met; map format migration fully finalized.
+**✅ Checkpoint Complete**: Phase 7 polish tasks T060–T072 validated (commit performed: feat(map-format): finalize Phase 7 polish & verification).
+All success criteria met; map format migration fully finalized.
 
 ---
 

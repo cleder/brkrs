@@ -1,23 +1,17 @@
 # Research: Brkrs Complete Game
 
-**Feature**: 001-complete-game
-**Created**: 2025-10-31
-**Purpose**: Architecture decisions and best practices for Bevy + Rapier3D
-game development
+**Feature**: 001-complete-game **Created**: 2025-10-31 **Purpose**: Architecture decisions and best practices for Bevy + Rapier3D game development
 
 ## Overview
 
-This document consolidates research findings for implementing an
-Arkanoid/Breakout game using Bevy 0.16.0 and Rapier3D 0.31.0. All
-decisions align with the project constitution's ECS-first, physics-driven,
-and modular design principles.
+This document consolidates research findings for implementing an Arkanoid/Breakout game using Bevy 0.16.0 and Rapier3D 0.31.0.
+All decisions align with the project constitution's ECS-first, physics-driven, and modular design principles.
 
 ## Key Architecture Decisions
 
 ### 1. ECS Component Organization
 
-**Decision**: Organize components by entity type (paddle, ball, brick) rather
-than by property type (transform, physics, rendering)
+**Decision**: Organize components by entity type (paddle, ball, brick) rather than by property type (transform, physics, rendering)
 
 **Rationale**:
 
@@ -46,8 +40,7 @@ components/
 
 ### 2. Physics Constraint Strategy
 
-**Decision**: Use Rapier's `LockedAxes::TRANSLATION_LOCKED_Y` for all
-gameplay objects to enforce 2D plane constraint at Y=2.0
+**Decision**: Use Rapier's `LockedAxes::TRANSLATION_LOCKED_Y` for all gameplay objects to enforce 2D plane constraint at Y=2.0
 
 **Rationale**:
 
@@ -71,8 +64,7 @@ gameplay objects to enforce 2D plane constraint at Y=2.0
 
 ### 3. Ball "English" (Steering) Implementation
 
-**Decision**: Apply impulse to ball based on paddle velocity at collision
-moment, added to Rapier's natural collision response
+**Decision**: Apply impulse to ball based on paddle velocity at collision moment, added to Rapier's natural collision response
 
 - Maintains physics realism while adding gameplay depth
 - Impulse magnitude can be adjusted via resource/config file
@@ -141,13 +133,7 @@ trait BrickBehavior {
 
 - **JSON** (rejected): Less Rust-native, verbose for nested data
 
-**Level File Structure**:
-// assets/levels/level_001.ron
-Level(
-    bricks: [
-        Brick(pos: (0, 0), type: Standard),
-        Brick(pos: (1, 0), type: MultiHit(durability: 2)),
-        // ...
+**Level File Structure**: // assets/levels/level_001.ron Level(     bricks: [         Brick(pos: (0, 0), type: Standard),         Brick(pos: (1, 0), type: MultiHit(durability: 2)),         // ...
 
 ],
 
@@ -191,8 +177,7 @@ pub enum GameState {
 
 ### 7. Mouse Input Handling
 
-**Decision**: Use `AccumulatedMouseMotion` and `AccumulatedMouseScroll`
-resources with sensitivity scaling
+**Decision**: Use `AccumulatedMouseMotion` and `AccumulatedMouseScroll` resources with sensitivity scaling
 
 **Rationale**:
 
@@ -308,7 +293,8 @@ codegen-units = 1
 
 ## Open Questions (Resolved)
 
-All technical clarifications from the planning phase have been resolved through the decisions above. No blocking unknowns remain.
+All technical clarifications from the planning phase have been resolved through the decisions above.
+No blocking unknowns remain.
 
 ## Next Steps
 

@@ -3,23 +3,18 @@
 **Branch**: `003-map-format` | **Date**: 2025-11-27 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/003-map-format/spec.md`
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**Note**: This template is filled in by the `/speckit.plan` command.
+See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-Change the game grid format from 22x22 to 20x20 cells while maintaining gameplay feel and fixing level transition timing issues. The primary requirements are: (1) Update all grid dimension calculations from 22 to 20, (2) Fix level loading sequence so bricks spawn before ball physics activate, (3) Ensure fade-to-black transition shows bricks before gameplay begins, (4) Maintain exact mathematical cell sizing (PLANE_H/20 × PLANE_W/20). Technical approach involves modifying constants (GRID_WIDTH/GRID_HEIGHT), updating level validation logic, adjusting level transition sequencing in spawn_bricks_only and finalize_level_advance systems, and updating all level .ron files to 20x20 format.
+Change the game grid format from 22x22 to 20x20 cells while maintaining gameplay feel and fixing level transition timing issues.
+The primary requirements are: (1) Update all grid dimension calculations from 22 to 20, (2) Fix level loading sequence so bricks spawn before ball physics activate, (3) Ensure fade-to-black transition shows bricks before gameplay begins, (4) Maintain exact mathematical cell sizing (PLANE_H/20 × PLANE_W/20).
+Technical approach involves modifying constants (GRID_WIDTH/GRID_HEIGHT), updating level validation logic, adjusting level transition sequencing in spawn_bricks_only and finalize_level_advance systems, and updating all level .ron files to 20x20 format.
 
 ## Technical Context
 
-**Language/Version**: Rust 1.81 (Rust 2021 edition via rustup)
-**Primary Dependencies**: Bevy 0.16 (ECS, scheduling, `Time`, asset system), bevy_rapier3d 0.31 (physics + collision), serde/ron (level asset parsing)
-**Storage**: File-based RON assets under `assets/levels/`; no runtime persistence
-**Testing**: `cargo test` (unit + integration tests), manual gameplay testing for transitions
-**Target Platform**: Native (Linux/Windows/macOS) + WASM (browser via wasm-bindgen)
-**Project Type**: Single Bevy game project with ECS architecture
-**Performance Goals**: 60 FPS on native and WASM; level transitions complete within 2 seconds
-**Constraints**: WASM embedded assets (no filesystem), cross-platform constant expressions, physics-driven gameplay
-**Scale/Scope**: Small game (2 levels currently, expandable); ~10-15 source files affected; grid overlay + level loader + embedded WASM level strings
+**Language/Version**: Rust 1.81 (Rust 2021 edition via rustup) **Primary Dependencies**: Bevy 0.16 (ECS, scheduling, `Time`, asset system), bevy_rapier3d 0.31 (physics + collision), serde/ron (level asset parsing) **Storage**: File-based RON assets under `assets/levels/`; no runtime persistence **Testing**: `cargo test` (unit + integration tests), manual gameplay testing for transitions **Target Platform**: Native (Linux/Windows/macOS) + WASM (browser via wasm-bindgen) **Project Type**: Single Bevy game project with ECS architecture **Performance Goals**: 60 FPS on native and WASM; level transitions complete within 2 seconds **Constraints**: WASM embedded assets (no filesystem), cross-platform constant expressions, physics-driven gameplay **Scale/Scope**: Small game (2 levels currently, expandable); ~10-15 source files affected; grid overlay + level loader + embedded WASM level strings
 
 ## Constitution Check
 
@@ -27,28 +22,33 @@ Change the game grid format from 22x22 to 20x20 cells while maintaining gameplay
 
 ### I. ECS-First Architecture
 
-**Status**: ✅ PASS
-**Analysis**: Grid format change modifies constants and level loading systems. All changes remain within ECS paradigm (systems operating on components, no mutable state outside ECS). Level transition sequence uses existing Bevy systems and resources.
+**Status**: ✅ PASS **Analysis**: Grid format change modifies constants and level loading systems.
+All changes remain within ECS paradigm (systems operating on components, no mutable state outside ECS).
+Level transition sequence uses existing Bevy systems and resources.
 
 ### II. Physics-Driven Gameplay
 
-**Status**: ✅ PASS
-**Analysis**: Ball physics freeze/activate behavior uses existing physics components (GravityScale, Velocity, BallFrozen marker). No manual transform manipulation for gameplay. Grid size change doesn't affect physics engine usage.
+**Status**: ✅ PASS **Analysis**: Ball physics freeze/activate behavior uses existing physics components (GravityScale, Velocity, BallFrozen marker).
+No manual transform manipulation for gameplay.
+Grid size change doesn't affect physics engine usage.
 
 ### III. Modular Feature Design
 
-**Status**: ✅ PASS
-**Analysis**: Changes are localized to level loading module and grid overlay system. Level transition timing is event-driven via LevelAdvanceState resource. No new tight coupling introduced.
+**Status**: ✅ PASS **Analysis**: Changes are localized to level loading module and grid overlay system.
+Level transition timing is event-driven via LevelAdvanceState resource.
+No new tight coupling introduced.
 
 ### IV. Performance-First Implementation
 
-**Status**: ✅ PASS
-**Analysis**: Grid change from 22x22 to 20x20 actually reduces entity count (484 → 400 cells), improving performance. Level transition sequence optimization (spawn bricks before physics) prevents wasted frame time on empty field rendering. Must verify 60 FPS maintained on both native and WASM after changes.
+**Status**: ✅ PASS **Analysis**: Grid change from 22x22 to 20x20 actually reduces entity count (484 → 400 cells), improving performance.
+Level transition sequence optimization (spawn bricks before physics) prevents wasted frame time on empty field rendering.
+Must verify 60 FPS maintained on both native and WASM after changes.
 
 ### V. Cross-Platform Compatibility
 
-**Status**: ⚠️ VERIFY
-**Analysis**: Changes affect WASM embedded level strings (include_str! for level_001.ron, level_002.ron). Must update embedded_level_str() function and test WASM build. Conditional compilation already in place, just needs data updates.
+**Status**: ⚠️ VERIFY **Analysis**: Changes affect WASM embedded level strings (include_str! for level_001.ron, level_002.ron).
+Must update embedded_level_str() function and test WASM build.
+Conditional compilation already in place, just needs data updates.
 
 **Action Items**:
 
@@ -100,8 +100,11 @@ api/
 
 ```
 
-**Structure Decision**: Single Rust project with Bevy ECS game engine. Changes affect core grid constants (src/lib.rs), level loading and validation (src/level_loader.rs), debug visualization (src/systems/grid_debug.rs), and level transition timing (src/systems/level_switch.rs). Asset files updated from 22x22 to 20x20 matrices (assets/levels/*.ron).
+**Structure Decision**: Single Rust project with Bevy ECS game engine.
+Changes affect core grid constants (src/lib.rs), level loading and validation (src/level_loader.rs), debug visualization (src/systems/grid_debug.rs), and level transition timing (src/systems/level_switch.rs).
+Asset files updated from 22x22 to 20x20 matrices (assets/levels/*.ron).
 
 ## Complexity Tracking
 
-No constitution violations detected. All principles pass or require verification testing only.
+No constitution violations detected.
+All principles pass or require verification testing only.

@@ -6,7 +6,8 @@
   - Description: A 2D matrix representation of a level layout; each cell is an integer tile index mapping to a BrickType or other tile.
   - Fields:
     - id: string (file or level identifier)
-    - matrix: [Link text](integer)] — required. Each inner array represents a row of tile indexes.
+    - matrix: [Link text](integer)] — required.
+      Each inner array represents a row of tile indexes.
     - metadata: map<string, string> — optional, authoring metadata and versioning
 
 - BrickType

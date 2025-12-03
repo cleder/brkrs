@@ -1,11 +1,11 @@
 # Event Contracts: Multi-Hit Bricks
 
-**Feature**: 005-multi-hit-bricks
-**Date**: 2025-11-29
+**Feature**: 005-multi-hit-bricks **Date**: 2025-11-29
 
 ## Overview
 
-This document defines the event contracts for multi-hit brick behavior. Events enable decoupled communication between collision handling, visual updates, audio, and scoring systems.
+This document defines the event contracts for multi-hit brick behavior.
+Events enable decoupled communication between collision handling, visual updates, audio, and scoring systems.
 
 ## Events
 
@@ -39,7 +39,8 @@ pub struct MultiHitBrickHit {
 
 ### BrickTypeChanged
 
-Implicit "event" via Bevy's change detection. When `BrickTypeId` component is mutated, systems with `Changed<BrickTypeId>` query filter will detect it.
+Implicit "event" via Bevy's change detection.
+When `BrickTypeId` component is mutated, systems with `Changed<BrickTypeId>` query filter will detect it.
 
 ```rust
 // No explicit event struct needed - use Bevy's change detection:

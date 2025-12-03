@@ -46,9 +46,8 @@ cargo test --test migration_parity
 
 CI notes
 
-- This repo's CI includes a `migration_tests` job which only runs when files under
-  `assets/levels/` are changed on PRs. It builds `tools/migrate-level-indices` and
-  executes `cargo test --test migration_parity` to prevent accidental content drift.
+- This repo's CI includes a `migration_tests` job which only runs when files under `assets/levels/` are changed on PRs.
+  It builds `tools/migrate-level-indices` and executes `cargo test --test migration_parity` to prevent accidental content drift.
 - To validate the same checks locally run the migration-parity test shown above and push
   your changes to confirm CI picks them up.
 

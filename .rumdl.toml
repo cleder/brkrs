@@ -3,7 +3,7 @@
 # Global configuration options
 [global]
 # List of rules to disable (uncomment and modify as needed)
-disable = ["MD013", "MD036"]
+#disable = ["MD013", "MD036"]
 
 # List of rules to enable exclusively (if provided, only these rules will run)
 # enable = ["MD001", "MD003", "MD004"]
@@ -28,7 +28,12 @@ exclude = [
     # Specific files or patterns
     "CHANGELOG.md",
     "LICENSE.md",
+    "LICENSE-agpl-3.0.md"
 ]
+
+# Disable specific rules for specific files
+[per-file-ignores]
+"specs/**/*.md" = ["MD036"] 
 
 # Respect .gitignore files when scanning directories (default: true)
 respect_gitignore = true
@@ -38,18 +43,20 @@ respect_gitignore = true
 # [MD003]
 # style = "atx"  # Heading style (atx, atx_closed, setext)
 
-# [MD004]
-# style = "asterisk"  # Unordered list style (asterisk, plus, dash, consistent)
+[MD004]
+style = "dash"  # Unordered list style (asterisk, plus, dash, consistent)
 
 # [MD007]
 # indent = 4  # Unordered list indentation
 
-# [MD013]
-# line_length = 100  # Line length
-# code_blocks = false  # Exclude code blocks from line length check
-# tables = false  # Exclude tables from line length check
-# headings = true  # Include headings in line length check
+[MD013]
+line-length = 0
+reflow = true
+reflow-mode = "sentence-per-line"
+
+
 
 # [MD044]
 # names = ["rumdl", "Markdown", "GitHub"]  # Proper names that should be capitalized correctly
 # code_blocks_excluded = true  # Exclude code blocks from proper name check
+

@@ -3,11 +3,14 @@
 **Branch**: `001-complete-game` | **Date**: 2025-11-24 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/001-complete-game/spec.md`
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**Note**: This template is filled in by the `/speckit.plan` command.
+See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-Implement a complete Breakout/Arkanoid-style game in Rust using Bevy 0.16.0 ECS engine and Rapier3D 0.31.0 physics. The game features mouse-controlled paddle with velocity-based movement and rotation, physics-driven ball mechanics with "english" steering, 37+ brick types with varied behaviors, 77 unique levels loaded from RON format, and full game state management (menu, playing, paused, game over). Technical approach leverages ECS-first architecture with physics-driven gameplay, modular plugin design, and cross-platform support (native + WASM) with 60 FPS target.
+Implement a complete Breakout/Arkanoid-style game in Rust using Bevy 0.16.0 ECS engine and Rapier3D 0.31.0 physics.
+The game features mouse-controlled paddle with velocity-based movement and rotation, physics-driven ball mechanics with "english" steering, 37+ brick types with varied behaviors, 77 unique levels loaded from RON format, and full game state management (menu, playing, paused, game over).
+Technical approach leverages ECS-first architecture with physics-driven gameplay, modular plugin design, and cross-platform support (native + WASM) with 60 FPS target.
 
 ## Technical Context
 
@@ -57,7 +60,8 @@ Implement a complete Breakout/Arkanoid-style game in Rust using Bevy 0.16.0 ECS 
 | **IV. Performance-First** | ✅ PASS | Profile configured (opt-level=3 for deps); dynamic_linking in dev; CCD enabled for ball; change detection not yet leveraged (Phase 2 optimization) |
 | **V. Cross-Platform** | ✅ PASS | Conditional compilation for wireframe (native only); WASM target tested; assets loaded via include_str fallback; no platform-specific APIs without guards |
 
-**Overall Assessment**: ✅ **APPROVED** - All constitutional principles satisfied. Current implementation aligns with ECS patterns, physics-driven design, and modularity goals.
+**Overall Assessment**: ✅ **APPROVED** - All constitutional principles satisfied.
+Current implementation aligns with ECS patterns, physics-driven design, and modularity goals.
 
 ## Project Structure
 
@@ -115,7 +119,10 @@ target/                  # Build artifacts (gitignored)
 wasm/                    # WASM build output
 ```
 
-**Structure Decision**: Single Rust game project (Option 1). Current implementation has main.rs with systems module; Phase 1 will add components/, events.rs, and expand systems/ with feature-specific modules. Phase 2 will refactor into plugin architecture for better modularity. This aligns with Bevy's plugin pattern and constitutional modularity principle.
+**Structure Decision**: Single Rust game project (Option 1).
+Current implementation has main.rs with systems module; Phase 1 will add components/, events.rs, and expand systems/ with feature-specific modules.
+Phase 2 will refactor into plugin architecture for better modularity.
+This aligns with Bevy's plugin pattern and constitutional modularity principle.
 
 ## Complexity Tracking
 

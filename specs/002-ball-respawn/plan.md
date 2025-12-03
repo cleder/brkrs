@@ -5,19 +5,12 @@
 
 ## Summary
 
-Implement a physics-driven respawn loop so any ball that falls below the lower boundary triggers a `LifeLostEvent`, queues a one-second delay using Bevy's global `Time` resource, and respawns the ball/paddle at their matrix-defined transforms with zero velocity. The respawn feature must emit events for the lives/game-over system, freeze controls until the player relaunches the ball, and handle repeated losses or multi-ball scenarios without stalling gameplay.
+Implement a physics-driven respawn loop so any ball that falls below the lower boundary triggers a `LifeLostEvent`, queues a one-second delay using Bevy's global `Time` resource, and respawns the ball/paddle at their matrix-defined transforms with zero velocity.
+The respawn feature must emit events for the lives/game-over system, freeze controls until the player relaunches the ball, and handle repeated losses or multi-ball scenarios without stalling gameplay.
 
 ## Technical Context
 
-**Language/Version**: Rust 1.81 (Rust 2021 edition via rustup)
-**Primary Dependencies**: Bevy 0.16 (ECS, scheduling, `Time`), bevy_rapier3d 0.31 (physics + collision sensors), serde/ron (level matrix assets)
-**Storage**: File-based RON assets under `assets/levels/`; no runtime persistence
-**Testing**: `cargo test`, Bevy system unit tests, targeted WASM smoke build for timer parity
-**Target Platform**: Native desktop (Linux/macOS/Windows) plus WASM (Chrome/Firefox)
-**Project Type**: Single Bevy game workspace (`src/` + `assets/`)
-**Performance Goals**: Maintain 60 FPS and avoid respawn-induced GC spikes; respawn delay timing tolerance ±16 ms
-**Constraints**: ECS-first systems, physics-driven detection (Rapier sensors), 1 s delay sourced from Bevy `Time`, ball remains stationary until player launch, paddle controls disabled during delay, respawn positions always derived from matrix markers or fallback center
-**Scale/Scope**: Single-player brick breaker with ≤4 balls simultaneously; dozens of entities per level; respawn flow must succeed for 100 consecutive losses (SC-002)
+**Language/Version**: Rust 1.81 (Rust 2021 edition via rustup) **Primary Dependencies**: Bevy 0.16 (ECS, scheduling, `Time`), bevy_rapier3d 0.31 (physics + collision sensors), serde/ron (level matrix assets) **Storage**: File-based RON assets under `assets/levels/`; no runtime persistence **Testing**: `cargo test`, Bevy system unit tests, targeted WASM smoke build for timer parity **Target Platform**: Native desktop (Linux/macOS/Windows) plus WASM (Chrome/Firefox) **Project Type**: Single Bevy game workspace (`src/` + `assets/`) **Performance Goals**: Maintain 60 FPS and avoid respawn-induced GC spikes; respawn delay timing tolerance ±16 ms **Constraints**: ECS-first systems, physics-driven detection (Rapier sensors), 1 s delay sourced from Bevy `Time`, ball remains stationary until player launch, paddle controls disabled during delay, respawn positions always derived from matrix markers or fallback center **Scale/Scope**: Single-player brick breaker with ≤4 balls simultaneously; dozens of entities per level; respawn flow must succeed for 100 consecutive losses (SC-002)
 
 ## Constitution Check
 
@@ -65,7 +58,8 @@ tests/
 └── (integration tests live under src/tests modules via `cfg(test)`)
 ```
 
-**Structure Decision**: Keep single Bevy game crate. Add a new `systems/respawn.rs` module registered in `systems/mod.rs`; reuse existing asset loader and resources under `src/` rather than introducing new crates.
+**Structure Decision**: Keep single Bevy game crate.
+Add a new `systems/respawn.rs` module registered in `systems/mod.rs`; reuse existing asset loader and resources under `src/` rather than introducing new crates.
 
 ## Implementation Phases
 

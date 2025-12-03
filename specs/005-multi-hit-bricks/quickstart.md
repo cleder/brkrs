@@ -1,7 +1,6 @@
 # Quickstart: Multi-Hit Bricks
 
-**Feature**: 005-multi-hit-bricks
-**Date**: 2025-11-29
+**Feature**: 005-multi-hit-bricks **Date**: 2025-11-29
 
 ## Prerequisites
 

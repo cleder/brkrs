@@ -1,8 +1,6 @@
 # Quickstart: Pause and Resume System
 
-**Feature**: `004-pause-system`
-**Date**: 2025-11-28
-**Branch**: `004-pause-system`
+**Feature**: `004-pause-system` **Date**: 2025-11-28 **Branch**: `004-pause-system`
 
 ## Prerequisites
 
@@ -311,13 +309,17 @@ Expected log output:
 
 ## Known Limitations
 
-1. **WASM Window Mode**: Window mode switching not supported on WASM due to browser security. Users must use browser's native fullscreen (F11).
+1. **WASM Window Mode**: Window mode switching not supported on WASM due to browser security.
+   Users must use browser's native fullscreen (F11).
 
-2. **Gamepad/Touch Input**: Out of scope for this feature (FR-015). ESC key and mouse click only.
+2. **Gamepad/Touch Input**: Out of scope for this feature (FR-015).
+   ESC key and mouse click only.
 
-3. **Audio Pause**: Audio systems not affected by pause. If audio is implemented in future, separate audio pause handling required.
+3. **Audio Pause**: Audio systems not affected by pause.
+   If audio is implemented in future, separate audio pause handling required.
 
-4. **Pause Menu**: Current design shows simple text overlay. Interactive menu (resume/restart/quit buttons) is future enhancement.
+4. **Pause Menu**: Current design shows simple text overlay.
+   Interactive menu (resume/restart/quit buttons) is future enhancement.
 
 ---
 

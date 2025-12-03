@@ -1,6 +1,7 @@
 # Fallback Texture Placeholders
 
-Drop PNG or KTX assets in this directory to serve as the canonical fallback visuals for each gameplay object class. The default manifest references the following filenames:
+Drop PNG or KTX assets in this directory to serve as the canonical fallback visuals for each gameplay object class.
+The default manifest references the following filenames:
 
 - `ball_base.png`
 - `paddle_base.png`

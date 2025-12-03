@@ -12,9 +12,8 @@ All game features MUST be implemented using Bevy's ECS paradigm:
 - Avoid storing mutable state outside the ECS where possible
 - Leverage Bevy's change detection for reactive behavior
 
-**Rationale**: ECS architecture provides performance, modularity, and
-maintainability. It enables parallel execution, makes dependencies
-explicit, and aligns with Bevy's design philosophy.
+**Rationale**: ECS architecture provides performance, modularity, and maintainability.
+It enables parallel execution, makes dependencies explicit, and aligns with Bevy's design philosophy.
 
 ### II. Physics-Driven Gameplay
 
@@ -27,8 +26,7 @@ All game mechanics MUST rely on the physics engine (Rapier3D):
 - Physics configuration MUST be exposed for gameplay tuning
 
 **Rationale**: Physics-driven gameplay ensures realistic, emergent behavior.
-It reduces manual coding of movement and collision logic, and provides a
-consistent, predictable foundation for game mechanics.
+It reduces manual coding of movement and collision logic, and provides a consistent, predictable foundation for game mechanics.
 
 ### III. Modular Feature Design
 
@@ -40,9 +38,8 @@ Each game feature MUST be implemented as independently testable modules:
 - Event-driven communication between features
 - No tight coupling between game features
 
-**Rationale**: Modularity enables incremental development, easier testing,
-and future extensibility. Features can be developed in parallel and
-disabled/enabled independently for debugging.
+**Rationale**: Modularity enables incremental development, easier testing, and future extensibility.
+Features can be developed in parallel and disabled/enabled independently for debugging.
 
 ### IV. Performance-First Implementation
 
@@ -55,8 +52,8 @@ Game code MUST meet 60 FPS performance targets:
 - Test on target platforms (native + WASM) early
 - Use debug builds with opt-level=3 for dependencies during development
 
-**Rationale**: Games require consistent frame rates for good player
-experience. Early performance awareness prevents costly refactoring later.
+**Rationale**: Games require consistent frame rates for good player experience.
+Early performance awareness prevents costly refactoring later.
 WASM targets have stricter performance constraints.
 
 ### V. Cross-Platform Compatibility
@@ -69,9 +66,9 @@ Code MUST support native (Linux/Windows/macOS) and WASM targets:
 - Document platform-specific limitations clearly
 - Assets MUST be optimized for web delivery
 
-**Rationale**: The project targets both native and web platforms. WASM
-support broadens accessibility. Platform-specific issues caught late are
-expensive to fix.
+**Rationale**: The project targets both native and web platforms.
+WASM support broadens accessibility.
+Platform-specific issues caught late are expensive to fix.
 
 ## Performance Standards
 
@@ -146,14 +143,13 @@ All public modules, functions, types, and traits MUST have rustdoc documentation
 - Implementation details belong in code comments (`//`), not rustdoc
 
 **Rationale**: Rustdoc is embedded in the published documentation site.
-Clear, purpose-focused documentation enables developers to understand the
-codebase without reading implementation code. It supports onboarding,
-code review, and long-term maintainability.
+Clear, purpose-focused documentation enables developers to understand the codebase without reading implementation code.
+It supports onboarding, code review, and long-term maintainability.
 
 ## Governance
 
-This constitution establishes the architectural and quality standards for
-the Brkrs project. All contributions MUST comply with these principles.
+This constitution establishes the architectural and quality standards for the Brkrs project.
+All contributions MUST comply with these principles.
 
 **Amendment Process**:
 

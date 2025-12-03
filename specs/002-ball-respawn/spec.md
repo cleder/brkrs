@@ -1,9 +1,6 @@
 # Feature Specification: Ball Respawn System
 
-**Feature Branch**: `002-ball-respawn`
-**Created**: 2025-11-24
-**Status**: Draft
-**Input**: User description: "implement a ball respawn when a ball is despawned. respawn the ball at its initial position as specified in the level matrix, move the paddle to its initial position as specified in the matrix"
+**Feature Branch**: `002-ball-respawn` **Created**: 2025-11-24 **Status**: Draft **Input**: User description: "implement a ball respawn when a ball is despawned. respawn the ball at its initial position as specified in the level matrix, move the paddle to its initial position as specified in the matrix"
 
 ## Clarifications
 
@@ -21,9 +18,11 @@
 
 When a player loses the ball (it falls past the lower boundary), the game automatically respawns both the ball and paddle at their initial positions defined in the level matrix, allowing the player to continue playing without manual intervention.
 
-**Why this priority**: This is core gameplay functionality - without respawn, the game ends after a single ball loss, making it unplayable. This is the minimum viable feature.
+**Why this priority**: This is core gameplay functionality - without respawn, the game ends after a single ball loss, making it unplayable.
+This is the minimum viable feature.
 
-**Independent Test**: Can be fully tested by launching the game, letting the ball fall past the lower boundary, and verifying that both ball and paddle return to their starting positions. Delivers continuous gameplay.
+**Independent Test**: Can be fully tested by launching the game, letting the ball fall past the lower boundary, and verifying that both ball and paddle return to their starting positions.
+Delivers continuous gameplay.
 
 **Acceptance Scenarios**:
 
@@ -38,9 +37,11 @@ When a player loses the ball (it falls past the lower boundary), the game automa
 
 When a player loses multiple balls in succession, each respawn correctly resets positions and maintains game state, ensuring consistent behavior across repeated ball losses.
 
-**Why this priority**: Ensures the respawn system works reliably across the entire game session, not just the first occurrence. Critical for gameplay quality but dependent on P1 working first.
+**Why this priority**: Ensures the respawn system works reliably across the entire game session, not just the first occurrence.
+Critical for gameplay quality but dependent on P1 working first.
 
-**Independent Test**: Can be tested by intentionally losing the ball multiple times and verifying consistent respawn behavior each time. Delivers reliable repeated gameplay.
+**Independent Test**: Can be tested by intentionally losing the ball multiple times and verifying consistent respawn behavior each time.
+Delivers reliable repeated gameplay.
 
 **Acceptance Scenarios**:
 
@@ -54,9 +55,11 @@ When a player loses multiple balls in succession, each respawn correctly resets 
 
 When a respawn occurs, the player receives clear visual feedback indicating the reset, such as a brief pause, fade effect, or repositioning animation.
 
-**Why this priority**: Improves user experience and clarity but is not essential for core functionality. Can be added after basic respawn mechanics work.
+**Why this priority**: Improves user experience and clarity but is not essential for core functionality.
+Can be added after basic respawn mechanics work.
 
-**Independent Test**: Can be tested by observing the respawn sequence and confirming visual indicators are present. Delivers polished gameplay experience.
+**Independent Test**: Can be tested by observing the respawn sequence and confirming visual indicators are present.
+Delivers polished gameplay experience.
 
 **Acceptance Scenarios**:
 
@@ -113,6 +116,9 @@ When a respawn occurs, the player receives clear visual feedback indicating the 
 
 ## Known Limitations & Follow-Ups *(Phase 6)*
 
-1. **Grid overlay visibility warning** – `bevy lint` / `cargo clippy` warn that `GridOverlay` is `pub(crate)` while `toggle_grid_visibility` is `pub`. Nothing fails at runtime, but we should either widen the struct visibility or reduce the helper function to crate scope before feature freeze.
-2. **Unused monitor import in WASM** – `cargo build --target wasm32-unknown-unknown --release` currently warns about an unused `MonitorSelection` import (only required for desktop-exclusive window handling). Feature-gate or remove the import to keep WASM builds clean.
-3. **Structured logging scope** – Respawn events emit structured `tracing` spans/logs (`life_lost`, `respawn_scheduled`, `game_over_requested`), but the rest of the gameplay stack still relies on ad-hoc `log` macros. Future polish should migrate other critical systems or install a shared `tracing-subscriber` configuration so downstream tooling can consume the richer fields.
+1. **Grid overlay visibility warning** – `bevy lint` / `cargo clippy` warn that `GridOverlay` is `pub(crate)` while `toggle_grid_visibility` is `pub`.
+   Nothing fails at runtime, but we should either widen the struct visibility or reduce the helper function to crate scope before feature freeze.
+2. **Unused monitor import in WASM** – `cargo build --target wasm32-unknown-unknown --release` currently warns about an unused `MonitorSelection` import (only required for desktop-exclusive window handling).
+   Feature-gate or remove the import to keep WASM builds clean.
+3. **Structured logging scope** – Respawn events emit structured `tracing` spans/logs (`life_lost`, `respawn_scheduled`, `game_over_requested`), but the rest of the gameplay stack still relies on ad-hoc `log` macros.
+   Future polish should migrate other critical systems or install a shared `tracing-subscriber` configuration so downstream tooling can consume the richer fields.

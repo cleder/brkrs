@@ -1,9 +1,7 @@
 # Feature Specification: Textured Visuals Overhaul
 
-**Feature Branch**: `001-textured-visuals`
-**Created**: 2025-11-26
-**Status**: Draft
-**Input**: User description: "Introduce fully textured visuals for all major gameplay objects (ball, paddle, bricks, sidewalls (limiting the playing field), background, and per-level ground plane) with reliable fallback behavior and simple asset-swapping for artists. The ground plane can be customized per level, ball and bricks depend on their type"
+**Feature Branch**: `001-textured-visuals` **Created**: 2025-11-26 **Status**: Draft **Input**: User description: "Introduce fully textured visuals for all major gameplay objects (ball, paddle, bricks, sidewalls (limiting the playing field), background, and per-level ground plane) with reliable fallback behavior and simple asset-swapping for artists.
+The ground plane can be customized per level, ball and bricks depend on their type"
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -101,7 +99,8 @@ Artists and QA can cycle through levels in sequence by pressing the **L** key so
 
 ### Material Hot-Reload Strategy
 
-**Learning**: When the texture manifest changes, creating entirely new material handles breaks existing entity references. Materials must be updated in-place rather than recreated to ensure live hot-reload without requiring level restart.
+**Learning**: When the texture manifest changes, creating entirely new material handles breaks existing entity references.
+Materials must be updated in-place rather than recreated to ensure live hot-reload without requiring level restart.
 
 **Impact**: Artists can now edit `manifest.ron` UV scales, roughness values, or texture paths and see changes immediately in the running game without pressing 'L' or restarting.
 
@@ -109,7 +108,8 @@ Artists and QA can cycle through levels in sequence by pressing the **L** key so
 
 ### Texture Addressing Mode for Tiling
 
-**Learning**: By default, Bevy textures use `ClampToEdge` addressing mode, which causes textures to appear stretched or positioned in corners when UV scale exceeds 1.0. Tiling requires explicit `Repeat` mode on the sampler.
+**Learning**: By default, Bevy textures use `ClampToEdge` addressing mode, which causes textures to appear stretched or positioned in corners when UV scale exceeds 1.0.
+Tiling requires explicit `Repeat` mode on the sampler.
 
 **Impact**: Ground plane and wall textures now tile correctly when UV scale is increased (e.g., `(10.0, 8.0)`), creating seamless repeated patterns instead of a single stretched image.
 
@@ -119,9 +119,11 @@ Artists and QA can cycle through levels in sequence by pressing the **L** key so
 
 **Learning**: Entities spawned during `Startup` (like paddle and bricks) may render before the texture manifest finishes loading asynchronously, resulting in initial frames showing fallback materials even though proper textures are defined.
 
-**Impact**: Game now shows textures immediately on startup without requiring a level switch. Players no longer see a flash of red/gray materials before textures appear.
+**Impact**: Game now shows textures immediately on startup without requiring a level switch.
+Players no longer see a flash of red/gray materials before textures appear.
 
-**Implementation Note**: A dedicated system monitors when `CanonicalMaterialHandles` becomes ready and triggers once to update all existing paddle and brick materials. Queries must be disjoint using `Without<T>` to avoid conflicts.
+**Implementation Note**: A dedicated system monitors when `CanonicalMaterialHandles` becomes ready and triggers once to update all existing paddle and brick materials.
+Queries must be disjoint using `Without<T>` to avoid conflicts.
 
 <!--
 IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.

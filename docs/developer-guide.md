@@ -53,7 +53,8 @@ brkrs/
 cargo run
 ```
 
-Fast compilation, includes debug assertions. Use for day-to-day development.
+Fast compilation, includes debug assertions.
+Use for day-to-day development.
 
 ### Release build
 
@@ -61,7 +62,8 @@ Fast compilation, includes debug assertions. Use for day-to-day development.
 cargo run --release
 ```
 
-Optimized build with better performance. Use for testing gameplay feel.
+Optimized build with better performance.
+Use for testing gameplay feel.
 
 ### Running a specific level
 
@@ -174,11 +176,12 @@ Key systems:
 
 ### Multi-Hit Bricks
 
-Multi-hit bricks (indices 10-13) require multiple ball collisions to destroy. Each hit transitions the brick to a lower index until it becomes a simple stone (index 20), which can then be destroyed.
+Multi-hit bricks (indices 10-13) require multiple ball collisions to destroy.
+Each hit transitions the brick to a lower index until it becomes a simple stone (index 20), which can then be destroyed.
 
 **Lifecycle**: `13 → 12 → 11 → 10 → 20 → destroyed`
 
-The [`MultiHitBrickHit`] event is emitted on each transition, allowing systems to react for audio feedback or scoring:
+The `MultiHitBrickHit` event is emitted on each transition, allowing systems to react for audio feedback or scoring:
 
 ```rust
 use brkrs::systems::multi_hit::MultiHitBrickHit;
@@ -210,8 +213,7 @@ app.add_observer(my_observer);
 See {doc}`architecture` for a detailed breakdown.
 
 Note: The audio observers for multi-hit brick events have been centralized in the audio system.
-If you are following older documentation that references a placeholder observer in `systems::multi_hit`,
-see `systems::audio::on_multi_hit_brick_sound` for the current implementation.
+If you are following older documentation that references a placeholder observer in `systems::multi_hit`, see `systems::audio::on_multi_hit_brick_sound` for the current implementation.
 
 ## Development workflow
 
@@ -270,7 +272,8 @@ Hot reloading only works in debug builds. Release builds bake assets
 at compile time for performance.
 ```
 
-Assets support hot reloading in debug builds. Edit a level file and see changes immediately.
+Assets support hot reloading in debug builds.
+Edit a level file and see changes immediately.
 
 ### Writing doctests
 
@@ -286,7 +289,8 @@ use bevy::prelude::*;
 
 ### Working with Events and Observers
 
-Bevy 0.17 uses the **observer pattern** for custom events. Events are structs that derive `Event`:
+Bevy 0.17 uses the **observer pattern** for custom events.
+Events are structs that derive `Event`:
 
 ```rust
 #[derive(Event)]

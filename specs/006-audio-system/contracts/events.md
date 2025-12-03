@@ -1,11 +1,11 @@
 # Event Contracts: Audio System
 
-**Feature Branch**: `006-audio-system`
-**Date**: 2025-11-29
+**Feature Branch**: `006-audio-system` **Date**: 2025-11-29
 
 ## Overview
 
-This document defines the event contracts for the audio system. The audio system observes existing game events and introduces two new events.
+This document defines the event contracts for the audio system.
+The audio system observes existing game events and introduces two new events.
 
 ---
 
@@ -13,8 +13,7 @@ This document defines the event contracts for the audio system. The audio system
 
 ### MultiHitBrickHit
 
-**Source**: `src/systems/multi_hit.rs`
-**Trigger**: Ball collides with multi-hit brick (index 10-13)
+**Source**: `src/systems/multi_hit.rs` **Trigger**: Ball collides with multi-hit brick (index 10-13)
 
 ```rust
 #[derive(Event, Debug, Clone)]
@@ -31,8 +30,7 @@ pub struct MultiHitBrickHit {
 
 ### WallHit
 
-**Source**: `src/lib.rs`
-**Trigger**: Paddle collides with border wall
+**Source**: `src/lib.rs` **Trigger**: Paddle collides with border wall
 
 ```rust
 #[derive(Event)]
@@ -47,8 +45,7 @@ struct WallHit {
 
 ### BrickHit
 
-**Source**: `src/lib.rs`
-**Trigger**: Paddle collides with brick
+**Source**: `src/lib.rs` **Trigger**: Paddle collides with brick
 
 ```rust
 #[derive(Event)]
@@ -63,8 +60,7 @@ struct BrickHit {
 
 ### BallHit
 
-**Source**: `src/lib.rs`
-**Trigger**: Paddle collides with ball
+**Source**: `src/lib.rs` **Trigger**: Paddle collides with ball
 
 ```rust
 #[derive(Event)]
@@ -80,8 +76,7 @@ struct BallHit {
 
 ### LevelSwitchRequested
 
-**Source**: `src/systems/level_switch.rs`
-**Trigger**: Level transition requested (keyboard or automation)
+**Source**: `src/systems/level_switch.rs` **Trigger**: Level transition requested (keyboard or automation)
 
 ```rust
 #[derive(Event)]
@@ -98,8 +93,7 @@ pub struct LevelSwitchRequested {
 
 ### BrickDestroyed
 
-**Source**: `src/lib.rs` (new)
-**Trigger**: Any destructible brick is despawned
+**Source**: `src/lib.rs` (new) **Trigger**: Any destructible brick is despawned
 
 ```rust
 /// Emitted when a destructible brick is removed from the game.
@@ -121,8 +115,7 @@ pub struct BrickDestroyed {
 
 ### LevelStarted
 
-**Source**: `src/level_loader.rs` (new)
-**Trigger**: Level has finished loading and gameplay can begin
+**Source**: `src/level_loader.rs` (new) **Trigger**: Level has finished loading and gameplay can begin
 
 ```rust
 /// Emitted when a level has finished loading and is ready for play.
@@ -142,8 +135,7 @@ pub struct LevelStarted {
 
 ### BallWallHit
 
-**Source**: `src/lib.rs` (new)
-**Trigger**: Ball bounces off a wall boundary
+**Source**: `src/lib.rs` (new) **Trigger**: Ball bounces off a wall boundary
 
 ```rust
 /// Emitted when the ball bounces off a wall boundary.

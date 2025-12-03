@@ -1,8 +1,6 @@
 # Specification Quality Checklist: Pause and Resume System
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2025-01-24
-**Feature**: [spec.md](../spec.md)
+**Purpose**: Validate specification completeness and quality before proceeding to planning **Created**: 2025-01-24 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 
@@ -31,7 +29,9 @@
 
 ## Notes
 
-- **Input Scope Resolved**: Keyboard/mouse only (Option A selected). FR-015 added to explicitly define scope. Gamepad/touch support deferred to future enhancement.
+- **Input Scope Resolved**: Keyboard/mouse only (Option A selected).
+  FR-015 added to explicitly define scope.
+  Gamepad/touch support deferred to future enhancement.
 - All checklist items pass
 - Specification is complete and ready for planning phase
 

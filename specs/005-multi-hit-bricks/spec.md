@@ -1,9 +1,6 @@
 # Feature Specification: Multi-Hit Bricks
 
-**Feature Branch**: `005-multi-hit-bricks`
-**Created**: 2025-11-29
-**Status**: Draft
-**Input**: User description: "Create bricks that take several hits to destroy - Multi-Hit Bricks (Index 10-13) that need multiple hits before being destroyed"
+**Feature Branch**: `005-multi-hit-bricks` **Created**: 2025-11-29 **Status**: Draft **Input**: User description: "Create bricks that take several hits to destroy - Multi-Hit Bricks (Index 10-13) that need multiple hits before being destroyed"
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -11,9 +8,11 @@
 
 As a player, when I hit a multi-hit brick with the ball, the brick should visually change to show it has been damaged and requires fewer hits to destroy.
 
-**Why this priority**: This is the core mechanic of multi-hit bricks. Without visual feedback on damage, players cannot strategize or understand the brick's remaining durability.
+**Why this priority**: This is the core mechanic of multi-hit bricks.
+Without visual feedback on damage, players cannot strategize or understand the brick's remaining durability.
 
-**Independent Test**: Can be fully tested by launching a ball at a multi-hit brick and observing the visual transition. Delivers immediate gameplay feedback.
+**Independent Test**: Can be fully tested by launching a ball at a multi-hit brick and observing the visual transition.
+Delivers immediate gameplay feedback.
 
 **Acceptance Scenarios**:
 
@@ -71,10 +70,14 @@ As a player, I want multi-hit bricks to count toward level completion only when 
 
 ### Edge Cases
 
-- What happens when a multi-hit brick is hit in rapid succession before the transition animation completes? The hit should still register and transition should occur immediately.
-- How does the system handle a multi-hit brick placed at index 10 that is hit once? It transitions to simple stone (index 20).
-- What happens if a level only contains multi-hit bricks at various stages? All must be fully destroyed (reduced to simple stone and then destroyed) for level completion.
-- How are multi-hit bricks saved/loaded in level files? Each brick's current state (index 10-13) is stored, not its original state.
+- What happens when a multi-hit brick is hit in rapid succession before the transition animation completes?
+  The hit should still register and transition should occur immediately.
+- How does the system handle a multi-hit brick placed at index 10 that is hit once?
+  It transitions to simple stone (index 20).
+- What happens if a level only contains multi-hit bricks at various stages?
+  All must be fully destroyed (reduced to simple stone and then destroyed) for level completion.
+- How are multi-hit bricks saved/loaded in level files?
+  Each brick's current state (index 10-13) is stored, not its original state.
 
 ## Requirements *(mandatory)*
 
@@ -92,9 +95,13 @@ As a player, I want multi-hit bricks to count toward level completion only when 
 
 ### Key Entities
 
-- **Multi-Hit Brick**: A brick type that requires multiple hits to destroy. Characterized by a hit counter (1-4) that decrements on each collision. Transforms through visual states before becoming a simple stone.
-- **Brick Index**: The numeric identifier (10-13) that determines the brick's appearance and remaining durability. Lower index = fewer hits needed.
-- **Simple Stone (Index 20)**: The terminal state of a multi-hit brick before destruction. Behaves identically to a standalone simple stone.
+- **Multi-Hit Brick**: A brick type that requires multiple hits to destroy.
+  Characterized by a hit counter (1-4) that decrements on each collision.
+  Transforms through visual states before becoming a simple stone.
+- **Brick Index**: The numeric identifier (10-13) that determines the brick's appearance and remaining durability.
+  Lower index = fewer hits needed.
+- **Simple Stone (Index 20)**: The terminal state of a multi-hit brick before destruction.
+  Behaves identically to a standalone simple stone.
 
 ## Success Criteria *(mandatory)*
 

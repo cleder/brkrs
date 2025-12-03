@@ -1,11 +1,9 @@
 # Tasks: Pause and Resume System
 
-**Input**: Design documents from `/specs/004-pause-system/`
-**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
-**Feature Branch**: `004-pause-system`
-**Date**: 2025-11-28
+**Input**: Design documents from `/specs/004-pause-system/` **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/ **Feature Branch**: `004-pause-system` **Date**: 2025-11-28
 
-**Tests**: No explicit test requirements in specification. Manual testing scenarios provided in quickstart.md.
+**Tests**: No explicit test requirements in specification.
+Manual testing scenarios provided in quickstart.md.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -375,14 +373,6 @@ app.add_systems(Update, (
 
 ## Format Validation
 
-✅ All tasks follow required format: `- [ ] [ID] [P?] [Story?] Description with file path`
-✅ Task IDs sequential (T001-T042)
-✅ [P] markers on parallelizable tasks (different files, no dependencies)
-✅ labels on user story phase tasks (US1, US2, US3)
-✅ File paths included in all implementation task descriptions
-✅ Tasks organized by user story for independent implementation
-✅ Clear checkpoints after each user story phase
-✅ Dependencies documented in dedicated section
-✅ Parallel execution examples provided
+✅ All tasks follow required format: `- [ ] [ID] [P?] [Story?] Description with file path` ✅ Task IDs sequential (T001-T042) ✅ [P] markers on parallelizable tasks (different files, no dependencies) ✅ labels on user story phase tasks (US1, US2, US3) ✅ File paths included in all implementation task descriptions ✅ Tasks organized by user story for independent implementation ✅ Clear checkpoints after each user story phase ✅ Dependencies documented in dedicated section ✅ Parallel execution examples provided
 
 **Tasks file ready for implementation!**

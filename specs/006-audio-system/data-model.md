@@ -1,7 +1,6 @@
 # Data Model: Audio System
 
-**Feature Branch**: `006-audio-system`
-**Date**: 2025-11-29
+**Feature Branch**: `006-audio-system` **Date**: 2025-11-29
 
 ## Entities
 

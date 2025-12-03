@@ -39,7 +39,8 @@ cargo build --target wasm32-unknown-unknown --release
 
 ## Automated Coverage
 
-- `tests/common/multi_respawn.rs` verifies that queued `LifeLostEvent`s process sequentially and game-over states halt new respawns. Run `cargo test multi_respawn` to execute only these cases when iterating on User Story 2.
+- `tests/common/multi_respawn.rs` verifies that queued `LifeLostEvent`s process sequentially and game-over states halt new respawns.
+  Run `cargo test multi_respawn` to execute only these cases when iterating on User Story 2.
 
 ## Manual Verification
 
@@ -52,13 +53,15 @@ cargo build --target wasm32-unknown-unknown --release
    - The overlay should reach peak opacity halfway through the delay, then fade back out before controls unlock; if the overlay never appears or sticks around, file a bug under US3.
 
 1. **Stationary until controls return (launch-input check)**
-   - After respawn completes, keep your hands off the launch input (space/left click). The ball must remain frozen atop the paddle until movement controls unlock, then resume motion on its own the exact frame you regain control—no manual launch allowed.
+   - After respawn completes, keep your hands off the launch input (space/left click).
+     The ball must remain frozen atop the paddle until movement controls unlock, then resume motion on its own the exact frame you regain control—no manual launch allowed.
 
 1. **Controls locked**
    - Attempt to move the paddle during the respawn delay; input should be ignored until the timer completes and both the paddle and ball release together.
 
 1. **Lives integration hook**
-   - Enable debug logging (`RUST_LOG=info cargo run`). Lose a ball and confirm logs similar to:
+   - Enable debug logging (`RUST_LOG=info cargo run`).
+     Lose a ball and confirm logs similar to:
 
    ```text
    life lost: ball=Entity(34) cause=LowerGoal spawn=(0.00, 2.00, 0.00)
@@ -66,21 +69,28 @@ cargo build --target wasm32-unknown-unknown --release
    ```
 
 1. **Repeated losses + game-over skip**
-   - Intentionally lose the ball multiple times in a row. Watch for log output indicating queued respawns and the queue length:
+   - Intentionally lose the ball multiple times in a row.
+     Watch for log output indicating queued respawns and the queue length:
 
    ```text
    warn: respawn already pending; queued additional LifeLostEvent (queue_len=1)
    info: life lost: ... remaining_lives=1
    ```
 
-   - When the final life is lost, expect a `GameOverRequested` log (remaining_lives=0) and no further respawn scheduling entries. Confirm at least 5 consecutive respawns complete without panics or timer drift.
+   - When the final life is lost, expect a `GameOverRequested` log (remaining_lives=0) and no further respawn scheduling entries.
+     Confirm at least 5 consecutive respawns complete without panics or timer drift.
 
 1. **Multi-ball safety (if feature flag enabled)**
-   - Spawn an extra ball (debug command). Lose only one ball and ensure the remaining ball stays active while only the lost ball respawns.
+   - Spawn an extra ball (debug command).
+     Lose only one ball and ensure the remaining ball stays active while only the lost ball respawns.
 
 ## Troubleshooting
 
-- No respawn? Ensure the lower goal collider sets `Sensor` and `ActiveEvents::COLLISION_EVENTS` in `bevy_rapier3d` setup.
-- Ball starts too early? Ensure `BallFrozen` is applied during respawn scheduling and that no system removes `InputLocked` prematurely (the automatic release only fires when both unlock together).
-- Paddle still moveable during delay? Verify the input system checks for `InputLocked` before applying translations.
-- Timer longer/shorter than 1 second? Inspect `RespawnSchedule.timer` for correct duration and confirm `Time` resource is not scaled for slow-mo when testing.
+- No respawn?
+  Ensure the lower goal collider sets `Sensor` and `ActiveEvents::COLLISION_EVENTS` in `bevy_rapier3d` setup.
+- Ball starts too early?
+  Ensure `BallFrozen` is applied during respawn scheduling and that no system removes `InputLocked` prematurely (the automatic release only fires when both unlock together).
+- Paddle still moveable during delay?
+  Verify the input system checks for `InputLocked` before applying translations.
+- Timer longer/shorter than 1 second?
+  Inspect `RespawnSchedule.timer` for correct duration and confirm `Time` resource is not scaled for slow-mo when testing.

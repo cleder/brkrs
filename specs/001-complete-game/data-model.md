@@ -1,14 +1,11 @@
 # Data Model: Brkrs Complete Game
 
-**Feature**: 001-complete-game
-**Created**: 2025-10-31
-**Purpose**: ECS component and entity definitions
+**Feature**: 001-complete-game **Created**: 2025-10-31 **Purpose**: ECS component and entity definitions
 
 ## Overview
 
-This document defines all ECS components, entities, resources, and their
-relationships for the Brkrs game. The design follows Bevy's ECS paradigm
-with physics-driven gameplay using Rapier3D.
+This document defines all ECS components, entities, resources, and their relationships for the Brkrs game.
+The design follows Bevy's ECS paradigm with physics-driven gameplay using Rapier3D.
 
 ## Entity Archetypes
 

@@ -47,11 +47,13 @@ xcode-select --install
    cargo run --release
    ```
 
-   The first build takes several minutes to compile dependencies. Subsequent builds are much faster.
+   The first build takes several minutes to compile dependencies.
+   Subsequent builds are much faster.
 
 3. **Play!**
 
-   The game starts with Level 1. Use your mouse to control the paddle.
+   The game starts with Level 1.
+   Use your mouse to control the paddle.
 
 ## Controls
 
@@ -74,13 +76,15 @@ Levels are stored in `assets/levels/` as RON files:
 
 ## Web version
 
-A WASM build is available at:
-<https://cleder.github.io/brkrs/>
+A WASM build is available at: <https://cleder.github.io/brkrs/>
 
 No installation required — just open the link in a modern browser (Chrome, Firefox, Safari, Edge).
 
 ## Next steps
 
-- Having issues? See {doc}`troubleshooting`
-- Want to contribute? Read the {doc}`developer-guide`
-- Curious about the architecture? Check {doc}`architecture`
+- Having issues?
+  See {doc} `troubleshooting`
+- Want to contribute?
+  Read the {doc} `developer-guide`
+- Curious about the architecture?
+  Check {doc} `architecture`

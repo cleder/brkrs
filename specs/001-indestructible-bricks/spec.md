@@ -1,9 +1,8 @@
 # Feature Specification: Indestructible bricks (LevelDefinition)
 
-**Feature Branch**: `001-indestructible-bricks`
-**Created**: 2025-11-28
-**Status**: Draft
-**Input**: LevelDefinition should support indestructible bricks which do not count toward level completion. The indestructible brick uses tile index `90`. We are moving the canonical simple (destructible) brick index from `3` → `20` for newly authored levels; existing files using `3` are handled via a repository migration policy (see Clarifications).
+**Feature Branch**: `001-indestructible-bricks` **Created**: 2025-11-28 **Status**: Draft **Input**: LevelDefinition should support indestructible bricks which do not count toward level completion.
+The indestructible brick uses tile index `90`.
+We are moving the canonical simple (destructible) brick index from `3` → `20` for newly authored levels; existing files using `3` are handled via a repository migration policy (see Clarifications).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -57,7 +56,8 @@ As a developer or content maintainer, the existing simple (destructible) brick i
 
 **Why this priority**: Changing the simple brick index is an internal housekeeping step required to avoid index conflicts and reserve index ranges for distinct brick behaviours.
 
-**Independent Test**: Load a level that uses index `20` for simple bricks and verify they behave like the prior index `3` bricks. Also verify that any level file that still contains `3` behaves according to migration policy (see Clarifications).
+**Independent Test**: Load a level that uses index `20` for simple bricks and verify they behave like the prior index `3` bricks.
+Also verify that any level file that still contains `3` behaves according to migration policy (see Clarifications).
 
 **Acceptance Scenarios**:
 
@@ -91,7 +91,8 @@ As a developer or content maintainer, the existing simple (destructible) brick i
 - **FR-002**: Indestructible bricks MUST not decrement or otherwise count toward the remaining-destructible-bricks counter used to determine level completion.
 - **FR-003**: Indestructible bricks MUST continue to participate in normal collision behaviour (ball bounces, ball velocity may change) but MUST not be destroyed by collisions, powerups, or other in-game effects that would normally break destructible bricks.
 - **FR-004**: The interpretation of the simple (destructible) brick MUST be updated so that the index `20` represents the simple brick type for all newly authored level definitions.
-- **FR-005**: The system MUST provide clear, deterministic behaviour for existing levels that contain the old simple brick index `3` (see Clarifications). This behaviour must be defined and testable before implementation.
+- **FR-005**: The system MUST provide clear, deterministic behaviour for existing levels that contain the old simple brick index `3` (see Clarifications).
+  This behaviour must be defined and testable before implementation.
 
 *NOTE (Assumption)*: Unless otherwise decided (see Clarifications), levels that explicitly use index `3` should remain readable but a migration plan or documentation should be provided so designers know how index `3` will be treated going forward.
 
@@ -102,8 +103,10 @@ As a developer or content maintainer, the existing simple (destructible) brick i
 
 ### Key Entities *(include if feature involves data)*
 
-- **LevelDefinition (matrix)**: A 2D matrix of integers that map to in-game tile/brick types. Key attributes: coordinates, tile index values.
-- **BrickType**: Logical classification for a tile index (e.g., simple destructible, multi-hit, indestructible). Key attributes: index, durability (if applicable), contribution-to-completion (boolean).
+- **LevelDefinition (matrix)**: A 2D matrix of integers that map to in-game tile/brick types.
+  Key attributes: coordinates, tile index values.
+- **BrickType**: Logical classification for a tile index (e.g., simple destructible, multi-hit, indestructible).
+  Key attributes: index, durability (if applicable), contribution-to-completion (boolean).
 - **LevelCompletionCounter**: Runtime counter or logic that tracks how many destructible bricks remain in the level and drives the level-complete condition.
 
 ## Success Criteria *(mandatory)*
@@ -122,12 +125,16 @@ As a developer or content maintainer, the existing simple (destructible) brick i
 
 ## Clarifications (required)
 
-1. **Migration policy for existing levels that use index `3`**: The project will perform an automatic migration of repository level assets (files under `assets/levels/`) converting any tile index `3` to `20` during the feature landing. Runtime support for legacy index `3` MAY be added only for external/third-party levels (see implications). The migration approach is intended to keep existing packaged levels working after the index remap without requiring manual edits by designers.
+1. **Migration policy for existing levels that use index `3`**: The project will perform an automatic migration of repository level assets (files under `assets/levels/`) converting any tile index `3` to `20` during the feature landing.
+   Runtime support for legacy index `3` MAY be added only for external/third-party levels (see implications).
+   The migration approach is intended to keep existing packaged levels working after the index remap without requiring manual edits by designers.
 
 Migration details and acceptance criteria:
 
 - The repo-level automated migration script MUST update any `.ron` or level asset files under `assets/levels` that contain the tile value `3` to `20`, preserving formatting where possible and creating a backup copy (e.g., `level_X.ron.bak`) before modification.
-- The parser MUST continue to accept index `3` for the duration of an immediate compatibility window (if implemented) but the recommended canonical mapping will be `20` going forward. The migration script and README MUST document the choice and give designers guidance.
+- The parser MUST continue to accept index `3` for the duration of an immediate compatibility window (if implemented) but the recommended canonical mapping will be `20` going forward.
+  The migration script and README MUST document the choice and give designers guidance.
 - Acceptance: After running the migration script on repo assets, no files under `assets/levels/` should contain the standalone numeric tile `3` where it previously represented a simple brick; unit tests and a regression test run must validate that updated files behave identically to pre-migration behaviour.
 
-We implemented the repository-level migration approach for existing assets: the migration script will convert index `3` → `20` in repository-owned level files and write backups (e.g., `level_###.ron.bak`). External levels (user-supplied or third-party assets) will not be modified by default and may be handled separately with explicit migration steps.
+We implemented the repository-level migration approach for existing assets: the migration script will convert index `3` → `20` in repository-owned level files and write backups (e.g., `level_###.ron.bak`).
+External levels (user-supplied or third-party assets) will not be modified by default and may be handled separately with explicit migration steps.

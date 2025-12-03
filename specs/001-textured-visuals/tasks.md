@@ -4,8 +4,7 @@ description: "Task list for Textured Visuals Overhaul implementation"
 
 # Tasks: Textured Visuals Overhaul
 
-**Input**: Design documents from `/specs/001-textured-visuals/`
-**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
+**Input**: Design documents from `/specs/001-textured-visuals/` **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
 
 **Tests**: Added where explicitly called out by research + quickstart (manifest parsing, fallback registry, type variants, level switcher).
 
@@ -14,7 +13,8 @@ description: "Task list for Textured Visuals Overhaul implementation"
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Task can run in parallel (separate files, no blocking deps)
-- **[Story]**: Label per user story (US1..US4). Setup/Foundational/Polish omit the label.
+- **[Story]**: Label per user story (US1..US4).
+  Setup/Foundational/Polish omit the label.
 - Descriptions always include concrete file paths.
 
 ---
@@ -83,7 +83,8 @@ description: "Task list for Textured Visuals Overhaul implementation"
 - [x] T017 [US2] Apply brick-type textures on spawn/update by integrating registry lookups into `src/level_loader.rs` (brick matrix parsing).
 - [x] T018 [US2] Surface type-variant metadata through the `/visual-assets/manifest` contract by updating `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml` and any associated tooling/export commands.
 
-**Parallel Example (US2)**: While T014 establishes regression tests, T015 and T016 can run concurrently (loader vs materials). T017 waits on registry definitions but can start before contract doc (T018).
+**Parallel Example (US2)**: While T014 establishes regression tests, T015 and T016 can run concurrently (loader vs materials).
+T017 waits on registry definitions but can start before contract doc (T018).
 
 **Checkpoint**: Gameplay types are visually distinguishable and independently testable.
 
@@ -106,7 +107,8 @@ description: "Task list for Textured Visuals Overhaul implementation"
 - [x] T022 [US3] Add manifest hot-reload + asset swap detection in `src/systems/textures/overrides.rs` so artists can replace textures without rebuilding.
 - [x] T023 [US3] Honor the `/visual-assets/preview` contract by wiring a tooling hook or asset ingestion script referenced in `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml`.
 
-**Parallel Example (US3)**: T019 can run alongside T020 since it targets `tests/`, while T021 and T022 proceed sequentially within `src/systems/textures/overrides.rs`. T023 can begin once overrides expose an API endpoint or script integration point.
+**Parallel Example (US3)**: T019 can run alongside T020 since it targets `tests/`, while T021 and T022 proceed sequentially within `src/systems/textures/overrides.rs`.
+T023 can begin once overrides expose an API endpoint or script integration point.
 
 **Checkpoint**: Each level presents unique art, and asset-swapping fits into the documented pipeline.
 
@@ -128,7 +130,8 @@ description: "Task list for Textured Visuals Overhaul implementation"
 - [x] T026 [US4] Connect keyboard input to the new event in `src/main.rs` (or existing input system) and ensure `src/level_loader.rs` handles queued switches.
 - [x] T027 [US4] Mirror the `/levels/next` contract by exposing a debug command or tooling shim as defined in `specs/001-textured-visuals/contracts/visual-assets.openapi.yaml`.
 
-**Parallel Example (US4)**: T024 can be authored while T025 builds the event/resource plumbing. T026 and T027 can proceed concurrently once the event exists (different files: `src/main.rs` vs contracts/tooling script).
+**Parallel Example (US4)**: T024 can be authored while T025 builds the event/resource plumbing.
+T026 and T027 can proceed concurrently once the event exists (different files: `src/main.rs` vs contracts/tooling script).
 
 **Checkpoint**: Artists loop through levels instantly via keyboard or tooling endpoint.
 
@@ -146,7 +149,8 @@ description: "Task list for Textured Visuals Overhaul implementation"
 
 1. **Phase 1 → Phase 2**: Setup must complete before foundational ECS resources compile.
 2. **Phase 2 → User Stories**: Foundational resources block all story phases; once complete, US1..US4 may proceed (priority order recommended: P1 → P4).
-3. **User Stories**: Each story remains independently testable but may start in parallel after Phase 2 if staffing allows. Ensure US1 (baseline) lands before dependent visual polish (US2/US3).
+3. **User Stories**: Each story remains independently testable but may start in parallel after Phase 2 if staffing allows.
+   Ensure US1 (baseline) lands before dependent visual polish (US2/US3).
 4. **Polish**: Runs last after desired stories ship.
 
 ## Parallel Opportunities Summary
@@ -170,4 +174,5 @@ description: "Task list for Textured Visuals Overhaul implementation"
 
 ## MVP Scope Recommendation
 
-Deliver up through **User Story 1** (Phases 1–3). This slice guarantees textured gameplay with resilient fallbacks and unlocks stakeholder demos while later stories iterate in parallel.
+Deliver up through **User Story 1** (Phases 1–3).
+This slice guarantees textured gameplay with resilient fallbacks and unlocks stakeholder demos while later stories iterate in parallel.

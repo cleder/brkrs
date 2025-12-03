@@ -1,9 +1,9 @@
 # Feature Specification: Pause and Resume System
 
-**Feature Branch**: `004-pause-system`
-**Created**: 2025-01-24
-**Status**: Draft
-**Input**: User description: "Implement a pause and restart system. During a pause the game will be windowed. The pause will display a message. Use the esc key to pause and a click on the screen to resume."
+**Feature Branch**: `004-pause-system` **Created**: 2025-01-24 **Status**: Draft **Input**: User description: "Implement a pause and restart system.
+During a pause the game will be windowed.
+The pause will display a message.
+Use the esc key to pause and a click on the screen to resume."
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -11,9 +11,12 @@
 
 A player presses the ESC key during active gameplay to pause the game, freezing all game physics and displaying a pause overlay message.
 
-**Why this priority**: Core pause functionality is the foundation of the feature. Without the ability to pause, the entire feature has no value. This is the most critical user need.
+**Why this priority**: Core pause functionality is the foundation of the feature.
+Without the ability to pause, the entire feature has no value.
+This is the most critical user need.
 
-**Independent Test**: Can be fully tested by running the game, starting gameplay, pressing ESC, and verifying that the game freezes and displays the pause message. Delivers immediate value as a minimal pause system.
+**Independent Test**: Can be fully tested by running the game, starting gameplay, pressing ESC, and verifying that the game freezes and displays the pause message.
+Delivers immediate value as a minimal pause system.
 
 **Acceptance Scenarios**:
 
@@ -27,9 +30,12 @@ A player presses the ESC key during active gameplay to pause the game, freezing 
 
 A player clicks anywhere on the game screen while paused to resume gameplay, removing the pause overlay and restarting all game physics.
 
-**Why this priority**: Resume functionality is equally critical to pause. Without a way to unpause, the game becomes unplayable after the first pause. This completes the minimal viable pause system.
+**Why this priority**: Resume functionality is equally critical to pause.
+Without a way to unpause, the game becomes unplayable after the first pause.
+This completes the minimal viable pause system.
 
-**Independent Test**: Can be tested independently by manually entering a paused state (or using the ESC pause from Story 1), then clicking the screen to verify physics resume and overlay disappears. Delivers value by completing the pause/resume cycle.
+**Independent Test**: Can be tested independently by manually entering a paused state (or using the ESC pause from Story 1), then clicking the screen to verify physics resume and overlay disappears.
+Delivers value by completing the pause/resume cycle.
 
 **Acceptance Scenarios**:
 
@@ -41,11 +47,14 @@ A player clicks anywhere on the game screen while paused to resume gameplay, rem
 
 ### User Story 3 - Window Mode Switching on Pause (Priority: P2)
 
-When the player pauses the game, the system switches from fullscreen mode to windowed mode. Upon resume, the system switches back to fullscreen mode (or the original windowing state).
+When the player pauses the game, the system switches from fullscreen mode to windowed mode.
+Upon resume, the system switches back to fullscreen mode (or the original windowing state).
 
-**Why this priority**: This is a secondary enhancement that improves user experience during pause by allowing easier interaction with other applications. It's valuable but not essential for a minimal pause system.
+**Why this priority**: This is a secondary enhancement that improves user experience during pause by allowing easier interaction with other applications.
+It's valuable but not essential for a minimal pause system.
 
-**Independent Test**: Can be tested independently by verifying the window mode before pause (fullscreen), pausing the game, confirming the window becomes windowed, then resuming and verifying fullscreen is restored. Delivers value by improving desktop workflow during pauses.
+**Independent Test**: Can be tested independently by verifying the window mode before pause (fullscreen), pausing the game, confirming the window becomes windowed, then resuming and verifying fullscreen is restored.
+Delivers value by improving desktop workflow during pauses.
 
 **Acceptance Scenarios**:
 

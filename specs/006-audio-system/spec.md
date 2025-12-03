@@ -1,10 +1,7 @@
 # Feature Specification: Audio System
 
-**Feature Branch**: `006-audio-system`
-**Created**: 2025-11-29
-**Status**: Draft
-**Input**: User description: "Audio event hooks for brick interactions, level transitions, and multi-hit brick feedback. Addresses GitHub issues #10 and #23."
-**Related Issues**: [#10](https://github.com/cleder/brkrs/issues/10), [#23](https://github.com/cleder/brkrs/issues/23)
+**Feature Branch**: `006-audio-system` **Created**: 2025-11-29 **Status**: Draft **Input**: User description: "Audio event hooks for brick interactions, level transitions, and multi-hit brick feedback.
+Addresses GitHub issues #10 and #23." **Related Issues**: [#10](https://github.com/cleder/brkrs/issues/10), [#23](https://github.com/cleder/brkrs/issues/23)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -12,9 +9,11 @@
 
 As a player, I want to hear sounds when bricks are hit or destroyed so that I receive immediate audio feedback confirming my actions.
 
-**Why this priority**: Audio feedback for brick collisions is the most fundamental audio interaction in a brick-breaker game. It provides essential gameplay feedback and is triggered most frequently during play.
+**Why this priority**: Audio feedback for brick collisions is the most fundamental audio interaction in a brick-breaker game.
+It provides essential gameplay feedback and is triggered most frequently during play.
 
-**Independent Test**: Can be fully tested by launching a ball at any brick and listening for the appropriate sound. Delivers immediate confirmation that audio is working.
+**Independent Test**: Can be fully tested by launching a ball at any brick and listening for the appropriate sound.
+Delivers immediate confirmation that audio is working.
 
 **Acceptance Scenarios**:
 
@@ -103,10 +102,14 @@ As a developer or player on a minimal setup, I want the game to run without erro
 
 ### Edge Cases
 
-- What happens when multiple bricks are destroyed in rapid succession (e.g., chain reaction)? System limits concurrent sounds to 3-4 of the same type; excess sounds are dropped.
-- What happens when the ball hits a corner between two bricks simultaneously? A single sound should play (not double).
-- How does the system handle audio on web builds where audio context requires user interaction? The system should gracefully handle browser audio restrictions.
-- What happens if volume is set to 0%? Audio events should still fire internally (for future analytics) but produce no audible output.
+- What happens when multiple bricks are destroyed in rapid succession (e.g., chain reaction)?
+  System limits concurrent sounds to 3-4 of the same type; excess sounds are dropped.
+- What happens when the ball hits a corner between two bricks simultaneously?
+  A single sound should play (not double).
+- How does the system handle audio on web builds where audio context requires user interaction?
+  The system should gracefully handle browser audio restrictions.
+- What happens if volume is set to 0%?
+  Audio events should still fire internally (for future analytics) but produce no audible output.
 
 ## Requirements *(mandatory)*
 
@@ -128,8 +131,10 @@ As a developer or player on a minimal setup, I want the game to run without erro
 
 ### Key Entities
 
-- **Audio Event**: A game event (collision, transition, action) that should trigger audio playback. Examples: BrickHit, WallHit, PaddleWallHit, PaddleBrickHit, LevelComplete.
-- **Sound Asset**: An audio file mapped to one or more audio events. Identified by a sound ID or name.
+- **Audio Event**: A game event (collision, transition, action) that should trigger audio playback.
+  Examples: BrickHit, WallHit, PaddleWallHit, PaddleBrickHit, LevelComplete.
+- **Sound Asset**: An audio file mapped to one or more audio events.
+  Identified by a sound ID or name.
 - **Audio Configuration**: User-adjustable settings including master volume (0-100%) and mute state.
 - **Sound Mapping**: The relationship between game events and their corresponding sound assets.
 

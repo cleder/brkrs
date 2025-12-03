@@ -23,4 +23,5 @@ cd tools/migrate-level-indices && cargo build
 
 Notes
 
-- The script is intentionally small and designed for use when landing the feature. CI will run tests that exercise the migration logic.
+- The script is intentionally small and designed for use when landing the feature.
+  CI will run tests that exercise the migration logic.

@@ -5,19 +5,12 @@
 
 ## Summary
 
-Implement bricks that require multiple hits to destroy (indices 10-13), where each hit transforms the brick to the next lower index until it becomes a simple stone (index 20), which can then be destroyed. The implementation leverages Bevy's ECS architecture with component-based state tracking and collision-driven state transitions.
+Implement bricks that require multiple hits to destroy (indices 10-13), where each hit transforms the brick to the next lower index until it becomes a simple stone (index 20), which can then be destroyed.
+The implementation leverages Bevy's ECS architecture with component-based state tracking and collision-driven state transitions.
 
 ## Technical Context
 
-**Language/Version**: Rust 1.81 (Rust 2021 edition)
-**Primary Dependencies**: Bevy 0.17, bevy_rapier3d (physics/collision)
-**Storage**: RON level files (existing format supports indices 10-13)
-**Testing**: cargo test (unit + integration tests)
-**Target Platform**: Native (Linux/Windows/macOS) + WASM
-**Project Type**: Single Bevy game project
-**Performance Goals**: 60 FPS on target hardware (existing requirement)
-**Constraints**: No frame drops during brick state transitions; WASM compatibility
-**Scale/Scope**: 4 new brick variants (indices 10-13) with state machine behavior
+**Language/Version**: Rust 1.81 (Rust 2021 edition) **Primary Dependencies**: Bevy 0.17, bevy_rapier3d (physics/collision) **Storage**: RON level files (existing format supports indices 10-13) **Testing**: cargo test (unit + integration tests) **Target Platform**: Native (Linux/Windows/macOS) + WASM **Project Type**: Single Bevy game project **Performance Goals**: 60 FPS on target hardware (existing requirement) **Constraints**: No frame drops during brick state transitions; WASM compatibility **Scale/Scope**: 4 new brick variants (indices 10-13) with state machine behavior
 
 ## Constitution Check
 
@@ -71,11 +64,13 @@ assets/
     └── manifest.ron     # Update with type_variants for indices 10-13
 ```
 
-**Structure Decision**: Single project structure (existing). Multi-hit brick logic added as a new system in `src/systems/multi_hit.rs` with integration tests in `tests/`.
+**Structure Decision**: Single project structure (existing).
+Multi-hit brick logic added as a new system in `src/systems/multi_hit.rs` with integration tests in `tests/`.
 
 ## Complexity Tracking
 
-No constitution violations. Implementation follows established patterns:
+No constitution violations.
+Implementation follows established patterns:
 
 - Uses existing `BrickTypeId` component for state
 - Extends existing collision handling in `mark_brick_on_ball_collision`

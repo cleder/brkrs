@@ -1,6 +1,7 @@
 # Contributing
 
-Thank you for your interest in contributing to brkrs! This guide covers the contribution workflow.
+Thank you for your interest in contributing to brkrs!
+This guide covers the contribution workflow.
 
 ## Getting Started
 
@@ -75,9 +76,8 @@ Thank you for your interest in contributing to brkrs! This guide covers the cont
 
 #### Code Block Syntax Highlighting
 
-For RON (Rusty Object Notation) files, use `rust` as the language identifier
-instead of `ron`. Pygments (used by Sphinx) doesn't have a RON lexer, but
-RON syntax is Rust-like so `rust` provides good highlighting:
+For RON (Rusty Object Notation) files, use `rust` as the language identifier instead of `ron`.
+Pygments (used by Sphinx) doesn't have a RON lexer, but RON syntax is Rust-like so `rust` provides good highlighting:
 
 ```markdown
 <!-- Do this -->

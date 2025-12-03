@@ -153,6 +153,7 @@ The `fallback/` directory contains default textures used when custom textures ar
 
 **"Matrix must be 20x20"**: Check that all rows have exactly 20 elements and there are exactly 20 rows.
 
-**"Invalid cell value"**: Only values 0-5 are valid. Check for typos.
+**"Invalid cell value"**: Only values 0-5 are valid.
+Check for typos.
 
 **"Missing paddle/ball"**: The level will still load but will use fallback spawn positions.

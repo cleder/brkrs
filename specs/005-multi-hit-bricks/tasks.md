@@ -1,7 +1,6 @@
 # Tasks: Multi-Hit Bricks
 
-**Input**: Design documents from `/specs/005-multi-hit-bricks/`
-**Prerequisites**: plan.md ✅, spec.md ✅, research.md ✅, data-model.md ✅, contracts/ ✅
+**Input**: Design documents from `/specs/005-multi-hit-bricks/` **Prerequisites**: plan.md ✅, spec.md ✅, research.md ✅, data-model.md ✅, contracts/ ✅
 
 **Tests**: Tests are included as this is a gameplay feature requiring verification.
 

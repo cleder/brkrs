@@ -1,7 +1,6 @@
 # Data Model: Multi-Hit Bricks
 
-**Feature**: 005-multi-hit-bricks
-**Date**: 2025-11-29
+**Feature**: 005-multi-hit-bricks **Date**: 2025-11-29
 
 ## Entities
 
@@ -143,4 +142,5 @@ Emitted when any brick (including former multi-hit) is destroyed.
 | `type_id` | `u8` | Final type ID at destruction |
 | `points` | `u32` | Points to award |
 
-**Note**: Event implementation is optional for MVP. Core functionality works without events; they enable future audio/scoring integration.
+**Note**: Event implementation is optional for MVP.
+Core functionality works without events; they enable future audio/scoring integration.

@@ -1,8 +1,6 @@
 # Specification Quality Checklist: Create Sphinx / MyST documentation and Read the Docs site
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2025-11-29
-**Feature**: ../spec.md
+**Purpose**: Validate specification completeness and quality before proceeding to planning **Created**: 2025-11-29 **Feature**: ../spec.md
 
 ## Content Quality
 
@@ -31,4 +29,5 @@
 
 ## Notes
 
-All checklist items pass; the spec is ready for planning. If you want additional outputs (PDF/epub) or full rustdoc embedding, open a follow-up feature to expand scope.
+All checklist items pass; the spec is ready for planning.
+If you want additional outputs (PDF/epub) or full rustdoc embedding, open a follow-up feature to expand scope.

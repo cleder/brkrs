@@ -1,17 +1,23 @@
 # Feature Specification: Brkrs Complete Game
 
-**Feature Branch**: `001-complete-game`
-**Created**: 2025-10-31
-**Status**: Draft
-**Input**: User description: "Brkrs is a classic Breakout/Arkanoid style game implemented in Rust with the Bevy game engine. It's a feature-rich clone with advanced gameplay mechanics beyond the basic Breakout formula. It features a paddle that can be controlled with the mouse, in all directions (left/right (x), up/down (y)). If the player is moving the paddle to the right when the ball makes contact, the game calculates a greater horizontal velocity component in the rightward direction, sending the ball off at a sharper horizontal angle. Conversely, moving the paddle to the left imparts a leftward 'english.' The mouse wheel controls the rotation of the paddle. It uses 3D rendering to display the bricks, the walls, and the ball. The game will be implemented in 3D but constrained to a 2D plane above the ground. The game area is divided into a 22x22 grid, the stones are placed into this grid and fill a grid cell."
+**Feature Branch**: `001-complete-game` **Created**: 2025-10-31 **Status**: Draft **Input**: User description: "Brkrs is a classic Breakout/Arkanoid style game implemented in Rust with the Bevy game engine.
+It's a feature-rich clone with advanced gameplay mechanics beyond the basic Breakout formula.
+It features a paddle that can be controlled with the mouse, in all directions (left/right (x), up/down (y)).
+If the player is moving the paddle to the right when the ball makes contact, the game calculates a greater horizontal velocity component in the rightward direction, sending the ball off at a sharper horizontal angle.
+Conversely, moving the paddle to the left imparts a leftward 'english.' The mouse wheel controls the rotation of the paddle.
+It uses 3D rendering to display the bricks, the walls, and the ball.
+The game will be implemented in 3D but constrained to a 2D plane above the ground.
+The game area is divided into a 22x22 grid, the stones are placed into this grid and fill a grid cell."
 
 ## Clarifications
 
 ### Session 2025-11-24
 
-- Q: What should happen when the ball hits a multi-hit brick? The spec mentions "durability" but doesn't specify the reflection behavior. → A: Ball always reflects normally; only durability changes
+- Q: What should happen when the ball hits a multi-hit brick?
+  The spec mentions "durability" but doesn't specify the reflection behavior. → A: Ball always reflects normally; only durability changes
 - Q: How many lives should the player start with, and where should the ball respawn after being lost? → A: 3 lives; ball respawns at position designated by "2" in level matrix; paddle respawns at position designated by "1" in level matrix
-- Q: What brick types should count toward level completion? The spec mentions 37 brick types but doesn't clarify which must be destroyed to advance. → A: Only destructible bricks count; indestructible bricks can remain
+- Q: What brick types should count toward level completion?
+  The spec mentions 37 brick types but doesn't clarify which must be destroyed to advance. → A: Only destructible bricks count; indestructible bricks can remain
 - Q: How should mouse movement speed affect paddle movement? → A: Velocity-based (current implementation: mouse delta * 0.0004 / delta_time creates proportional velocity)
 - Q: What maximum ball velocity should be enforced? → A: Ball-type dependent; smaller balls (golf ball) can reach higher speeds, larger balls (beach ball) have lower max speed
 
@@ -21,9 +27,11 @@
 
 A player launches the game, starts playing with mouse-controlled paddle movement, and experiences the core ball-paddle-brick physics interaction with mouse-based ball steering.
 
-**Why this priority**: This is the absolute core of the game - without basic paddle control, ball physics, and brick destruction, there is no game. This MVP provides the fundamental gameplay experience.
+**Why this priority**: This is the absolute core of the game - without basic paddle control, ball physics, and brick destruction, there is no game.
+This MVP provides the fundamental gameplay experience.
 
-**Independent Test**: Can be fully tested by launching the game, moving the paddle with the mouse (X and Y directions), hitting the ball, and destroying at least one brick. Delivers a playable Breakout experience.
+**Independent Test**: Can be fully tested by launching the game, moving the paddle with the mouse (X and Y directions), hitting the ball, and destroying at least one brick.
+Delivers a playable Breakout experience.
 
 **Acceptance Scenarios**:
 
@@ -42,9 +50,11 @@ A player launches the game, starts playing with mouse-controlled paddle movement
 
 A player navigates through different game states including starting, pausing, game over, and progressing through levels.
 
-**Why this priority**: Essential for a complete game experience, but the core gameplay (P1) must work first. This adds game flow and progression.
+**Why this priority**: Essential for a complete game experience, but the core gameplay (P1) must work first.
+This adds game flow and progression.
 
-**Independent Test**: Can be tested by starting a game, pausing/resuming, losing all lives to trigger game over, and completing a level to advance. Delivers a structured game experience with proper state transitions.
+**Independent Test**: Can be tested by starting a game, pausing/resuming, losing all lives to trigger game over, and completing a level to advance.
+Delivers a structured game experience with proper state transitions.
 
 **Acceptance Scenarios**:
 
@@ -61,9 +71,11 @@ A player navigates through different game states including starting, pausing, ga
 
 A player encounters different brick types with unique behaviors, adding variety and challenge to the gameplay.
 
-**Why this priority**: Enhances gameplay depth and variety, but requires core gameplay (P1) and level progression (P2) to be functional first. Delivers the "feature-rich" aspect beyond basic Breakout.
+**Why this priority**: Enhances gameplay depth and variety, but requires core gameplay (P1) and level progression (P2) to be functional first.
+Delivers the "feature-rich" aspect beyond basic Breakout.
 
-**Independent Test**: Can be tested by playing a level containing different brick types and observing varied behaviors (different hit counts, special effects, etc.). Delivers enhanced gameplay variety.
+**Independent Test**: Can be tested by playing a level containing different brick types and observing varied behaviors (different hit counts, special effects, etc.).
+Delivers enhanced gameplay variety.
 
 **Acceptance Scenarios**:
 
@@ -81,7 +93,8 @@ A player progresses through 77 unique levels with different brick layouts and ch
 
 **Why this priority**: Provides long-term engagement and replayability, but depends on core gameplay (P1), state management (P2), and brick variety (P3) being complete.
 
-**Independent Test**: Can be tested by loading different level definitions and verifying correct brick placement and progression. Delivers extensive content and replay value.
+**Independent Test**: Can be tested by loading different level definitions and verifying correct brick placement and progression.
+Delivers extensive content and replay value.
 
 **Acceptance Scenarios**:
 
@@ -96,9 +109,11 @@ A player progresses through 77 unique levels with different brick layouts and ch
 
 A player experiences a visually appealing 3D-rendered game with proper lighting, shadows, and camera perspective.
 
-**Why this priority**: Enhances player experience and game polish, but all core gameplay mechanics must be functional first. Delivers professional visual quality.
+**Why this priority**: Enhances player experience and game polish, but all core gameplay mechanics must be functional first.
+Delivers professional visual quality.
 
-**Independent Test**: Can be tested by launching the game and observing 3D models, lighting effects, shadows, and overhead camera view. Delivers polished visual presentation.
+**Independent Test**: Can be tested by launching the game and observing 3D models, lighting effects, shadows, and overhead camera view.
+Delivers polished visual presentation.
 
 **Acceptance Scenarios**:
 
@@ -113,12 +128,18 @@ A player experiences a visually appealing 3D-rendered game with proper lighting,
 
 ### Edge Cases
 
-- What happens when the paddle reaches the boundary of the play area (collision with walls)? Paddle bounces back proportionally to collision impulse. Balls get an impulse from the wall collision. Screen shake effect (could be implemented by moving the camera position).
+- What happens when the paddle reaches the boundary of the play area (collision with walls)?
+  Paddle bounces back proportionally to collision impulse.
+  Balls get an impulse from the wall collision.
+  Screen shake effect (could be implemented by moving the camera position).
 - How does the system handle the ball getting stuck in a corner or between bricks?
-- What happens when the ball velocity becomes too high (speed limiting)? A speed limit should be enforced depending on the ball type: small balls (golf ball) can reach higher maximum speeds, while large balls (beach ball) have lower maximum speeds to maintain physics stability and gameplay balance.
-- How does the game handle window resize or focus loss during gameplay? Pause the game.
+- What happens when the ball velocity becomes too high (speed limiting)?
+  A speed limit should be enforced depending on the ball type: small balls (golf ball) can reach higher maximum speeds, while large balls (beach ball) have lower maximum speeds to maintain physics stability and gameplay balance.
+- How does the game handle window resize or focus loss during gameplay?
+  Pause the game.
 - What happens when mouse input is lost or disconnected during gameplay? pause the game.
-- How does the paddle rotation affect ball collision angles at extreme rotation values? Rotation angles should be limited to 45 degrees. when the paddle is rotated an angular force should be applied that nudges the paddle back into a horizontal position.
+- How does the paddle rotation affect ball collision angles at extreme rotation values?
+  Rotation angles should be limited to 45 degrees. when the paddle is rotated an angular force should be applied that nudges the paddle back into a horizontal position.
 - What happens when multiple bricks are destroyed simultaneously?
 - How does the game handle loading a corrupted or missing level definition?
 

@@ -100,5 +100,6 @@ Event-driven flow keeps the respawn feature modular and satisfies FR-009/FR-010.
 ## Validation Rules
 
 - Each level load must yield exactly one paddle and one ball spawn; missing markers trigger warnings and fallback center positions per FR-008.
-- Only one `RespawnRequest` may be active at a time. A second `LifeLostEvent` while `pending.is_some()` should be queued for after the current respawn completes to satisfy multi-loss handling.
+- Only one `RespawnRequest` may be active at a time.
+  A second `LifeLostEvent` while `pending.is_some()` should be queued for after the current respawn completes to satisfy multi-loss handling.
 - Systems manipulating paddle/ball transforms must honor `BallFrozen`/`InputLocked` markers to keep initial velocity zero until the player launches.

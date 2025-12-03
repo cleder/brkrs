@@ -3,7 +3,8 @@
 **Branch**: `001-indestructible-bricks` | **Date**: 2025-11-28 | **Spec**: spec.md
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**Note**: This template is filled in by the `/speckit.plan` command.
+See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
@@ -17,25 +18,19 @@
   the iteration process.
 -->
 
-**Language/Version**: Rust 1.81
-**Primary Dependencies**: Bevy 0.17, bevy_rapier3d, serde (ron + serde), bevy_ecs
-**Storage**: Files (LevelDefinition assets stored in assets/levels/*.ron)
-**Testing**: cargo test (unit + integration) and manual gameplay tests (native + WASM)
-**Target Platform**: Native desktop (Linux, macOS, Windows) and WASM for web builds
-**Project Type**: Single (game engine codebase)
-**Performance Goals**: Maintain 60 FPS on target platforms; low-latency collision handling for physics-driven gameplay
-**Constraints**: Must adhere to project's Constitution (ECS-first, physics-driven, cross-platform). Changes should not add large allocations in hot loops or break WASM compatibility
-**Scale/Scope**: Small feature-level change within the existing codebase — touching level parsing & brick systems, unit tests, sample assets
+**Language/Version**: Rust 1.81 **Primary Dependencies**: Bevy 0.17, bevy_rapier3d, serde (ron + serde), bevy_ecs **Storage**: Files (LevelDefinition assets stored in assets/levels/ *.ron) * *Testing* *: cargo test (unit + integration) and manual gameplay tests (native + WASM) * *Target Platform* *: Native desktop (Linux, macOS, Windows) and WASM for web builds * *Project Type* *: Single (game engine codebase) * *Performance Goals* *: Maintain 60 FPS on target platforms; low-latency collision handling for physics-driven gameplay * *Constraints* *: Must adhere to project's Constitution (ECS-first, physics-driven, cross-platform).
+Changes should not add large allocations in hot loops or break WASM compatibility * *Scale/Scope**: Small feature-level change within the existing codebase — touching level parsing & brick systems, unit tests, sample assets
 
 ## Constitution Check
 
-GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.
+GATE: Must pass before Phase 0 research.
+Re-check after Phase 1 design.
 
 Checkpoints (must be satisfied or explicitly justified):
 
 - ECS-first: Implementation MUST be expressed as systems + components. (OK)
 - Physics-driven: Brick behaviour MUST be handled via collisions and physics events where applicable. (OK)
-- Modular feature: Add new brick behaviour as a self-contained system, togglable and testable. (OK)
+- Modular feature: Add new brick behaviour as a self-contained system, toggleable and testable. (OK)
 - Performance: No additional per-frame allocations in hot loops, tests must confirm 60 FPS preserved. (OK - to be validated by profiling)
 
 No gates are violated by the proposed plan — proceed to Phase 1.
@@ -106,8 +101,7 @@ Key areas impacted:
 - `src/systems/` — new or updated system modules: `respawn.rs`, `level_switch.rs`, and a new `indestructible.rs` system file to coordinate brick behaviour
 - `assets/levels/` — migration of levels under this directory during landing
 
-The implementation will follow the existing layout and add unit/integration tests under `tests/`.
-directories captured above]
+The implementation will follow the existing layout and add unit/integration tests under `tests/`. directories captured above]
 
 ## Complexity Tracking
 

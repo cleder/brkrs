@@ -66,11 +66,13 @@ PR / Merge status
 
 Note
 
-- On 2025-12-01 the repository CI was updated to run tests single-threaded by setting the `RUST_TEST_THREADS=1` environment variable in `.github/workflows/ci.yaml`. This change was made to avoid intermittent test failures caused by parallel tests touching shared files or relying on environment variables.
+- On 2025-12-01 the repository CI was updated to run tests single-threaded by setting the `RUST_TEST_THREADS=1` environment variable in `.github/workflows/ci.yaml`.
+  This change was made to avoid intermittent test failures caused by parallel tests touching shared files or relying on environment variables.
 
 Acknowledgements
 
-- Thanks to the team for the spec and review feedback. If you'd like, I can open the PR from this environment given an authenticated `gh` session or `GH_TOKEN`.
+- Thanks to the team for the spec and review feedback.
+  If you'd like, I can open the PR from this environment given an authenticated `gh` session or `GH_TOKEN`.
 
 ---
 

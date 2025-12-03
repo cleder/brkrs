@@ -1,8 +1,6 @@
 # Specification Quality Checklist: Indestructible bricks (LevelDefinition)
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2025-11-28
-**Feature**: ../spec.md
+**Purpose**: Validate specification completeness and quality before proceeding to planning **Created**: 2025-11-28 **Feature**: ../spec.md
 
 ## Content Quality
 

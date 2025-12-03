@@ -2,7 +2,9 @@
 
 ## Summary
 
-Grid and level matrix migrated from 22x22 to 20x20 across code, assets, and documentation. Four user stories plus polish phase delivered; success criteria SC-001..SC-010 all verified. Final state is stable for native and WASM builds.
+Grid and level matrix migrated from 22x22 to 20x20 across code, assets, and documentation.
+Four user stories plus polish phase delivered; success criteria SC-001..SC-010 all verified.
+Final state is stable for native and WASM builds.
 
 ## What Went Well
 
@@ -69,4 +71,5 @@ Grid and level matrix migrated from 22x22 to 20x20 across code, assets, and docu
 
 ## Final Status
 
-Migration complete; all tasks T001–T072 closed and committed. Conventional commit recorded: `feat(map-format): finalize Phase 7 polish & verification`.
+Migration complete; all tasks T001–T072 closed and committed.
+Conventional commit recorded: `feat(map-format): finalize Phase 7 polish & verification`.

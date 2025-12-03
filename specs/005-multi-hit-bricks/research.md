@@ -1,7 +1,6 @@
 # Research: Multi-Hit Bricks
 
-**Feature**: 005-multi-hit-bricks
-**Date**: 2025-11-29
+**Feature**: 005-multi-hit-bricks **Date**: 2025-11-29
 
 ## Overview
 
@@ -68,7 +67,8 @@ This document captures research findings for implementing multi-hit bricks (indi
 - Current audio system (if implemented) uses events
 - Decouples collision logic from audio playback
 
-**Implementation Note**: Audio system may not be fully implemented yet. Document the event emission; audio playback can be added when audio system is ready.
+**Implementation Note**: Audio system may not be fully implemented yet.
+Document the event emission; audio playback can be added when audio system is ready.
 
 ### 5. Scoring
 
@@ -80,7 +80,8 @@ This document captures research findings for implementing multi-hit bricks (indi
 - Simple stone destruction awards standard 25 points
 - Scoring system (if implemented) should listen for brick hit/destroy events
 
-**Implementation Note**: Score tracking may not be fully implemented. Document the scoring events; actual score updates can be added when scoring system is ready.
+**Implementation Note**: Score tracking may not be fully implemented.
+Document the scoring events; actual score updates can be added when scoring system is ready.
 
 ### 6. Level Completion Logic
 
@@ -93,7 +94,8 @@ This document captures research findings for implementing multi-hit bricks (indi
 - When they transition to simple stone (20), they KEEP the component
 - Level completes when all `CountsTowardsCompletion` entities are despawned
 
-**Implementation Note**: Current code adds `CountsTowardsCompletion` for all bricks except index 90 (indestructible). Indices 10-13 will automatically get this component since they are < 90 and >= 3.
+**Implementation Note**: Current code adds `CountsTowardsCompletion` for all bricks except index 90 (indestructible).
+Indices 10-13 will automatically get this component since they are < 90 and >= 3.
 
 ## Dependencies
 

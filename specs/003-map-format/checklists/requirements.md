@@ -1,8 +1,6 @@
 # Specification Quality Checklist: Map Format Change (22x22 to 20x20)
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2025-11-27
-**Feature**: [spec.md](../spec.md)
+**Purpose**: Validate specification completeness and quality before proceeding to planning **Created**: 2025-11-27 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 
@@ -31,7 +29,8 @@
 
 ## Notes
 
-All checklist items pass validation. The specification is complete and ready for planning phase.
+All checklist items pass validation.
+The specification is complete and ready for planning phase.
 
 **Validation Details**:
 
