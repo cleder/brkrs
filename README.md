@@ -28,6 +28,8 @@ It quickly became clear that doing everything manually would involve **a steep l
 
 brkrs was born as a solution: a way to **learn modern Rust game development**, apply **spec-first workflows**, and experiment with **AI-assisted coding**, all while still having fun playing a real game.
 
+The development process follows the "Kaizen no michi" (改善の道) philosophy of making small, incremental changes to achieve long-term growth and success.
+
 ---
 
 ## Try it now
