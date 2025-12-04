@@ -33,6 +33,7 @@ faq
 
 developer-guide
 contributing
+contributors
 asset-format
 architecture
 bricks
