@@ -99,6 +99,8 @@ Suggested learning steps:
 3. **Submit a PR** that fulfills the spec
 4. **Experiment** with AI-assisted features or gameplay tweaks
 
+Follow "Seika no Ho" (清華の法), "the way of clear planning", a Samurai principle for strategic planning that aligns actions with values.
+
 ## Documentation
 
 Full documentation is available at **[brkrs.readthedocs.io](https://brkrs.readthedocs.io/)**:
