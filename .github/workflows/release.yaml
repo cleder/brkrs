@@ -1,7 +1,6 @@
 name: Release
 permissions:
-  contents: read
-  releases: write
+  contents: write
 
 on:
   workflow_dispatch:
