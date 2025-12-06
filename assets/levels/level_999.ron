@@ -1,4 +1,9 @@
-LevelDefinition(
+matrix: [
+          [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+          [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+          // ... 18 more rows to total 20 ...
+          [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      ],
     number: 999,
     description: Some(r#"
         Example level demonstrating the new metadata fields.
