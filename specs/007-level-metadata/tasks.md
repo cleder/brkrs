@@ -27,17 +27,17 @@ Four independent user stories with incremental delivery strategy.
 
 ### Project Structure & Preparation
 
-- [ ] T001 Review existing `LevelDefinition` struct in `src/level_loader.rs` and document current implementation
-- [ ] T002 Verify backward compatibility by listing all files that deserialize `LevelDefinition`
-- [ ] T003 Create test file `tests/level_definition.rs` with imports and module structure
-- [ ] T004 Create level example file `assets/levels/level_999.ron` as test case
-- [ ] T005 Review RON format in `assets/levels/README.md` for context on current structure
+- [x] T001 Review existing `LevelDefinition` struct in `src/level_loader.rs` and document current implementation
+- [x] T002 Verify backward compatibility by listing all files that deserialize `LevelDefinition`
+- [x] T003 Create test file `tests/level_definition.rs` with imports and module structure
+- [x] T004 Create level example file `assets/levels/level_999.ron` as test case
+- [x] T005 Review RON format in `assets/levels/README.md` for context on current structure
 
 ### Dependencies & Research Confirmation
 
-- [ ] T006 Confirm serde `#[serde(default)]` behavior with existing code patterns
-- [ ] T007 Validate Markdown link extraction logic from `research.md` is implementable with standard Rust string methods
-- [ ] T008 Verify WASM compatibility of proposed string operations (no platform-specific code)
+- [x] T006 Confirm serde `#[serde(default)]` behavior with existing code patterns
+- [x] T007 Validate Markdown link extraction logic from `research.md` is implementable with standard Rust string methods
+- [x] T008 Verify WASM compatibility of proposed string operations (no platform-specific code)
 
 ---
 
@@ -47,48 +47,48 @@ Four independent user stories with incremental delivery strategy.
 
 ### Data Model Implementation
 
-- [ ] T009 [US1] Add `description: Option<String>` field to `LevelDefinition` struct in `src/level_loader.rs`
-- [ ] T010 [US1] Add `#[serde(default)]` attribute to description field for backward compatibility
-- [ ] T011 [US1] Add rustdoc comment explaining description field purpose in `src/level_loader.rs`
+- [x] T009 [US1] Add `description: Option<String>` field to `LevelDefinition` struct in `src/level_loader.rs`
+- [x] T010 [US1] Add `#[serde(default)]` attribute to description field for backward compatibility
+- [x] T011 [US1] Add rustdoc comment explaining description field purpose in `src/level_loader.rs`
 
 ### Helper Functions
 
-- [ ] T012 [US1] Implement `LevelDefinition::has_description()` method in `src/level_loader.rs`
-- [ ] T013 [US1] Add rustdoc examples for `has_description()` method
+- [x] T012 [US1] Implement `LevelDefinition::has_description()` method in `src/level_loader.rs`
+- [x] T013 [US1] Add rustdoc examples for `has_description()` method
 
 ### Unit Tests
 
-- [ ] T014 [P] [US1] Add test `test_level_with_description_only()` in `tests/level_definition.rs`
-- [ ] T015 [P] [US1] Add test `test_multiline_description()` in `tests/level_definition.rs`
-- [ ] T016 [P] [US1] Add test `test_empty_description_treated_as_none()` in `tests/level_definition.rs`
-- [ ] T017 [P] [US1] Add test `test_description_with_special_chars()` in `tests/level_definition.rs`
+- [x] T014 [P] [US1] Add test `test_level_with_description_only()` in `tests/level_definition.rs`
+- [x] T015 [P] [US1] Add test `test_multiline_description()` in `tests/level_definition.rs`
+- [x] T016 [P] [US1] Add test `test_empty_description_treated_as_none()` in `tests/level_definition.rs`
+- [x] T017 [P] [US1] Add test `test_description_with_special_chars()` in `tests/level_definition.rs`
 
 ### Integration Tests
 
-- [ ] T018 [US1] Run `cargo test` and verify all description tests pass
-- [ ] T019 [US1] Load existing level files without description field to verify backward compatibility
-- [ ] T020 [US1] Create level_999.ron with description and verify it loads correctly
+- [x] T018 [US1] Run `cargo test` and verify all description tests pass
+- [x] T019 [US1] Load existing level files without description field to verify backward compatibility
+- [x] T020 [US1] Create level_999.ron with description and verify it loads correctly
 
 ### Documentation - Technical Reference
 
-- [ ] T021 [US1] Update `assets/levels/README.md` with "Description field" section including:
+- [x] T021 [US1] Update `assets/levels/README.md` with "Description field" section including:
   - Single-line example
   - Multi-line raw string example
   - When to use guidance
-- [ ] T022 [US1] Add description field to the "Field structure" documentation in `assets/levels/README.md`
+- [x] T022 [US1] Add description field to the "Field structure" documentation in `assets/levels/README.md`
 
 ### Documentation - User-Facing
 
-- [ ] T023 [US1] Update `docs/asset-format.md` with description field section including:
+- [x] T023 [US1] Update `docs/asset-format.md` with description field section including:
   - Purpose and use cases
   - RON syntax examples
   - Best practices for descriptions
 
 ### Verification
 
-- [ ] T024 [US1] Verify `cargo check` passes with new field
-- [ ] T025 [US1] Verify `cargo clippy` reports no warnings for new code
-- [ ] T026 [US1] Verify rustdoc builds correctly: `cargo doc --no-deps --open`
+- [x] T024 [US1] Verify `cargo check` passes with new field
+- [x] T025 [US1] Verify `cargo clippy` reports no warnings for new code
+- [x] T026 [US1] Verify rustdoc builds correctly: `cargo doc --no-deps --open`
 
 ---
 
@@ -100,64 +100,64 @@ Four independent user stories with incremental delivery strategy.
 
 ### Data Model Implementation
 
-- [ ] T027 [P] [US2] Add `author: Option<String>` field to `LevelDefinition` struct in `src/level_loader.rs`
-- [ ] T028 [P] [US2] Add `#[serde(default)]` attribute to author field
-- [ ] T029 [P] [US2] Add rustdoc comment explaining author field purpose in `src/level_loader.rs`
+- [x] T027 [P] [US2] Add `author: Option<String>` field to `LevelDefinition` struct in `src/level_loader.rs`
+- [x] T028 [P] [US2] Add `#[serde(default)]` attribute to author field
+- [x] T029 [P] [US2] Add rustdoc comment explaining author field purpose in `src/level_loader.rs`
 
 ### Helper Functions - Author Name Extraction
 
-- [ ] T030 [US2] Implement `extract_author_name()` function in `src/level_loader.rs` using string manipulation (no regex)
-- [ ] T031 [US2] Add comprehensive rustdoc to `extract_author_name()` with examples:
+- [x] T030 [US2] Implement `extract_author_name()` function in `src/level_loader.rs` using string manipulation (no regex)
+- [x] T031 [US2] Add comprehensive rustdoc to `extract_author_name()` with examples:
   - Plain text: "Jane Smith" → "Jane Smith"
   - Markdown: "[Jane Smith](mailto:...)" → "Jane Smith"
   - Edge cases documented
-- [ ] T032 [US2] Implement `LevelDefinition::has_author()` method in `src/level_loader.rs`
-- [ ] T033 [US2] Implement `LevelDefinition::author_name()` method in `src/level_loader.rs`
-- [ ] T034 [US2] Add rustdoc examples for author helper methods
+- [x] T032 [US2] Implement `LevelDefinition::has_author()` method in `src/level_loader.rs`
+- [x] T033 [US2] Implement `LevelDefinition::author_name()` method in `src/level_loader.rs`
+- [x] T034 [US2] Add rustdoc examples for author helper methods
 
 ### Unit Tests
 
-- [ ] T035 [P] [US2] Add test `test_level_with_author_plain_string()` in `tests/level_definition.rs`
-- [ ] T036 [P] [US2] Add test `test_author_markdown_email_format()` in `tests/level_definition.rs`
-- [ ] T037 [P] [US2] Add test `test_author_markdown_url_format()` in `tests/level_definition.rs`
-- [ ] T038 [P] [US2] Add test `test_extract_author_plain_text()` in `tests/level_definition.rs`
-- [ ] T039 [P] [US2] Add test `test_extract_author_markdown_email()` in `tests/level_definition.rs`
-- [ ] T040 [P] [US2] Add test `test_extract_author_markdown_url()` in `tests/level_definition.rs`
-- [ ] T041 [P] [US2] Add test `test_extract_author_edge_cases()` in `tests/level_definition.rs`
-- [ ] T042 [P] [US2] Add test `test_empty_author_treated_as_none()` in `tests/level_definition.rs`
+- [x] T035 [P] [US2] Add test `test_level_with_author_plain_string()` in `tests/level_definition.rs`
+- [x] T036 [P] [US2] Add test `test_author_markdown_email_format()` in `tests/level_definition.rs`
+- [x] T037 [P] [US2] Add test `test_author_markdown_url_format()` in `tests/level_definition.rs`
+- [x] T038 [P] [US2] Add test `test_extract_author_plain_text()` in `tests/level_definition.rs`
+- [x] T039 [P] [US2] Add test `test_extract_author_markdown_email()` in `tests/level_definition.rs`
+- [x] T040 [P] [US2] Add test `test_extract_author_markdown_url()` in `tests/level_definition.rs`
+- [x] T041 [P] [US2] Add test `test_extract_author_edge_cases()` in `tests/level_definition.rs`
+- [x] T042 [P] [US2] Add test `test_empty_author_treated_as_none()` in `tests/level_definition.rs`
 
 ### Integration Tests
 
-- [ ] T043 [US2] Run `cargo test` and verify all author tests pass
-- [ ] T044 [US2] Create test level with plain author string and verify parsing
-- [ ] T045 [US2] Create test level with markdown author link and verify name extraction
-- [ ] T046 [US2] Verify backward compatibility - load levels without author field
+- [x] T043 [US2] Run `cargo test` and verify all author tests pass
+- [x] T044 [US2] Create test level with plain author string and verify parsing
+- [x] T045 [US2] Create test level with markdown author link and verify name extraction
+- [x] T046 [US2] Verify backward compatibility - load levels without author field
 
 ### Documentation - Technical Reference
 
-- [ ] T047 [US2] Update `assets/levels/README.md` with "Author field" section including:
+- [x] T047 [US2] Update `assets/levels/README.md` with "Author field" section including:
   - Plain text example
   - Markdown email example
   - Markdown URL example
   - When to use guidance
-- [ ] T048 [US2] Add author field to the "Field structure" documentation in `assets/levels/README.md`
+- [x] T048 [US2] Add author field to the "Field structure" documentation in `assets/levels/README.md`
 
 ### Documentation - User-Facing
 
-- [ ] T049 [US2] Update `docs/asset-format.md` with author field section including:
+- [x] T049 [US2] Update `docs/asset-format.md` with author field section including:
   - Purpose and attribution benefits
   - Plain text vs markdown format examples
   - Name extraction behavior documented
-- [ ] T050 [US2] Update `docs/developer-guide.md` with new section "Creating Levels with Metadata":
+- [x] T050 [US2] Update `docs/developer-guide.md` with new section "Creating Levels with Metadata":
   - Complete level file example with both fields
   - Tips for good descriptions
   - Attribution best practices
 
 ### Verification
 
-- [ ] T051 [US2] Verify `cargo check` passes with author field and helper functions
-- [ ] T052 [US2] Verify `cargo clippy` reports no warnings for author code
-- [ ] T053 [US2] Verify rustdoc builds correctly and includes author documentation
+- [x] T051 [US2] Verify `cargo check` passes with author field and helper functions
+- [x] T052 [US2] Verify `cargo clippy` reports no warnings for author code
+- [x] T053 [US2] Verify rustdoc builds correctly and includes author documentation
 
 ---
 
@@ -246,17 +246,17 @@ Four independent user stories with incremental delivery strategy.
 
 ### Code Quality
 
-- [ ] T086 Run `cargo fmt --all` to ensure consistent formatting
-- [ ] T087 Run `cargo clippy --all-targets --all-features` for warnings
-- [ ] T088 Address any clippy warnings in new code
-- [ ] T089 Verify no compiler warnings: `cargo build --all-targets`
+- [x] T086 Run `cargo fmt --all` to ensure consistent formatting
+- [x] T087 Run `cargo clippy --all-targets --all-features` for warnings
+- [x] T088 Address any clippy warnings in new code
+- [x] T089 Verify no compiler warnings: `cargo build --all-targets`
 
 ### Final Testing
 
-- [ ] T090 Run full test suite with all features: `cargo test --all-features`
-- [ ] T091 Test game runs with metadata: `BK_LEVEL=999 cargo run --release`
-- [ ] T092 Test game with existing levels: `BK_LEVEL=1 cargo run --release`
-- [ ] T093 Build documentation: `cargo doc --no-deps`
+- [x] T090 Run full test suite with all features: `cargo test --all-features`
+- [x] T091 Test game runs with metadata: `BK_LEVEL=999 cargo run --release`
+- [x] T092 Test game with existing levels: `BK_LEVEL=1 cargo run --release`
+- [x] T093 Build documentation: `cargo doc --no-deps`
 
 ### Git & Release
 
