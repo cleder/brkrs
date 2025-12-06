@@ -5,13 +5,9 @@ Last updated: 2025-11-24
 
 ## Active Technologies
 
-- Rust 1.81 (Rust 2021 edition) + Bevy 0.17, bevy_rapier3d (physics/collision) (005-multi-hit-bricks)
-- RON level files (existing format supports indices 10-13) (005-multi-hit-bricks)
-- Rust 1.81 (Rust 2021 edition) + Bevy 0.17 (AudioPlugin, AudioSource, observers), bevy_rapier3d (006-audio-system)
-- RON configuration file for audio settings persistence (006-audio-system)
-- Rust 1.81 (project), Python 3.11 for docs toolchain + Sphinx, MyST-Parser, furo-theme, sphinx-rtd-theme-compat (if needed), `cargo doc` for rustdoc generation (001-sphinx-docs)
-- N/A — documentation stored in repo under `/docs/` and `specs/` for plans (001-sphinx-docs)
-- Rust 1.81 (Rust 2021 edition via rustup) + Bevy 0.17 (ECS, input handling, window management, Time, rendering), bevy_rapier3d (physics simulation control)
+- Rust 1.81 (Rust 2021 edition) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde 1.0, ron 0.8 (007-level-metadata)
+- RON files in `assets/levels/` directory (007-level-metadata)
+- ECS architecture with Bevy (all features)
 
 ## Project Structure
 
@@ -37,9 +33,10 @@ Rust 2021 edition (toolchain managed by rustup): Follow standard conventions
 
 ## Recent Changes
 
+- 007-level-metadata: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde 1.0, ron 0.8
+
 - 006-audio-system: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17 (AudioPlugin, AudioSource, observers), bevy_rapier3d
 - 005-multi-hit-bricks: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17, bevy_rapier3d (physics/collision)
-- 001-sphinx-docs: Added Rust 1.81 (project), Python 3.11 for docs toolchain + Sphinx, MyST-Parser, furo-theme, sphinx-rtd-theme-compat (if needed), `cargo doc` for rustdoc generation
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
