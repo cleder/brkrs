@@ -10,9 +10,7 @@
 
 use bevy::prelude::*;
 #[cfg(not(target_arch = "wasm32"))]
-use bevy::window::Window;
-#[cfg(not(target_arch = "wasm32"))]
-use bevy::window::WindowMode;
+use bevy::window::{Window, WindowMode};
 use bevy::window::{CursorOptions, PrimaryWindow};
 use bevy_rapier3d::prelude::*;
 
