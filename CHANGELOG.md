@@ -11,8 +11,7 @@ All notable changes to this project are documented here.
 
 ### Added
 
-- Audio system (`006-audio-system`): event-driven audio plugin, WASM localStorage persistence for `AudioConfig`, graceful degradation when audio assets are missing, and test hardening (tempfile-backed tests).
-- CI: enforce single-threaded test execution in `ci.yaml` (`RUST_TEST_THREADS=1`) to avoid test races on shared files.
+- Level metadata (`007-level-metadata`): optional `description` and `author` fields in `LevelDefinition` for level design documentation and contributor attribution. Supports plain text and markdown link formats for authors. Fully backward compatible with existing level files.
 
 ## [0.0.1] - 2025-11-29
 

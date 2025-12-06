@@ -14,6 +14,8 @@ pub mod pause;
 pub mod systems;
 pub mod ui;
 
+pub use level_loader::extract_author_name;
+
 #[cfg(feature = "texture_manifest")]
 use crate::systems::TextureManifestPlugin;
 use crate::systems::{AudioPlugin, InputLocked, LevelSwitchPlugin, RespawnPlugin, RespawnSystems};

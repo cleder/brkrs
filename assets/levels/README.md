@@ -27,6 +27,64 @@ Fields
   If omitted, the runtime uses the global gravity.
 - `matrix: Vec<Vec<u8>>` — the tile grid, encoded as rows of byte values.
   The runtime normalizes input to 20×20 using `src/level_loader.rs::normalize_matrix_simple` (padding/truncating rows or columns as needed).
+- `description: Option<String>` — optional level design documentation.
+  Use for design notes, gameplay hints, technical implementation details, or any other information helpful to other developers.
+  Supports multiline strings and special characters.
+- `author: Option<String>` — optional contributor attribution.
+  Use plain text names or Markdown link format `[Name](url)` for email/website attribution.
+  The runtime provides helper methods to extract display names from markdown links.
+
+## Metadata fields (description and author)
+
+Level files can include optional metadata fields for better organization and attribution:
+
+### Description field
+
+The `description` field allows level designers to document their design intent, gameplay mechanics, or technical notes:
+
+```ron
+LevelDefinition(
+  number: 42,
+  description: Some(r#"
+    Expert challenge level featuring moving obstacles.
+
+    Design goals:
+    - Test player precision timing
+    - Introduce moving brick patterns
+    - Maintain 60 FPS performance
+
+    Technical notes:
+    - Uses custom brick type 100
+    - Requires texture_manifest feature
+  "#),
+  matrix: [
+    // ... level matrix
+  ],
+)
+```
+
+### Author field
+
+The `author` field credits contributors and supports both plain text and markdown link formats:
+
+```ron
+// Plain text attribution
+author: Some("Jane Smith")
+
+// Markdown email link
+author: Some("[Jane Smith](mailto:jane@example.com)")
+
+// Markdown website link
+author: Some("[Game Team](https://github.com/org/repo)")
+```
+
+The runtime provides `extract_author_name()` function and `LevelDefinition::author_name()` method to extract display names from markdown links, returning "Jane Smith" or "Game Team" respectively.
+
+### Backward compatibility
+
+Both fields are optional and default to `None`.
+Existing level files without these fields continue to work unchanged.
+The runtime treats empty/whitespace-only values as `None` for helper methods like `has_description()` and `has_author()`.
 
 ## Tile values and semantics
 
@@ -36,8 +94,6 @@ Common tokens:
 - `0` — empty / no entity.
 - `1` — paddle spawn cell (the first `1` found sets the paddle spawn point).
 - `2` — ball spawn cell (the first `2` found sets the ball spawn point).
-- `3` — legacy simple (destructible) brick index.
-  This value is supported for a compatibility window but should be migrated to `20` in repository assets.
 - `20` — canonical simple (destructible) brick index; recommended for newly authored levels.
 - `>= 3` — any value 3..=255 is treated as a brick `BrickTypeId` (appearance and variants determined by texture manifest if enabled).
 - `90` — indestructible brick — collides and renders like a brick but does NOT count toward level completion.
@@ -61,24 +117,6 @@ BK_LEVEL=997 cargo run --release
 
 - Unit and integration tests exercise level loading and migration tooling.
   See `tests/` for examples.
-
-## Migration & repository landing
-
-This repository provides a small migration CLI that can update your level files across the codebase:
-
-- Tool: `tools/migrate-level-indices` — replaces tile values in RON LevelDefinition matrices (e.g., `3` -> `20`).
-- Wrapper: `scripts/migrate-assets.sh` — convenience wrapper that builds the migration tool, runs it and prints helpful guidance.
-  Use `--backup` to keep `*.ron.bak` backups.
-
-Example (recommended):
-
-```bash
-cd tools/migrate-level-indices && cargo build
-./scripts/migrate-assets.sh --backup --from 3 --to 20 assets/levels/*.ron
-```
-
-After running the migration script you should review changed files and commit them.
-CI also runs a migration parity test for PRs that modify files in `assets/levels/`.
 
 ## Visual / texture mapping
 

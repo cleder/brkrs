@@ -17,6 +17,8 @@ Levels are defined in RON (Rusty Object Notation) files located in `assets/level
 LevelDefinition(
   number: 1,                         // Level number (must match filename)
   gravity: Some((2.0, 0.0, 0.0)),    // Optional: custom gravity vector (x, y, z)
+  description: Some("Level design notes and gameplay hints"), // Optional: level documentation
+  author: Some("[Jane Smith](mailto:jane@example.com)"),       // Optional: contributor attribution
   matrix: [
     // 20 rows of 20 columns each
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -25,6 +27,59 @@ LevelDefinition(
   ],
 )
 ```
+
+### Metadata Fields
+
+Level files support optional metadata fields for documentation and attribution:
+
+#### Description Field
+
+Use the `description` field to document level design intent, gameplay mechanics, or technical notes:
+
+```rust
+description: Some(r#"
+  Expert challenge level with moving obstacles.
+
+  Design goals:
+  - Test player precision timing
+  - Introduce complex brick patterns
+  - Maintain 60 FPS performance
+
+  Technical notes:
+  - Uses custom brick type 100
+  - Requires texture_manifest feature
+"#),
+```
+
+The description supports:
+
+- Multiline strings using raw string literals (`r#"..."#`)
+- Special characters and formatting
+- Detailed design documentation
+- Technical implementation notes
+
+#### Author Field
+
+Use the `author` field to credit contributors with plain text or markdown link formats:
+
+```rust
+// Plain text attribution
+author: Some("Jane Smith"),
+
+// Markdown email link
+author: Some("[Jane Smith](mailto:jane@example.com)"),
+
+// Markdown website link
+author: Some("[Game Team](https://github.com/org/repo)"),
+```
+
+The runtime provides helper functions to extract display names from markdown links, returning "Jane Smith" or "Game Team" respectively.
+
+#### Backward Compatibility
+
+Both metadata fields are optional and default to `None`.
+Existing level files continue to work unchanged.
+The runtime treats empty/whitespace-only values as absent for helper methods.
 
 ### Matrix Cell Values
 
