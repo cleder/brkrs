@@ -1,6 +1,8 @@
 # brkrs — a fun, playable brick-breaker game & learning playground
 
-[![Crates.io](https://img.shields.io/crates/v/brkrs?color=blue\&logo=rust\&logoColor=white)](https://crates.io/crates/brkrs) [![Docs.rs](https://img.shields.io/docsrs/brkrs)](https://docs.rs/brkrs) [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE-agpl-3.0.md) [![Rust](https://img.shields.io/badge/rust-1.XX+-orange?logo=rust\&logoColor=white)](https://www.rust-lang.org/) [![Build](https://img.shields.io/github/actions/workflow/status/cleder/brkrs/rust.yml?branch=main)](https://github.com/cleder/brkrs/actions) [![Documentation Status](https://readthedocs.org/projects/brkrs/badge/?version=latest)](https://brkrs.readthedocs.io/en/latest/?badge=latest)
+[![Crates.io](https://img.shields.io/crates/v/brkrs?color=blue\&logo=rust\&logoColor=white)](https://crates.io/crates/brkrs) [![Docs.rs](https://img.shields.io/docsrs/brkrs)](https://docs.rs/brkrs) [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE-agpl-3.0.md) [![Rust](https://img.shields.io/badge/rust-1.81+-orange?logo=rust\&logoColor=white)](https://www.rust-lang.org/) [![Documentation Status](https://readthedocs.org/projects/brkrs/badge/?version=latest)](https://brkrs.readthedocs.io/en/latest/?badge=latest)
+
+[![CI-main](https://github.com/cleder/brkrs/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/cleder/brkrs/actions/workflows/ci.yaml) [![CI - develop](https://github.com/cleder/brkrs/actions/workflows/ci.yaml/badge.svg?branch=develop)](https://github.com/cleder/brkrs/actions/workflows/ci.yaml)
 
 **brkrs** is a real, playable Breakout/Arkanoid-style game written in [**Rust** 🦀](https://rust-lang.org/) using the [**Bevy**](https://bevy.org/) engine.
 It’s also a **hands-on learning project**, letting you explore:

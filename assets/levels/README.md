@@ -94,8 +94,6 @@ Common tokens:
 - `0` — empty / no entity.
 - `1` — paddle spawn cell (the first `1` found sets the paddle spawn point).
 - `2` — ball spawn cell (the first `2` found sets the ball spawn point).
-- `3` — legacy simple (destructible) brick index.
-  This value is supported for a compatibility window but should be migrated to `20` in repository assets.
 - `20` — canonical simple (destructible) brick index; recommended for newly authored levels.
 - `>= 3` — any value 3..=255 is treated as a brick `BrickTypeId` (appearance and variants determined by texture manifest if enabled).
 - `90` — indestructible brick — collides and renders like a brick but does NOT count toward level completion.
@@ -119,24 +117,6 @@ BK_LEVEL=997 cargo run --release
 
 - Unit and integration tests exercise level loading and migration tooling.
   See `tests/` for examples.
-
-## Migration & repository landing
-
-This repository provides a small migration CLI that can update your level files across the codebase:
-
-- Tool: `tools/migrate-level-indices` — replaces tile values in RON LevelDefinition matrices (e.g., `3` -> `20`).
-- Wrapper: `scripts/migrate-assets.sh` — convenience wrapper that builds the migration tool, runs it and prints helpful guidance.
-  Use `--backup` to keep `*.ron.bak` backups.
-
-Example (recommended):
-
-```bash
-cd tools/migrate-level-indices && cargo build
-./scripts/migrate-assets.sh --backup --from 3 --to 20 assets/levels/*.ron
-```
-
-After running the migration script you should review changed files and commit them.
-CI also runs a migration parity test for PRs that modify files in `assets/levels/`.
 
 ## Visual / texture mapping
 
