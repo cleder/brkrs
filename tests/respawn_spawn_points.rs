@@ -30,6 +30,8 @@ fn level_with_markers(
         number: 1,
         gravity: None,
         matrix,
+        description: None,
+        author: None,
         #[cfg(feature = "texture_manifest")]
         presentation: None,
     }

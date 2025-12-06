@@ -50,10 +50,73 @@ pub struct LevelDefinition {
     #[cfg(feature = "texture_manifest")]
     #[serde(default)]
     pub presentation: Option<crate::systems::textures::loader::LevelTextureSet>,
+    /// Optional description documenting the level's design intent, unique features, or gameplay characteristics.
+    /// This is for documentation purposes only and is not displayed during gameplay.
+    #[serde(default)]
+    pub description: Option<String>,
+    /// Optional author field for contributor attribution.
+    /// Supports plain text names (e.g., "Jane Smith") or markdown links (e.g., "[Jane Smith](mailto:jane@example.com)").
+    /// When using markdown format, only the display name is extracted.
+    #[serde(default)]
+    pub author: Option<String>,
 }
 
 #[derive(Resource, Debug)]
 pub struct CurrentLevel(pub LevelDefinition);
+
+/// Extract display name from author field (handles plain text and markdown link formats)
+///
+/// Converts:
+/// - Plain text: "Jane Smith" → "Jane Smith"
+/// - Markdown link: "[Jane Smith](mailto:jane@example.com)" → "Jane Smith"
+/// - Markdown link: "[Team](https://github.com/team)" → "Team"
+///
+/// If the author string doesn't match the markdown pattern, it's returned as-is.
+///
+/// # Examples
+///
+/// ```ignore
+/// assert_eq!(extract_author_name("Jane Smith"), "Jane Smith");
+/// assert_eq!(extract_author_name("[Jane Smith](mailto:jane@example.com)"), "Jane Smith");
+/// ```
+pub fn extract_author_name(author: &str) -> &str {
+    let trimmed = author.trim();
+    if trimmed.starts_with('[') {
+        if let Some(end_bracket) = trimmed.find("](") {
+            return trimmed[1..end_bracket].trim();
+        }
+    }
+    trimmed
+}
+
+impl LevelDefinition {
+    /// Returns true if the level has a non-empty description
+    ///
+    /// Returns `false` if the description field is `None` or contains only whitespace.
+    pub fn has_description(&self) -> bool {
+        self.description
+            .as_ref()
+            .is_some_and(|s| !s.trim().is_empty())
+    }
+
+    /// Returns true if the level has a non-empty author
+    ///
+    /// Returns `false` if the author field is `None` or contains only whitespace.
+    pub fn has_author(&self) -> bool {
+        self.author.as_ref().is_some_and(|s| !s.trim().is_empty())
+    }
+
+    /// Get the author display name, extracting from markdown format if needed
+    ///
+    /// Returns `None` if author field is empty or absent.
+    /// Automatically extracts the name from markdown links like `[Name](url)`.
+    pub fn author_name(&self) -> Option<&str> {
+        self.author
+            .as_ref()
+            .filter(|s| !s.trim().is_empty())
+            .map(|s| extract_author_name(s))
+    }
+}
 
 pub struct LevelLoaderPlugin;
 

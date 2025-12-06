@@ -27,6 +27,64 @@ Fields
   If omitted, the runtime uses the global gravity.
 - `matrix: Vec<Vec<u8>>` — the tile grid, encoded as rows of byte values.
   The runtime normalizes input to 20×20 using `src/level_loader.rs::normalize_matrix_simple` (padding/truncating rows or columns as needed).
+- `description: Option<String>` — optional level design documentation.
+  Use for design notes, gameplay hints, technical implementation details, or any other information helpful to other developers.
+  Supports multiline strings and special characters.
+- `author: Option<String>` — optional contributor attribution.
+  Use plain text names or markdown link format `[Name](url)` for email/website attribution.
+  The runtime provides helper methods to extract display names from markdown links.
+
+## Metadata fields (description and author)
+
+Level files can include optional metadata fields for better organization and attribution:
+
+### Description field
+
+The `description` field allows level designers to document their design intent, gameplay mechanics, or technical notes:
+
+```ron
+LevelDefinition(
+  number: 42,
+  description: Some(r#"
+    Expert challenge level featuring moving obstacles.
+
+    Design goals:
+    - Test player precision timing
+    - Introduce moving brick patterns
+    - Maintain 60 FPS performance
+
+    Technical notes:
+    - Uses custom brick type 100
+    - Requires texture_manifest feature
+  "#),
+  matrix: [
+    // ... level matrix
+  ],
+)
+```
+
+### Author field
+
+The `author` field credits contributors and supports both plain text and markdown link formats:
+
+```ron
+// Plain text attribution
+author: Some("Jane Smith")
+
+// Markdown email link
+author: Some("[Jane Smith](mailto:jane@example.com)")
+
+// Markdown website link
+author: Some("[Game Team](https://github.com/org/repo)")
+```
+
+The runtime provides `extract_author_name()` function and `LevelDefinition::author_name()` method to extract display names from markdown links, returning "Jane Smith" or "Game Team" respectively.
+
+### Backward compatibility
+
+Both fields are optional and default to `None`.
+Existing level files without these fields continue to work unchanged.
+The runtime treats empty/whitespace-only values as `None` for helper methods like `has_description()` and `has_author()`.
 
 ## Tile values and semantics
 
