@@ -10,7 +10,7 @@ See `.specify/templates/commands/plan.md` for the execution workflow.
 
 Add optional `description` and `author` fields to the `LevelDefinition` RON structure.
 The description field enables level designers to document design intent, unique features, and gameplay characteristics.
-The author field supports contributor attribution using either plain string names or markdown link format (extracting name from `[Name](url)`).
+The author field supports contributor attribution using either plain string names or Markdown link format (extracting name from `[Name](url)`).
 Both fields are documentation-only (not displayed during gameplay) and maintain backward compatibility with existing level files.
 
 ## Technical Context

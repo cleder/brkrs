@@ -184,15 +184,15 @@ LevelDefinition(
 
 ## Decision 5: Migration Tool Impact
 
-**Context**: Existing migration tool (`tools/migrate-level-indices`) may need updates to preserve new fields.
+**Context**: Migration tool (`tools/migrate-level-indices`) was removed as no longer needed.
 
-**Decision**: No changes required to migration tool for initial release
+**Decision**: No migration tool updates required
 
 **Rationale**:
 
-- Migration tool uses its own `LevelDefinition` struct that mirrors the main one
-- Adding `#[serde(default)]` fields to migration tool's struct preserves fields during read/write
-- Tool operates on matrix values only, doesn't modify other fields
+- Migration tool was removed in a previous refactor
+- No tool exists to update for new fields
+- Metadata fields use `#[serde(default)]` so existing levels work unchanged
 - Existing fields (number, gravity) are already preserved correctly
 
 **Future Enhancement**: If migration tool needs to modify metadata fields, update its `LevelDefinition` struct to match main definition.

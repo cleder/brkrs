@@ -31,7 +31,7 @@ Fields
   Use for design notes, gameplay hints, technical implementation details, or any other information helpful to other developers.
   Supports multiline strings and special characters.
 - `author: Option<String>` — optional contributor attribution.
-  Use plain text names or markdown link format `[Name](url)` for email/website attribution.
+  Use plain text names or Markdown link format `[Name](url)` for email/website attribution.
   The runtime provides helper methods to extract display names from markdown links.
 
 ## Metadata fields (description and author)

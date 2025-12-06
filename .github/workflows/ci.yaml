@@ -172,30 +172,3 @@ jobs:
         with:
           name: cache-benchmark-metrics
           path: cache_metrics.txt
-
-  # Run migration parity tests when assets/levels/ files are modified in a PR
-  migration_tests:
-    name: Migration tests (assets/levels)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-
-      - name: Detect changes in assets/levels
-        id: check_changes
-        run: |
-          git fetch origin ${{ github.base_ref }} || true
-          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD || true)
-          echo "changed_files=$CHANGED" >> $GITHUB_OUTPUT
-          if echo "$CHANGED" | grep -q '^assets/levels/' ; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Skip job when no asset files changed
-        if: steps.check_changes.outputs.changed == 'false'
-        run: |
-          echo "No changes in assets/levels detected; skipping asset validation"

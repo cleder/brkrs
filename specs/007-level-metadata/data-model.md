@@ -33,7 +33,7 @@
 
 - **`author`**:
   - Purpose: Contributor attribution and contact information
-  - Format: Plain string ("Name") or markdown link ("[Name](url)")
+  - Format: Plain string ("Name") or Markdown link ("[Name](url)")
   - Constraints: None enforced (validation is linter/editor concern)
   - Use cases: Credit contributors, enable feedback channels
 
@@ -65,7 +65,7 @@ Metadata is not modified during gameplay.
 
 ### extract_author_name
 
-**Purpose**: Extract display name from author field (handle both plain text and markdown links)
+**Purpose**: Extract display name from author field (handle both plain text and Markdown links)
 
 **Signature**:
 
@@ -78,7 +78,7 @@ pub fn extract_author_name(author: &str) -> &str
 | Input | Output | Reason |
 |-------|--------|--------|
 | `"Jane Smith"` | `"Jane Smith"` | Plain text passthrough |
-| `"[Jane Smith](mailto:jane@example.com)"` | `"Jane Smith"` | Extract from markdown link |
+| `"[Jane Smith](mailto:jane@example.com)"` | `"Jane Smith"` | Extract from Markdown link |
 | `"[](url)"` | `""` | Empty brackets edge case |
 | `"[[Name]](url)"` | `[Name]` | Nested brackets (acceptable) |
 | `"Not a link"` | `"Not a link"` | Fallback to original |
@@ -109,7 +109,7 @@ impl LevelDefinition {
         self.author.as_ref().map_or(false, |s| !s.trim().is_empty())
     }
 
-    /// Get author display name (extract from markdown if needed)
+    /// Get author display name (extract from Markdown if needed)
     pub fn author_name(&self) -> Option<&str> {
         self.author.as_ref()
             .filter(|s| !s.trim().is_empty())
@@ -224,7 +224,7 @@ All existing `level_*.ron` files load unchanged with metadata defaulting to `Non
 - ✅ Empty string handling
 - ✅ Multi-line description with raw strings
 - ✅ Author name extraction (plain text)
-- ✅ Author name extraction (markdown link)
+- ✅ Author name extraction (Markdown link)
 - ✅ Author name extraction (edge cases)
 
 **Integration Tests**:

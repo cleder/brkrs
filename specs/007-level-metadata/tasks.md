@@ -36,7 +36,7 @@ Four independent user stories with incremental delivery strategy.
 ### Dependencies & Research Confirmation
 
 - [ ] T006 Confirm serde `#[serde(default)]` behavior with existing code patterns
-- [ ] T007 Validate markdown link extraction logic from `research.md` is implementable with standard Rust string methods
+- [ ] T007 Validate Markdown link extraction logic from `research.md` is implementable with standard Rust string methods
 - [ ] T008 Verify WASM compatibility of proposed string operations (no platform-specific code)
 
 ---
@@ -94,7 +94,7 @@ Four independent user stories with incremental delivery strategy.
 
 ## Phase 3: User Story 2 - Contributor Takes Credit for Work (P1)
 
-*Independent Test: Add author field (plain and markdown), parse correctly, extract name properly*
+*Independent Test: Add author field (plain and Markdown), parse correctly, extract name properly*
 
 **Note**: Can be implemented in parallel with US1 - independent changes
 
@@ -247,22 +247,22 @@ Four independent user stories with incremental delivery strategy.
 ### Code Quality
 
 - [ ] T086 Run `cargo fmt --all` to ensure consistent formatting
-- [ ] T086 Run `cargo clippy --all-targets --all-features --all` for warnings
-- [ ] T087 Address any clippy warnings in new code
-- [ ] T088 Verify no compiler warnings: `cargo build --all-targets`
+- [ ] T087 Run `cargo clippy --all-targets --all-features` for warnings
+- [ ] T088 Address any clippy warnings in new code
+- [ ] T089 Verify no compiler warnings: `cargo build --all-targets`
 
 ### Final Testing
 
-- [ ] T089 Run full test suite with all features: `cargo test --all-features`
-- [ ] T090 Test game runs with metadata: `BK_LEVEL=999 cargo run --release`
-- [ ] T091 Test game with existing levels: `BK_LEVEL=1 cargo run --release`
-- [ ] T092 Build documentation: `cargo doc --no-deps`
+- [ ] T090 Run full test suite with all features: `cargo test --all-features`
+- [ ] T091 Test game runs with metadata: `BK_LEVEL=999 cargo run --release`
+- [ ] T092 Test game with existing levels: `BK_LEVEL=1 cargo run --release`
+- [ ] T093 Build documentation: `cargo doc --no-deps`
 
 ### Git & Release
 
-- [ ] T093 Stage all changes: `git add .`
-- [ ] T094 Create commit with descriptive message including feature summary
-- [ ] T095 Update CHANGELOG.md with feature additions and backward compatibility note
+- [ ] T094 Stage all changes: `git add .`
+- [ ] T095 Create commit with descriptive message including feature summary
+- [ ] T096 Update CHANGELOG.md with feature additions and backward compatibility note
 - [ ] T096 Push to feature branch for code review
 
 ---
@@ -457,7 +457,7 @@ Minimum viable product = **P1 features only** (US1 + US2):
 - [x] Unit tests for all new functions (T014-T042)
 - [x] Integration tests for backward compatibility (T018-T020, T064-T074)
 - [x] Documentation build tests (T061-T063, T081-T084)
-- [x] Code quality tests (T086-T092)
+- [x] Code quality tests (T086-T093)
 
 ---
 
