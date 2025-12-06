@@ -33,7 +33,7 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
       - name: Rust Cache
-        uses: Swatinem/rust-cache@v2        
+        uses: Swatinem/rust-cache@v2
       - name: Install Dependencies
         run: |
           sudo apt-get update
