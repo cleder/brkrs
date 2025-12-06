@@ -260,9 +260,9 @@ Four independent user stories with incremental delivery strategy.
 
 ### Git & Release
 
-- [ ] T094 Stage all changes: `git add .`
-- [ ] T095 Create commit with descriptive message including feature summary
-- [ ] T096 Update CHANGELOG.md with feature additions and backward compatibility note
+- [x] T094 Stage all changes: `git add .`
+- [x] T095 Create commit with descriptive message including feature summary
+- [x] T096 Update CHANGELOG.md with feature additions and backward compatibility note
 - [ ] T096 Push to feature branch for code review
 
 ---
