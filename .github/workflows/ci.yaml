@@ -198,12 +198,4 @@ jobs:
       - name: Skip job when no asset files changed
         if: steps.check_changes.outputs.changed == 'false'
         run: |
-          echo "No changes in assets/levels detected; skipping migration tests"
-
-      - name: Build migration tool
-        if: steps.check_changes.outputs.changed == 'true'
-        run: cargo build --manifest-path tools/migrate-level-indices/Cargo.toml
-
-      - name: Run migration parity tests
-        if: steps.check_changes.outputs.changed == 'true'
-        run: cargo test --test migration_parity -- --nocapture
+          echo "No changes in assets/levels detected; skipping asset validation"

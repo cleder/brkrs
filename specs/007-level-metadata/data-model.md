@@ -206,7 +206,7 @@ LevelDefinition(
 **Existing Levels**: No changes required.
 All existing `level_*.ron` files load unchanged with metadata defaulting to `None`.
 
-**Migration Tool**: `tools/migrate-level-indices` preserves metadata fields automatically when its `LevelDefinition` struct is updated to match the main definition.
+**Migration Tool**: Removed - no longer needed.
 
 **Adding Metadata**: Level designers can add metadata fields to existing levels incrementally via:
 

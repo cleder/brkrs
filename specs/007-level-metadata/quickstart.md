@@ -249,40 +249,7 @@ cargo test level_definition
 # All tests should pass
 ```
 
-### Step 4: Update Migration Tool (15 min)
-
-**File**: `tools/migrate-level-indices/src/main.rs`
-
-**Action**: Update the tool's `LevelDefinition` struct to match main definition
-
-```rust
-#[derive(Deserialize, Serialize, Debug)]
-struct LevelDefinition {
-    number: u32,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    gravity: Option<(f32, f32, f32)>,
-
-    // ADD THESE LINES:
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    description: Option<String>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    author: Option<String>,
-
-    matrix: Vec<Vec<u8>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    presentation: Option<serde_json::Value>,
-}
-```
-
-**Verification**:
-
-```bash
-cd tools/migrate-level-indices
-cargo test
-```
-
-### Step 5: Update Documentation (30 min)
+### Step 4: Update Documentation (30 min)
 
 **File**: `assets/levels/README.md`
 
@@ -414,11 +381,6 @@ cargo test
 # Run game with various levels
 BK_LEVEL=1 cargo run --release   # Old level without metadata
 BK_LEVEL=999 cargo run --release # New level with metadata
-
-# Test migration tool preserves metadata
-cd tools/migrate-level-indices
-cargo run -- --from 3 --to 20 ../../assets/levels/level_999.ron
-# Check that level_999.ron still has description/author after migration
 ```
 
 ### Step 8: Update User-Facing Documentation (30 min)

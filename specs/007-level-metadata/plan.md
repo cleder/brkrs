@@ -97,8 +97,7 @@ tests/
 └── integration/             # Existing integration tests (verify backward compatibility)
 
 tools/
-└── migrate-level-indices/   # OPTIONALLY update to preserve new fields during migration
-    └── src/main.rs
+└── migrate-level-indices/   # REMOVED - no longer needed
 ```
 
 **Structure Decision**: Single project structure.
