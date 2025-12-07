@@ -1,6 +1,8 @@
 # brkrs — a fun, playable brick-breaker game & learning playground
 
-[![Crates.io](https://img.shields.io/crates/v/brkrs?color=blue\&logo=rust\&logoColor=white)](https://crates.io/crates/brkrs) [![Docs.rs](https://img.shields.io/docsrs/brkrs)](https://docs.rs/brkrs) [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE-agpl-3.0.md) [![Rust](https://img.shields.io/badge/rust-1.XX+-orange?logo=rust\&logoColor=white)](https://www.rust-lang.org/) [![Build](https://img.shields.io/github/actions/workflow/status/cleder/brkrs/rust.yml?branch=main)](https://github.com/cleder/brkrs/actions) [![Documentation Status](https://readthedocs.org/projects/brkrs/badge/?version=latest)](https://brkrs.readthedocs.io/en/latest/?badge=latest)
+[![Crates.io](https://img.shields.io/crates/v/brkrs?color=blue\&logo=rust\&logoColor=white)](https://crates.io/crates/brkrs) [![Docs.rs](https://img.shields.io/docsrs/brkrs)](https://docs.rs/brkrs) [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE) [![Rust](https://img.shields.io/badge/rust-1.81+-orange?logo=rust\&logoColor=white)](https://www.rust-lang.org/) [![Documentation Status](https://readthedocs.org/projects/brkrs/badge/?version=latest)](https://brkrs.readthedocs.io/en/latest/?badge=latest)
+
+Tests: [![CI-main](https://github.com/cleder/brkrs/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/cleder/brkrs/actions/workflows/ci.yaml?branch=main) [![CI-develop](https://github.com/cleder/brkrs/actions/workflows/ci.yaml/badge.svg?branch=develop)](https://github.com/cleder/brkrs/actions/workflows/ci.yaml?branch=develop)
 
 **brkrs** is a real, playable Breakout/Arkanoid-style game written in [**Rust** 🦀](https://rust-lang.org/) using the [**Bevy**](https://bevy.org/) engine.
 It’s also a **hands-on learning project**, letting you explore:
@@ -42,11 +44,11 @@ You can play a web version on [GitHub Pages](https://cleder.github.io/brkrs/)
 <tr>
 <td width="50%">
 <img src="docs/_static/images/gameplay-current.png" alt="Current level gameplay" style="width: 100%;">
-<p style="text-align: center;"><em>Current level gameplay</em></p>
+<p style="text-align: center;"><em>Level 1</em></p>
 </td>
 <td width="50%">
 <img src="docs/_static/images/gameplay-next.png" alt="Next level preview" style="width: 100%;">
-<p style="text-align: center;"><em>Next level preview</em></p>
+<p style="text-align: center;"><em>Level 2</em></p>
 </td>
 </tr>
 </table>
@@ -127,4 +129,4 @@ It ensures that any code snippet developed by the open-source community stays av
 
 This guarantees your freedom to share and change all versions of this program and makes sure it remains free software for all its users.
 
-[![AGPLv3](docs/_static/images/agplv3-with-text-162x68.png)](https://www.gnu.org/licenses/agpl-3.0.en.html)
+[![AGPLv3](https://www.gnu.org/graphics/agplv3-with-text-162x68.png)](https://www.gnu.org/licenses/agpl-3.0.en.html)
