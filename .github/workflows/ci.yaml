@@ -30,15 +30,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
-        with:
-          # Build cache key from Cargo.lock checksum and branch name so each
-          # branch + lockfile combination gets its own cache. This improves
-          # cache correctness when dependencies change or different branches
-          # modify Cargo.lock.
-          shared-key: ${{ runner.os }}-ci-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
-          save-if: ${{ github.event_name == 'push' }}
       - name: Install Dependencies
         run: |
           sudo apt-get update
