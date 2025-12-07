@@ -38,7 +38,7 @@ The development process follows the "Kaizen no michi" (改善の道) philosophy 
 
 You can play a web version on [GitHub Pages](https://cleder.github.io/brkrs/)
 
-**Gameplay snapshot:**
+**Gameplay screenshot:**
 
 <table>
 <tr>
@@ -119,6 +119,23 @@ Full documentation is available at **[brkrs.readthedocs.io](https://brkrs.readth
 - Watch specs transform into working features
 - Experiment safely with Rust, Bevy, and AI-assisted workflows
 - Learn by doing in a **hands-on, playful way**
+
+---
+
+## 📣 Help Wanted: Your Skills Can Level Up **brkrs**
+
+While the code is solid, a great game needs more than just logic!
+We are actively looking for creative community members to join the effort and help turn **brkrs** into a visually and aurally stunning experience.
+
+This is your chance to get your work into a real, playable, open-source game!
+
+- **🎧 Sound & Music:** We need satisfying **sound effects** (the *thwack* of a brick, the *clink* of a power-up) and engaging **background music**.
+- **🎨 Art & Textures:** Help us create unique **brick textures**, stylish **paddle designs**, backgrounds, and other necessary **artwork**.
+- **📐 Level Design:** Got an evil streak?
+  Use the easy-to-modify level configuration files (RON) to create new, challenging, and fun **level designs**!
+- **🧪 Testing & Feedback:** Simply playing the game and reporting bugs or suggesting balance tweaks is incredibly valuable!
+
+If you're a designer, artist, musician, or just a gamer with a great eye for detail, **reach out** or **submit a Pull Request** with your contributions!
 
 ---
 
