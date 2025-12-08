@@ -74,7 +74,7 @@ fn runtime_manifest_indexes_profiles_and_variants() {
         .profiles
         .get("ball/default")
         .expect("ball/default profile should be indexed by id");
-    assert_eq!(ball_profile.albedo_path, "fallback/ball_base.png");
+    assert_eq!(ball_profile.albedo_path, "default/ball_base.png");
 
     let resolved_variant = manifest
         .type_variants
