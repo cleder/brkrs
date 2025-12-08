@@ -2,7 +2,7 @@
     profiles: [
         (
             id: "ball/default",
-            albedo_path: "fallback/ball_base.png",
+            albedo_path: "default/softball.png",
             normal_path: None,
             roughness: 0.4,
             metallic: 0.0,
