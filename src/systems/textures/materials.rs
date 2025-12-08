@@ -501,7 +501,7 @@ fn apply_canonical_materials_to_existing_entities(
     if *applied || !canonical.is_ready() {
         return;
     }
-    
+
     *applied = true;
 
     // Update paddle materials
