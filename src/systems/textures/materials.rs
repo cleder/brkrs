@@ -491,14 +491,19 @@ fn apply_canonical_materials_to_existing_entities(
         (&mut MeshMaterial3d<StandardMaterial>, &crate::BrickTypeId),
         (With<crate::Brick>, Without<crate::Paddle>, Without<Ball>),
     >,
+    mut applied: Local<bool>,
 ) {
     let Some(canonical) = canonical else {
         return;
     };
 
     // Only run once when canonical materials first become ready
-    if !canonical.is_changed() && !canonical.is_ready() {
+    if *applied || !canonical.is_ready() {
         return;
+    }
+    
+    if canonical.is_ready() {
+        *applied = true;
     }
 
     // Update paddle materials
