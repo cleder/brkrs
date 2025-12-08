@@ -474,18 +474,22 @@ pub fn brick_type_material_handle(
 }
 
 /// Apply canonical materials to existing entities when they become available.
-/// This ensures paddle and bricks spawned during Startup get proper textures
+/// This ensures paddle, balls, and bricks spawned during Startup get proper textures
 /// once the manifest finishes loading.
 fn apply_canonical_materials_to_existing_entities(
     canonical: Option<Res<CanonicalMaterialHandles>>,
     type_registry: Option<Res<TypeVariantRegistry>>,
     mut paddle_query: Query<
         &mut MeshMaterial3d<StandardMaterial>,
-        (With<crate::Paddle>, Without<crate::Brick>),
+        (With<crate::Paddle>, Without<crate::Brick>, Without<Ball>),
+    >,
+    mut ball_query: Query<
+        (&mut MeshMaterial3d<StandardMaterial>, &BallTypeId),
+        (With<Ball>, Without<crate::Paddle>, Without<crate::Brick>),
     >,
     mut brick_query: Query<
         (&mut MeshMaterial3d<StandardMaterial>, &crate::BrickTypeId),
-        (With<crate::Brick>, Without<crate::Paddle>),
+        (With<crate::Brick>, Without<crate::Paddle>, Without<Ball>),
     >,
 ) {
     let Some(canonical) = canonical else {
@@ -493,7 +497,7 @@ fn apply_canonical_materials_to_existing_entities(
     };
 
     // Only run once when canonical materials first become ready
-    if !canonical.is_changed() || !canonical.is_ready() {
+    if !canonical.is_changed() && !canonical.is_ready() {
         return;
     }
 
@@ -501,6 +505,20 @@ fn apply_canonical_materials_to_existing_entities(
     if let Some(paddle_handle) = canonical.get(BaselineMaterialKind::Paddle) {
         for mut material in paddle_query.iter_mut() {
             material.0 = paddle_handle.clone();
+        }
+    }
+
+    // Update ball materials based on type
+    for (mut material, ball_type) in ball_query.iter_mut() {
+        if let Some(registry) = type_registry.as_ref() {
+            if let Some(handle) = registry.get(ObjectClass::Ball, ball_type.0) {
+                material.0 = handle;
+                continue;
+            }
+        }
+        // Fall back to canonical ball material
+        if let Some(ball_handle) = canonical.get(BaselineMaterialKind::Ball) {
+            material.0 = ball_handle.clone();
         }
     }
 
