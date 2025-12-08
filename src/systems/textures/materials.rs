@@ -522,6 +522,11 @@ fn apply_canonical_materials_to_existing_entities(
             }
         }
         // Fall back to canonical ball material
+        debug!(
+            target: "textures::materials",
+            ball_type = ball_type.0,
+            "No type variant for ball; falling back to canonical material"
+        );
         if let Some(ball_handle) = canonical.get(BaselineMaterialKind::Ball) {
             material.0 = ball_handle.clone();
             updated_count += 1;
@@ -538,6 +543,11 @@ fn apply_canonical_materials_to_existing_entities(
             }
         }
         // Fall back to canonical brick material
+        debug!(
+            target: "textures::materials",
+            brick_type = brick_type.0,
+            "No type variant for brick; falling back to canonical material"
+        );
         if let Some(brick_handle) = canonical.get(BaselineMaterialKind::Brick) {
             material.0 = brick_handle.clone();
             updated_count += 1;
