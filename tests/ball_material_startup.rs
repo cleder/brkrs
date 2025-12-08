@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 
 use brkrs::systems::textures::materials::{
-    BaselineMaterialKind, CanonicalMaterialHandles, FallbackRegistry, ProfileMaterialBank,
-    TextureMaterialsPlugin,
+    BaselineMaterialKind, CanonicalMaterialHandles, TextureMaterialsPlugin,
 };
 use brkrs::systems::textures::{
     ObjectClass, TextureManifest, TypeVariantRegistry, VisualAssetProfile,
@@ -203,10 +202,13 @@ fn handles_wasm_race_condition() {
     app.update();
 
     // Verify canonical materials are ready but no balls exist
-    let canonical = app.world().resource::<CanonicalMaterialHandles>();
-    assert!(canonical.is_ready(), "Canonical materials should be ready");
+    let canonical_ready = app
+        .world()
+        .resource::<CanonicalMaterialHandles>()
+        .is_ready();
+    assert!(canonical_ready, "Canonical materials should be ready");
 
-    let ball_count = app.world().query::<&Ball>().iter(app.world()).count();
+    let ball_count = app.world_mut().query::<&Ball>().iter(app.world()).count();
     assert_eq!(ball_count, 0, "No balls should exist yet");
 
     // NOW spawn the ball entity (late spawn - simulating WASM where materials load before entities)
@@ -238,9 +240,16 @@ fn handles_wasm_race_condition() {
     );
 
     // Verify it's a valid material from canonical or type registry
-    let has_canonical = canonical.get(BaselineMaterialKind::Ball).is_some();
-    let type_registry = app.world().resource::<TypeVariantRegistry>();
-    let has_type_variant = type_registry.get(ObjectClass::Ball, 0).is_some();
+    let has_canonical = app
+        .world()
+        .resource::<CanonicalMaterialHandles>()
+        .get(BaselineMaterialKind::Ball)
+        .is_some();
+    let has_type_variant = app
+        .world()
+        .resource::<TypeVariantRegistry>()
+        .get(ObjectClass::Ball, 0)
+        .is_some();
 
     assert!(
         has_canonical || has_type_variant,
