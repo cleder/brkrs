@@ -502,9 +502,7 @@ fn apply_canonical_materials_to_existing_entities(
         return;
     }
     
-    if canonical.is_ready() {
-        *applied = true;
-    }
+    *applied = true;
 
     // Update paddle materials
     if let Some(paddle_handle) = canonical.get(BaselineMaterialKind::Paddle) {
