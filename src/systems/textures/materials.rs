@@ -497,17 +497,18 @@ fn apply_canonical_materials_to_existing_entities(
         return;
     };
 
-    // Only run once when canonical materials first become ready
+    // Skip if materials not ready or already applied successfully
     if *applied || !canonical.is_ready() {
         return;
     }
 
-    *applied = true;
+    let mut updated_count = 0;
 
     // Update paddle materials
     if let Some(paddle_handle) = canonical.get(BaselineMaterialKind::Paddle) {
         for mut material in paddle_query.iter_mut() {
             material.0 = paddle_handle.clone();
+            updated_count += 1;
         }
     }
 
@@ -516,12 +517,14 @@ fn apply_canonical_materials_to_existing_entities(
         if let Some(registry) = type_registry.as_ref() {
             if let Some(handle) = registry.get(ObjectClass::Ball, ball_type.0) {
                 material.0 = handle;
+                updated_count += 1;
                 continue;
             }
         }
         // Fall back to canonical ball material
         if let Some(ball_handle) = canonical.get(BaselineMaterialKind::Ball) {
             material.0 = ball_handle.clone();
+            updated_count += 1;
         }
     }
 
@@ -530,12 +533,25 @@ fn apply_canonical_materials_to_existing_entities(
         if let Some(registry) = type_registry.as_ref() {
             if let Some(handle) = registry.get(ObjectClass::Brick, brick_type.0) {
                 material.0 = handle;
+                updated_count += 1;
                 continue;
             }
         }
         // Fall back to canonical brick material
         if let Some(brick_handle) = canonical.get(BaselineMaterialKind::Brick) {
             material.0 = brick_handle.clone();
+            updated_count += 1;
         }
+    }
+
+    // Only mark as applied if we actually updated some entities
+    // This handles the WASM case where materials might become ready before entities spawn
+    if updated_count > 0 {
+        *applied = true;
+        debug!(
+            target: "textures::materials",
+            count = updated_count,
+            "Applied canonical materials to existing entities"
+        );
     }
 }
