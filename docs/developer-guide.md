@@ -15,6 +15,11 @@ See {doc}`quickstart` for platform-specific dependencies like build-essential on
 or Xcode Command Line Tools on macOS.
 ```
 
+## SpecKit Quickstart
+
+Read through the official [SpecKit quickstart documentation](https://github.github.io/spec-kit/quickstart.html).
+You will need to follow the whole process (with the exception of `/speckit.constitution`, the constitution exist).
+
 ## Repository structure
 
 ```text
@@ -155,7 +160,7 @@ cargo test
 
    The `description` and `author` fields are optional but recommended for:
    - **Description**: Document design intent, gameplay mechanics, or technical notes
-   - **Author**: Credit contributors with plain text or markdown links
+   - **Author**: Credit contributors with plain text or Markdown links
 
 3. Test locally:
 
