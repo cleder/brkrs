@@ -23,6 +23,10 @@ if not exist "%WASM_BINARY%" (
 REM Generate JavaScript bindings
 echo Generating JavaScript bindings...
 wasm-bindgen --out-dir . --target web "%WASM_BINARY%"
+if errorlevel 1 (
+    echo Error: wasm-bindgen failed. Aborting build.
+    exit /b 1
+)
 
 REM Copy assets if they exist
 if exist "..\assets" (
