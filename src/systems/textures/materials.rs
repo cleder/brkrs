@@ -474,33 +474,62 @@ pub fn brick_type_material_handle(
 }
 
 /// Apply canonical materials to existing entities when they become available.
-/// This ensures paddle and bricks spawned during Startup get proper textures
+/// This ensures paddle, balls, and bricks spawned during Startup get proper textures
 /// once the manifest finishes loading.
 fn apply_canonical_materials_to_existing_entities(
     canonical: Option<Res<CanonicalMaterialHandles>>,
     type_registry: Option<Res<TypeVariantRegistry>>,
     mut paddle_query: Query<
         &mut MeshMaterial3d<StandardMaterial>,
-        (With<crate::Paddle>, Without<crate::Brick>),
+        (With<crate::Paddle>, Without<crate::Brick>, Without<Ball>),
+    >,
+    mut ball_query: Query<
+        (&mut MeshMaterial3d<StandardMaterial>, &BallTypeId),
+        (With<Ball>, Without<crate::Paddle>, Without<crate::Brick>),
     >,
     mut brick_query: Query<
         (&mut MeshMaterial3d<StandardMaterial>, &crate::BrickTypeId),
-        (With<crate::Brick>, Without<crate::Paddle>),
+        (With<crate::Brick>, Without<crate::Paddle>, Without<Ball>),
     >,
+    mut applied: Local<bool>,
 ) {
     let Some(canonical) = canonical else {
         return;
     };
 
-    // Only run once when canonical materials first become ready
-    if !canonical.is_changed() || !canonical.is_ready() {
+    // Skip if materials not ready or already applied successfully
+    if *applied || !canonical.is_ready() {
         return;
     }
+
+    let mut updated_count = 0;
 
     // Update paddle materials
     if let Some(paddle_handle) = canonical.get(BaselineMaterialKind::Paddle) {
         for mut material in paddle_query.iter_mut() {
             material.0 = paddle_handle.clone();
+            updated_count += 1;
+        }
+    }
+
+    // Update ball materials based on type
+    for (mut material, ball_type) in ball_query.iter_mut() {
+        if let Some(registry) = type_registry.as_ref() {
+            if let Some(handle) = registry.get(ObjectClass::Ball, ball_type.0) {
+                material.0 = handle;
+                updated_count += 1;
+                continue;
+            }
+        }
+        // Fall back to canonical ball material
+        debug!(
+            target: "textures::materials",
+            ball_type = ball_type.0,
+            "No type variant for ball; falling back to canonical material"
+        );
+        if let Some(ball_handle) = canonical.get(BaselineMaterialKind::Ball) {
+            material.0 = ball_handle.clone();
+            updated_count += 1;
         }
     }
 
@@ -509,12 +538,30 @@ fn apply_canonical_materials_to_existing_entities(
         if let Some(registry) = type_registry.as_ref() {
             if let Some(handle) = registry.get(ObjectClass::Brick, brick_type.0) {
                 material.0 = handle;
+                updated_count += 1;
                 continue;
             }
         }
         // Fall back to canonical brick material
+        debug!(
+            target: "textures::materials",
+            brick_type = brick_type.0,
+            "No type variant for brick; falling back to canonical material"
+        );
         if let Some(brick_handle) = canonical.get(BaselineMaterialKind::Brick) {
             material.0 = brick_handle.clone();
+            updated_count += 1;
         }
+    }
+
+    // Only mark as applied if we actually updated some entities
+    // This handles the WASM case where materials might become ready before entities spawn
+    if updated_count > 0 {
+        *applied = true;
+        debug!(
+            target: "textures::materials",
+            count = updated_count,
+            "Applied canonical materials to existing entities"
+        );
     }
 }

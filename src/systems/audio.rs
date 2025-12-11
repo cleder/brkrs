@@ -370,7 +370,7 @@ fn save_audio_config_on_change(config: Res<AudioConfig>) {
                             if let Err(e) = storage.set_item(storage_key, &serialized) {
                                 warn!(
                                     target: "audio",
-                                    error = %e,
+                                    error = ?e,
                                     "Failed to save audio config to localStorage"
                                 );
                             } else {

@@ -193,7 +193,7 @@ Maps gameplay type IDs to visual profiles.
 |-------|------|---------|-------------|
 | `object_class` | Enum | *required* | `Ball` or `Brick` |
 | `type_id` | u8 | *required* | Gameplay type ID (3+ for bricks) |
-| `profile_id` | String | *required* | Reference to VisualAssetProfile.id |
+| `profile_id` | String | *required* | Reference to `VisualAssetProfile.id` |
 | `emissive_color` | `Option<Color>` |`None`| Self-illumination color |
 |`animation`| `Option<AnimationDescriptor>` |`None` | Future: animation effects |
 

@@ -15,6 +15,11 @@ See {doc}`quickstart` for platform-specific dependencies like build-essential on
 or Xcode Command Line Tools on macOS.
 ```
 
+## SpecKit Quickstart
+
+Read through the official [SpecKit quickstart documentation](https://github.github.io/spec-kit/quickstart.html).
+You will need to follow the whole process (with the exception of `/speckit.constitution`, the constitution exist).
+
 ## Repository structure
 
 ```text
@@ -135,7 +140,27 @@ cargo test
    cp assets/levels/level_001.ron assets/levels/level_003.ron
    ```
 
-2. Edit the file with your level design (see {doc}`asset-format` for details)
+2. Edit the file with your level design and optional metadata:
+
+   ```rust
+   LevelDefinition(
+     number: 3,
+     description: Some(r#"
+       Beginner tutorial level.
+
+       Teaches basic paddle control and ball bouncing.
+       Features a simple brick pattern for practice.
+     "#),
+     author: Some("[Jane Smith](mailto:jane@example.com)"),
+     matrix: [
+       // ... your level design
+     ],
+   )
+   ```
+
+   The `description` and `author` fields are optional but recommended for:
+   - **Description**: Document design intent, gameplay mechanics, or technical notes
+   - **Author**: Credit contributors with plain text or Markdown links
 
 3. Test locally:
 
