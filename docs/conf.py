@@ -19,7 +19,12 @@ author = "Christian Ledermann"
 extensions = [
     "myst_parser",
     "sphinx_copybutton",
+    'sphinx_toolbox.sidebar_links',
 ]
+
+# If using :github: option
+github_username = 'cleder'
+github_repository = 'brkrs'
 
 # MyST-Parser configuration
 myst_enable_extensions = [
@@ -47,7 +52,7 @@ html_static_path = ["_static"]
 # Furo theme options
 html_theme_options = {
     "source_repository": "https://github.com/cleder/brkrs",
-    "source_branch": "main",
+    "source_branch": "develop",
     "source_directory": "docs/",
 }
 
