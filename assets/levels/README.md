@@ -32,7 +32,7 @@ Fields
   Supports multiline strings and special characters.
 - `author: Option<String>` — optional contributor attribution.
   Use plain text names or Markdown link format `[Name](url)` for email/website attribution.
-  The runtime provides helper methods to extract display names from markdown links.
+  The runtime provides helper methods to extract display names from Markdown links.
 
 ## Metadata fields (description and author)
 
@@ -65,7 +65,7 @@ LevelDefinition(
 
 ### Author field
 
-The `author` field credits contributors and supports both plain text and markdown link formats:
+The `author` field credits contributors and supports both plain text and Markdown link formats:
 
 ```ron
 // Plain text attribution
@@ -78,7 +78,7 @@ author: Some("[Jane Smith](mailto:jane@example.com)")
 author: Some("[Game Team](https://github.com/org/repo)")
 ```
 
-The runtime provides `extract_author_name()` function and `LevelDefinition::author_name()` method to extract display names from markdown links, returning "Jane Smith" or "Game Team" respectively.
+The runtime provides `extract_author_name()` function and `LevelDefinition::author_name()` method to extract display names from Markdown links, returning "Jane Smith" or "Game Team" respectively.
 
 ### Backward compatibility
 
