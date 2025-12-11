@@ -19,12 +19,11 @@ author = "Christian Ledermann"
 extensions = [
     "myst_parser",
     "sphinx_copybutton",
-    'sphinx_toolbox.sidebar_links',
 ]
 
 # If using :github: option
-github_username = 'cleder'
-github_repository = 'brkrs'
+github_username = "cleder"
+github_repository = "brkrs"
 
 # MyST-Parser configuration
 myst_enable_extensions = [

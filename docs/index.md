@@ -13,11 +13,7 @@ Welcome to the brkrs documentation! **brkrs** is a Breakout/Arkanoid style game 
 - 🎮 [Play the web version](https://cleder.github.io/brkrs/)
 - 📖 {doc}`quickstart` — Get running in 10 minutes
 - 🛠️ {doc}`developer-guide` — Contribute to the project
-
-```{sidebar-links}
-:caption: Links
-:github:
-```
+- 📦 [GitHub](https://github.com/cleder/brkrs/)
 
 ## Getting Started
 
