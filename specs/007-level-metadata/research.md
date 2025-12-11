@@ -11,7 +11,7 @@ Research focuses on:
 
 1. Serde/RON best practices for optional fields
 2. Backward compatibility strategies
-3. String parsing for markdown link extraction
+3. String parsing for Markdown link extraction
 
 ## Decision 1: Optional Field Implementation
 
@@ -56,7 +56,7 @@ pub struct LevelDefinition {
 
 ## Decision 2: Author Name Extraction from Markdown Links
 
-**Context**: Support both plain names ("Jane Smith") and markdown links ("[Jane Smith](mailto:jane@example.com)") in author field.
+**Context**: Support both plain names ("Jane Smith") and Markdown links ("[Jane Smith](mailto:jane@example.com)") in author field.
 
 **Decision**: Simple regex-based extraction with fallback to raw string
 
@@ -65,11 +65,11 @@ pub struct LevelDefinition {
 - Markdown link format is `[Display Text](url)` - simple to parse
 - Edge cases (nested brackets, multiple links) should preserve raw string rather than fail
 - Extraction logic isolated to helper function for testability
-- No external markdown parsing dependencies needed for this simple case
+- No external Markdown parsing dependencies needed for this simple case
 
 **Alternatives Considered**:
 
-- Full markdown parser (e.g., pulldown-cmark): Rejected as overkill for single link extraction
+- Full Markdown parser (e.g., pulldown-cmark): Rejected as overkill for single link extraction
 - Manual character-by-character parsing: Rejected as regex is clearer and sufficient
 - Store both name and URL separately: Rejected as spec only requires name extraction
 
@@ -121,7 +121,7 @@ pub fn extract_author_name(author: &str) -> &str {
 
 **Testing Strategy**:
 
-- Unit tests for plain strings, markdown links, edge cases
+- Unit tests for plain strings, Markdown links, edge cases
 - Integration tests with level files containing both formats
 
 ## Decision 3: Validation and Constraints
@@ -177,7 +177,7 @@ LevelDefinition(
 **Documentation Sections to Add**:
 
 1. Field descriptions (what each field is for)
-2. Format examples (plain text, markdown links, multi-line)
+2. Format examples (plain text, Markdown links, multi-line)
 3. When to use description (design intent, difficulty notes)
 4. Author format options (name only vs. contact info)
 5. Migration guide (adding fields to existing levels)

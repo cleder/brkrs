@@ -38,8 +38,8 @@
 
 **⚠️ CRITICAL**: No user story pages can be published until CI and RTD are configured
 
-- [x] T005 Create docs-pr CI workflow for fast PR validation in .github/workflows/docs-pr.yml
-- [x] T006 [P] Create docs-main CI workflow with rustdoc generation in .github/workflows/docs-main.yml
+- [x] T005 Create docs-pr CI workflow for fast PR validation in .GitHub/workflows/docs-pr.yml
+- [x] T006 [P] Create docs-main CI workflow with rustdoc generation in .GitHub/workflows/docs-main.yml
 - [x] T007 [P] Create Read the Docs configuration file at readthedocs.yml
 - [x] T008 Create rustdoc staging script to copy target/doc/ to docs/_static/rustdoc/ in scripts/stage-rustdoc.sh
 - [x] T009 [P] Add Makefile or justfile targets for local docs build in docs/Makefile

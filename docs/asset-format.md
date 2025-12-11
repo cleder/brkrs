@@ -60,7 +60,7 @@ The description supports:
 
 #### Author Field
 
-Use the `author` field to credit contributors with plain text or markdown link formats:
+Use the `author` field to credit contributors with plain text or Markdown link formats:
 
 ```rust
 // Plain text attribution
@@ -73,7 +73,7 @@ author: Some("[Jane Smith](mailto:jane@example.com)"),
 author: Some("[Game Team](https://github.com/org/repo)"),
 ```
 
-The runtime provides helper functions to extract display names from markdown links, returning "Jane Smith" or "Game Team" respectively.
+The runtime provides helper functions to extract display names from Markdown links, returning "Jane Smith" or "Game Team" respectively.
 
 #### Backward Compatibility
 
