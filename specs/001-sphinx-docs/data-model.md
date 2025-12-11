@@ -4,7 +4,7 @@
 
 - Documentation Source
   - Description: The collection of MyST/Sphinx source files stored in `/docs/` inside the repository.
-  - Key attributes: path, file type (Markdown/rst), author, last_modified, version
+  - Key attributes: path, file type (markdown/rst), author, last_modified, version
   - Validation rules: Files must parse as MyST; relative links resolved; images under `assets/` or `textures/`
 
 - Rustdoc Artifacts
