@@ -60,7 +60,7 @@ The description supports:
 
 #### Author Field
 
-Use the `author` field to credit contributors with plain text or markdown link formats:
+Use the `author` field to credit contributors with plain text or Markdown link formats:
 
 ```rust
 // Plain text attribution
@@ -73,7 +73,7 @@ author: Some("[Jane Smith](mailto:jane@example.com)"),
 author: Some("[Game Team](https://github.com/org/repo)"),
 ```
 
-The runtime provides helper functions to extract display names from markdown links, returning "Jane Smith" or "Game Team" respectively.
+The runtime provides helper functions to extract display names from Markdown links, returning "Jane Smith" or "Game Team" respectively.
 
 #### Backward Compatibility
 
@@ -86,8 +86,8 @@ The runtime treats empty/whitespace-only values as absent for helper methods.
 | Value | Entity | Notes |
 |-------|--------|-------|
 | `0` | Empty | No entity spawned |
-| `1` | Paddle | First occurrence only; additional 1s are ignored |
-| `2` | Ball | First occurrence only; additional 2s are ignored |
+| `1` | Ball | First occurrence only; additional 1s are ignored |
+| `2` | Paddle | First occurrence only; additional 2s are ignored |
 | `3` | Brick | Standard destructible brick |
 | `4` | Indestructible Brick | Cannot be destroyed by the ball |
 | `5` | Brick Type 5 | (Reserved for future use) |
@@ -110,9 +110,9 @@ The game uses a 20×20 grid:
  3 │              └─────────────────────┘                       │
  4 │                                                            │
    │                                                            │
-12 │                    ○ Ball (2)                              │
+12 │                    ═ Paddle (2)                            │
    │                                                            │
-18 │                    ═ Paddle (1)                            │
+18 │                    ○ Ball (1)                              │
 19 │                                                            │
    └────────────────────────────────────────────────────────────┘
 (rows)
@@ -200,8 +200,8 @@ The `fallback/` directory contains default textures used when custom textures ar
 ### Level Validation Rules
 
 1. **Matrix size**: Must be exactly 20 rows × 20 columns
-2. **Paddle**: At least one cell with value `1` (or fallback spawn is used)
-3. **Ball**: At least one cell with value `2` (or fallback spawn is used)
+2. **Paddle**: At least one cell with value `2` (or fallback spawn is used)
+3. **Ball**: At least one cell with value `1` (or fallback spawn is used)
 4. **Number**: Must match the filename (e.g., `number: 1` in `level_001.ron`)
 
 ### Common Errors

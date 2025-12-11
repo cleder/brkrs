@@ -421,10 +421,10 @@ fn spawn_level_entities_impl(
     for (row, row_data) in def.matrix.iter().enumerate() {
         for (col, value) in row_data.iter().enumerate() {
             let x = -PLANE_H / 2.0 + (row as f32 + 0.5) * CELL_HEIGHT;
-            let z = -PLANE_W / 2.0 + (col as f32 + 0.5) * CELL_WIDTH;
+            let z = PLANE_W / 2.0 - (col as f32 + 0.5) * CELL_WIDTH;
             match value {
                 0 => {}
-                1 => {
+                2 => {
                     // Paddle
                     if !paddle_spawned {
                         paddle_spawned = true;
@@ -455,7 +455,7 @@ fn spawn_level_entities_impl(
                             .insert(paddle_respawn_handle(position));
                     }
                 }
-                2 => {
+                1 => {
                     // Ball
                     if !ball_spawned {
                         ball_spawned = true;
@@ -649,8 +649,7 @@ fn spawn_bricks_only(
             }
             let brick_type_id = *value;
             let x = -PLANE_H / 2.0 + (row as f32 + 0.5) * CELL_HEIGHT;
-            let z = -PLANE_W / 2.0 + (col as f32 + 0.5) * CELL_WIDTH;
-
+            let z = PLANE_W / 2.0 - (col as f32 + 0.5) * CELL_WIDTH;
             #[cfg(feature = "texture_manifest")]
             let brick_mat = {
                 type_registry
@@ -705,13 +704,13 @@ pub fn set_spawn_points_only(def: &LevelDefinition, spawn_points: &mut SpawnPoin
     for (row, row_data) in def.matrix.iter().enumerate() {
         for (col, value) in row_data.iter().enumerate() {
             let x = -PLANE_H / 2.0 + (row as f32 + 0.5) * CELL_HEIGHT;
-            let z = -PLANE_W / 2.0 + (col as f32 + 0.5) * CELL_WIDTH;
+            let z = PLANE_W / 2.0 - (col as f32 + 0.5) * CELL_WIDTH;
             match value {
-                1 if !paddle_set => {
+                2 if !paddle_set => {
                     paddle_set = true;
                     spawn_points.paddle = Some(Vec3::new(x, 2.0, z));
                 }
-                2 if !ball_set => {
+                1 if !ball_set => {
                     ball_set = true;
                     spawn_points.ball = Some(Vec3::new(x, 2.0, z));
                 }

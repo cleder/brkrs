@@ -116,7 +116,7 @@ ls assets/levels/
 Check the level file format:
 
 - Matrix must be exactly 20×20
-- Cell values: 0=empty, 1=paddle, 2=ball, 3=brick
+- Cell values: 0=empty, 2=paddle, 1=ball, 3=brick
 - See the {doc}`asset-format` guide for details
 
 ## Still stuck?

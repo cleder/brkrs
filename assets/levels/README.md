@@ -32,7 +32,7 @@ Fields
   Supports multiline strings and special characters.
 - `author: Option<String>` — optional contributor attribution.
   Use plain text names or Markdown link format `[Name](url)` for email/website attribution.
-  The runtime provides helper methods to extract display names from markdown links.
+  The runtime provides helper methods to extract display names from Markdown links.
 
 ## Metadata fields (description and author)
 
@@ -65,7 +65,7 @@ LevelDefinition(
 
 ### Author field
 
-The `author` field credits contributors and supports both plain text and markdown link formats:
+The `author` field credits contributors and supports both plain text and Markdown link formats:
 
 ```ron
 // Plain text attribution
@@ -78,7 +78,7 @@ author: Some("[Jane Smith](mailto:jane@example.com)")
 author: Some("[Game Team](https://github.com/org/repo)")
 ```
 
-The runtime provides `extract_author_name()` function and `LevelDefinition::author_name()` method to extract display names from markdown links, returning "Jane Smith" or "Game Team" respectively.
+The runtime provides `extract_author_name()` function and `LevelDefinition::author_name()` method to extract display names from Markdown links, returning "Jane Smith" or "Game Team" respectively.
 
 ### Backward compatibility
 
@@ -92,8 +92,8 @@ The runtime uses numeric tile values to determine what to spawn at each grid cel
 Common tokens:
 
 - `0` — empty / no entity.
-- `1` — paddle spawn cell (the first `1` found sets the paddle spawn point).
-- `2` — ball spawn cell (the first `2` found sets the ball spawn point).
+- `2` — paddle spawn cell (the first `2` found sets the paddle spawn point).
+- `1` — ball spawn cell (the first `1` found sets the ball spawn point).
 - `20` — canonical simple (destructible) brick index; recommended for newly authored levels.
 - `>= 3` — any value 3..=255 is treated as a brick `BrickTypeId` (appearance and variants determined by texture manifest if enabled).
 - `90` — indestructible brick — collides and renders like a brick but does NOT count toward level completion.
@@ -102,7 +102,7 @@ Notes for designers
 
 - Prefer `20` for standard destructible bricks. `3` is legacy and will be migrated automatically for repository assets (see below).
 - `90` is reserved for indestructible bricks — they cannot be destroyed but still collide and participate in gameplay.
-- Only the first `1` (paddle) and `2` (ball) in the matrix are used; add at most one of each.
+- Only the first `2` (paddle) and `1` (ball) in the matrix are used; add at most one of each.
   If they are absent the runtime spawns reasonable defaults.
 - The loader will convert input matrices to the expected 20×20 shape; but editing a properly sized matrix makes human editing and visual reasoning easier.
 
