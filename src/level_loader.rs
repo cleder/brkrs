@@ -1,4 +1,6 @@
-use crate::level_format::{normalize_matrix_simple, INDESTRUCTIBLE_BRICK};
+use crate::level_format::{
+    normalize_matrix_simple, INDESTRUCTIBLE_BRICK, PADDLE_ENLARGE_BRICK, PADDLE_SHRINK_BRICK,
+};
 use crate::systems::level_switch::{LevelSwitchRequested, LevelSwitchState};
 use crate::systems::respawn::{RespawnEntityKind, RespawnHandle, SpawnPoints, SpawnTransform};
 #[cfg(feature = "texture_manifest")]
@@ -14,9 +16,9 @@ use ron::de::from_str;
 use serde::Deserialize;
 
 use crate::{
-    Ball, BallTypeId, Brick, BrickTypeId, CountsTowardsCompletion, GameProgress, GravityConfig,
-    LowerGoal, Paddle, BALL_RADIUS, CELL_HEIGHT, CELL_WIDTH, PADDLE_HEIGHT, PADDLE_RADIUS, PLANE_H,
-    PLANE_W,
+    Ball, BallTypeId, Brick, BrickType30, BrickType32, BrickTypeId, CountsTowardsCompletion,
+    GameProgress, GravityConfig, LowerGoal, Paddle, BALL_RADIUS, CELL_HEIGHT, CELL_WIDTH,
+    PADDLE_HEIGHT, PADDLE_RADIUS, PLANE_H, PLANE_W,
 };
 use bevy_rapier3d::prelude::*;
 
@@ -536,6 +538,12 @@ fn spawn_level_entities_impl(
                     ));
                     if brick_type_id != INDESTRUCTIBLE_BRICK {
                         entity.insert(CountsTowardsCompletion);
+                    }
+                    // Add marker components for paddle size powerup bricks
+                    if brick_type_id == PADDLE_SHRINK_BRICK {
+                        entity.insert(BrickType30);
+                    } else if brick_type_id == PADDLE_ENLARGE_BRICK {
+                        entity.insert(BrickType32);
                     }
                 }
             }

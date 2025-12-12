@@ -18,7 +18,10 @@ pub use level_loader::extract_author_name;
 
 #[cfg(feature = "texture_manifest")]
 use crate::systems::TextureManifestPlugin;
-use crate::systems::{AudioPlugin, InputLocked, LevelSwitchPlugin, RespawnPlugin, RespawnSystems};
+use crate::systems::{
+    AudioPlugin, InputLocked, LevelSwitchPlugin, LevelSwitchRequested, RespawnPlugin,
+    RespawnSystems,
+};
 
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
@@ -40,6 +43,14 @@ const PADDLE_RADIUS: f32 = 0.3;
 const PADDLE_HEIGHT: f32 = 3.0;
 const PLANE_H: f32 = 30.0;
 const PLANE_W: f32 = 40.0;
+
+// Paddle size powerup constants
+const PADDLE_BASE_WIDTH: f32 = 20.0;
+const PADDLE_MIN_WIDTH: f32 = 10.0;
+const PADDLE_MAX_WIDTH: f32 = 30.0;
+const PADDLE_SHRINK_MULTIPLIER: f32 = 0.7;
+const PADDLE_ENLARGE_MULTIPLIER: f32 = 1.5;
+const PADDLE_SIZE_EFFECT_DURATION: f32 = 10.0;
 
 // Bounce/impulse tuning
 // How strongly the wall collision pushes the ball (ExternalImpulse on balls)
@@ -120,6 +131,32 @@ pub struct PaddleGrowing {
 #[derive(Component)]
 pub struct BallFrozen;
 
+/// Marker component for brick type 30 (triggers paddle shrink)
+#[derive(Component)]
+pub struct BrickType30;
+
+/// Marker component for brick type 32 (triggers paddle enlarge)
+#[derive(Component)]
+pub struct BrickType32;
+
+/// Component that tracks an active paddle size effect
+#[derive(Component)]
+pub struct PaddleSizeEffect {
+    /// Type of the size effect (shrink or enlarge)
+    pub effect_type: SizeEffectType,
+    /// Time remaining for this effect in seconds
+    pub remaining_duration: f32,
+    /// Target width for this effect
+    pub target_width: f32,
+}
+
+/// Type of paddle size modification effect
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SizeEffectType {
+    Shrink,
+    Enlarge,
+}
+
 /// Emitted when the paddle collides with a wall boundary.
 /// Used by the audio system to play paddle-wall collision sounds.
 #[derive(Event)]
@@ -144,6 +181,17 @@ pub struct BallHit {
     pub impulse: Vec3,
     /// The ball entity that was hit.
     pub ball: Entity,
+}
+
+/// Emitted when a paddle size effect is applied (for audio/visual feedback).
+#[derive(Event)]
+pub struct PaddleSizeEffectApplied {
+    /// The paddle entity affected
+    pub paddle: Entity,
+    /// Type of effect applied
+    pub effect_type: SizeEffectType,
+    /// The new target width
+    pub target_width: f32,
 }
 
 /// Stores configurable gravity values (normal gameplay gravity, etc.)
@@ -204,6 +252,9 @@ pub fn run() {
         app.add_plugins(TextureManifestPlugin);
     }
 
+    // Register paddle size effect event
+    app.add_event::<PaddleSizeEffectApplied>();
+
     app.add_systems(
         Startup,
         (setup, spawn_border, systems::grid_debug::spawn_grid_overlay),
@@ -227,6 +278,12 @@ pub fn run() {
             read_character_controller_collisions,
             detect_ball_wall_collisions,
             mark_brick_on_ball_collision,
+            detect_paddle_powerup_collisions,
+            update_paddle_size_timers,
+            remove_expired_size_effects,
+            apply_paddle_size_to_transform,
+            clear_paddle_effects_on_level_switch,
+            clear_paddle_effects_on_respawn,
             despawn_marked_entities, // Runs after marking, allowing physics to resolve
             // display_events,
             // designer palette - toggle with P
@@ -681,6 +738,161 @@ fn detect_ball_wall_collisions(
                     entity: ball_entity,
                     impulse: velocity.linvel,
                 });
+            }
+        }
+    }
+}
+
+/// Detect ball collisions with powerup bricks (types 30 and 32) and apply paddle size effects.
+fn detect_paddle_powerup_collisions(
+    mut collision_events: MessageReader<CollisionEvent>,
+    balls: Query<Entity, With<Ball>>,
+    brick30: Query<Entity, With<BrickType30>>,
+    brick32: Query<Entity, With<BrickType32>>,
+    mut paddles: Query<(Entity, &Transform), With<Paddle>>,
+    mut commands: Commands,
+) {
+    for event in collision_events.read() {
+        if let CollisionEvent::Started(e1, e2, _) = event {
+            let e1_is_ball = balls.get(*e1).is_ok();
+            let e2_is_ball = balls.get(*e2).is_ok();
+
+            // Determine which entity is the ball and which is the brick
+            let (ball_entity, brick_entity) = if e1_is_ball {
+                (*e1, *e2)
+            } else if e2_is_ball {
+                (*e2, *e1)
+            } else {
+                continue;
+            };
+
+            // Check if brick is type 30 (shrink) or type 32 (enlarge)
+            let effect_type = if brick30.get(brick_entity).is_ok() {
+                Some(SizeEffectType::Shrink)
+            } else if brick32.get(brick_entity).is_ok() {
+                Some(SizeEffectType::Enlarge)
+            } else {
+                None
+            };
+
+            if let Some(effect_type) = effect_type {
+                // Apply effect to all paddles (typically just one)
+                for (paddle_entity, _transform) in paddles.iter_mut() {
+                    let target_width = match effect_type {
+                        SizeEffectType::Shrink => (PADDLE_BASE_WIDTH * PADDLE_SHRINK_MULTIPLIER)
+                            .clamp(PADDLE_MIN_WIDTH, PADDLE_MAX_WIDTH),
+                        SizeEffectType::Enlarge => (PADDLE_BASE_WIDTH * PADDLE_ENLARGE_MULTIPLIER)
+                            .clamp(PADDLE_MIN_WIDTH, PADDLE_MAX_WIDTH),
+                    };
+
+                    // Remove any existing effect and add new one
+                    commands
+                        .entity(paddle_entity)
+                        .remove::<PaddleSizeEffect>()
+                        .insert(PaddleSizeEffect {
+                            effect_type,
+                            remaining_duration: PADDLE_SIZE_EFFECT_DURATION,
+                            target_width,
+                        });
+
+                    // Emit event for audio/visual feedback
+                    commands.trigger(PaddleSizeEffectApplied {
+                        paddle: paddle_entity,
+                        effect_type,
+                        target_width,
+                    });
+
+                    debug!(
+                        "Applied {:?} effect to paddle {:?}, target width: {}",
+                        effect_type, paddle_entity, target_width
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// Update paddle size effect timers.
+fn update_paddle_size_timers(mut effects: Query<&mut PaddleSizeEffect>, time: Res<Time>) {
+    for mut effect in effects.iter_mut() {
+        effect.remaining_duration -= time.delta_secs();
+        effect.remaining_duration = effect.remaining_duration.max(0.0);
+    }
+}
+
+/// Remove expired paddle size effects and restore paddle to base size.
+fn remove_expired_size_effects(
+    mut paddles: Query<(Entity, &PaddleSizeEffect)>,
+    mut commands: Commands,
+) {
+    for (entity, effect) in paddles.iter_mut() {
+        if effect.remaining_duration <= 0.0 {
+            commands.entity(entity).remove::<PaddleSizeEffect>();
+            debug!("Removed expired size effect from paddle {:?}", entity);
+        }
+    }
+}
+
+/// Apply paddle size effect to the paddle's transform scale.
+fn apply_paddle_size_to_transform(
+    mut paddles: Query<(&mut Transform, Option<&PaddleSizeEffect>), With<Paddle>>,
+) {
+    for (mut transform, effect) in paddles.iter_mut() {
+        let target_scale = if let Some(effect) = effect {
+            // Calculate scale based on target width relative to base width
+            let scale_factor = effect.target_width / PADDLE_BASE_WIDTH;
+            Vec3::new(1.0, 1.0, scale_factor)
+        } else {
+            // No effect active, use base scale
+            Vec3::ONE
+        };
+
+        // Smoothly interpolate to target scale (or just set it directly for immediate effect)
+        transform.scale = target_scale;
+    }
+}
+
+/// Clear paddle size effects when a level switch is requested.
+fn clear_paddle_effects_on_level_switch(
+    mut level_switch_events: MessageReader<systems::LevelSwitchRequested>,
+    paddles: Query<Entity, (With<Paddle>, With<PaddleSizeEffect>)>,
+    mut commands: Commands,
+) {
+    if level_switch_events.read().next().is_some() {
+        for paddle_entity in paddles.iter() {
+            commands.entity(paddle_entity).remove::<PaddleSizeEffect>();
+            debug!(
+                "Cleared paddle size effect on level switch for paddle {:?}",
+                paddle_entity
+            );
+        }
+    }
+}
+
+/// Clear paddle size effects when ball respawn is scheduled (player loses life).
+fn clear_paddle_effects_on_respawn(
+    mut collision_events: MessageReader<CollisionEvent>,
+    balls: Query<Entity, With<Ball>>,
+    lower_goals: Query<Entity, With<LowerGoal>>,
+    paddles: Query<Entity, (With<Paddle>, With<PaddleSizeEffect>)>,
+    mut commands: Commands,
+) {
+    for event in collision_events.read() {
+        if let CollisionEvent::Started(e1, e2, _) = event {
+            let e1_is_ball = balls.get(*e1).is_ok();
+            let e2_is_ball = balls.get(*e2).is_ok();
+            let e1_is_goal = lower_goals.get(*e1).is_ok();
+            let e2_is_goal = lower_goals.get(*e2).is_ok();
+
+            // If ball hits lower goal, clear paddle effects
+            if (e1_is_ball && e2_is_goal) || (e2_is_ball && e1_is_goal) {
+                for paddle_entity in paddles.iter() {
+                    commands.entity(paddle_entity).remove::<PaddleSizeEffect>();
+                    debug!(
+                        "Cleared paddle size effect on ball loss for paddle {:?}",
+                        paddle_entity
+                    );
+                }
             }
         }
     }
