@@ -37,8 +37,8 @@ pub const BRICK_TYPE_32: u8 = 32;
 pub struct PaddleSizeEffect {
     /// Type of effect: Shrink or Enlarge
     pub effect_type: SizeEffectType,
-    /// Time remaining in seconds before effect expires
-    pub remaining_duration: f32,
+    /// Timer tracking effect duration
+    pub timer: Timer,
     /// Original paddle width before effect (always 20.0)
     pub base_width: f32,
 }
@@ -135,7 +135,7 @@ pub fn detect_powerup_brick_collisions(
                         commands.entity(paddle_entity).remove::<PaddleSizeEffect>();
                         commands.entity(paddle_entity).insert(PaddleSizeEffect {
                             effect_type,
-                            remaining_duration: EFFECT_DURATION,
+                            timer: Timer::from_seconds(EFFECT_DURATION, TimerMode::Once),
                             base_width: PADDLE_BASE_WIDTH,
                         });
 
@@ -162,15 +162,9 @@ pub fn detect_powerup_brick_collisions(
 }
 
 /// System to countdown effect timers
-pub fn update_effect_timers(
-    mut paddles: Query<&mut PaddleSizeEffect>,
-    time: Res<Time>,
-) {
+pub fn update_effect_timers(mut paddles: Query<&mut PaddleSizeEffect>, time: Res<Time>) {
     for mut effect in paddles.iter_mut() {
-        effect.remaining_duration -= time.delta_secs();
-        if effect.remaining_duration < 0.0 {
-            effect.remaining_duration = 0.0;
-        }
+        effect.timer.tick(time.delta());
     }
 }
 
@@ -180,7 +174,7 @@ pub fn remove_expired_effects(
     mut commands: Commands,
 ) {
     for (entity, effect, mut transform) in paddles.iter_mut() {
-        if effect.remaining_duration <= 0.0 {
+        if effect.timer.is_finished() {
             // Restore paddle to base width
             transform.scale.x = 1.0;
 
@@ -238,38 +232,42 @@ pub fn play_effect_audio(
 
 /// System to clear paddle size effects on level change
 pub fn clear_effects_on_level_change(
-    mut level_switch_events: MessageReader<LevelSwitchRequested>,
+    level_switch_events: Option<MessageReader<LevelSwitchRequested>>,
     mut paddles: Query<(Entity, &mut Transform), (With<Paddle>, With<PaddleSizeEffect>)>,
     mut commands: Commands,
 ) {
-    for _event in level_switch_events.read() {
-        for (entity, mut transform) in paddles.iter_mut() {
-            // Restore paddle to base width
-            transform.scale.x = 1.0;
+    if let Some(mut events) = level_switch_events {
+        for _event in events.read() {
+            for (entity, mut transform) in paddles.iter_mut() {
+                // Restore paddle to base width
+                transform.scale.x = 1.0;
 
-            // Remove effect component
-            commands.entity(entity).remove::<PaddleSizeEffect>();
+                // Remove effect component
+                commands.entity(entity).remove::<PaddleSizeEffect>();
 
-            debug!("Cleared paddle size effect on level change");
+                debug!("Cleared paddle size effect on level change");
+            }
         }
     }
 }
 
 /// System to clear paddle size effects on life loss
 pub fn clear_effects_on_life_loss(
-    mut life_lost_events: MessageReader<LifeLostEvent>,
+    life_lost_events: Option<MessageReader<LifeLostEvent>>,
     mut paddles: Query<(Entity, &mut Transform), (With<Paddle>, With<PaddleSizeEffect>)>,
     mut commands: Commands,
 ) {
-    for _event in life_lost_events.read() {
-        for (entity, mut transform) in paddles.iter_mut() {
-            // Restore paddle to base width
-            transform.scale.x = 1.0;
+    if let Some(mut events) = life_lost_events {
+        for _event in events.read() {
+            for (entity, mut transform) in paddles.iter_mut() {
+                // Restore paddle to base width
+                transform.scale.x = 1.0;
 
-            // Remove effect component
-            commands.entity(entity).remove::<PaddleSizeEffect>();
+                // Remove effect component
+                commands.entity(entity).remove::<PaddleSizeEffect>();
 
-            debug!("Cleared paddle size effect on life loss");
+                debug!("Cleared paddle size effect on life loss");
+            }
         }
     }
 }

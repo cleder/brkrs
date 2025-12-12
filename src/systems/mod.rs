@@ -17,6 +17,8 @@ pub use level_switch::{
     LevelSwitchPlugin, LevelSwitchRequested, LevelSwitchSource, LevelSwitchState,
 };
 pub use multi_hit::MultiHitBrickHit;
-pub use paddle_size::{PaddleSizeEffect, PaddleSizeEffectApplied, PaddleSizePlugin, SizeEffectType};
+pub use paddle_size::{
+    PaddleSizeEffect, PaddleSizeEffectApplied, PaddleSizePlugin, SizeEffectType,
+};
 pub use respawn::{InputLocked, RespawnPlugin, RespawnSystems};
 pub use textures::TextureManifestPlugin;
