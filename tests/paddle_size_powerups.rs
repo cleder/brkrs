@@ -275,7 +275,7 @@ fn new_effect_replaces_old_effect() {
 }
 
 #[test]
-fn timer_resets_on_same_brick_type() {
+fn timer_resets_on_different_brick_type() {
     let mut app = test_app();
 
     // Spawn paddle
@@ -287,7 +287,7 @@ fn timer_resets_on_same_brick_type() {
     // Spawn ball
     let ball = app.world_mut().spawn(Ball).id();
 
-    // First shrink brick
+    // First shrink brick (type 30)
     let brick1 = app
         .world_mut()
         .spawn((Brick, BrickTypeId(BRICK_TYPE_30)))
@@ -320,7 +320,7 @@ fn timer_resets_on_same_brick_type() {
         remaining_secs
     );
 
-    // Second shrink brick
+    // Second enlarge brick (type 32, different from first)
     let brick2 = app
         .world_mut()
         .spawn((Brick, BrickTypeId(BRICK_TYPE_32)))

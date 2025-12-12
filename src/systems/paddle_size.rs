@@ -103,25 +103,17 @@ pub fn detect_powerup_brick_collisions(
 ) {
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
-            // Check if one entity is a ball
-            let ball_entity = if balls.contains(*e1) {
-                Some(*e1)
+            // Determine which entity is the ball and which is the brick
+            let (_ball_entity, brick_entity) = if balls.contains(*e1) {
+                (*e1, *e2)
             } else if balls.contains(*e2) {
-                Some(*e2)
+                (*e2, *e1)
             } else {
-                None
+                continue; // Neither entity is a ball
             };
 
-            if ball_entity.is_none() {
-                continue;
-            }
-
-            // Check if the other entity is a powerup brick
-            let brick_type = if balls.contains(*e1) {
-                bricks.get(*e2).ok()
-            } else {
-                bricks.get(*e1).ok()
-            };
+            // Check if the brick entity is a powerup brick
+            let brick_type = bricks.get(brick_entity).ok();
 
             if let Some(brick_type_id) = brick_type {
                 let effect_type = match brick_type_id.0 {
@@ -131,7 +123,8 @@ pub fn detect_powerup_brick_collisions(
                 };
 
                 if let Some(effect_type) = effect_type {
-                    // Apply effect to all paddles (typically just one)
+                    // Apply effect to all paddles
+                    // Note: Game design assumes single paddle, but implementation supports multiple
                     for (paddle_entity, mut transform) in paddles.iter_mut() {
                         let new_width = calculate_paddle_width(PADDLE_BASE_WIDTH, effect_type);
 
@@ -287,14 +280,29 @@ impl Plugin for PaddleSizePlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<PaddleSizeEffectApplied>();
 
-        // Register all systems
+        // Register systems with explicit ordering to ensure deterministic execution
+        // Chain: collision detection → timer updates → effect removal → visual feedback
+        app.add_systems(
+            Update,
+            (
+                detect_powerup_brick_collisions,
+                update_effect_timers,
+                remove_expired_effects,
+                (update_paddle_visual_feedback, restore_paddle_visual),
+            )
+                .chain(),
+        );
+
+        // Event-driven cleanup systems can run independently
         app.add_systems(Update, clear_effects_on_level_change);
-        app.add_systems(Update, clear_effects_on_life_loss);
-        app.add_systems(Update, detect_powerup_brick_collisions);
-        app.add_systems(Update, update_effect_timers);
-        app.add_systems(Update, remove_expired_effects);
-        app.add_systems(Update, update_paddle_visual_feedback);
-        app.add_systems(Update, restore_paddle_visual);
+
+        // clear_effects_on_life_loss must run before paddle shrink animation captures start_scale
+        // to ensure powerup effects are cleared and paddle returns to base scale first
+        app.add_systems(
+            Update,
+            clear_effects_on_life_loss.before(crate::systems::respawn::RespawnSystems::Detect),
+        );
+
         app.add_systems(Update, play_effect_audio);
     }
 }
