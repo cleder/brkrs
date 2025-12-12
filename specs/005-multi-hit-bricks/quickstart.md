@@ -13,7 +13,6 @@
 ### 1. Run Existing Tests
 
 ```bash
-cd /home/christian/devel/bevy/brkrs
 cargo test
 ```
 

@@ -1,7 +1,7 @@
 # Implementation Plan: Paddle Shrink Visual Feedback
 
-**Branch**: `008-paddle-shrink-feedback` | **Date**: 2025-12-12 | **Spec**: /home/christian/devel/bevy/brkrs/specs/008-paddle-shrink-feedback/spec.md
-**Input**: Feature specification from `/specs/008-paddle-shrink-feedback/spec.md`
+**Branch**: `008-paddle-shrink-feedback` | **Date**: 2025-12-12 | **Spec**: specs/008-paddle-shrink-feedback/spec.md
+**Input**: Feature specification from `specs/008-paddle-shrink-feedback/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command.
 See `.specify/templates/commands/plan.md` for the execution workflow.

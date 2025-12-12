@@ -1,6 +1,6 @@
 # Tasks: Indestructible bricks (LevelDefinition)
 
-**Input**: Design documents from `/home/christian/devel/bevy/brkrs/specs/001-indestructible-bricks/` **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
+**Input**: Design documents from `/specs/001-indestructible-bricks/` **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
 
 ---
 
