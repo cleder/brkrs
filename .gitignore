@@ -48,5 +48,8 @@ Thumbs.db
 /docs/_build/
 /docs/_static/rustdoc/
 
+# Deployment staging directory
+/deploy/
+
 # User configuration files (persisted locally, not in repo)
 /config/
