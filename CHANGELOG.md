@@ -11,6 +11,7 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Paddle shrink visual feedback (`008-paddle-shrink-feedback`): When a player loses their last ball, the paddle immediately shrinks from full size to nearly invisible (scale 0.01) over 1 second, providing instant visual feedback while running concurrently with the respawn delay. Smooth animation uses cubic easing interpolation and integrates seamlessly with the existing respawn system and fadeout overlay.
 - Level metadata (`007-level-metadata`): optional `description` and `author` fields in `LevelDefinition` for level design documentation and contributor attribution. Supports plain text and markdown link formats for authors. Fully backward compatible with existing level files.
 
 ## [0.0.1] - 2025-11-29

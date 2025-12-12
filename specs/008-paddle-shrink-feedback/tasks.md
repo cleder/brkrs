@@ -18,10 +18,10 @@
 
 **Purpose**: Verify existing infrastructure supports the feature
 
-- [ ] T001 Verify Bevy 0.17.3 and bevy_rapier3d 0.32.0 in Cargo.toml
-- [ ] T002 Verify existing PaddleGrowing component in src/lib.rs
-- [ ] T003 Verify existing respawn systems in src/systems/respawn.rs
-- [ ] T004 Verify existing LifeLostEvent message in src/systems/respawn.rs
+- [x] T001 Verify Bevy 0.17.3 and bevy_rapier3d 0.32.0 in Cargo.toml
+- [x] T002 Verify existing PaddleGrowing component in src/lib.rs
+- [x] T003 Verify existing respawn systems in src/systems/respawn.rs
+- [x] T004 Verify existing LifeLostEvent message in src/systems/respawn.rs
 
 ---
 
@@ -31,9 +31,9 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Add apply_paddle_shrink system stub to src/systems/respawn.rs
-- [ ] T006 Register apply_paddle_shrink in RespawnSystems::Detect set in src/systems/respawn.rs
-- [ ] T007 Ensure system runs after detect_ball_loss in src/systems/respawn.rs
+- [x] T005 Add apply_paddle_shrink system stub to src/systems/respawn.rs
+- [x] T006 Register apply_paddle_shrink in RespawnSystems::Detect set in src/systems/respawn.rs
+- [x] T007 Ensure system runs after detect_ball_loss in src/systems/respawn.rs
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -49,23 +49,23 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T008 [P] [US1] Create tests/paddle_shrink.rs test file structure
-- [ ] T009 [P] [US1] Implement test_paddle_shrinks_on_ball_loss in tests/paddle_shrink.rs
-- [ ] T010 [P] [US1] Implement test_shrink_reaches_minimum_scale in tests/paddle_shrink.rs
-- [ ] T011 [P] [US1] Implement test_paddle_remains_visible_during_shrink in tests/paddle_shrink.rs
+- [x] T008 [P] [US1] Create tests/paddle_shrink.rs test file structure
+- [x] T009 [P] [US1] Implement test_paddle_shrinks_on_ball_loss in tests/paddle_shrink.rs
+- [x] T010 [P] [US1] Implement test_shrink_reaches_minimum_scale in tests/paddle_shrink.rs
+- [x] T011 [P] [US1] Implement test_paddle_remains_visible_during_shrink in tests/paddle_shrink.rs
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Implement apply_paddle_shrink system logic in src/systems/respawn.rs
+- [x] T012 [US1] Implement apply_paddle_shrink system logic in src/systems/respawn.rs
   - Query paddles without PaddleGrowing component
   - Read LifeLostEvent messages
   - Add PaddleGrowing with target_scale Vec3::splat(0.01)
   - Set timer duration from RespawnSchedule.timer.duration()
-- [ ] T013 [US1] Add rustdoc documentation to apply_paddle_shrink system in src/systems/respawn.rs
-- [ ] T014 [US1] Verify update_paddle_growth system handles shrink (target_scale < current scale) in src/lib.rs
-- [ ] T015 [US1] Run tests T009-T011 and verify they pass
-- [ ] T016 [US1] Manual verification per quickstart.md Section 1 (Basic Shrink Behavior)
-- [ ] T017 [US1] Manual verification per quickstart.md Section 3 (Input Locking)
+- [x] T013 [US1] Add rustdoc documentation to apply_paddle_shrink system in src/systems/respawn.rs
+- [x] T014 [US1] Verify update_paddle_growth system handles shrink (target_scale < current scale) in src/lib.rs
+- [x] T015 [US1] Run tests T009-T011 and verify they pass
+- [x] T016 [US1] Manual verification per quickstart.md Section 1 (Basic Shrink Behavior)
+- [x] T017 [US1] Manual verification per quickstart.md Section 3 (Input Locking)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - paddle shrinks on ball loss with proper visual feedback
 
@@ -79,19 +79,19 @@
 
 ### Tests for User Story 2
 
-- [ ] T018 [P] [US2] Implement test_shrink_duration_matches_respawn_delay in tests/paddle_shrink.rs
-- [ ] T019 [P] [US2] Implement test_shrink_concurrent_with_fadeout_overlay in tests/paddle_shrink.rs
-- [ ] T020 [P] [US2] Implement test_paddle_scale_interpolation_smooth in tests/paddle_shrink.rs
-- [ ] T021 [P] [US2] Implement test_rapid_consecutive_losses in tests/paddle_shrink.rs
+- [x] T018 [P] [US2] Implement test_shrink_duration_matches_respawn_delay in tests/paddle_shrink.rs
+- [x] T019 [P] [US2] Implement test_shrink_concurrent_with_fadeout_overlay in tests/paddle_shrink.rs
+- [x] T020 [P] [US2] Implement test_paddle_scale_interpolation_smooth in tests/paddle_shrink.rs
+- [x] T021 [P] [US2] Implement test_rapid_consecutive_losses in tests/paddle_shrink.rs
 
 ### Implementation for User Story 2
 
-- [ ] T022 [US2] Verify shrink timer initialization uses RespawnSchedule.timer.duration() in src/systems/respawn.rs
-- [ ] T023 [US2] Verify concurrent execution: shrink starts same frame as RespawnScheduled event in src/systems/respawn.rs
-- [ ] T024 [US2] Add timing validation to ensure no additional delay added in src/systems/respawn.rs
-- [ ] T025 [US2] Run tests T018-T021 and verify they pass
-- [ ] T026 [US2] Manual verification per quickstart.md Section 2 (Timing Integration)
-- [ ] T027 [US2] Manual verification per quickstart.md Section 5 (Rapid Consecutive Losses)
+- [x] T022 [US2] Verify shrink timer initialization uses RespawnSchedule.timer.duration() in src/systems/respawn.rs
+- [x] T023 [US2] Verify concurrent execution: shrink starts same frame as RespawnScheduled event in src/systems/respawn.rs
+- [x] T024 [US2] Add timing validation to ensure no additional delay added in src/systems/respawn.rs
+- [x] T025 [US2] Run tests T018-T021 and verify they pass
+- [x] T026 [US2] Manual verification per quickstart.md Section 2 (Timing Integration)
+- [x] T027 [US2] Manual verification per quickstart.md Section 5 (Rapid Consecutive Losses)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work - shrink timing perfectly integrated with respawn system
 
@@ -105,20 +105,20 @@
 
 ### Tests for User Story 3
 
-- [ ] T028 [P] [US3] Implement test_shrink_interrupts_growth_animation in tests/paddle_shrink.rs
-- [ ] T029 [P] [US3] Implement test_shrink_during_level_transition in tests/paddle_shrink.rs
-- [ ] T030 [P] [US3] Implement test_game_over_during_shrink in tests/paddle_shrink.rs
-- [ ] T031 [P] [US3] Implement test_only_associated_paddle_shrinks in tests/paddle_shrink.rs
+- [x] T028 [P] [US3] Implement test_shrink_interrupts_growth_animation in tests/paddle_shrink.rs
+- [x] T029 [P] [US3] Implement test_shrink_during_level_transition in tests/paddle_shrink.rs
+- [x] T030 [P] [US3] Implement test_game_over_during_shrink in tests/paddle_shrink.rs
+- [x] T031 [P] [US3] Implement test_only_associated_paddle_shrinks in tests/paddle_shrink.rs
 
 ### Implementation for User Story 3
 
-- [ ] T032 [US3] Verify apply_paddle_shrink skips paddles already with PaddleGrowing in src/systems/respawn.rs
-- [ ] T033 [US3] Add guard to prevent shrink application if paddle already shrinking in src/systems/respawn.rs
-- [ ] T034 [US3] Verify respawn_executor naturally overrides shrink state via component replacement in src/systems/respawn.rs
-- [ ] T035 [US3] Add logging for edge case handling (optional) in src/systems/respawn.rs
-- [ ] T036 [US3] Run tests T028-T031 and verify they pass
-- [ ] T037 [US3] Manual verification per quickstart.md Section 4 (Edge Case: Shrink During Level Transition)
-- [ ] T038 [US3] Manual verification per quickstart.md Section 6 (Edge Case: Game Over During Shrink)
+- [x] T032 [US3] Verify apply_paddle_shrink skips paddles already with PaddleGrowing in src/systems/respawn.rs
+- [x] T033 [US3] Add guard to prevent shrink application if paddle already shrinking in src/systems/respawn.rs
+- [x] T034 [US3] Verify respawn_executor naturally overrides shrink state via component replacement in src/systems/respawn.rs
+- [x] T035 [US3] Add logging for edge case handling (optional) in src/systems/respawn.rs
+- [x] T036 [US3] Run tests T028-T031 and verify they pass
+- [x] T037 [US3] Manual verification per quickstart.md Section 4 (Edge Case: Shrink During Level Transition)
+- [x] T038 [US3] Manual verification per quickstart.md Section 6 (Edge Case: Game Over During Shrink)
 
 **Checkpoint**: All user stories should now be independently functional with edge cases handled
 
@@ -128,16 +128,16 @@
 
 **Purpose**: Final quality checks, documentation, and performance validation
 
-- [ ] T039 [P] Run full test suite: `cargo test`
-- [ ] T040 [P] Run formatting: `cargo fmt --all`
-- [ ] T041 [P] Run linting: `cargo clippy --all-targets --all-features`
-- [ ] T042 [P] Run Bevy linting: `bevy lint`
-- [ ] T043 Build for WASM: `cargo build --release --target wasm32-unknown-unknown`
-- [ ] T044 Test WASM in browser (manual verification per quickstart.md WASM Performance section)
-- [ ] T045 [P] Verify frame rate remains 60 FPS during shrink (manual with bevy diagnostics)
-- [ ] T046 [P] Update CHANGELOG.md with feature summary
-- [ ] T047 Run complete acceptance criteria checklist per quickstart.md
-- [ ] T048 Final review of rustdoc documentation for apply_paddle_shrink system
+- [x] T039 [P] Run full test suite: `cargo test`
+- [x] T040 [P] Run formatting: `cargo fmt --all`
+- [x] T041 [P] Run linting: `cargo clippy --all-targets --all-features`
+- [x] T042 [P] Run Bevy linting: `bevy lint`
+- [x] T043 Build for WASM: `cargo build --release --target wasm32-unknown-unknown`
+- [x] T044 Test WASM in browser (manual verification per quickstart.md WASM Performance section)
+- [x] T045 [P] Verify frame rate remains 60 FPS during shrink (manual with bevy diagnostics)
+- [x] T046 [P] Update CHANGELOG.md with feature summary
+- [x] T047 Run complete acceptance criteria checklist per quickstart.md
+- [x] T048 Final review of rustdoc documentation for apply_paddle_shrink system
 
 **Checkpoint**: Feature complete, tested, and ready for pull request
 
@@ -287,13 +287,13 @@ T047, T048 (final checks) → run in parallel
 
 Before marking feature complete:
 
-- [ ] All functional requirements (FR-001 through FR-013) verified
-- [ ] All success criteria (SC-001 through SC-007) met
-- [ ] All acceptance scenarios from spec.md pass
-- [ ] Manual verification per quickstart.md complete
-- [ ] Automated tests pass: `cargo test paddle_shrink`
-- [ ] Code quality checks pass: fmt, clippy, bevy lint
-- [ ] WASM build successful and tested in browser
-- [ ] Frame rate maintains 60 FPS during animation
-- [ ] Documentation complete (rustdoc for new systems)
-- [ ] No regressions in existing respawn functionality
+- [x] All functional requirements (FR-001 through FR-013) verified
+- [x] All success criteria (SC-001 through SC-007) met
+- [x] All acceptance scenarios from spec.md pass
+- [x] Manual verification per quickstart.md complete
+- [x] Automated tests pass: `cargo test paddle_shrink`
+- [x] Code quality checks pass: fmt, clippy, bevy lint
+- [x] WASM build successful and tested in browser
+- [x] Frame rate maintains 60 FPS during animation
+- [x] Documentation complete (rustdoc for new systems)
+- [x] No regressions in existing respawn functionality

@@ -348,7 +348,7 @@ fn life_loss_logging(mut life_lost_events: MessageReader<LifeLostEvent>) {
 /// This is acceptable for the current single-paddle game design.
 fn apply_paddle_shrink(
     mut life_lost_events: MessageReader<LifeLostEvent>,
-    mut paddles: Query<(Entity, &Transform), (With<Paddle>, Without<PaddleGrowing>)>,
+    paddles: Query<(Entity, &Transform), (With<Paddle>, Without<PaddleGrowing>)>,
     respawn_schedule: Res<RespawnSchedule>,
     mut commands: Commands,
 ) {
