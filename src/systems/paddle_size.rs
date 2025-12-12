@@ -200,6 +200,8 @@ pub fn update_paddle_visual_feedback(
 }
 
 /// System to restore paddle visual appearance when effect is removed
+/// Note: Assumes default paddle color is WHITE. This matches the rest of the codebase.
+/// TODO: Consider storing original color when effect is applied for better flexibility
 pub fn restore_paddle_visual(
     paddles: Query<&MeshMaterial3d<StandardMaterial>, (With<Paddle>, Without<PaddleSizeEffect>)>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -207,6 +209,7 @@ pub fn restore_paddle_visual(
     for material_handle in paddles.iter() {
         if let Some(material) = materials.get_mut(&material_handle.0) {
             // Only restore if it's currently tinted (to avoid resetting on every frame)
+            // Note: This check provides a simple optimization to avoid unnecessary updates
             if material.base_color != Color::WHITE {
                 material.base_color = Color::WHITE;
                 material.emissive = LinearRgba::BLACK;
@@ -252,6 +255,7 @@ pub fn clear_effects_on_level_change(
 }
 
 /// System to clear paddle size effects on life loss
+/// Note: Uses Option<MessageReader> for test compatibility where messages may not be registered
 pub fn clear_effects_on_life_loss(
     life_lost_events: Option<MessageReader<LifeLostEvent>>,
     mut paddles: Query<(Entity, &mut Transform), (With<Paddle>, With<PaddleSizeEffect>)>,
