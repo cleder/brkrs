@@ -87,9 +87,9 @@ fn brick_30_shrinks_paddle() {
         .expect("Paddle should have Transform");
 
     assert!(
-        (transform.scale.x - 0.7).abs() < 0.01,
-        "Paddle X scale should be ~0.7 (70% of base), got {}",
-        transform.scale.x
+        (transform.scale.y - 0.7).abs() < 0.01,
+        "Paddle Y scale should be ~0.7 (70% of base), got {}",
+        transform.scale.y
     );
 }
 
@@ -138,9 +138,9 @@ fn brick_32_enlarges_paddle() {
         .expect("Paddle should have Transform");
 
     assert!(
-        (transform.scale.x - 1.5).abs() < 0.01,
-        "Paddle X scale should be ~1.5 (150% of base), got {}",
-        transform.scale.x
+        (transform.scale.y - 1.5).abs() < 0.01,
+        "Paddle Y scale should be ~1.5 (150% of base), got {}",
+        transform.scale.y
     );
 }
 
@@ -200,9 +200,9 @@ fn effect_expires_after_duration() {
         .expect("Paddle should have Transform");
 
     assert!(
-        (transform.scale.x - 1.0).abs() < 0.01,
-        "Paddle X scale should be restored to 1.0, got {}",
-        transform.scale.x
+        (transform.scale.y - 1.0).abs() < 0.01,
+        "Paddle Y scale should be restored to 1.0, got {}",
+        transform.scale.y
     );
 }
 
@@ -268,9 +268,9 @@ fn new_effect_replaces_old_effect() {
         .get::<Transform>()
         .expect("Paddle should have Transform");
     assert!(
-        (transform.scale.x - 1.5).abs() < 0.01,
+        (transform.scale.y - 1.5).abs() < 0.01,
         "Paddle should be enlarged to 1.5, got {}",
-        transform.scale.x
+        transform.scale.y
     );
 }
 

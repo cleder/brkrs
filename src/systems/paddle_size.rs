@@ -139,9 +139,9 @@ pub fn detect_powerup_brick_collisions(
                             base_width: PADDLE_BASE_WIDTH,
                         });
 
-                        // Update paddle transform scale (X-axis is width in this game)
+                        // Update paddle length: the capsule's height axis maps to world Z after rotation, so scale Y
                         let scale_factor = new_width / PADDLE_BASE_WIDTH;
-                        transform.scale.x = scale_factor;
+                        transform.scale.y = scale_factor;
 
                         // Emit event for audio/visual feedback
                         effect_applied_events.write(PaddleSizeEffectApplied {
@@ -175,8 +175,8 @@ pub fn remove_expired_effects(
 ) {
     for (entity, effect, mut transform) in paddles.iter_mut() {
         if effect.timer.is_finished() {
-            // Restore paddle to base width
-            transform.scale.x = 1.0;
+            // Restore paddle to base length
+            transform.scale.y = 1.0;
 
             // Remove effect component
             commands.entity(entity).remove::<PaddleSizeEffect>();
@@ -242,8 +242,8 @@ pub fn clear_effects_on_level_change(
     if let Some(mut events) = level_switch_events {
         for _event in events.read() {
             for (entity, mut transform) in paddles.iter_mut() {
-                // Restore paddle to base width
-                transform.scale.x = 1.0;
+                // Restore paddle to base length
+                transform.scale.y = 1.0;
 
                 // Remove effect component
                 commands.entity(entity).remove::<PaddleSizeEffect>();
@@ -264,8 +264,8 @@ pub fn clear_effects_on_life_loss(
     if let Some(mut events) = life_lost_events {
         for _event in events.read() {
             for (entity, mut transform) in paddles.iter_mut() {
-                // Restore paddle to base width
-                transform.scale.x = 1.0;
+                // Restore paddle to base length
+                transform.scale.y = 1.0;
 
                 // Remove effect component
                 commands.entity(entity).remove::<PaddleSizeEffect>();
