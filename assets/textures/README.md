@@ -178,9 +178,9 @@ Defines a complete material profile.
 |-------|------|---------|-------------|
 | `id` | String | *required* | Unique identifier (e.g., "brick/metal") |
 | `albedo_path` | String | *required* | Path to base color texture |
-| `normal_path` | `Option<String>`|`None`| Optional normal map for surface detail |
+| `normal_path` | `Option<String>`|`None`| Optional normal map for surface detail. **Important**: Must be a proper normal map (RGB values representing XYZ normals in tangent space), not a bump map. If you have a grayscale bump map, convert it to a normal map using image editing software (e.g., GIMP: Filters → Generic → Normal Map). Bevy does not automatically convert bump maps to normal maps. |
 |`roughness`| f32 |`0.5`| Surface roughness (0.0 = mirror, 1.0 = matte) |
-|`metallic`| f32 |`0.0`| Metallic property (0.0 = dielectric, 1.0 = metal) |
+|`metallic`| f32 |`0.0`| Metallic property (0.0 = non-metal/dielectric, 1.0 = fully metal). Controls how reflective and mirror-like a surface appears. Combined with `roughness`: low metallic + low roughness = shiny plastic; high metallic + low roughness = polished mirror-like metal; high metallic + high roughness = brushed/worn metal. |
 |`uv_scale`| (f32, f32) |`(1.0, 1.0)`| Texture tiling factors (x, y) |
 |`uv_offset`| (f32, f32) |`(0.0, 0.0)`| Texture offset (x, y) |
 |`fallback_chain`|`Vec<String>`|`[]` | Backup profile IDs if texture fails to load |

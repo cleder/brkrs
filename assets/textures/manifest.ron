@@ -1,11 +1,12 @@
+// "debug/four_squares_64.png",
 (
     profiles: [
         (
             id: "ball/default",
             albedo_path: "default/ball_base.png",
-            normal_path: None,
+            normal_path: Some("default/ball_base_bump_100.png"),
             roughness: 0.4,
-            metallic: 0.0,
+            metallic: 0.1,
             uv_scale: (1.0, 1.0),
             uv_offset: (0.0, 0.0),
             fallback_chain: ["ball/fallback"],
@@ -94,9 +95,9 @@
             id: "sidewall/default",
             albedo_path: "fallback/sidewall_base.png",
             normal_path: None,
-            roughness: 0.8,
-            metallic: 0.0,
-            uv_scale: (4.0, 3.0),
+            roughness: 0.9,
+            metallic: 0.6,
+            uv_scale: (6.0, 2.0),
             uv_offset: (0.0, 0.0),
             fallback_chain: ["brick/default"],
         ),
