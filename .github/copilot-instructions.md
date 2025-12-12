@@ -37,11 +37,11 @@ Rust 2021 edition (toolchain managed by rustup): Follow standard conventions
 
 ## Recent Changes
 
+- 001-paddle-size-powerups: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde 1.0, ron 0.8
+
 - 008-paddle-shrink-feedback: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde 1.0, ron 0.8
 
 - 008-paddle-shrink-feedback: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17.3, bevy_rapier3d 0.32.0
-
-- 007-level-metadata: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde 1.0, ron 0.8
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
