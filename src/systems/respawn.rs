@@ -1002,6 +1002,7 @@ mod tests {
                 PaddleGrowing {
                     timer: Timer::from_seconds(1.0, TimerMode::Once),
                     target_scale: Vec3::ONE,
+                    start_scale: Vec3::splat(0.01),
                 },
             ))
             .id();
@@ -1024,6 +1025,7 @@ mod tests {
                 PaddleGrowing {
                     timer: Timer::from_seconds(1.0, TimerMode::Once),
                     target_scale: Vec3::ONE,
+                    start_scale: Vec3::splat(0.01),
                 },
             ))
             .id();

@@ -416,7 +416,9 @@ fn update_paddle_growth(
             let progress = growing.timer.fraction();
             // Use smooth easing function (ease-out cubic)
             let eased_progress = 1.0 - (1.0 - progress).powi(3);
-            transform.scale = growing.start_scale.lerp(growing.target_scale, eased_progress);
+            transform.scale = growing
+                .start_scale
+                .lerp(growing.target_scale, eased_progress);
         }
     }
 }

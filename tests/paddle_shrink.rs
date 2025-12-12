@@ -132,7 +132,7 @@ fn shrink_reaches_minimum_scale() {
         Vec3::splat(0.01),
         "Target scale should be 0.01 (minimum scale)"
     );
-    
+
     // Verify timer is set up correctly
     assert!(
         !growing.timer.is_finished(),
@@ -289,7 +289,7 @@ fn shrink_interrupts_growth_animation() {
 fn rapid_consecutive_losses_handled() {
     let mut app = test_app();
     let lower_goal = app.world_mut().spawn(LowerGoal).id();
-    
+
     // Spawn paddle
     let paddle = app
         .world_mut()
@@ -356,7 +356,7 @@ fn shrink_component_configuration() {
         Vec3::splat(0.01),
         "Target scale should be 0.01 for shrink"
     );
-    
+
     assert_eq!(
         growing.start_scale,
         Vec3::ONE,
@@ -364,11 +364,8 @@ fn shrink_component_configuration() {
     );
 
     // Verify timer is active
-    assert!(
-        !growing.timer.is_finished(),
-        "Timer should be active"
-    );
-    
+    assert!(!growing.timer.is_finished(), "Timer should be active");
+
     // Verify timer duration matches respawn delay
     let respawn_duration = app
         .world()
@@ -376,7 +373,7 @@ fn shrink_component_configuration() {
         .timer
         .duration()
         .as_secs_f32();
-    
+
     assert_eq!(
         growing.timer.duration().as_secs_f32(),
         respawn_duration,
