@@ -12,6 +12,7 @@ All notable changes to this project are documented here.
 ### Added
 
 - Level metadata (`007-level-metadata`): optional `description` and `author` fields in `LevelDefinition` for level design documentation and contributor attribution. Supports plain text and markdown link formats for authors. Fully backward compatible with existing level files.
+- Paddle shrink visual feedback (`008-paddle-shrink-feedback`): When a ball is lost, the paddle smoothly shrinks to near-zero size over 1 second, providing immediate visual feedback concurrent with the respawn delay and fadeout overlay. Uses existing `PaddleGrowing` component with inverse semantics (shrink to 0.01 scale instead of grow to 1.0). Includes comprehensive test coverage for basic shrink behavior, timing integration, and edge cases.
 
 ## [0.0.1] - 2025-11-29
 
