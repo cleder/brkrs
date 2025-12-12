@@ -57,7 +57,11 @@ fn paddle_size_effect_shrink_target_width() {
         ))
         .id();
 
-    let effect = app.world().entity(paddle).get::<PaddleSizeEffect>().unwrap();
+    let effect = app
+        .world()
+        .entity(paddle)
+        .get::<PaddleSizeEffect>()
+        .unwrap();
     assert_eq!(
         effect.target_width, 14.0,
         "Shrink should result in 14.0 width (70% of 20)"
@@ -81,7 +85,11 @@ fn paddle_size_effect_enlarge_target_width() {
         ))
         .id();
 
-    let effect = app.world().entity(paddle).get::<PaddleSizeEffect>().unwrap();
+    let effect = app
+        .world()
+        .entity(paddle)
+        .get::<PaddleSizeEffect>()
+        .unwrap();
     assert_eq!(
         effect.target_width, 30.0,
         "Enlarge should result in 30.0 width (150% of 20)"
@@ -113,13 +121,23 @@ fn paddle_can_have_effect_removed() {
         .id();
 
     // Verify effect exists
-    assert!(app.world().entity(paddle).get::<PaddleSizeEffect>().is_some());
+    assert!(app
+        .world()
+        .entity(paddle)
+        .get::<PaddleSizeEffect>()
+        .is_some());
 
     // Remove effect
-    app.world_mut().entity_mut(paddle).remove::<PaddleSizeEffect>();
+    app.world_mut()
+        .entity_mut(paddle)
+        .remove::<PaddleSizeEffect>();
 
     // Verify effect removed
-    assert!(app.world().entity(paddle).get::<PaddleSizeEffect>().is_none());
+    assert!(app
+        .world()
+        .entity(paddle)
+        .get::<PaddleSizeEffect>()
+        .is_none());
 }
 
 #[test]
@@ -140,7 +158,11 @@ fn paddle_can_replace_effect() {
         .id();
 
     // Verify shrink effect
-    let effect = app.world().entity(paddle).get::<PaddleSizeEffect>().unwrap();
+    let effect = app
+        .world()
+        .entity(paddle)
+        .get::<PaddleSizeEffect>()
+        .unwrap();
     assert_eq!(effect.effect_type, SizeEffectType::Shrink);
 
     // Replace with enlarge effect
@@ -154,7 +176,11 @@ fn paddle_can_replace_effect() {
         });
 
     // Verify enlarge effect
-    let effect = app.world().entity(paddle).get::<PaddleSizeEffect>().unwrap();
+    let effect = app
+        .world()
+        .entity(paddle)
+        .get::<PaddleSizeEffect>()
+        .unwrap();
     assert_eq!(effect.effect_type, SizeEffectType::Enlarge);
     assert_eq!(effect.target_width, 30.0);
     assert_eq!(effect.remaining_duration, 10.0);
