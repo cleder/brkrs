@@ -1,17 +1,19 @@
 # Implementation Plan: Paddle Shrink Visual Feedback
 
-**Branch**: `008-paddle-shrink-feedback` | **Date**: 2025-12-12 | **Spec**: [spec.md](./spec.md)
+**Branch**: `008-paddle-shrink-feedback` | **Date**: 2025-12-12 | **Spec**: /home/christian/devel/bevy/brkrs/specs/008-paddle-shrink-feedback/spec.md
 **Input**: Feature specification from `/specs/008-paddle-shrink-feedback/spec.md`
+
+**Note**: This template is filled in by the `/speckit.plan` command.
+See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-When a player loses the ball, the paddle provides immediate visual feedback by shrinking concurrently with the respawn delay.
-The shrink animation runs during the existing 1-second respawn delay (matching the fadeout overlay timing), keeping the paddle visible throughout.
-This feature reuses Bevy's existing animation components and integrates with the established respawn system without breaking current behavior or adding extra time to the respawn sequence.
+When a player loses their last ball (life loss), the paddle provides immediate visual feedback by shrinking smoothly before the respawn sequence begins.
+The shrink animation runs concurrently with the existing respawn delay and fadeout overlay, ensuring no additional time is added to the gameplay loop.
 
 ## Technical Context
 
-**Language/Version**: Rust 1.81 (Rust 2021 edition) **Primary Dependencies**: Bevy 0.17.3, bevy_rapier3d 0.32.0 **Storage**: N/A (in-memory ECS state only) **Testing**: cargo test (integration tests in tests/ directory) **Target Platform**: Native (Linux/Windows/macOS) + WASM **Project Type**: Single game project with ECS architecture **Performance Goals**: 60 FPS on native, stable performance on WASM **Constraints**: Animation must complete within respawn delay duration (~1 second), no additional frame time overhead **Scale/Scope**: Single animation component, integrates with existing respawn system (~200 lines of code estimated)
+**Language/Version**: Rust 1.81 (Rust 2021 edition) **Primary Dependencies**: Bevy 0.17.3, bevy_rapier3d 0.32.0, serde 1.0, ron 0.8 **Storage**: In-memory ECS state only (no persistent storage) **Testing**: cargo test (unit/integration), manual gameplay testing **Target Platform**: Native (Linux/Windows/macOS) + WASM **Project Type**: Game engine (Bevy ECS) **Performance Goals**: 60 FPS, smooth animation timing **Constraints**: ECS-first architecture, physics-driven gameplay, cross-platform compatibility **Scale/Scope**: Single system addition, ~200 LOC, affects paddle entity only
 
 ## Constitution Check
 
@@ -19,42 +21,40 @@ This feature reuses Bevy's existing animation components and integrates with the
 
 ### I. Entity-Component-System Architecture (ECS-First)
 
-- ✅ **PASS**: Feature implemented as ECS system operating on paddle entities
-- ✅ **PASS**: Animation state stored in component (reusing PaddleGrowing pattern)
-- ✅ **PASS**: System is pure function of query inputs (time, paddle transform, component state)
-- ✅ **PASS**: Leverages Bevy's change detection and observers
+✅ **COMPLIES**: Feature implemented as ECS systems operating on components (`PaddleGrowing`, `Paddle`, `InputLocked`).
+Uses existing `LifeLostEvent` for event-driven communication.
+No mutable state outside ECS.
 
 ### II. Physics-Driven Gameplay
 
-- ✅ **PASS**: Does not interfere with physics; animation is visual only (scale transform)
-- ✅ **PASS**: Maintains physics properties during animation
+✅ **COMPLIES**: Visual feedback feature only.
+Does not affect physics forces, collisions, or movement.
+Paddle physics behavior unchanged during shrink animation.
 
 ### III. Modular Feature Design
 
-- ✅ **PASS**: Implemented as independent system in respawn module
-- ✅ **PASS**: Uses clear component marker for shrinking state
-- ✅ **PASS**: Event-driven communication with existing respawn system
-- ✅ **PASS**: No tight coupling; integrates via existing LifeLostEvent
+✅ **COMPLIES**: Feature is independently testable, uses clear component markers, can be added/removed without breaking core gameplay.
+Event-driven communication with existing respawn system.
 
 ### IV. Performance-First Implementation
 
-- ✅ **PASS**: Minimal performance impact (single lerp per paddle per frame during shrink)
-- ✅ **PASS**: No allocations in animation loop
-- ✅ **PASS**: Reuses existing timer infrastructure
-- ✅ **PASS**: Tested on both native and WASM (per existing patterns)
+✅ **COMPLIES**: Animation must maintain 60 FPS target.
+Uses Bevy's built-in interpolation and timer systems.
+No allocations in hot loops.
+Tested on both native and WASM targets.
 
 ### V. Cross-Platform Compatibility
 
-- ✅ **PASS**: No platform-specific code required
-- ✅ **PASS**: Animation uses standard Bevy transform system
-- ✅ **PASS**: Testing covers both native and WASM builds
+✅ **COMPLIES**: No platform-specific APIs.
+Uses Bevy's cross-platform animation and timing systems.
+Assets are already optimized for web delivery.
 
 ### VI. Comprehensive Rustdoc Documentation
 
-- ✅ **PASS**: Public components and systems will be documented with rustdoc
-- ✅ **PASS**: Focus on why/when to use, not implementation details
+✅ **COMPLIES**: All new public components, systems, and events will have rustdoc documentation explaining purpose and usage, not implementation details.
 
-**GATE STATUS**: ✅ ALL CHECKS PASSED - Proceed to Phase 0
+**GATE STATUS**: ✅ PASS - No violations detected.
+Feature aligns with all constitutional principles.
 
 ## Project Structure
 
@@ -70,128 +70,182 @@ specs/[###-feature]/
 └── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
+## Project Structure
+
+### Documentation (this feature)
+
+```text
+specs/008-paddle-shrink-feedback/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+```
+
 ### Source Code (repository root)
 
 ```text
 src/
+├── lib.rs               # Component definitions (Paddle, PaddleGrowing, InputLocked)
 ├── systems/
-│   ├── respawn.rs           # Enhanced with paddle shrink logic
-│   └── mod.rs               # Module declarations
-├── lib.rs                   # Component definitions (PaddleShrinking)
-└── main.rs                  # Game entry point
+│   ├── respawn.rs       # Existing respawn system (modified for shrink integration)
+│   └── [new file]       # New shrink system (apply_paddle_shrink)
+└── level_loader.rs      # Existing level loading (no changes needed)
 
 tests/
-├── paddle_shrink.rs         # New: Integration tests for shrink behavior
-└── common/
-    └── paddle_shrink.rs     # Test helpers if needed
+├── respawn_spawn_points.rs  # Existing tests (may need updates for shrink behavior)
+└── [new test file]      # Integration tests for shrink animation timing
 ```
 
-**Structure Decision**: Single Rust project following Bevy ECS patterns.
-The paddle shrink feature integrates directly into the existing `src/systems/respawn.rs` module since it's tightly coupled with the respawn system lifecycle.
-Component definitions added to `src/lib.rs` alongside existing game components.
-Integration tests follow the established pattern in the `tests/` directory.
+**Structure Decision**: Single project structure following existing Bevy ECS patterns.
+New shrink system added to `systems/` directory alongside existing respawn system.
+Components defined in `lib.rs` per project conventions.
 
-## Complexity Tracking
+## Phase 0: Outline & Research
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
+**Status**: ✅ COMPLETE (research.md already exists and is comprehensive)
 
-No violations detected.
-All constitutional principles satisfied.
+**Research Topics Resolved**:
 
----
-
-## Implementation Phases
-
-### Phase 0: Research ✅ COMPLETE
-
-**Deliverable**: `research.md`
+1. ✅ Animation Component Design Pattern - Reuse `PaddleGrowing` with inverse semantics
+2. ✅ Timing Coordination with Respawn System - Concurrent execution matching fadeout duration
+3. ✅ Handling Edge Cases - Component replacement handles interruptions gracefully
+4. ✅ ECS Integration Points - Event-driven system using existing `LifeLostEvent`
 
 **Key Decisions**:
 
-- Reuse `PaddleGrowing` component for shrink animation (inverse semantics)
-- Trigger shrink on `LifeLostEvent` with duration matching respawn delay
-- Let respawn executor handle interruption naturally via component replacement
-- Capture current scale implicitly via lerp (no explicit storage needed)
-- Create integration tests following existing patterns
+- Reuse existing `PaddleGrowing` component for shrink animation (target_scale = Vec3::splat(0.01))
+- Shrink duration matches `RespawnSchedule.timer.duration()` (concurrent with fadeout)
+- New `apply_paddle_shrink` system triggers on `LifeLostEvent` when no balls remain
+- Component replacement handles animation interruption during level transitions
 
-**Status**: Research complete, all technical unknowns resolved.
+## Phase 1: Design & Contracts
 
----
+**Status**: IN PROGRESS
 
-### Phase 1: Design & Contracts ✅ COMPLETE
+### Data Model Design
 
-**Deliverables**:
+**Entities & Components**:
 
-- `data-model.md` - ECS components, resources, events, state transitions
-- `contracts/internal-contracts.md` - Component interfaces and system behaviors
-- `quickstart.md` - Manual verification steps and testing guide
-- Agent context updated (copilot-instructions.md)
+1. **Paddle Entity** (Existing - Enhanced)
+   - **Components**: `Paddle` (marker), `Transform` (scale), `PaddleGrowing` (animation state)
+   - **Relationships**: Associated with ball entities through game state
+   - **State Transitions**: Full size ↔ Shrinking ↔ Minimum size ↔ Regrowing
+   - **Validation**: Scale must be Vec3::ONE when not animating, Vec3::splat(0.01) during shrink
 
-**Key Artifacts**:
+2. **PaddleGrowing Component** (Existing - Extended Usage)
+   - **Fields**:
+     - `timer: Timer` - Animation duration and progress tracking
+     - `target_scale: Vec3` - Final scale after animation (0.01 for shrink, 1.0 for growth)
+   - **Validation**: `target_scale` must be either `Vec3::splat(0.01)` or `Vec3::ONE`
+   - **Lifecycle**: Added on animation start, removed on completion
 
-- Component schema: `PaddleGrowing { timer, target_scale }`
-- Event contract: `LifeLostEvent` triggers shrink
-- System contract: `apply_paddle_shrink` adds component
-- State transition diagram: Playing → Ball Loss → Shrinking → Respawn → Regrowing → Playing
-- Testing strategy: Integration tests verifying timing, concurrency, edge cases
+3. **InputLocked Component** (Existing - Extended Usage)
+   - **Purpose**: Prevents paddle input during shrink animation
+   - **Validation**: Must be present during shrink, absent during normal play
 
-**Status**: Design complete, ready for Phase 2 (task breakdown).
+**Event Contracts**:
 
----
+1. **LifeLostEvent** (Existing - Extended Consumer)
+   - **Trigger**: Ball collides with lower goal boundary AND no balls remain in play
+   - **Consumers**: `enqueue_respawn_requests` (existing), `apply_paddle_shrink` (new)
+   - **Post-Conditions**: Paddle shrink animation begins immediately
 
-## Next Steps
+**System Contracts**:
 
-**Command**: `/speckit.tasks`
+1. **apply_paddle_shrink** (New System)
+   - **Purpose**: Apply shrink animation to paddle when life is lost
+   - **Execution**: `RespawnSystems::Detect` set, after `detect_ball_loss`
+   - **Inputs**: `EventReader<LifeLostEvent>`, paddle query without `PaddleGrowing`
+   - **Outputs**: Adds `PaddleGrowing` component with shrink target
+   - **Guarantees**: Only triggers when no balls remain, idempotent if already shrinking
 
-This will:
+### API Contracts Generation
 
-1. Break down implementation into specific tasks
-2. Map tasks to user stories and acceptance criteria
-3. Define test cases for each task
-4. Create `tasks.md` with detailed implementation checklist
+**Internal ECS Contracts** (contracts/internal-contracts.md):
 
-**Estimated Effort**: ~4-6 hours implementation + 2-3 hours testing
+- Component interfaces and guarantees
+- Event schemas and consumer expectations
+- System behavior contracts and error handling
 
-**Implementation Order**:
+**External Contracts**: N/A (no external APIs, internal ECS feature only)
 
-1. Add shrink system to respawn module
-2. Wire into existing event flow
-3. Write integration tests
-4. Manual verification against quickstart guide
-5. Documentation and code review
+### Quickstart Documentation
 
----
+**Target Audience**: Developers implementing or testing the feature
 
-## Post-Phase 1 Constitution Re-Check
+**Content Structure**:
 
-Revisiting constitutional compliance after design:
+1. Prerequisites and build setup
+2. Manual verification steps for each acceptance scenario
+3. Timing verification procedures
+4. Edge case testing scenarios
+5. Performance validation steps
 
-### I. Entity-Component-System Architecture
+### Agent Context Update
 
-- ✅ Design uses pure ECS patterns
-- ✅ State in component (`PaddleGrowing`), logic in system (`apply_paddle_shrink`)
-- ✅ Query-based entity selection
+**Status**: ✅ COMPLETE - Updated GitHub Copilot context with:
+
+- Language: Rust 1.81 (Rust 2021 edition)
+- Framework: Bevy 0.17.3, bevy_rapier3d 0.32.0, serde 1.0, ron 0.8
+- Database: In-memory ECS state only (no persistent storage)
+- Project type: Game engine (Bevy ECS)
+
+## Constitution Check (Post-Design)
+
+*Re-evaluation after Phase 1 design completion*
+
+### I. Entity-Component-System Architecture (ECS-First)
+
+✅ **COMPLIES**: Design uses pure ECS patterns with components (`PaddleGrowing`, `InputLocked`), events (`LifeLostEvent`), and systems (`apply_paddle_shrink`).
+No external state management.
 
 ### II. Physics-Driven Gameplay
 
-- ✅ No physics interference; scale is visual only
+✅ **COMPLIES**: Feature is purely visual feedback.
+Does not interfere with physics forces, collisions, or Rapier3D integration.
+Paddle remains physics-driven during shrink.
 
 ### III. Modular Feature Design
 
-- ✅ Self-contained in respawn module
-- ✅ Clean event-driven integration
+✅ **COMPLIES**: Feature is completely independent - can be added/removed without affecting core gameplay.
+Uses event-driven communication.
+Clear system boundaries.
 
-### IV. Performance-First
+### IV. Performance-First Implementation
 
-- ✅ Minimal overhead (one lerp per frame per paddle)
-- ✅ No allocations
+✅ **COMPLIES**: Design leverages Bevy's built-in animation systems and timers.
+No custom interpolation logic.
+Maintains 60 FPS requirement through existing `update_paddle_growth` system.
 
-### V. Cross-Platform
+### V. Cross-Platform Compatibility
 
-- ✅ Platform-agnostic implementation
+✅ **COMPLIES**: Uses only Bevy's cross-platform APIs.
+No platform-specific code.
+Animation timing uses Bevy's `Timer` which works identically on native and WASM.
 
-### VI. Rustdoc Documentation
+### VI. Comprehensive Rustdoc Documentation
 
-- ✅ Documentation plan established in quickstart
+✅ **COMPLIES**: All new public APIs (system functions, component structs) will include rustdoc explaining purpose and usage patterns, following project standards.
 
-**FINAL GATE STATUS**: ✅ ALL CHECKS PASSED - Proceed to implementation
+**GATE STATUS**: ✅ PASS - Design maintains constitutional compliance.
+No violations introduced.
+
+## Phase 2: Implementation Planning
+
+**Status**: READY - All prerequisites complete.
+Ready for `/speckit.tasks` command to generate implementation tasks.
+
+**Deliverables Ready**:
+
+- ✅ Feature specification (spec.md) - Updated with clarified life loss vs ball loss
+- ✅ Technical research (research.md) - Complete with all design decisions
+- ✅ Data model (data-model.md) - ECS entities, components, and state transitions defined
+- ✅ API contracts (contracts/) - Internal ECS contracts documented
+- ✅ Quickstart guide (quickstart.md) - Manual verification procedures
+- ✅ Implementation plan (plan.md) - Complete technical approach
+- ✅ Agent context updated - Copilot instructions include new technologies
+
+**Next Steps**: Run `/speckit.tasks` to generate detailed implementation tasks from this plan.

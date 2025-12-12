@@ -24,10 +24,11 @@ Without this, players rely only on life counter changes to understand they lost 
 
 **Acceptance Scenarios**:
 
-1. **Given** the ball is in play and the paddle is at full size, **When** the ball collides with the lower goal boundary, **Then** the paddle immediately begins shrinking smoothly
-2. **Given** the paddle has started shrinking due to ball loss, **When** the shrink animation completes during the respawn delay, **Then** the paddle reaches a small size (matching the respawn regrowth starting size)
+1. **Given** the last remaining ball is in play and the paddle is at full size, **When** the ball collides with the lower goal boundary and no more balls are present, **Then** the paddle immediately begins shrinking smoothly
+2. **Given** the paddle has started shrinking due to the last ball being lost, **When** the shrink animation completes during the respawn delay, **Then** the paddle reaches a small size (matching the respawn regrowth starting size)
 3. **Given** the paddle is shrinking concurrently with the respawn delay, **When** the respawn delay completes, **Then** the paddle regrowth animation begins
-4. **Given** the paddle is shrinking, **When** checking player controls, **Then** paddle input remains locked throughout the shrink animation
+4. **Given** the paddle is shrinking following a life loss, **When** checking player controls, **Then** paddle input remains locked throughout the shrink animation
+5. **Given** a ball collides with the lower goal boundary but other balls remain in play, **When** the collision is detected, **Then** the paddle does NOT shrink (no life is lost)
 
 ---
 
@@ -41,7 +42,7 @@ The shrink animation must integrate seamlessly with the existing respawn system 
 
 **Acceptance Scenarios**:
 
-1. **Given** a ball loss occurs, **When** measuring the time from ball collision to paddle reaching minimum size, **Then** the shrink animation completes within a defined duration
+1. **Given** a life loss occurs (the last ball is lost), **When** measuring the time from life loss to paddle reaching minimum size, **Then** the shrink animation completes within a defined duration
 2. **Given** the paddle has shrunk to minimum size, **When** the respawn delay timer starts, **Then** the paddle remains at minimum size during the 1-second wait period
 3. **Given** the respawn delay completes, **When** the paddle and ball respawn, **Then** the paddle grows from the same minimum size it shrunk to
 4. **Given** multiple consecutive ball losses occur, **When** each loss triggers, **Then** each shrink animation plays fully regardless of rapid succession
@@ -50,17 +51,18 @@ The shrink animation must integrate seamlessly with the existing respawn system 
 
 ### User Story 3 - Multiple Ball Scenarios (Priority: P3)
 
-In multi-ball gameplay scenarios, only the paddle that loses its tracked ball should shrink, while other paddles (if any exist in future features) remain unaffected.
+In multi-ball gameplay scenarios (planned for future iteration), the paddle shrink animation must only trigger when the last ball is lost, not when individual balls are lost during multi-ball play.
 
-**Why this priority**: Ensures correctness for edge cases and future multi-ball power-ups, though current game has single paddle/ball.
+**Why this priority**: Ensures correctness for future multi-ball power-ups, maintaining single paddle design while accounting for multiple concurrent balls.
 
-**Independent Test**: Can be tested in multi-ball scenarios by losing one ball and verifying only the appropriate paddle responds.
+**Independent Test**: Can be tested in multi-ball scenarios by losing individual balls and verifying paddle only shrinks when no balls remain.
 
 **Acceptance Scenarios**:
 
-1. **Given** a single paddle exists and the ball is lost, **When** the shrink animation triggers, **Then** that paddle shrinks
-2. **Given** the game is in a state where ball loss is detected, **When** the paddle shrink begins, **Then** the shrink animation does not interfere with other game entities
-3. **Given** a ball loss occurs during level transition, **When** the transition is in progress, **Then** the shrink animation is skipped or handled gracefully
+1. **Given** a single paddle exists and a life is lost (last ball lost), **When** the shrink animation triggers, **Then** that paddle shrinks
+2. **Given** the game is in a state where life loss is detected, **When** the paddle shrink begins, **Then** the shrink animation does not interfere with other game entities
+3. **Given** a life loss occurs during level transition, **When** the transition is in progress, **Then** the shrink animation is skipped or handled gracefully
+4. **Given** multiple balls are in play and one ball is lost, **When** other balls remain active, **Then** the paddle does NOT shrink (no life is lost)
 
 ---
 
@@ -76,7 +78,7 @@ In multi-ball gameplay scenarios, only the paddle that loses its tracked ball sh
 
 ### Functional Requirements
 
-- **FR-001**: System MUST trigger paddle shrink animation immediately when ball collides with lower goal boundary
+- **FR-001**: System MUST trigger paddle shrink animation immediately when the last ball is lost (no balls remain in play)
 - **FR-002**: Paddle MUST shrink smoothly from its current scale to a minimum scale over a defined duration
 - **FR-003**: Minimum paddle scale MUST match the starting scale used in the respawn regrowth animation (0.01 per existing code)
 - **FR-004**: Paddle shrink animation MUST run concurrently with the respawn delay timer (matching fadeout overlay behavior)
@@ -86,9 +88,10 @@ In multi-ball gameplay scenarios, only the paddle that loses its tracked ball sh
 - **FR-008**: System MUST integrate with existing respawn system without breaking current respawn timing or behavior
 - **FR-009**: Shrink animation MUST use smooth easing (matching the cubic easing used in paddle growth)
 - **FR-010**: Shrink animation duration MUST match the existing respawn fadeout overlay timing (RespawnFadeOverlay duration)
-- **FR-011**: System MUST handle interruption of existing paddle growth animation if ball loss occurs during level transition
-- **FR-012**: System MUST work correctly with the existing respawn queue system for consecutive ball losses
+- **FR-011**: System MUST handle interruption of existing paddle growth animation if the last ball is lost during level transition
+- **FR-012**: System MUST work correctly with the existing respawn queue system for consecutive ball losses (when no balls remain)
 - **FR-013**: Paddle shrink MUST only affect the paddle entity associated with the lost ball (future-proofing for multi-paddle scenarios)
+- **FR-014**: System MUST NOT trigger paddle shrink when a ball is lost if other balls remain in play
 
 ### Key Entities
 
