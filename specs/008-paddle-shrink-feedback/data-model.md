@@ -21,6 +21,7 @@ This document defines the ECS components, resources, events, and state transitio
 pub struct PaddleGrowing {
     pub timer: Timer,         // Duration of animation
     pub target_scale: Vec3,   // Final scale after animation
+    pub start_scale: Vec3,    // Scale at the start of the animation
 }
 ```
 

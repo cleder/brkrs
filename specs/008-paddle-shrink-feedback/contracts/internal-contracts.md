@@ -21,6 +21,7 @@ This document defines the internal ECS "contracts" - component interfaces, event
 pub struct PaddleGrowing {
     pub timer: Timer,        // Bevy timer tracking animation progress
     pub target_scale: Vec3,  // Final scale value (0.01 for shrink, 1.0 for growth)
+    pub start_scale: Vec3,   // Scale at the start of the animation
 }
 ```
 

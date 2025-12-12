@@ -187,6 +187,7 @@ All technical unknowns from the planning phase are resolved here.
 pub struct PaddleGrowing {
     pub timer: Timer,
     pub target_scale: Vec3,  // Vec3::ONE for growth, Vec3::splat(0.01) for shrink
+    pub start_scale: Vec3,
 }
 ```
 
