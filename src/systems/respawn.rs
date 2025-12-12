@@ -237,6 +237,9 @@ impl Plugin for RespawnPlugin {
                     life_loss_logging
                         .in_set(RespawnSystems::Detect)
                         .after(detect_ball_loss),
+                    apply_paddle_shrink
+                        .in_set(RespawnSystems::Detect)
+                        .after(detect_ball_loss),
                     enqueue_respawn_requests.in_set(RespawnSystems::Schedule),
                     process_respawn_queue
                         .in_set(RespawnSystems::Schedule)
@@ -311,6 +314,55 @@ fn life_loss_logging(mut life_lost_events: MessageReader<LifeLostEvent>) {
             spawn_z = spawn.z,
             "Life lost; scheduling respawn"
         );
+    }
+}
+
+/// Applies paddle shrink animation when a ball is lost.
+///
+/// This system reacts to `LifeLostEvent` messages and adds a `PaddleGrowing` component
+/// to paddles that don't already have one. The component configures the paddle to shrink
+/// from its current scale down to near-zero (Vec3::splat(0.01)) over the duration of the
+/// respawn delay timer.
+///
+/// The shrink animation runs concurrently with the respawn delay and fadeout overlay,
+/// providing immediate visual feedback to the player that they lost a life.
+///
+/// # Animation Details
+///
+/// - **Duration**: Matches the respawn delay timer (typically 1.0 second)
+/// - **Start scale**: Current paddle scale (captured when component is added)
+/// - **Target scale**: Vec3::splat(0.01) (near-zero, barely visible)
+/// - **Easing**: Cubic ease-out (applied by `update_paddle_growth` system)
+///
+/// # Integration
+///
+/// - Runs in `RespawnSystems::Detect` set after `detect_ball_loss`
+/// - Only affects paddles without an active `PaddleGrowing` component
+/// - Works seamlessly with the existing respawn system
+/// - Paddle input remains locked via `InputLocked` component (added by ball loss detection)
+fn apply_paddle_shrink(
+    mut life_lost_events: MessageReader<LifeLostEvent>,
+    mut paddles: Query<(Entity, &Transform), (With<Paddle>, Without<PaddleGrowing>)>,
+    respawn_schedule: Res<RespawnSchedule>,
+    mut commands: Commands,
+) {
+    for _event in life_lost_events.read() {
+        for (entity, transform) in paddles.iter_mut() {
+            let shrink_duration = respawn_schedule.timer.duration();
+            commands.entity(entity).insert(PaddleGrowing {
+                timer: Timer::from_seconds(shrink_duration.as_secs_f32(), TimerMode::Once),
+                target_scale: Vec3::splat(0.01),
+                start_scale: transform.scale,
+            });
+            info!(
+                target: "respawn",
+                event = "paddle_shrink_started",
+                ?entity,
+                start_scale = ?transform.scale,
+                duration_secs = shrink_duration.as_secs_f32(),
+                "Paddle shrink animation triggered by ball loss"
+            );
+        }
     }
 }
 
@@ -579,6 +631,7 @@ fn respawn_executor(
                 PaddleGrowing {
                     timer: Timer::from_seconds(PADDLE_GROWTH_DURATION, TimerMode::Once),
                     target_scale: Vec3::ONE,
+                    start_scale: Vec3::splat(0.01),
                 },
                 RespawnHandle {
                     spawn: paddle_spawn,
@@ -601,6 +654,7 @@ fn respawn_executor(
                 PaddleGrowing {
                     timer: Timer::from_seconds(PADDLE_GROWTH_DURATION, TimerMode::Once),
                     target_scale: Vec3::ONE,
+                    start_scale: Vec3::splat(0.01),
                 },
                 InputLocked,
                 RigidBody::KinematicPositionBased,
