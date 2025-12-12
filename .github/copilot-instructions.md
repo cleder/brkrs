@@ -5,6 +5,10 @@ Last updated: 2025-11-24
 
 ## Active Technologies
 
+- In-memory ECS state only (no persistent storage) (008-paddle-shrink-feedback)
+
+- N/A (in-memory ECS state only) (008-paddle-shrink-feedback)
+
 - Rust 1.81 (Rust 2021 edition) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde 1.0, ron 0.8 (007-level-metadata)
 - RON files in `assets/levels/` directory (007-level-metadata)
 - ECS architecture with Bevy (all features)
@@ -33,10 +37,11 @@ Rust 2021 edition (toolchain managed by rustup): Follow standard conventions
 
 ## Recent Changes
 
-- 007-level-metadata: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde 1.0, ron 0.8
+- 008-paddle-shrink-feedback: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde 1.0, ron 0.8
 
-- 006-audio-system: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17 (AudioPlugin, AudioSource, observers), bevy_rapier3d
-- 005-multi-hit-bricks: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17, bevy_rapier3d (physics/collision)
+- 008-paddle-shrink-feedback: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17.3, bevy_rapier3d 0.32.0
+
+- 007-level-metadata: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde 1.0, ron 0.8
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

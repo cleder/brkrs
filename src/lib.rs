@@ -114,6 +114,7 @@ struct CameraShake {
 pub struct PaddleGrowing {
     pub timer: Timer,
     pub target_scale: Vec3,
+    pub start_scale: Vec3,
 }
 
 #[derive(Component)]
@@ -404,6 +405,10 @@ fn update_paddle_growth(
             transform.scale = growing.target_scale;
             if let Ok(mut config) = rapier_config.single_mut() {
                 config.gravity = gravity_cfg.normal;
+            } else {
+                warn!(
+                    "Failed to restore gravity after paddle growth: RapierConfiguration not found"
+                );
             }
             commands.entity(entity).remove::<PaddleGrowing>();
             info!(
@@ -411,11 +416,13 @@ fn update_paddle_growth(
                 gravity_cfg.normal
             );
         } else {
-            // Interpolate scale from near-zero to target
+            // Interpolate scale from start to target
             let progress = growing.timer.fraction();
             // Use smooth easing function (ease-out cubic)
             let eased_progress = 1.0 - (1.0 - progress).powi(3);
-            transform.scale = Vec3::splat(0.01).lerp(growing.target_scale, eased_progress);
+            transform.scale = growing
+                .start_scale
+                .lerp(growing.target_scale, eased_progress);
         }
     }
 }

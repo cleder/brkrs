@@ -1071,6 +1071,7 @@ fn handle_level_advance_delay(
                 crate::PaddleGrowing {
                     timer: Timer::from_seconds(crate::PADDLE_GROWTH_DURATION, TimerMode::Once),
                     target_scale: Vec3::ONE,
+                    start_scale: Vec3::splat(0.01),
                 },
                 RigidBody::KinematicPositionBased,
                 GravityScale(0.0),
