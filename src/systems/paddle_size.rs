@@ -75,16 +75,20 @@ pub fn calculate_paddle_width(base_width: f32, effect_type: SizeEffectType) -> f
 /// Get color for visual feedback based on effect type
 pub fn effect_to_color(effect_type: SizeEffectType) -> Color {
     match effect_type {
-        SizeEffectType::Shrink => Color::srgb(1.0, 0.3, 0.3), // Red tint
-        SizeEffectType::Enlarge => Color::srgb(0.3, 1.0, 0.3), // Green tint
+        // Softer red tint for shrink
+        SizeEffectType::Shrink => Color::srgb(1.0, 0.5, 0.5),
+        // Extra gentle green tint for enlarge
+        SizeEffectType::Enlarge => Color::srgb(0.68, 0.78, 0.68),
     }
 }
 
 /// Get emissive glow for visual feedback based on effect type
 pub fn effect_to_glow(effect_type: SizeEffectType) -> LinearRgba {
     match effect_type {
-        SizeEffectType::Shrink => LinearRgba::rgb(0.3, 0.0, 0.0), // Red glow
-        SizeEffectType::Enlarge => LinearRgba::rgb(0.0, 0.3, 0.0), // Green glow
+        // Softer red glow to match subtler tint
+        SizeEffectType::Shrink => LinearRgba::rgb(0.15, 0.0, 0.0),
+        // Softer green glow to match subtler tint
+        SizeEffectType::Enlarge => LinearRgba::rgb(0.0, 0.08, 0.0),
     }
 }
 
