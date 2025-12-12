@@ -30,9 +30,32 @@ pub const MULTI_HIT_BRICK_3: u8 = 12;
 pub const MULTI_HIT_BRICK_4: u8 = 13;
 
 /// Brick type 30: triggers paddle shrink effect (70% of base size) when hit by ball.
+///
+/// When a ball collides with a brick of this type, the paddle shrinks to 14 units
+/// (70% of the base 20 units) for 10 seconds. The brick is destroyed after being hit.
+///
+/// # Example Level Usage
+/// ```ron
+/// matrix: [
+///   [0,0,30,30,30,0,0], // Row of shrink powerup bricks
+///   // ...
+/// ]
+/// ```
 pub const PADDLE_SHRINK_BRICK: u8 = 30;
 
 /// Brick type 32: triggers paddle enlarge effect (150% of base size) when hit by ball.
+///
+/// When a ball collides with a brick of this type, the paddle enlarges to 30 units
+/// (150% of the base 20 units, capped at maximum) for 10 seconds. The brick is destroyed
+/// after being hit.
+///
+/// # Example Level Usage
+/// ```ron
+/// matrix: [
+///   [0,0,32,32,32,0,0], // Row of enlarge powerup bricks
+///   // ...
+/// ]
+/// ```
 pub const PADDLE_ENLARGE_BRICK: u8 = 32;
 
 /// Returns `true` if the given type ID represents a multi-hit brick (indices 10-13).

@@ -131,29 +131,53 @@ pub struct PaddleGrowing {
 #[derive(Component)]
 pub struct BallFrozen;
 
-/// Marker component for brick type 30 (triggers paddle shrink)
+/// Marker component for brick type 30 (triggers paddle shrink).
+///
+/// When a ball collides with a brick marked with this component,
+/// the paddle will shrink to 70% of its base size (14 units) for 10 seconds.
 #[derive(Component)]
 pub struct BrickType30;
 
-/// Marker component for brick type 32 (triggers paddle enlarge)
+/// Marker component for brick type 32 (triggers paddle enlarge).
+///
+/// When a ball collides with a brick marked with this component,
+/// the paddle will enlarge to 150% of its base size (30 units) for 10 seconds.
 #[derive(Component)]
 pub struct BrickType32;
 
-/// Component that tracks an active paddle size effect
+/// Component that tracks an active paddle size effect.
+///
+/// This component is added to paddle entities when they should have a temporary
+/// size modification. The effect is automatically removed after the duration expires.
+///
+/// # Examples
+///
+/// ```ignore
+/// commands.entity(paddle_entity).insert(PaddleSizeEffect {
+///     effect_type: SizeEffectType::Shrink,
+///     remaining_duration: 10.0,
+///     target_width: 14.0,
+/// });
+/// ```
 #[derive(Component)]
 pub struct PaddleSizeEffect {
     /// Type of the size effect (shrink or enlarge)
     pub effect_type: SizeEffectType,
     /// Time remaining for this effect in seconds
     pub remaining_duration: f32,
-    /// Target width for this effect
+    /// Target width for this effect (clamped between 10 and 30 units)
     pub target_width: f32,
 }
 
-/// Type of paddle size modification effect
+/// Type of paddle size modification effect.
+///
+/// - `Shrink`: Reduces paddle to 70% of base size (14 units)
+/// - `Enlarge`: Increases paddle to 150% of base size (30 units)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SizeEffectType {
+    /// Shrink effect (70% of base size)
     Shrink,
+    /// Enlarge effect (150% of base size)
     Enlarge,
 }
 
@@ -183,14 +207,17 @@ pub struct BallHit {
     pub ball: Entity,
 }
 
-/// Emitted when a paddle size effect is applied (for audio/visual feedback).
+/// Event emitted when a paddle size effect is applied (for audio/visual feedback).
+///
+/// This event is triggered when a ball collides with a powerup brick (type 30 or 32),
+/// allowing audio and visual systems to respond to the effect activation.
 #[derive(Event)]
 pub struct PaddleSizeEffectApplied {
     /// The paddle entity affected
     pub paddle: Entity,
-    /// Type of effect applied
+    /// Type of effect applied (shrink or enlarge)
     pub effect_type: SizeEffectType,
-    /// The new target width
+    /// The new target width (clamped between 10 and 30 units)
     pub target_width: f32,
 }
 
@@ -744,6 +771,19 @@ fn detect_ball_wall_collisions(
 }
 
 /// Detect ball collisions with powerup bricks (types 30 and 32) and apply paddle size effects.
+///
+/// This system listens for collision events between balls and bricks marked with
+/// `BrickType30` (shrink) or `BrickType32` (enlarge) components. When a collision
+/// is detected, it applies the corresponding size effect to all paddles in the game.
+///
+/// The system handles:
+/// - Effect replacement: New effects override existing ones
+/// - Timer reset: Hitting the same brick type resets the duration to 10 seconds
+/// - Size clamping: Target widths are clamped between 10 and 30 units
+///
+/// # Size Effects
+/// - **Brick 30 (Shrink)**: Paddle width becomes 14 units (70% of base 20 units)
+/// - **Brick 32 (Enlarge)**: Paddle width becomes 30 units (150% of base 20 units)
 fn detect_paddle_powerup_collisions(
     mut collision_events: MessageReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
@@ -813,6 +853,9 @@ fn detect_paddle_powerup_collisions(
 }
 
 /// Update paddle size effect timers.
+///
+/// Decrements the remaining duration of all active paddle size effects based on
+/// the elapsed time since the last frame. Durations are clamped to a minimum of 0.
 fn update_paddle_size_timers(mut effects: Query<&mut PaddleSizeEffect>, time: Res<Time>) {
     for mut effect in effects.iter_mut() {
         effect.remaining_duration -= time.delta_secs();
@@ -821,6 +864,10 @@ fn update_paddle_size_timers(mut effects: Query<&mut PaddleSizeEffect>, time: Re
 }
 
 /// Remove expired paddle size effects and restore paddle to base size.
+///
+/// Checks all paddles with active size effects and removes the component when
+/// the remaining duration reaches zero. The paddle's transform will automatically
+/// be restored to base scale by `apply_paddle_size_to_transform` in the next frame.
 fn remove_expired_size_effects(
     mut paddles: Query<(Entity, &PaddleSizeEffect)>,
     mut commands: Commands,
@@ -834,6 +881,16 @@ fn remove_expired_size_effects(
 }
 
 /// Apply paddle size effect to the paddle's transform scale.
+///
+/// Updates the transform scale of all paddles based on their active size effects.
+/// The scale is applied to the Z-axis (width) while keeping X and Y axes at 1.0.
+///
+/// - With effect: Scale = (target_width / base_width) in Z-axis
+/// - Without effect: Scale = Vec3::ONE (base size)
+///
+/// The base paddle width is 20 units, so:
+/// - Shrink effect (14 units) = 0.7 scale
+/// - Enlarge effect (30 units) = 1.5 scale
 fn apply_paddle_size_to_transform(
     mut paddles: Query<(&mut Transform, Option<&PaddleSizeEffect>), With<Paddle>>,
 ) {
@@ -853,6 +910,9 @@ fn apply_paddle_size_to_transform(
 }
 
 /// Clear paddle size effects when a level switch is requested.
+///
+/// Removes all active paddle size effects when transitioning between levels,
+/// ensuring the paddle starts each level at its base size.
 fn clear_paddle_effects_on_level_switch(
     mut level_switch_events: MessageReader<systems::LevelSwitchRequested>,
     paddles: Query<Entity, (With<Paddle>, With<PaddleSizeEffect>)>,
@@ -870,6 +930,9 @@ fn clear_paddle_effects_on_level_switch(
 }
 
 /// Clear paddle size effects when ball respawn is scheduled (player loses life).
+///
+/// Removes all active paddle size effects when the ball hits the lower goal,
+/// ensuring the paddle is reset to base size when the player loses a life.
 fn clear_paddle_effects_on_respawn(
     mut collision_events: MessageReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
