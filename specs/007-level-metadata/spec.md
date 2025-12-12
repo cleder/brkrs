@@ -6,7 +6,7 @@
 **Input**: User description: "I want to include a description in the Level Files to encourage designers to document what is unique, engaging, etc.
 A description of the file format is in `assets/levels/README.md` The description is for documentation purposes only and does not need to be displayed in the game itself.
 Add an author to the level file, so contributors can take credit for their work.
-The author can be a plain string (name) or a markdown link `[Your Name](mailto:your@email.com)`, in that case only the name should be extracted."
+The author can be a plain string (name) or a Markdown link `[Your Name](mailto:your@email.com)`, in that case only the name should be extracted."
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -34,12 +34,12 @@ This attribution allows them to receive recognition for their creative work and 
 
 **Why this priority**: Essential for contributor recognition and motivation - equally important to description field for establishing ownership and encouraging contributions.
 
-**Independent Test**: Can be fully tested by adding an author field (plain string or markdown link format) to a level file, verifying it parses correctly, and confirming the extracted name is available for display or documentation purposes.
+**Independent Test**: Can be fully tested by adding an author field (plain string or Markdown link format) to a level file, verifying it parses correctly, and confirming the extracted name is available for display or documentation purposes.
 
 **Acceptance Scenarios**:
 
 1. **Given** a level designer creates a new level, **When** they add an `author` field with their name as a plain string (e.g., "Jane Smith"), **Then** the file parses correctly and the author name is preserved
-2. **Given** a contributor wants to provide contact information, **When** they add an author field with markdown link format `[Jane Smith](mailto:jane@example.com)`, **Then** the system extracts "Jane Smith" as the author name
+2. **Given** a contributor wants to provide contact information, **When** they add an author field with Markdown link format `[Jane Smith](mailto:jane@example.com)`, **Then** the system extracts "Jane Smith" as the author name
 3. **Given** an existing level file without an author field, **When** the file is loaded, **Then** the system treats author as optional and loads the level successfully
 
 ---
@@ -79,18 +79,18 @@ Designers can optionally add these fields to existing levels over time without b
 ### Edge Cases
 
 - What happens when the description field contains special characters (quotes, newlines, RON syntax characters)?
-- How does the system handle an author field with malformed markdown link syntax?
+- How does the system handle an author field with malformed Markdown link syntax?
 - What happens when description is an empty string versus field being omitted entirely?
 - How does the system handle extremely long descriptions (e.g., 1000+ characters)?
-- What happens when author field contains multiple markdown links or nested brackets?
+- What happens when author field contains multiple Markdown links or nested brackets?
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
 - **FR-001**: Level files MUST support an optional `description` field that accepts multi-line text explaining the level's unique features, design intent, or gameplay characteristics
-- **FR-002**: Level files MUST support an optional `author` field that accepts either a plain string name or markdown link format `[Name](mailto:email)` or `[Name](url)`
-- **FR-003**: The system MUST extract only the name portion from markdown-formatted author fields (e.g., `[Jane Smith](mailto:jane@example.com)` extracts "Jane Smith")
+- **FR-002**: Level files MUST support an optional `author` field that accepts either a plain string name or Markdown link format `[Name](mailto:email)` or `[Name](url)`
+- **FR-003**: The system MUST extract only the name portion from Markdown-formatted author fields (e.g., `[Jane Smith](mailto:jane@example.com)` extracts "Jane Smith")
 - **FR-004**: The system MUST treat both `description` and `author` fields as optional - level files without these fields must load successfully
 - **FR-005**: The system MUST preserve description text formatting including line breaks, spaces, and common punctuation when parsing RON files
 - **FR-006**: Existing level files without metadata fields MUST continue to load and function identically to current behavior (backward compatibility)
@@ -111,6 +111,6 @@ Designers can optionally add these fields to existing levels over time without b
 
 - **SC-001**: 100% of existing level files load successfully without modification after feature implementation
 - **SC-002**: Level designers can add description and author fields to new or existing levels in under 30 seconds
-- **SC-003**: All markdown-formatted author fields correctly extract the name portion without the email/URL
+- **SC-003**: All Markdown-formatted author fields correctly extract the name portion without the email/URL
 - **SC-004**: Level files with metadata fields parse and load with the same performance characteristics as files without metadata (no measurable degradation)
 - **SC-005**: The repository README or level documentation includes clear examples of using description and author fields within 1 day of feature completion

@@ -54,4 +54,4 @@ The specification successfully meets all quality criteria:
 
 **Ready for next phase**: `/speckit.plan`
 
-**Minor Note**: The spec file has markdown linting warnings (line length exceeding 80 characters) but these do not affect specification quality or readiness for planning.
+**Minor Note**: The spec file has Markdown linting warnings (line length exceeding 80 characters) but these do not affect specification quality or readiness for planning.

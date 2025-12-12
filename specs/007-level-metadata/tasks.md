@@ -130,7 +130,7 @@ Four independent user stories with incremental delivery strategy.
 
 - [x] T043 [US2] Run `cargo test` and verify all author tests pass
 - [x] T044 [US2] Create test level with plain author string and verify parsing
-- [x] T045 [US2] Create test level with markdown author link and verify name extraction
+- [x] T045 [US2] Create test level with Markdown author link and verify name extraction
 - [x] T046 [US2] Verify backward compatibility - load levels without author field
 
 ### Documentation - Technical Reference
@@ -146,7 +146,7 @@ Four independent user stories with incremental delivery strategy.
 
 - [x] T049 [US2] Update `docs/asset-format.md` with author field section including:
   - Purpose and attribution benefits
-  - Plain text vs markdown format examples
+  - Plain text vs Markdown format examples
   - Name extraction behavior documented
 - [x] T050 [US2] Update `docs/developer-guide.md` with new section "Creating Levels with Metadata":
   - Complete level file example with both fields
@@ -181,7 +181,7 @@ Four independent user stories with incremental delivery strategy.
 
 - [ ] T058 [US3] Update `level_001.ron` (if present) with description and author examples
 - [ ] T059 [US3] Ensure `level_999.ron` has well-documented metadata for reference
-- [ ] T060 [US3] Verify all example files render correctly in markdown viewers
+- [ ] T060 [US3] Verify all example files render correctly in Markdown viewers
 
 ### Testing
 

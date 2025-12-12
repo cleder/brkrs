@@ -58,7 +58,7 @@ description: Some(r#"
 #### `author: Option<String>` (NEW)
 
 **Type**: Optional string  
-**Format**: Plain text name OR markdown link `[Name](url)`  
+**Format**: Plain text name OR Markdown link `[Name](url)`  
 **Purpose**: Contributor attribution and contact information  
 **Constraints**: None enforced  
 **Default**: `None` (when omitted)
@@ -141,7 +141,7 @@ pub fn extract_author_name(author: &str) -> &str
 
 - Always returns valid string slice
 - Never panics
-- Original string returned if not valid markdown link
+- Original string returned if not valid Markdown link
 
 **Contract**: This is a pure function (no side effects, deterministic)
 
@@ -190,8 +190,8 @@ impl LevelDefinition {
 **Guarantees**:
 
 - Returns `None` if author field is `None` or empty
-- Returns extracted name if markdown link format
-- Returns plain text if not markdown format
+- Returns extracted name if Markdown link format
+- Returns plain text if not Markdown format
 
 ## Contract 3: Documentation Format
 
@@ -202,7 +202,7 @@ impl LevelDefinition {
 ### Required Documentation Sections
 
 1. **Field Descriptions**: Explain purpose of `description` and `author`
-2. **Format Examples**: Show plain text, markdown, multi-line usage
+2. **Format Examples**: Show plain text, Markdown, multi-line usage
 3. **Use Cases**: When to add metadata, what makes good descriptions
 4. **Migration Guide**: How to add fields to existing levels
 
