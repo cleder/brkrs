@@ -353,7 +353,7 @@ fn apply_paddle_shrink(
     mut commands: Commands,
 ) {
     for _event in life_lost_events.read() {
-        for (entity, transform) in paddles.iter_mut() {
+        for (entity, transform) in paddles.iter() {
             let shrink_duration = respawn_schedule.timer.duration();
             commands.entity(entity).insert(PaddleGrowing {
                 timer: Timer::from_seconds(shrink_duration.as_secs_f32(), TimerMode::Once),
