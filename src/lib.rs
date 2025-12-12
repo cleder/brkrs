@@ -405,6 +405,10 @@ fn update_paddle_growth(
             transform.scale = growing.target_scale;
             if let Ok(mut config) = rapier_config.single_mut() {
                 config.gravity = gravity_cfg.normal;
+            } else {
+                warn!(
+                    "Failed to restore gravity after paddle growth: RapierConfiguration not found"
+                );
             }
             commands.entity(entity).remove::<PaddleGrowing>();
             info!(

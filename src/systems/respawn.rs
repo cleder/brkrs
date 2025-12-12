@@ -340,6 +340,12 @@ fn life_loss_logging(mut life_lost_events: MessageReader<LifeLostEvent>) {
 /// - Only affects paddles without an active `PaddleGrowing` component
 /// - Works seamlessly with the existing respawn system
 /// - Paddle input remains locked via `InputLocked` component (added by ball loss detection)
+///
+/// # Note on Multiple Paddles
+///
+/// Currently, the game design assumes a single paddle. If multiple paddles exist,
+/// all paddles without an active `PaddleGrowing` animation will shrink on ball loss.
+/// This is acceptable for the current single-paddle game design.
 fn apply_paddle_shrink(
     mut life_lost_events: MessageReader<LifeLostEvent>,
     mut paddles: Query<(Entity, &Transform), (With<Paddle>, Without<PaddleGrowing>)>,
