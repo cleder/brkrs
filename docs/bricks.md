@@ -20,16 +20,16 @@ The `Index` column refers to the brick's identifier in the map file.
 
 | Index | Image | Name | Score | Description |
 |-------|-------|------|-------|-------------|
-| 20 | ![Stone](img/bricks/Stone.gif) | Simple Stone | 25 | Basic brick, destroyed on first hit |
+| 20 ✅️ | ![Stone](img/bricks/Stone.gif) | Simple Stone | 25 | Basic brick, destroyed on first hit |
 
 ### Multi-Hit Bricks
 
 | Index | Image | Name | Score | Description |
 |-------|-------|------|-------|-------------|
-| 10 | ![Hit 1](img/bricks/Stonehit1.gif) | Hit 1 | 50 | Needs 1 more hit to become simple stone |
-| 11 | ![Hit 2](img/bricks/Stonehit2.gif) | Hit 2 | 50 | Needs 2 more hits |
-| 12 | ![Hit 3](img/bricks/Stonehit3.gif) | Hit 3 | 50 | Needs 3 more hits |
-| 13 | ![Hit 4](img/bricks/Stonehit4.gif) | Hit 4 | 50 | Needs 4 more hits |
+| 10 ✅️ | ![Hit 1](img/bricks/Stonehit1.gif) | Hit 1 | 50 | Needs 1 more hit to become simple stone |
+| 11 ✅️ | ![Hit 2](img/bricks/Stonehit2.gif) | Hit 2 | 50 | Needs 2 more hits |
+| 12 ✅️ | ![Hit 3](img/bricks/Stonehit3.gif) | Hit 3 | 50 | Needs 3 more hits |
+| 13 ✅️ | ![Hit 4](img/bricks/Stonehit4.gif) | Hit 4 | 50 | Needs 4 more hits |
 
 ### Gravity Bricks
 
@@ -54,8 +54,8 @@ The `Index` column refers to the brick's identifier in the map file.
 
 | Index | Image | Name | Score | Description |
 |-------|-------|------|-------|-------------|
-| 30 | ![Apple](img/bricks/Stoneapple.gif) | Apple | 300 | Shrinks paddle (temporary) |
-| 32 | ![Yin Yang](img/bricks/Stoneyinyan.gif) | Yin Yang | 225 | Enlarges paddle |
+| 30 ✅️ | ![Apple](img/bricks/Stoneapple.gif) | Apple | 300 | Shrinks paddle (temporary) |
+| 32 ✅️ | ![Yin Yang](img/bricks/Stoneyinyan.gif) | Yin Yang | 225 | Enlarges paddle |
 
 ### Ball Size Bricks
 
@@ -112,6 +112,7 @@ The `Index` column refers to the brick's identifier in the map file.
 ### Level Bricks
 
 | Index | Image | Name | Score | Description |
+|-------|-------|------|-------|-------------|
 | 50 | ![Level Up](img/bricks/Stonelevelup.gif) | Smiley/Level Up | 300 | Advances to next level |
 | 54 | ![Level Down](img/bricks/Stoneleveldown.gif) | Level Down | - | Returns to previous level |
 | 41 | ![Extra](img/bricks/Stoneextra.gif) | Extra Ball | +1 Ball | Gives an extra ball (life) |
@@ -128,7 +129,7 @@ These bricks cannot be destroyed and don't count toward level completion.
 
 | Index | Image | Name | Description |
 |-------|-------|------|-------------|
-| 90 | ![Solid](img/bricks/Stonesolid.gif) | Solid | Indestructible, ball bounces off |
+| 90 ✅️ | ![Solid](img/bricks/Stonesolid.gif) | Solid | Indestructible, ball bounces off |
 | 91 | | Solid Die | **Deadly** - Kills paddle on contact |
 | 92 | | Solid Down | Solid + accelerates ball downward on bottom hit |
 | 93 | | Solid Left | Solid + accelerates ball leftward |
@@ -151,7 +152,7 @@ Some levels use Conway's Game of Life algorithm (2-3-3 variant):
 - Generation stones in columns 3, 4, 5 of row 0 determine respawning brick types
 - Ball/paddle starting position determines if LIFE mode is active
 
-## Additional Images
+## Future Additions
 
 | Image | Description |
 |-------|-------------|
