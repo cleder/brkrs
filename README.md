@@ -4,19 +4,66 @@
 
 [![CI-main](https://github.com/cleder/brkrs/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/cleder/brkrs/actions/workflows/ci.yaml?branch=main) [![CI-develop](https://github.com/cleder/brkrs/actions/workflows/ci.yaml/badge.svg?branch=develop)](https://github.com/cleder/brkrs/actions/workflows/ci.yaml?branch=develop)
 
+<!-- INCLUSION-MARKER-DO-NOT-REMOVE -->
+
+## Quick links
+
+Full **documentation** is available at **[brkrs.readthedocs.io](https://brkrs.readthedocs.io/)**:
+
+- 🎮 [Play the web version](https://cleder.github.io/brkrs/) — Try it now!
+- 📖 [Quickstart Guide](https://brkrs.readthedocs.io/en/latest/quickstart.html) — Get running in 10 minutes
+- 🛠️ [Developer Guide](https://brkrs.readthedocs.io/en/latest/developer-guide.html) — Contribute to the project
+- 📑 [API Reference](https://brkrs.readthedocs.io/en/latest/api-reference.html) — Rust API documentation
+- 📦 [GitHub](https://github.com/cleder/brkrs/) — This is where the magic happens 😉️!
+
+## Overview
+
 **brkrs** is a real, playable Breakout/Arkanoid-style game written in [**Rust** 🦀](https://rust-lang.org/) using the [**Bevy**](https://bevy.org/) engine.
+It extends the classic formula with richer physics, gravity, paddle rotation, and per-level configuration.
+
+- Classic Breakout-style gameplay: paddle, ball, bricks, and levels
+- Controls: move paddle with mouse, scroll wheel to rotate (if enabled), ESC to pause.
+- Levels are human-readable and easy to modify
+- Crate-ready and cross-platform (desktop + WebAssembly builds)
+- A **fun, approachable way to learn Rust, Bevy, and modern coding practices**
+
+[![Gameplay Screenshot](docs/img/screenshot-v-0.0.1.png)](https://cleder.github.io/brkrs/)
+
 It’s also a **hands-on learning project**, letting you explore:
 
-- **Spec-first development** with GitHub **speckit**
-- Incremental feature development through issues & PRs
+- **Spec-first development** with GitHub **[speckit](https://github.com/github/spec-kit)**
 - AI-assisted and agentic coding experiments
+- Spec-first workflow: every feature begins as a spec and ends as working Rust code
+- Small, incremental PRs demonstrate the development workflow and learning path
 
 Every feature starts as a spec, flows through an issue or PR, and ends as working Rust code.
 You can **play the game, explore the code, and learn modern Rust/Bevy workflows all at the same time**.
+Play, tweak, and learn — modify levels, bricks, or mechanics to see specs turn into features.
 
 > Linus Torvalds said: **“Talk is cheap. Show me the code.”**
 
 brkrs lets you play, tinker, and see the specs come alive in a real game.
+
+## Learning Path & Contribution
+
+This project is intended to be **fun and educational**.
+Suggested learning steps:
+
+1. **Read a spec** in the repo or wiki
+2. **Pick a small issue** to implement
+3. **Submit a PR** that fulfills the spec
+4. **Experiment** with AI-assisted features or gameplay tweaks
+
+Follow "Seika no Ho" (清華の法), "the way of clear planning", a Samurai principle for strategic planning that aligns actions with values.
+
+---
+
+## Why You’ll Enjoy It
+
+- Play a real game while learning coding practices
+- Watch specs transform into working features
+- Experiment safely with Rust, Bevy, and AI-assisted workflows
+- Learn by doing in a **hands-on, playful way**
 
 ---
 
@@ -34,55 +81,6 @@ The development process follows the "Kaizen no michi" (改善の道) philosophy 
 
 ---
 
-## Try it now
-
-You can play a web version on [GitHub Pages](https://cleder.github.io/brkrs/)
-
-**Gameplay screenshot:**
-
-<table>
-<tr>
-<td width="50%">
-<img src="docs/_static/images/gameplay-current.png" alt="Current level gameplay" style="width: 100%;">
-<p style="text-align: center;"><em>Level 1</em></p>
-</td>
-<td width="50%">
-<img src="docs/_static/images/gameplay-next.png" alt="Next level preview" style="width: 100%;">
-<p style="text-align: center;"><em>Level 2</em></p>
-</td>
-</tr>
-</table>
-
-## Key Features
-
-`brkrs` is a Breakout/Arkanoid style game implemented in Rust with the Bevy engine.
-It extends the classic formula with richer physics, paddle rotation, and per-level configuration.
-
-- Classic Breakout-style gameplay: paddle, ball, bricks, and levels
-- Levels are human-readable and easy to modify
-- Spec-first workflow: every feature begins as a spec and ends as working Rust code
-- Small, incremental PRs demonstrate the development workflow and learning path
-- Crate-ready and cross-platform (desktop + WebAssembly builds)
-- A **fun, approachable way to learn Rust, Bevy, and modern coding practices**
-
----
-
-## Quickstart (play & learn)
-
-Prerequisites: Rust + Cargo + Git
-
-```bash
-git clone https://github.com/cleder/brkrs.git
-cd brkrs
-cargo run --release
-```
-
-Controls: move paddle with mouse, scroll wheel to rotate (if enabled), ESC to pause.
-
-Play, tweak, and learn — modify levels, bricks, or mechanics to see specs turn into features.
-
----
-
 ## Core Systems
 
 1. **Physics (Rapier3D)** – 3D physics constrained to a flat play plane.
@@ -90,37 +88,6 @@ Play, tweak, and learn — modify levels, bricks, or mechanics to see specs turn
 3. **Level Loader** – RON file parsing, entity spawning, per-level gravity.
 4. **Brick System** – Extensible brick behaviors via components & events.
 5. **Pause System** – ESC to pause, click to resume, with window mode switching (native).
-
-## Learning Path & Contribution
-
-This project is intended to be **fun and educational**.
-Suggested learning steps:
-
-1. **Read a spec** in the repo or wiki
-2. **Pick a small issue** to implement
-3. **Submit a PR** that fulfills the spec
-4. **Experiment** with AI-assisted features or gameplay tweaks
-
-Follow "Seika no Ho" (清華の法), "the way of clear planning", a Samurai principle for strategic planning that aligns actions with values.
-
-## Documentation
-
-Full documentation is available at **[brkrs.readthedocs.io](https://brkrs.readthedocs.io/)**:
-
-- [Quickstart Guide](https://brkrs.readthedocs.io/en/latest/quickstart.html) — Get running in 10 minutes
-- [Developer Guide](https://brkrs.readthedocs.io/en/latest/developer-guide.html) — Set up a development environment
-- [API Reference](https://brkrs.readthedocs.io/en/latest/api-reference.html) — Rust API documentation
-
----
-
-## Why You’ll Enjoy It
-
-- Play a real game while learning coding practices
-- Watch specs transform into working features
-- Experiment safely with Rust, Bevy, and AI-assisted workflows
-- Learn by doing in a **hands-on, playful way**
-
----
 
 ## 📣 Help Wanted: Your Skills Can Level Up **brkrs**
 
@@ -137,6 +104,7 @@ This is your chance to get your work into a real, playable, open-source game!
 
 If you're a designer, artist, musician, or just a gamer with a great eye for detail, **reach out** or **submit a Pull Request** with your contributions!
 
+<!-- INCLUSION-MARKER-END-DO-NOT-REMOVE -->
 ---
 
 ## License
