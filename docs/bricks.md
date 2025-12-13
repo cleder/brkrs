@@ -14,7 +14,7 @@ They are grouped into the following ranges:
 ## Brick Types
 
 The following tables detail the various brick types.
-The `Index` column refers to the brick's identifier in the map file.
+The `Index` column refers to the brick's identifier in the map file, the ✅️ indicates if it is already implemented.
 
 ### Simple Bricks
 
