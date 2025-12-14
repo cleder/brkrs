@@ -76,7 +76,7 @@ jobs:
         run: cargo clean
       - name: Run coverage build
         run: |
-          export CARGO_TARGET_DIR=/tmp/cargo-target
+          export CARGO_TARGET_DIR=$GITHUB_WORKSPACE/target_cov
           cargo llvm-cov --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5

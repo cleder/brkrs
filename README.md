@@ -14,25 +14,25 @@ Full **documentation** is available at **[brkrs.readthedocs.io](https://brkrs.re
 - 📖 [Quickstart Guide](https://brkrs.readthedocs.io/en/latest/quickstart.html) — Get running in 10 minutes
 - 🛠️ [Developer Guide](https://brkrs.readthedocs.io/en/latest/developer-guide.html) — Contribute to the project
 - 📑 [API Reference](https://brkrs.readthedocs.io/en/latest/api-reference.html) — Rust API documentation
-- 📦 [GitHub](https://github.com/cleder/brkrs/) — This is where the magic happens 😉️!
+- 🔮 [GitHub](https://github.com/cleder/brkrs/) — 🧙🏻‍♀️ Here is where the magic happens 🪄
 
 ## Overview
 
 **brkrs** is a real, playable Breakout/Arkanoid-style game written in [**Rust** 🦀](https://rust-lang.org/) using the [**Bevy**](https://bevy.org/) engine.
 It extends the classic formula with richer physics, gravity, paddle rotation, and per-level configuration.
 
-- Classic Breakout-style gameplay: paddle, ball, bricks, and levels
-- Controls: move paddle with mouse, scroll wheel to rotate (if enabled), ESC to pause.
-- Levels are human-readable and easy to modify
-- Crate-ready and cross-platform (desktop + WebAssembly builds)
-- A **fun, approachable way to learn Rust, Bevy, and modern coding practices**
+- 🧱 Classic Breakout-style gameplay: paddle, ball, bricks, and levels
+- 🖱️ Controls: move paddle with mouse, scroll wheel to rotate.
+- 👀 Levels are human-readable and easy to modify
+- 📦 Crate-ready and cross-platform (desktop + WebAssembly builds)
+- 🥳 A **fun, approachable way to learn Rust, Bevy, and modern coding practices**
 
 [![Gameplay Screenshot](docs/img/screenshot-v-0.0.1.png)](https://cleder.github.io/brkrs/)
 
 It’s also a **hands-on learning project**, letting you explore:
 
-- **Spec-first development** with GitHub **[speckit](https://github.com/github/spec-kit)**
-- AI-assisted and agentic coding experiments
+- 📝 **Spec-first development** with GitHub **[speckit](https://github.com/github/spec-kit)**
+- 🤖 AI-assisted and agentic coding experiments
 - Spec-first workflow: every feature begins as a spec and ends as working Rust code
 - Small, incremental PRs demonstrate the development workflow and learning path
 
@@ -107,7 +107,7 @@ If you're a designer, artist, musician, or just a gamer with a great eye for det
 <!-- INCLUSION-MARKER-END-DO-NOT-REMOVE -->
 ---
 
-## License
+## License ⚖️
 
 The GNU Affero General Public License is a free, copyleft license for software and other kinds of works, specifically designed to ensure cooperation with the community.
 It ensures that any code snippet developed by the open-source community stays available and prevents others from repackaging and selling open-source software without giving back.
