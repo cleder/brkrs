@@ -21,7 +21,7 @@
 ## Requirement Consistency
 
 - [x] CHK011 Do the user stories’ acceptance scenarios align with FRs on starting lives (3) and decrement behavior? [Resolved, Spec §User Story 1, Spec §FR-001, Spec §FR-002]
-- [ ] CHK012 Do the edge cases align with FR-002/FR-003 regarding duplicate events and clamping at 0? [Consistency, Spec §Edge Cases, Spec §FR-002, Spec §FR-003]
+- [x] CHK012 Do the edge cases align with FR-002/FR-003 regarding duplicate events and clamping at 0? [Resolved, Spec §Edge Cases, Spec §FR-002, Spec §FR-003]
 - [x] CHK013 Are the assumptions (persist across levels; reset only on new session) consistent with the user stories and acceptance scenarios? [Resolved, Spec §Assumptions, Spec §User Story 1]
 - [x] CHK014 Do success criteria (SC-003 "within 1 second") align with the unquantified "immediately" language in FR-005, or does the spec need one consistent timing definition? [Resolved, Spec §FR-005, Spec §SC-003]
 
@@ -42,20 +42,20 @@
 ## Edge Case Coverage
 
 - [x] CHK021 Is the “multiple LifeLostEvent occurrences in the same moment” edge case sufficiently detailed to avoid conflicting interpretations (e.g., count decrements once per event vs de-duplication rules)? [Resolved, Spec §Edge Cases]
-- [ ] CHK022 Does the spec define behavior when LifeLostEvent occurs while already at 0 lives beyond “remain at 0” (e.g., should game-over message re-trigger, re-animate, or stay unchanged)? [Gap, Spec §User Story 3, Spec §FR-007]
-- [ ] CHK023 Are boundary conditions for lives value types addressed (max lives, overflow/underflow expectations, future extensibility) or intentionally out of scope? [Gap, Spec §FR-003]
+- [x] CHK022 Does the spec define behavior when LifeLostEvent occurs while already at 0 lives beyond “remain at 0” (e.g., should game-over message re-trigger, re-animate, or stay unchanged)? [Resolved, Spec §Edge Cases]
+- [x] CHK023 Are boundary conditions for lives value types addressed (max lives, overflow/underflow expectations, future extensibility) or intentionally out of scope? [Resolved, Spec §FR-003 (intentionally out of scope)]
 
 ## Non-Functional Requirements
 
-- [ ] CHK024 Does the spec define any readability requirements for the lives display (e.g., minimum font size/contrast, placement stability), or is UI styling intentionally unspecified? [Gap, Spec §FR-004]
-- [ ] CHK025 Does the spec define cross-platform constraints relevant to the feature (native vs WASM) for text/overlay behavior, or explicitly state that behavior is identical? [Gap, Spec §Success Criteria]
+- [x] CHK024 Does the spec define any readability requirements for the lives display (e.g., minimum font size/contrast, placement stability), or is UI styling intentionally unspecified? [Resolved, Spec §Non-Functional Constraints]
+- [x] CHK025 Does the spec define cross-platform constraints relevant to the feature (native vs WASM) for text/overlay behavior, or explicitly state that behavior is identical? [Resolved, Spec §Non-Functional Constraints]
 - [x] CHK026 Does the spec state whether the game-over message should be visible regardless of pause state (or other overlays), and if so is that requirement explicit? [Resolved, Spec §FR-008]
 
 ## Dependencies & Assumptions
 
-- [ ] CHK027 Are all assumptions (persist across levels; reset conditions; definition of LifeLostEvent) explicitly validated as acceptable product behavior, not just inferred? [Assumption, Spec §Assumptions]
-- [ ] CHK028 Are dependencies on existing domain signals (LifeLostEvent, game-over signaling) documented at a requirements level (what the system relies on) without leaking implementation detail? [Dependency, Spec §Key Entities]
-- [ ] CHK029 Is the Orbitron font requirement documented in a consistent “non-functional constraints” place (plan/tasks) and explicitly treated as outside the spec’s functional scope? [Consistency, Plan §Resolved Decisions, Tasks §Phase 1–2]
+- [x] CHK027 Are all assumptions (persist across levels; reset conditions; definition of LifeLostEvent) explicitly validated as acceptable product behavior, not just inferred? [Resolved, Spec §Assumptions]
+- [x] CHK028 Are dependencies on existing domain signals (LifeLostEvent, game-over signaling) documented at a requirements level (what the system relies on) without leaking implementation detail? [Resolved, Spec §Dependencies]
+- [x] CHK029 Is the Orbitron font requirement documented in a consistent “non-functional constraints” place (plan/tasks) and explicitly treated as outside the spec’s functional scope? [Resolved, Spec §Non-Functional Constraints, Plan/Tasks]
 
 ## Ambiguities & Conflicts
 

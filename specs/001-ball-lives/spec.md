@@ -87,6 +87,7 @@ As a player, I want the remaining lives count to be consistent and never become 
 
 - Multiple LifeLostEvent occurrences arrive in the same moment (e.g., rapid duplicate triggers): the remaining lives count decrements once per distinct event (no coalescing by frame timing) and never goes below 0.
 - LifeLostEvent occurs after the "Game over" message is already displayed: count remains at 0 and "Game over" remains visible.
+- LifeLostEvent occurs while remaining lives is already 0: the count stays at 0; the "Game over" message remains unchanged (no re-trigger/re-animation required).
 - Remaining lives display is visible during normal gameplay and accurately reflects the current remaining count.
 
 ## Requirements *(mandatory)*
@@ -105,16 +106,29 @@ As a player, I want the remaining lives count to be consistent and never become 
 - **FR-004**: The system MUST display the remaining lives count on-screen during gameplay.
 - **FR-005**: The on-screen remaining lives count MUST update to reflect the new value synchronously within one frame (at 60 FPS target, ~16ms) after the count changes.
   When the remaining lives transitions from 1 to 0 due to a LifeLostEvent, the decrement to 0, the HUD update, and the appearance of the "Game over" message MUST occur within the same frame.
-- **FR-006**: When a LifeLostEvent occurs while the remaining lives count is 1 (resulting in 0), the system MUST display the exact message "Game over" (lowercase, Orbitron font, centered on-screen). "No lives left" is explicitly defined as `remaining lives count == 0` (game state), not a world-state query for physical ball entities.
-  The lives display remains visible during gameplay and while the game-over message is active.
-- **FR-007**: Once the “Game over” message is displayed, it MUST remain displayed while the remaining balls count is 0.- **FR-008**: When the "Game over" message is active, pause input MUST be disabled; the game-over message is modal and appears above any pause overlay.
+**FR-006**: When a LifeLostEvent occurs while the remaining lives count is 1 (resulting in 0), the system MUST display the exact message "Game over" (lowercase, centered on-screen). "No lives left" is explicitly defined as `remaining lives count == 0` (game state), not a world-state query for physical ball entities.
+
+The lives display remains visible during gameplay and while the game-over message is active. **FR-007**: Once the "Game over" message is displayed, it MUST remain displayed while the remaining lives count is 0. **FR-008**: When the "Game over" message is active, pause input MUST be disabled; the game-over message is modal and appears above any pause overlay.
+
 - **FR-009**: Once the "Game over" message is displayed, gameplay is considered ended; no respawn shall occur, and player input (movement, actions) MUST be disabled until the player explicitly restarts or returns to the main menu.
 
 ### Assumptions
 
-- A "new play session" is initiated when the player launches the game or clicks a "New Game" button; it persists across all level transitions within that session and resets only when the player explicitly exits or restarts.- The remaining lives count represents how many additional life losses are allowed in the current play session.
+- A "new play session" is initiated when the player launches the game or clicks a "New Game" button; it persists across all level transitions within that session and resets only when the player explicitly exits or restarts.
+- The remaining lives count represents how many additional life losses are allowed in the current play session.
 - The remaining lives count persists across normal gameplay progression within a play session (e.g., across levels) and resets only when a new play session starts.
 - “LifeLostEvent” refers to the game’s domain signal for “the player has just lost one ball/life.”
+- Assumptions validated: persistence across levels, session reset conditions, and event semantics are acceptable product behavior for this feature.
+
+### Non-Functional Constraints
+
+- Font choice and styling (e.g., Orbitron) are defined in the implementation plan/tasks and treated as non-functional constraints.
+  Functional acceptance does not depend on a specific font family, only on message text, placement, and visibility.
+
+### Dependencies
+
+- Depends on domain events: `LifeLostEvent` for decrement; game-over signaling/UI systems for message display.
+  Requirements reference these at the behavioral level without prescribing implementation details.
 
 ### Key Entities *(include if feature involves data)*
 
