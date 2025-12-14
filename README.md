@@ -6,17 +6,17 @@
 
 <!-- INCLUSION-MARKER-DO-NOT-REMOVE -->
 
-## Quick links
+## 🔗 Quick links
 
 Full **documentation** is available at **[brkrs.readthedocs.io](https://brkrs.readthedocs.io/)**:
 
-- 🎮 [Play the web version](https://cleder.github.io/brkrs/) — Try it now!
-- 📖 [Quickstart Guide](https://brkrs.readthedocs.io/en/latest/quickstart.html) — Get running in 10 minutes
-- 🛠️ [Developer Guide](https://brkrs.readthedocs.io/en/latest/developer-guide.html) — Contribute to the project
-- 📑 [API Reference](https://brkrs.readthedocs.io/en/latest/api-reference.html) — Rust API documentation
+- 🎮 [Play the web version](https://cleder.github.io/brkrs/) — Try it now! 👾
+- 📖 [Quickstart Guide](https://brkrs.readthedocs.io/en/latest/quickstart.html) — Get running in 10 minutes 🏁
+- 🛠️ [Developer Guide](https://brkrs.readthedocs.io/en/latest/developer-guide.html) — Contribute to the project 🤗
+- 📑 [API Reference](https://brkrs.readthedocs.io/en/latest/api-reference.html) — Rust API documentation ⚙️
 - 🔮 [GitHub](https://github.com/cleder/brkrs/) — 🧙🏻‍♀️ Here is where the magic happens 🪄
 
-## Overview
+## 🔎 Overview
 
 **brkrs** is a real, playable Breakout/Arkanoid-style game written in [**Rust** 🦀](https://rust-lang.org/) using the [**Bevy**](https://bevy.org/) engine.
 It extends the classic formula with richer physics, gravity, paddle rotation, and per-level configuration.
@@ -44,7 +44,7 @@ Play, tweak, and learn — modify levels, bricks, or mechanics to see specs turn
 
 brkrs lets you play, tinker, and see the specs come alive in a real game.
 
-## Learning Path & Contribution
+## 🎓 Learning Path & Contribution
 
 This project is intended to be **fun and educational**.
 Suggested learning steps:
@@ -58,7 +58,7 @@ Follow "Seika no Ho" (清華の法), "the way of clear planning", a Samurai prin
 
 ---
 
-## Why You’ll Enjoy It
+## 🤩 Why You’ll Enjoy It
 
 - Play a real game while learning coding practices
 - Watch specs transform into working features
@@ -67,7 +67,7 @@ Follow "Seika no Ho" (清華の法), "the way of clear planning", a Samurai prin
 
 ---
 
-## The Story Behind brkrs
+## 📜 The Story Behind brkrs
 
 I always wanted to **rewrite my old [Arkanoid/Breakout-style game, YaAC 🐧](https://github.com/cleder/yaac)**, in a modern game framework.
 
@@ -81,7 +81,7 @@ The development process follows the "Kaizen no michi" (改善の道) philosophy 
 
 ---
 
-## Core Systems
+## ⚙️ Core Systems
 
 1. **Physics (Rapier3D)** – 3D physics constrained to a flat play plane.
 2. **Game State** – (planned) menu, playing, paused, game over, transitions.
@@ -92,7 +92,7 @@ The development process follows the "Kaizen no michi" (改善の道) philosophy 
 ## 📣 Help Wanted: Your Skills Can Level Up **brkrs**
 
 While the code is solid, a great game needs more than just logic!
-We are actively looking for creative community members to join the effort and help turn **brkrs** into a visually and aurally stunning experience.
+We are actively looking for creative community members 🤗 to join the effort and help turn **brkrs** into a visually and aurally stunning experience.
 
 This is your chance to get your work into a real, playable, open-source game!
 
@@ -100,14 +100,14 @@ This is your chance to get your work into a real, playable, open-source game!
 - **🎨 Art & Textures:** Help us create unique **brick textures**, stylish **paddle designs**, backgrounds, and other necessary **artwork**.
 - **📐 Level Design:** Got an evil streak?
   Use the easy-to-modify level configuration files (RON) to create new, challenging, and fun **level designs**!
-- **🧪 Testing & Feedback:** Simply playing the game and reporting bugs or suggesting balance tweaks is incredibly valuable!
+- **🤔 Testing & Feedback:** Simply playing the game and reporting bugs or suggesting balance tweaks is incredibly valuable!
 
-If you're a designer, artist, musician, or just a gamer with a great eye for detail, **reach out** or **submit a Pull Request** with your contributions!
+If you're a designer 🏛, artist 🖌, musician 𝄞, or a gamer 🕹️ with an eye 🧐 for detail, **reach out** or **submit a Pull Request** with your contributions!
 
 <!-- INCLUSION-MARKER-END-DO-NOT-REMOVE -->
 ---
 
-## License ⚖️
+## ⚖️ License
 
 The GNU Affero General Public License is a free, copyleft license for software and other kinds of works, specifically designed to ensure cooperation with the community.
 It ensures that any code snippet developed by the open-source community stays available and prevents others from repackaging and selling open-source software without giving back.
