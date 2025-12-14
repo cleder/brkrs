@@ -21,10 +21,12 @@ pub fn spawn_lives_counter(
         return;
     }
 
-    let font = ui_fonts
-        .as_ref()
-        .map(|f| f.orbitron.clone())
-        .unwrap_or_default();
+    let Some(fonts) = ui_fonts else {
+        warn!("UiFonts resource missing; skipping lives counter spawn");
+        return;
+    };
+
+    let font = fonts.orbitron.clone();
 
     commands.spawn((
         Text::new(format!("Lives: {}", lives_state.lives_remaining)),
@@ -54,7 +56,7 @@ pub fn update_lives_counter(
         return;
     }
 
-    for mut text in counter_query.iter_mut() {
+    if let Ok(mut text) = counter_query.single_mut() {
         **text = format!("Lives: {}", lives_state.lives_remaining);
     }
 }

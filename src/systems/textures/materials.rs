@@ -152,12 +152,14 @@ impl ProfileMaterialBank {
         self.handles
             .retain(|id, _| manifest.profiles.contains_key(id));
 
-        // Always recreate materials to ensure consistency across platforms
-        // This ensures texture handles are fresh, particularly important for async loading
         for profile in manifest.profiles.values() {
-            // Remove old handle if it exists
-            self.handles.remove(&profile.id);
-            // Create new material with fresh texture handles
+            if let Some(existing_handle) = self.handles.get(&profile.id).cloned() {
+                if let Some(material) = materials.get_mut(&existing_handle) {
+                    *material = make_material(profile, asset_server);
+                    continue;
+                }
+            }
+
             let handle = bake_material(profile, asset_server, materials);
             self.handles.insert(profile.id.clone(), handle);
         }
@@ -327,11 +329,7 @@ fn add_unlit_color(
     })
 }
 
-fn bake_material(
-    profile: &VisualAssetProfile,
-    asset_server: &AssetServer,
-    materials: &mut Assets<StandardMaterial>,
-) -> Handle<StandardMaterial> {
+fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> StandardMaterial {
     let base_color_texture = asset_server.load(manifest_asset_path(&profile.albedo_path));
     let normal_map_texture = profile
         .normal_path
@@ -342,14 +340,22 @@ fn bake_material(
     let uv_transform =
         Affine2::from_scale_angle_translation(profile.uv_scale, 0.0, profile.uv_offset);
 
-    materials.add(StandardMaterial {
+    StandardMaterial {
         base_color_texture: Some(base_color_texture),
         normal_map_texture,
         metallic: profile.metallic,
         perceptual_roughness: profile.roughness,
         uv_transform,
         ..default()
-    })
+    }
+}
+
+fn bake_material(
+    profile: &VisualAssetProfile,
+    asset_server: &AssetServer,
+    materials: &mut Assets<StandardMaterial>,
+) -> Handle<StandardMaterial> {
+    materials.add(make_material(profile, asset_server))
 }
 
 fn manifest_asset_path(relative: &str) -> String {
@@ -475,6 +481,8 @@ pub fn brick_type_material_handle(
 fn apply_canonical_materials_to_existing_entities(
     canonical: Option<Res<CanonicalMaterialHandles>>,
     type_registry: Option<Res<TypeVariantRegistry>>,
+    mut logged_missing_type_registry: Local<bool>,
+    mut logged_missing_type_variant: Local<bool>,
     mut paddle_query: Query<
         &mut MeshMaterial3d<StandardMaterial>,
         (With<crate::Paddle>, Without<crate::Brick>, Without<Ball>),
@@ -539,34 +547,51 @@ fn apply_canonical_materials_to_existing_entities(
         );
     }
 
-    for (mut material, brick_type) in brick_query.iter_mut() {
-        if let Some(registry) = type_registry.as_ref() {
+    if let Some(registry) = type_registry.as_ref() {
+        *logged_missing_type_registry = false;
+        for (mut material, brick_type) in brick_query.iter_mut() {
             if let Some(handle) = registry.get(ObjectClass::Brick, brick_type.0) {
                 material.0 = handle;
                 updated_count += 1;
+                *logged_missing_type_variant = false;
                 continue;
-            } else {
+            }
+
+            if !*logged_missing_type_variant {
                 debug!(
                     target: "textures::materials",
                     brick_type = brick_type.0,
                     "Type variant not found in registry for brick"
                 );
+                *logged_missing_type_variant = true;
             }
-        } else {
+
+            if let Some(brick_handle) = canonical.get(BaselineMaterialKind::Brick) {
+                material.0 = brick_handle.clone();
+                updated_count += 1;
+            }
+        }
+    } else {
+        if !*logged_missing_type_registry {
             debug!(
                 target: "textures::materials",
                 "TypeVariantRegistry not available for brick material application"
             );
+            *logged_missing_type_registry = true;
         }
-        // Fall back to canonical brick material
-        debug!(
-            target: "textures::materials",
-            brick_type = brick_type.0,
-            "No type variant for brick; falling back to canonical material"
-        );
-        if let Some(brick_handle) = canonical.get(BaselineMaterialKind::Brick) {
-            material.0 = brick_handle.clone();
-            updated_count += 1;
+
+        for (mut material, brick_type) in brick_query.iter_mut() {
+            if let Some(brick_handle) = canonical.get(BaselineMaterialKind::Brick) {
+                material.0 = brick_handle.clone();
+                updated_count += 1;
+            } else if !*logged_missing_type_variant {
+                debug!(
+                    target: "textures::materials",
+                    brick_type = brick_type.0,
+                    "No canonical brick material available; using fallback"
+                );
+                *logged_missing_type_variant = true;
+            }
         }
     }
 

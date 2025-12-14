@@ -34,10 +34,12 @@ pub fn spawn_pause_overlay(
 
     // Only spawn if paused and overlay doesn't exist
     if matches!(*pause_state, PauseState::Paused { .. }) && overlay_query.is_empty() {
-        let font = ui_fonts
-            .as_ref()
-            .map(|f| f.orbitron.clone())
-            .unwrap_or_default();
+        let Some(fonts) = ui_fonts else {
+            warn!("UiFonts resource missing; skipping pause overlay spawn");
+            return;
+        };
+
+        let font = fonts.orbitron.clone();
 
         commands.spawn((
             Text::new("PAUSED\nClick to Resume"),

@@ -32,10 +32,12 @@ pub fn spawn_game_over_overlay(
         return;
     }
 
-    let font = ui_fonts
-        .as_ref()
-        .map(|f| f.orbitron.clone())
-        .unwrap_or_default();
+    let Some(fonts) = ui_fonts else {
+        warn!("UiFonts resource missing; skipping game over overlay spawn");
+        return;
+    };
+
+    let font = fonts.orbitron.clone();
 
     commands.spawn((
         Text::new("Game over"),

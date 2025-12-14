@@ -126,12 +126,6 @@ fn game_over_halts_additional_respawns() {
         assert_eq!(lives.lives_remaining, 1);
     }
 
-    // Manually set lives to 0 to trigger game-over before next respawn
-    {
-        let mut lives = app.world_mut().resource_mut::<LivesState>();
-        lives.lives_remaining = 0;
-    }
-
     {
         let mut collisions = app.world_mut().resource_mut::<Messages<CollisionEvent>>();
         collisions.write(CollisionEvent::Started(

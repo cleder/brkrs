@@ -482,18 +482,21 @@ fn enqueue_respawn_requests(
     mut commands: Commands,
 ) {
     let mut saw_event = false;
+    let mut game_over_emitted = false;
+
     for event in events.read().copied() {
         saw_event = true;
 
         // Decrement lives on each LifeLostEvent (strictly event-driven, one per event)
-        if lives_state.lives_remaining > 0 {
-            lives_state.lives_remaining -= 1;
-        }
+        lives_state.lives_remaining = lives_state.lives_remaining.saturating_sub(1);
 
         if lives_state.lives_remaining == 0 {
-            game_over_events.write(GameOverRequested {
-                remaining_lives: lives_state.lives_remaining,
-            });
+            if !game_over_emitted {
+                game_over_events.write(GameOverRequested {
+                    remaining_lives: lives_state.lives_remaining,
+                });
+                game_over_emitted = true;
+            }
             continue;
         }
 

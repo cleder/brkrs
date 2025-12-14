@@ -247,8 +247,13 @@ pub fn run() {
             detect_ball_wall_collisions,
             mark_brick_on_ball_collision,
             despawn_marked_entities, // Runs after marking, allowing physics to resolve
-            // display_events,
-            // designer palette - toggle with P
+        ),
+    );
+
+    // Designer palette and brick updates split out for readability
+    app.add_systems(
+        Update,
+        (
             ui::palette::toggle_palette,
             ui::palette::ensure_palette_ui,
             ui::palette::handle_palette_selection,
@@ -276,9 +281,12 @@ fn setup(
     gravity_cfg: Res<GravityConfig>,
     ui_fonts: Option<Res<UiFonts>>,
 ) {
-    let rapier_config = rapier_config.single_mut();
     // Set gravity for normal gameplay (respawn will temporarily disable it)
-    rapier_config.unwrap().gravity = gravity_cfg.normal;
+    if let Ok(mut config) = rapier_config.single_mut() {
+        config.gravity = gravity_cfg.normal;
+    } else {
+        warn!("RapierConfiguration not found; gravity not set");
+    }
 
     let _debug_material = materials.add(StandardMaterial {
         base_color_texture: Some(images.add(uv_debug_texture())),
