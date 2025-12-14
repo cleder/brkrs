@@ -1,0 +1,61 @@
+openapi: 3.0.3
+info:
+  title: Brkrs Ball Lives Counter (Message Contracts)
+  version: 1.0.0
+  description: |
+    This contract describes the feature-visible message payloads used by the Ball Lives Counter feature.
+    These are internal, event-style messages used to coordinate systems.
+
+paths: {}
+
+components:
+  schemas:
+    LifeLossCause:
+      type: string
+      description: Reason a life/ball was lost.
+      enum:
+        - LowerGoal
+
+    LifeLostEvent:
+      type: object
+      description: |
+        Emitted when a ball/life is lost.
+        Consumers use this as the trigger to decrement remaining lives.
+      required:
+        - cause
+      properties:
+        ball:
+          type: string
+          description: Identifier of the ball entity that was lost (engine-specific).
+        cause:
+          $ref: '#/components/schemas/LifeLossCause'
+        ball_spawn:
+          type: object
+          description: Canonical spawn transform for the replacement ball (engine-specific).
+
+    GameOverRequested:
+      type: object
+      description: Emitted when remaining lives are exhausted and game-over UX should be displayed.
+      required:
+        - remaining_lives
+      properties:
+        remaining_lives:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Expected to be 0 when game over is requested.
+
+    LivesState:
+      type: object
+      description: Canonical remaining-lives state for the current play session.
+      required:
+        - lives_remaining
+      properties:
+        lives_remaining:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Remaining balls/lives.
+        on_last_life:
+          type: boolean
+          description: Optional indicator for last-life state.
