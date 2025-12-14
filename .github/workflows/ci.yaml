@@ -32,8 +32,6 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
       - name: Install Dependencies
@@ -50,17 +48,36 @@ jobs:
         run: |
           cargo fetch --locked
           cargo test --no-run --all-features || true
-      - name: Generate code coverage
-        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+      - name: Run cargo test
+        run: cargo test --all-features
+      - name: Compile WASM target
+        run: |
+          cargo build --release --target wasm32-unknown-unknown --all-features
+
+  # 📊 Coverage job (isolated, cleans before build)
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+      - name: Clean target dir
+        run: cargo clean
+      - name: Run coverage build
+        run: |
+          export CARGO_TARGET_DIR=/tmp/cargo-target
+          cargo llvm-cov --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # required for private repos or protected branches
           files: lcov.info
           fail_ci_if_error: true
-      - name: Compile WASM target
-        run: |
-          cargo build --release --target wasm32-unknown-unknown --all-features
+
+
 
   # Run cargo clippy -- -D warnings
   clippy_check:
