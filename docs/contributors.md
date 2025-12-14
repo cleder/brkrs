@@ -40,8 +40,9 @@ To do so:
 | GitHub User ID | Name | Role | Description |
 |----------------|------|------|-------------|
 | [cleder](https://github.com/cleder/) | [Christian Ledermann](mailto:christian.ledermann@gmail.com) | Maintainer, Developer | Main Developer, Oversees project direction and reviews PRs |
-| | drummyfish | Artwork/Textures | [Big pack of hand painted tiling textures](https://opengameart.org/content/big-pack-of-hand-painted-tiling-textures) |
-| | [Robin Wood](https://www.robinwood.com/) | Artwork/Textures | [Texture Maps for Balls](https://www.robinwood.com/Catalog/FreeStuff/Textures/TextureSet.html) |
+| | drummyfish | Artwork, Textures | [Big pack of hand painted tiling textures](https://opengameart.org/content/big-pack-of-hand-painted-tiling-textures) |
+| | [Robin Wood](https://www.robinwood.com/) | Artwork, Textures | [Texture Maps for Balls](https://www.robinwood.com/Catalog/FreeStuff/Textures/TextureSet.html) |
+| [micahbrich](https://github.com/micahbrich) | Micah Rich | Artwork, Fonts | [Orbitron](https://github.com/theleagueof/orbitron) |
 
 ---
 
