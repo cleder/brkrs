@@ -21,6 +21,7 @@ use crate::systems::TextureManifestPlugin;
 use crate::systems::{
     AudioPlugin, InputLocked, LevelSwitchPlugin, PaddleSizePlugin, RespawnPlugin, RespawnSystems,
 };
+use crate::ui::fonts::{load_ui_fonts, UiFonts};
 
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
@@ -198,6 +199,8 @@ pub fn run() {
     app.add_plugins(crate::level_loader::LevelLoaderPlugin);
     // app.add_plugins(RapierDebugRenderPlugin::default());
     app.add_plugins(RespawnPlugin);
+    // Load UI fonts at startup
+    app.add_systems(Startup, load_ui_fonts);
     app.add_plugins(crate::pause::PausePlugin);
     app.add_plugins(AudioPlugin);
     app.add_plugins(PaddleSizePlugin);
@@ -258,6 +261,7 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut rapier_config: Query<&mut RapierConfiguration>,
     gravity_cfg: Res<GravityConfig>,
+    ui_fonts: Option<Res<UiFonts>>,
 ) {
     let rapier_config = rapier_config.single_mut();
     // Set gravity for normal gameplay (respawn will temporarily disable it)
@@ -306,15 +310,19 @@ fn setup(
     struct MainCamera;
 
     #[cfg(not(target_arch = "wasm32"))]
-    commands.spawn((
-        Text::new("Press space to toggle wire frames"),
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(12.0),
-            left: Val::Px(12.0),
-            ..default()
-        },
-    ));
+    if let Some(ui_fonts) = ui_fonts {
+        let font = ui_fonts.orbitron.clone();
+        commands.spawn((
+            Text::new("Press space to toggle wire frames"),
+            TextFont { font, ..default() },
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(12.0),
+                left: Val::Px(12.0),
+                ..default()
+            },
+        ));
+    }
 }
 
 /// Apply speed-dependent damping to control ball velocity

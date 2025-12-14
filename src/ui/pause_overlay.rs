@@ -7,6 +7,7 @@ use bevy::prelude::*;
 use bevy::text::Justify;
 
 use crate::pause::PauseState;
+use crate::ui::fonts::UiFonts;
 
 /// Marker component for the pause overlay UI entity.
 ///
@@ -22,12 +23,14 @@ pub fn spawn_pause_overlay(
     mut commands: Commands,
     pause_state: Res<PauseState>,
     overlay_query: Query<(), With<PauseOverlay>>,
+    ui_fonts: Res<UiFonts>,
 ) {
     // Only spawn if paused and overlay doesn't exist
     if matches!(*pause_state, PauseState::Paused { .. }) && overlay_query.is_empty() {
         commands.spawn((
             Text::new("PAUSED\nClick to Resume"),
             TextFont {
+                font: ui_fonts.orbitron.clone(),
                 font_size: 60.0,
                 ..default()
             },

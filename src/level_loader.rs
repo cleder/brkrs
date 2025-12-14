@@ -736,6 +736,7 @@ fn advance_level_when_cleared(
     mut commands: Commands,
     mut game_progress: ResMut<GameProgress>,
     mut level_advance: ResMut<LevelAdvanceState>,
+    ui_fonts: Option<Res<crate::ui::fonts::UiFonts>>,
 ) {
     let Some(curr) = current_level else {
         return;
@@ -775,15 +776,19 @@ fn advance_level_when_cleared(
             }
             // Spawn completion text (desktop only UI style similar to wireframe text)
             #[cfg(not(target_arch = "wasm32"))]
-            commands.spawn((
-                Text::new("GAME COMPLETE - Press Q to Quit"),
-                Node {
-                    position_type: PositionType::Absolute,
-                    top: Val::Px(60.0),
-                    left: Val::Px(60.0),
-                    ..default()
-                },
-            ));
+            if let Some(ui_fonts) = ui_fonts {
+                let font = ui_fonts.orbitron.clone();
+                commands.spawn((
+                    Text::new("GAME COMPLETE - Press Q to Quit"),
+                    TextFont { font, ..default() },
+                    Node {
+                        position_type: PositionType::Absolute,
+                        top: Val::Px(60.0),
+                        left: Val::Px(60.0),
+                        ..default()
+                    },
+                ));
+            }
         }
         return;
     }

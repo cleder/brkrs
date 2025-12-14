@@ -4,6 +4,7 @@ use bevy::window::PrimaryWindow;
 use crate::level_format::{INDESTRUCTIBLE_BRICK, SIMPLE_BRICK};
 use crate::systems::textures::loader::ObjectClass;
 use crate::systems::textures::TypeVariantRegistry;
+use crate::ui::fonts::UiFonts;
 use crate::{
     Brick, BrickTypeId, CountsTowardsCompletion, CELL_HEIGHT, CELL_WIDTH, GRID_HEIGHT, GRID_WIDTH,
     PLANE_H, PLANE_W,
@@ -61,6 +62,7 @@ pub fn ensure_palette_ui(
     registry: Option<Res<'_, TypeVariantRegistry>>,
     materials_res: Option<Res<'_, Assets<StandardMaterial>>>,
     mut meshes_res: Option<ResMut<'_, Assets<Mesh>>>,
+    ui_fonts: Option<Res<UiFonts>>,
     // meshes/materials optional (not present in every test harness) — keep function small for tests
 ) {
     if !state.is_changed() {
@@ -98,6 +100,10 @@ pub fn ensure_palette_ui(
                 parent.spawn((
                     Text::new("Designer Palette"),
                     TextFont {
+                        font: ui_fonts
+                            .as_ref()
+                            .map(|f| f.orbitron.clone())
+                            .unwrap_or_default(),
                         font_size: 16.0,
                         ..default()
                     },
@@ -108,6 +114,10 @@ pub fn ensure_palette_ui(
                 parent.spawn((
                     Text::new(format!("{} — Simple Brick", SIMPLE_BRICK)),
                     TextFont {
+                        font: ui_fonts
+                            .as_ref()
+                            .map(|f| f.orbitron.clone())
+                            .unwrap_or_default(),
                         font_size: 14.0,
                         ..default()
                     },
