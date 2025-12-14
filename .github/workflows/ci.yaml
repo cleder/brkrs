@@ -50,11 +50,6 @@ jobs:
         run: |
           cargo fetch --locked
           cargo test --no-run --all-features || true
-      - name: Run cargo test
-        run: cargo test --all-features
-      - name: Compile WASM target
-        run: |
-          cargo build --release --target wasm32-unknown-unknown --all-features
       - name: Generate code coverage
         run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
@@ -63,6 +58,9 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }} # required for private repos or protected branches
           files: lcov.info
           fail_ci_if_error: true
+      - name: Compile WASM target
+        run: |
+          cargo build --release --target wasm32-unknown-unknown --all-features
 
   # Run cargo clippy -- -D warnings
   clippy_check:
