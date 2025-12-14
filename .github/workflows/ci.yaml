@@ -2,12 +2,12 @@ name: CI
 
 on:
   push:
-    branches: 
+    branches:
       - '*'
   pull_request:
-    branches: 
+    branches:
       - main
-      - develop      
+      - develop
 
 env:
   CARGO_TERM_COLOR: always
@@ -32,6 +32,8 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
       - name: Install Dependencies
@@ -53,7 +55,14 @@ jobs:
       - name: Compile WASM target
         run: |
           cargo build --release --target wasm32-unknown-unknown --all-features
-
+      - name: Generate code coverage
+        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # required for private repos or protected branches
+          files: lcov.info
+          fail_ci_if_error: true
 
   # Run cargo clippy -- -D warnings
   clippy_check:
@@ -124,5 +133,3 @@ jobs:
           cache: true
       - name: Run `bevy_lint`
         run: bevy_lint --workspace
-
- 
