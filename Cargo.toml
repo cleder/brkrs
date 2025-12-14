@@ -9,6 +9,7 @@ description = "Breakout/Arkanoid-style game built in Rust using the Bevy engine,
 [features]
 default = ["texture_manifest"]
 texture_manifest = []
+local_dynamic = ["bevy/dynamic_linking"]
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
@@ -19,7 +20,7 @@ opt-level = 1
 opt-level = 3
 
 [dependencies]
-bevy = { version = "0.17.3", features = ["dynamic_linking"] }
+bevy = { version = "0.17.3" }
 bevy_rapier3d = { version = "0.32.0", features = [
     "debug-render-3d",
 ] }
