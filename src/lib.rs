@@ -199,8 +199,6 @@ pub fn run() {
     app.add_plugins(crate::level_loader::LevelLoaderPlugin);
     // app.add_plugins(RapierDebugRenderPlugin::default());
     app.add_plugins(RespawnPlugin);
-    // Load UI fonts at startup
-    app.add_systems(Startup, load_ui_fonts);
     app.add_plugins(crate::pause::PausePlugin);
     app.add_plugins(AudioPlugin);
     app.add_plugins(PaddleSizePlugin);
@@ -209,6 +207,9 @@ pub fn run() {
     {
         app.add_plugins(TextureManifestPlugin);
     }
+
+    // Load UI fonts at startup (after all plugins to avoid initialization order issues)
+    app.add_systems(Startup, load_ui_fonts);
 
     app.add_systems(
         Startup,

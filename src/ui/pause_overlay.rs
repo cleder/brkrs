@@ -25,7 +25,7 @@ pub fn spawn_pause_overlay(
     pause_state: Res<PauseState>,
     overlay_query: Query<(), With<PauseOverlay>>,
     game_over_query: Query<(), With<GameOverOverlay>>,
-    ui_fonts: Res<UiFonts>,
+    ui_fonts: Option<Res<UiFonts>>,
 ) {
     // Don't spawn pause overlay if game-over is active
     if !game_over_query.is_empty() {
@@ -34,10 +34,15 @@ pub fn spawn_pause_overlay(
 
     // Only spawn if paused and overlay doesn't exist
     if matches!(*pause_state, PauseState::Paused { .. }) && overlay_query.is_empty() {
+        let font = ui_fonts
+            .as_ref()
+            .map(|f| f.orbitron.clone())
+            .unwrap_or_default();
+
         commands.spawn((
             Text::new("PAUSED\nClick to Resume"),
             TextFont {
-                font: ui_fonts.orbitron.clone(),
+                font,
                 font_size: 60.0,
                 ..default()
             },

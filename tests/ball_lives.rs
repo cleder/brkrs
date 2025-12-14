@@ -115,7 +115,6 @@ fn multiple_events_same_frame_decrement_individually() {
         cause: LifeLossCause::LowerGoal,
         ball_spawn: SpawnTransform::new(Vec3::new(1.0, 0.0, 0.0), Quat::IDENTITY),
     });
-    drop(messages);
 
     app.update();
 
