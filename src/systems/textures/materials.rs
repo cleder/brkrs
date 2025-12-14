@@ -296,6 +296,17 @@ fn hydrate_texture_materials(
     if let Some(mut registry) = type_variants {
         // Need to call rebuild with mutable fallback which consumes &mut FallbackRegistry
         registry.rebuild(&manifest, &bank, fallback.as_mut());
+        info!(
+            target: "textures::materials",
+            type_variants = manifest.type_variants.len(),
+            registry_size = registry.map.len(),
+            "TypeVariantRegistry rebuilt"
+        );
+    } else {
+        warn!(
+            target: "textures::materials",
+            "TypeVariantRegistry resource missing during hydrate"
+        );
     }
     canonical.sync(&bank, fallback.as_mut());
     info!(
@@ -518,13 +529,34 @@ fn apply_canonical_materials_to_existing_entities(
     }
 
     // Update brick materials based on type
+    let brick_count = brick_query.iter().count();
+    if brick_count > 0 {
+        debug!(
+            target: "textures::materials",
+            brick_count,
+            has_registry = type_registry.is_some(),
+            "Processing brick materials"
+        );
+    }
+
     for (mut material, brick_type) in brick_query.iter_mut() {
         if let Some(registry) = type_registry.as_ref() {
             if let Some(handle) = registry.get(ObjectClass::Brick, brick_type.0) {
                 material.0 = handle;
                 updated_count += 1;
                 continue;
+            } else {
+                debug!(
+                    target: "textures::materials",
+                    brick_type = brick_type.0,
+                    "Type variant not found in registry for brick"
+                );
             }
+        } else {
+            debug!(
+                target: "textures::materials",
+                "TypeVariantRegistry not available for brick material application"
+            );
         }
         // Fall back to canonical brick material
         debug!(
