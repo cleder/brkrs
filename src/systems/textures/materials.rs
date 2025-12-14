@@ -152,18 +152,14 @@ impl ProfileMaterialBank {
         self.handles
             .retain(|id, _| manifest.profiles.contains_key(id));
 
-        // Update or create materials for each profile
+        // Always recreate materials to ensure consistency across platforms
+        // This ensures texture handles are fresh, particularly important for async loading
         for profile in manifest.profiles.values() {
-            if let Some(handle) = self.handles.get(&profile.id) {
-                // Reuse existing handle and update the material in-place
-                if let Some(material) = materials.get_mut(handle) {
-                    update_material(material, profile, asset_server);
-                }
-            } else {
-                // Create new material for new profile
-                let handle = bake_material(profile, asset_server, materials);
-                self.handles.insert(profile.id.clone(), handle);
-            }
+            // Remove old handle if it exists
+            self.handles.remove(&profile.id);
+            // Create new material with fresh texture handles
+            let handle = bake_material(profile, asset_server, materials);
+            self.handles.insert(profile.id.clone(), handle);
         }
     }
 
@@ -280,6 +276,7 @@ fn hydrate_texture_materials(
     mut canonical: ResMut<CanonicalMaterialHandles>,
     mut fallback: ResMut<FallbackRegistry>,
     type_variants: Option<ResMut<TypeVariantRegistry>>,
+    mut hydrated: Local<bool>,
 ) {
     let Some(manifest) = manifest else {
         return;
@@ -287,9 +284,14 @@ fn hydrate_texture_materials(
     let Some(asset_server) = asset_server else {
         return;
     };
-    if !manifest.is_changed() {
+
+    // Run once when manifest becomes available, even if not marked as changed
+    // This handles async asset loading across all platforms consistently
+    if !manifest.is_changed() && *hydrated {
         return;
     }
+    *hydrated = true;
+
     bank.rebuild(&manifest, &asset_server, materials.as_mut());
     if let Some(mut registry) = type_variants {
         // Need to call rebuild with mutable fallback which consumes &mut FallbackRegistry
@@ -312,25 +314,6 @@ fn add_unlit_color(
         unlit: true,
         ..default()
     })
-}
-
-fn update_material(
-    material: &mut StandardMaterial,
-    profile: &VisualAssetProfile,
-    asset_server: &AssetServer,
-) {
-    material.base_color_texture =
-        Some(asset_server.load(manifest_asset_path(&profile.albedo_path)));
-    material.normal_map_texture = profile
-        .normal_path
-        .as_ref()
-        .map(|path| asset_server.load(manifest_asset_path(path)));
-    material.metallic = profile.metallic;
-    material.perceptual_roughness = profile.roughness;
-
-    use bevy::math::Affine2;
-    material.uv_transform =
-        Affine2::from_scale_angle_translation(profile.uv_scale, 0.0, profile.uv_offset);
 }
 
 fn bake_material(
@@ -476,6 +459,8 @@ pub fn brick_type_material_handle(
 /// Apply canonical materials to existing entities when they become available.
 /// This ensures paddle, balls, and bricks spawned during Startup get proper textures
 /// once the manifest finishes loading.
+///
+/// Runs continuously to handle async asset loading consistently across all platforms.
 fn apply_canonical_materials_to_existing_entities(
     canonical: Option<Res<CanonicalMaterialHandles>>,
     type_registry: Option<Res<TypeVariantRegistry>>,
@@ -491,14 +476,13 @@ fn apply_canonical_materials_to_existing_entities(
         (&mut MeshMaterial3d<StandardMaterial>, &crate::BrickTypeId),
         (With<crate::Brick>, Without<crate::Paddle>, Without<Ball>),
     >,
-    mut applied: Local<bool>,
 ) {
     let Some(canonical) = canonical else {
         return;
     };
 
-    // Skip if materials not ready or already applied successfully
-    if *applied || !canonical.is_ready() {
+    // Skip if materials not ready
+    if !canonical.is_ready() {
         return;
     }
 
@@ -554,10 +538,8 @@ fn apply_canonical_materials_to_existing_entities(
         }
     }
 
-    // Only mark as applied if we actually updated some entities
-    // This handles the WASM case where materials might become ready before entities spawn
+    // Log material application for debugging
     if updated_count > 0 {
-        *applied = true;
         debug!(
             target: "textures::materials",
             count = updated_count,

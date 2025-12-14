@@ -209,7 +209,9 @@ pub fn run() {
     }
 
     // Load UI fonts at startup (after all plugins to avoid initialization order issues)
+    // On desktop, fonts load in Startup; on WASM, they defer to Update to avoid blocking textures
     app.add_systems(Startup, load_ui_fonts);
+    app.add_systems(Update, ui::fonts::ensure_ui_fonts_loaded);
 
     app.add_systems(
         Startup,
