@@ -64,6 +64,14 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          # Ensure pkg-config and development headers are available so native
+          # crates like wayland-sys can find system libraries (wayland-client.pc)
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Set PKG_CONFIG_PATH for native libs
+        run: echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig" >> $GITHUB_ENV
       - name: Clean target dir
         run: cargo clean
       - name: Run coverage build
