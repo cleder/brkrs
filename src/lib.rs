@@ -214,6 +214,16 @@ pub fn run() {
         Startup,
         (setup, spawn_border, systems::grid_debug::spawn_grid_overlay),
     );
+    // Lives counter HUD (separate add_systems to avoid tuple size limits)
+    app.add_systems(
+        Update,
+        (
+            ui::lives_counter::spawn_lives_counter,
+            ui::lives_counter::update_lives_counter.after(RespawnSystems::Schedule),
+            ui::game_over_overlay::spawn_game_over_overlay.after(RespawnSystems::Schedule),
+        ),
+    );
+
     app.add_systems(
         Update,
         (

@@ -473,7 +473,7 @@ fn hydrate_respawn_request(
 fn enqueue_respawn_requests(
     mut respawn_schedule: ResMut<RespawnSchedule>,
     mut events: MessageReader<LifeLostEvent>,
-    lives_state: Res<LivesState>,
+    mut lives_state: ResMut<LivesState>,
     time: Res<Time>,
     spawn_points: Res<SpawnPoints>,
     mut game_over_events: MessageWriter<GameOverRequested>,
@@ -484,6 +484,11 @@ fn enqueue_respawn_requests(
     let mut saw_event = false;
     for event in events.read().copied() {
         saw_event = true;
+
+        // Decrement lives on each LifeLostEvent (strictly event-driven, one per event)
+        if lives_state.lives_remaining > 0 {
+            lives_state.lives_remaining -= 1;
+        }
 
         if lives_state.lives_remaining == 0 {
             game_over_events.write(GameOverRequested {

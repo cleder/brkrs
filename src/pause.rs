@@ -77,8 +77,14 @@ fn handle_pause_input(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut pause_state: ResMut<PauseState>,
     level_advance: Res<LevelAdvanceState>,
+    lives_state: Res<crate::systems::respawn::LivesState>,
     #[cfg(not(target_arch = "wasm32"))] window: Single<&Window, With<PrimaryWindow>>,
 ) {
+    // Disable pause input when game is over (lives = 0)
+    if lives_state.lives_remaining == 0 {
+        return;
+    }
+
     // Only allow pause if:
     // 1. ESC was just pressed (frame-level debouncing via just_pressed)
     // 2. Game is currently Active (not already paused)

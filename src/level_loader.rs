@@ -836,11 +836,15 @@ fn restart_level_on_key(
     ball_q: Query<Entity, With<Ball>>,
     mut game_progress: ResMut<GameProgress>,
     mut level_advance: ResMut<LevelAdvanceState>,
+    mut lives_state: ResMut<crate::systems::respawn::LivesState>,
     #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
 ) {
     if !keyboard.just_pressed(KeyCode::KeyR) {
         return;
     }
+    // Reset lives to 3 when restarting level
+    lives_state.lives_remaining = 3;
+
     let level_number = current_level.map(|cl| cl.0.number).unwrap_or(1);
     let path = format!("assets/levels/level_{:03}.ron", level_number);
     match force_load_level_from_path(
