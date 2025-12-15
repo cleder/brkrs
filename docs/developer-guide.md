@@ -372,7 +372,7 @@ Bevy's WASM asset loader uses HTTP to fetch assets, requiring explicit metadata 
 
 **Meta file format** (RON):
 
-```ron
+```rust
 (
     asset: Load(
         loader: "bevy_image::image_loader::ImageLoader",

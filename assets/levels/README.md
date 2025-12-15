@@ -8,7 +8,7 @@ The loader expects a 20×20 matrix by default and will normalize (pad or truncat
 A level file is a RON value with the `LevelDefinition` structure the runtime expects.
 Minimal example:
 
-```ron
+```rust
 LevelDefinition(
   number: 1,
   gravity: Some((0.0, -9.81, 0.0)), // optional override per-level
@@ -42,7 +42,7 @@ Level files can include optional metadata fields for better organization and att
 
 The `description` field allows level designers to document their design intent, gameplay mechanics, or technical notes:
 
-```ron
+```rust
 LevelDefinition(
   number: 42,
   description: Some(r#"
@@ -67,7 +67,7 @@ LevelDefinition(
 
 The `author` field credits contributors and supports both plain text and Markdown link formats:
 
-```ron
+```rust
 // Plain text attribution
 author: Some("Jane Smith")
 

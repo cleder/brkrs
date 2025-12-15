@@ -17,7 +17,7 @@ Textures can be customized globally or overridden per-level for unique visual th
 
 2. **Add a profile entry** to `manifest.ron`:
 
-```ron
+```rust
 (
   profiles: [
     // ... existing profiles ...
@@ -58,7 +58,7 @@ Edit the canonical profiles in `manifest.ron`:
 
 Use `type_variants` to map gameplay types to visual profiles:
 
-```ron
+```rust
 (
   profiles: [
     // ... profiles ...
@@ -99,7 +99,7 @@ Add profiles for `brick/type20` and `brick/indestructible` in `manifest.ron` and
 
 Example:
 
-```ron
+```rust
 (
   // ... profiles ...
   type_variants: [
@@ -115,7 +115,7 @@ Customize ground, background, and sidewall textures for specific levels:
 
 ##### **Method 1: In manifest.ron**
 
-```ron
+```rust
 (
   profiles: [
     // ... profiles ...
@@ -140,7 +140,7 @@ Customize ground, background, and sidewall textures for specific levels:
 
 ##### **Method 2: Inline in level file** (`assets/levels/level_002.ron`)
 
-```ron
+```rust
 LevelDefinition(
   number: 2,
   gravity: Some((-1.5, 0.0, 0.0)),
@@ -295,7 +295,7 @@ If you see default gray/colored materials instead of textures:
 
 Create resilient material loading with fallback chains:
 
-```ron
+```rust
 (
   id: "brick/exotic",
   albedo_path: "exotic_unavailable.png",
@@ -310,7 +310,7 @@ If `exotic_unavailable.png` fails, tries `brick/metal`, then `brick/default`.
 
 Add glow effects to bricks or balls:
 
-```ron
+```rust
 (
   object_class: Brick,
   type_id: 5,
@@ -324,7 +324,7 @@ Add glow effects to bricks or balls:
 
 Create color variations without new textures:
 
-```ron
+```rust
 (
   level_number: 3,
   ground_profile: Some("ground/default"),
@@ -360,7 +360,7 @@ This enables external editors to preview textures in real-time.
 
 ### Complete Manifest Example
 
-```ron
+```rust
 (
   profiles: [
     // Canonical defaults
