@@ -143,7 +143,7 @@ done
 
 **Solution**: Verify `.meta` file format matches exactly:
 
-```ron
+```rust
 (
     asset: Load(
         loader: "bevy_image::image_loader::ImageLoader",
