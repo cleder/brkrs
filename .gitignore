@@ -3,6 +3,7 @@
 debug/
 release/
 /tools/*/target/
+/experiments/*/target/
 
 # Local tooling environments
 /.venv
