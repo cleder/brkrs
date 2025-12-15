@@ -8,7 +8,7 @@
 
 ## 🔗 Quick links
 
-Full **documentation** is available at **[brkrs.readthedocs.io](https://brkrs.readthedocs.io/)**:
+The **documentation** is available at **[brkrs.readthedocs.io](https://brkrs.readthedocs.io/)**:
 
 - 🎮 [Play the web version](https://cleder.github.io/brkrs/) — Try it now! 👾
 - 📖 [Quickstart Guide](https://brkrs.readthedocs.io/en/latest/quickstart.html) — Get running in 10 minutes 🏁
@@ -18,12 +18,16 @@ Full **documentation** is available at **[brkrs.readthedocs.io](https://brkrs.re
 
 ## 🔎 Overview
 
-**brkrs** is a real, playable Breakout/Arkanoid-style game written in [**Rust** 🦀](https://rust-lang.org/) using the [**Bevy**](https://bevy.org/) engine.
+**brkrs** is a Breakout/Arkanoid-style game written in [**Rust** 🦀](https://rust-lang.org/) using the [**Bevy**](https://bevy.org/) engine.
 It extends the classic formula with richer physics, gravity, paddle rotation, and per-level configuration.
+Instead of bouncing the ball upward from a paddle that only moves sideways at the bottom of the screen, like a traditional Breakout clone, **brkrs** lets you:
 
 - 🧱 Classic Breakout-style gameplay: paddle, ball, bricks, and levels
-- 🖱️ Controls: move paddle with mouse, scroll wheel to rotate.
-- 👀 Levels are human-readable and easy to modify
+- 🖱️ Controls: Move your paddle with the mouse freely anywhere on the screen (not just along the bottom), scroll wheel to rotate.
+  Intercept the ball from any direction; above, below, or from the side
+- 👀 Play through 70+ levels with varied layouts and challenges.
+  Levels are human-readable and easy to modify
+- 🕵 Encounter many different brick types with special behaviors (things like gravity effects, magnets, teleporters, explosive bricks, and more), which make the puzzles more complex than simple ball-bouncing.
 - 📦 Crate-ready and cross-platform (desktop + WebAssembly builds)
 - 🥳 A **fun, approachable way to learn Rust, Bevy, and modern coding practices**
 
@@ -36,7 +40,7 @@ It’s also a **hands-on learning project**, letting you explore:
 - Spec-first workflow: every feature begins as a spec and ends as working Rust code
 - Small, incremental PRs demonstrate the development workflow and learning path
 
-Every feature starts as a spec, flows through an issue or PR, and ends as working Rust code.
+Every feature starts as a spec, flows through an issue (recommended) or directly via PR (if you are bold), and ends as working Rust code.
 You can **play the game, explore the code, and learn modern Rust/Bevy workflows all at the same time**.
 Play, tweak, and learn — modify levels, bricks, or mechanics to see specs turn into features.
 
@@ -71,11 +75,11 @@ Follow "Seika no Ho" (清華の法), "the way of clear planning", a Samurai prin
 
 I always wanted to **rewrite my old [Arkanoid/Breakout-style game, YaAC 🐧](https://github.com/cleder/yaac)**, in a modern game framework.
 
-I began by **manually implementing the core gameplay foundations**: reading documentation, following examples, and building a basic proof-of-concept with the essential mechanics (ball, paddle, bricks).
+I began by **manually implementing the core gameplay foundations**: reading documentation, following examples, and building a basic proof-of-concept with the essential mechanics (ball, paddle, walls).
 
 It quickly became clear that doing everything manually would involve **a steep learning curve and a lot of time**.
 
-brkrs was born as a solution: a way to **learn modern Rust game development**, apply **spec-first workflows**, and experiment with **AI-assisted coding**, all while still having fun playing a real game.
+brkrs was born as a way to **learn modern Rust game development**, apply **spec-first workflows**, and experiment with **AI-assisted coding**, all while still having fun playing a real game.
 
 The development process follows the "Kaizen no michi" (改善の道) philosophy of making small, incremental changes to achieve long-term growth and success.
 
@@ -89,12 +93,14 @@ The development process follows the "Kaizen no michi" (改善の道) philosophy 
 4. **Brick System** – Extensible brick behaviors via components & events.
 5. **Pause System** – ESC to pause, click to resume, with window mode switching (native).
 
+---
+
 ## 📣 Help Wanted: Your Skills Can Level Up **brkrs**
 
-While the code is solid, a great game needs more than just logic!
-We are actively looking for creative community members 🤗 to join the effort and help turn **brkrs** into a visually and aurally stunning experience.
+While the code is coming along nicely, a great game needs more than just logic!
+We are actively looking for creative community members to join 🤗 and help turn **brkrs** into a visually 👁️ and aurally 🎧 stunning experience.
 
-This is your chance to get your work into a real, playable, open-source game!
+This is your chance to get your work into a real, playable, open-source 🐃 game!
 
 - **🎧 Sound & Music:** We need satisfying **sound effects** (the *thwack* of a brick, the *clink* of a power-up) and engaging **background music**.
 - **🎨 Art & Textures:** Help us create unique **brick textures**, stylish **paddle designs**, backgrounds, and other necessary **artwork**.
