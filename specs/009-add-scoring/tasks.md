@@ -128,10 +128,10 @@ Implement shared ECS infrastructure that all user stories depend on.
 
 ### Tasks
 
-- [ ] T009 [US2] [P] Implement `brick_points(brick_type: BrickType) -> u32` function in `src/systems/scoring.rs` with complete match covering indices 10-57 (use docs/bricks.md for values)
-- [ ] T010 [US2] [P] Implement `award_points_system` in `src/systems/scoring.rs` that reads `BrickDestroyed` events and mutates `ScoreState.current_score` using `brick_points()` function
-- [ ] T011 [US2] Modify brick destruction logic in `src/systems/bricks/destruction.rs` to emit `BrickDestroyed` event before despawning (coordinate with existing destruction system)
-- [ ] T012 [US2] Register `award_points_system` in plugin with label that runs after brick destruction events are emitted and before milestone detection
+- [x] T009 [US2] [P] Implement `brick_points(brick_type: BrickType) -> u32` function in `src/systems/scoring.rs` with complete match covering indices 10-57 (use docs/bricks.md for values)
+- [x] T010 [US2] [P] Implement `award_points_system` in `src/systems/scoring.rs` that reads `BrickDestroyed` events and mutates `ScoreState.current_score` using `brick_points()` function
+- [x] T011 [US2] Modify brick destruction logic in `src/systems/bricks/destruction.rs` to emit `BrickDestroyed` event before despawning (coordinate with existing destruction system)
+- [x] T012 [US2] Register `award_points_system` in plugin with label that runs after brick destruction events are emitted and before milestone detection
 - [ ] T013 [US2] Write integration test in `tests/scoring.rs` that destroys various brick types and verifies score accumulation (Simple Stone 25pts, Multi-hit 50pts, Question brick 25-300 range)
 
 ---

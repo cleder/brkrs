@@ -1643,6 +1643,7 @@ dependencies = [
  "bevy",
  "bevy_rapier3d",
  "getrandom 0.2.15",
+ "rand",
  "ron 0.8.1",
  "serde",
  "serde_json",

@@ -255,6 +255,12 @@ pub fn run() {
         ),
     );
 
+    // Scoring: award points after brick despawn events have been emitted
+    app.add_systems(
+        Update,
+        systems::scoring::award_points_system.after(despawn_marked_entities),
+    );
+
     // Designer palette and brick updates split out for readability
     app.add_systems(
         Update,
@@ -728,6 +734,7 @@ fn detect_ball_wall_collisions(
 fn despawn_marked_entities(
     marked: Query<(Entity, Option<&BrickTypeId>), With<MarkedForDespawn>>,
     mut commands: Commands,
+    mut scoring_events: MessageWriter<systems::scoring::BrickDestroyed>,
 ) {
     for (entity, brick_type) in marked.iter() {
         // Emit BrickDestroyed event for audio system
@@ -735,6 +742,13 @@ fn despawn_marked_entities(
             commands.trigger(systems::BrickDestroyed {
                 entity,
                 brick_type: brick_type.0,
+            });
+
+            // Emit scoring message for point award
+            scoring_events.write(systems::scoring::BrickDestroyed {
+                brick_entity: entity,
+                brick_type: brick_type.0,
+                destroyed_by: None,
             });
         }
         commands.entity(entity).despawn();
