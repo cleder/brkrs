@@ -97,13 +97,24 @@ fn discover_level_slots() -> Vec<LevelSlot> {
     #[cfg(target_arch = "wasm32")]
     {
         // On WASM, hardcode the level list since there's no filesystem access
+        for i in 1..=74 {
+            slots.push(LevelSlot {
+                number: i,
+                path: format!("assets/levels/level_{:03}.ron", i),
+            });
+        }
+        // Add special debug levels
         slots.push(LevelSlot {
-            number: 1,
-            path: "assets/levels/level_001.ron".to_string(),
+            number: 997,
+            path: "assets/levels/level_997.ron".to_string(),
         });
         slots.push(LevelSlot {
-            number: 2,
-            path: "assets/levels/level_002.ron".to_string(),
+            number: 998,
+            path: "assets/levels/level_998.ron".to_string(),
+        });
+        slots.push(LevelSlot {
+            number: 999,
+            path: "assets/levels/level_999.ron".to_string(),
         });
     }
     if slots.is_empty() {

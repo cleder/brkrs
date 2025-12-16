@@ -45,18 +45,18 @@ pub fn ensure_ui_fonts_loaded(
         .clone();
 
     match asset_server.get_load_state(&handle) {
-        LoadState::Loaded => {
+        Some(LoadState::Loaded) => {
             commands.insert_resource(UiFonts {
                 orbitron: handle.clone(),
             });
             *pending = None;
         }
-        LoadState::Failed => {
+        Some(LoadState::Failed(_)) => {
             warn!("Failed to load Orbitron font for UI; overlay text will be missing");
             *pending = None;
         }
         _ => {
-            // Still loading; keep waiting.
+            // Still loading or not yet tracked; keep waiting.
         }
     }
 }
