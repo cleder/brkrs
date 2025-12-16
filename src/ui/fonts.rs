@@ -12,6 +12,23 @@ pub struct UiFonts {
     pub orbitron: Handle<Font>,
 }
 
+/// Plugin that wires up platform-appropriate font loading systems.
+pub struct FontsPlugin;
+
+impl Plugin for FontsPlugin {
+    fn build(&self, app: &mut App) {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            app.add_systems(Startup, load_ui_fonts);
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            app.add_systems(Update, ensure_ui_fonts_loaded);
+        }
+    }
+}
+
 /// Load UI fonts at startup (desktop only).
 /// On WASM, font loading is skipped at startup to avoid blocking texture loading.
 #[cfg(not(target_arch = "wasm32"))]

@@ -21,7 +21,7 @@ use crate::systems::TextureManifestPlugin;
 use crate::systems::{
     AudioPlugin, InputLocked, LevelSwitchPlugin, PaddleSizePlugin, RespawnPlugin, RespawnSystems,
 };
-use crate::ui::fonts::{load_ui_fonts, UiFonts};
+use crate::ui::fonts::UiFonts;
 
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
@@ -208,10 +208,8 @@ pub fn run() {
         app.add_plugins(TextureManifestPlugin);
     }
 
-    // Load UI fonts at startup (after all plugins to avoid initialization order issues)
-    // On desktop, fonts load in Startup; on WASM, they defer to Update to avoid blocking textures
-    app.add_systems(Startup, load_ui_fonts);
-    app.add_systems(Update, ui::fonts::ensure_ui_fonts_loaded);
+    // FontsPlugin wires platform-appropriate font loading systems
+    app.add_plugins(crate::ui::fonts::FontsPlugin);
 
     app.add_systems(
         Startup,

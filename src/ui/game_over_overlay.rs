@@ -1,6 +1,24 @@
-//! Game-over overlay UI component
+//! Game-over overlay UI
 //!
-//! Displays "Game over" message when the player runs out of lives.
+//! Purpose
+//! - Shows a centered "Game over" message when the player runs out of lives.
+//!
+//! When it spawns
+//! - `spawn_game_over_overlay` listens for `GameOverRequested` and only spawns when:
+//!   - The event is received, and
+//!   - `LivesState.lives_remaining == 0`, and
+//!   - No existing `GameOverOverlay` entity is present (idempotent), and
+//!   - `UiFonts` is available (logs a warning and defers otherwise).
+//!
+//! Scheduling and integration
+//! - Registered in Update after `RespawnSystems::Schedule`, ensuring lives and respawn logic have
+//!   finished before the overlay is evaluated and potentially spawned.
+//! - Uses the same `UiFonts` resource as the HUD to render text consistently across platforms.
+//!
+//! Relationship to other UI
+//! - The lives counter continues to exist; the overlay becomes the primary focus once visible.
+//!   Any future logic to hide/disable the counter during game-over can be added in the overlay
+//!   system if desired.
 
 use bevy::prelude::*;
 use bevy::text::Justify;
