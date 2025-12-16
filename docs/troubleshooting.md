@@ -91,6 +91,103 @@ aplay -l
 - Ensure WebGL 2.0 is enabled in your browser
 - Check the browser console (F12) for error messages
 
+### Textures don't load in WASM build
+
+```{important}
+This is the most common WASM issue. Bevy's WASM asset loader requires explicit
+metadata files for all assets loaded via HTTP.
+```
+
+**Symptoms**:
+
+- Browser console shows 404 errors for `.meta` files (e.g., `brick_base.png.meta not found`)
+- Textures appear black/missing
+- Console shows "Failed to load asset" messages
+
+**Solution**: Create `.meta` files for all PNG textures:
+
+```bash
+# Generate meta files for all textures
+find assets/textures -name "*.png" -type f | while read png; do
+  cat > "${png}.meta" << 'EOF'
+(
+    asset: Load(
+        loader: "bevy_image::image_loader::ImageLoader",
+        settings: (
+            format: FromExtension,
+            is_srgb: true,
+            sampler: Default,
+            asset_usage: 1,
+        ),
+    ),
+)
+EOF
+done
+```
+
+**Deploy checklist**:
+
+- [ ] Copy both `.png` and `.png.meta` files to web server
+- [ ] Preserve directory structure
+- [ ] Clear browser cache (Ctrl+Shift+R)
+- [ ] Check browser console for 404 errors
+
+### "Failed to deserialize meta" errors
+
+**Symptoms**:
+
+- Console shows: `Failed to deserialize meta for asset textures/...`
+- SpannedError with code like `ExpectedString` or missing field names
+
+**Cause**: Incorrect `.meta` file format or syntax error in RON file.
+
+**Solution**: Verify `.meta` file format matches exactly:
+
+```rust
+(
+    asset: Load(
+        loader: "bevy_image::image_loader::ImageLoader",
+        settings: (
+            format: FromExtension,
+            is_srgb: true,
+            sampler: Default,
+            asset_usage: 1,
+        ),
+    ),
+)
+```
+
+**Common mistakes**:
+
+- Missing commas or parentheses
+- Incorrect `asset_usage` format (use simple `1`, not struct syntax)
+- Wrong loader name (must be exact: `"bevy_image::image_loader::ImageLoader"`)
+
+### Levels don't work in WASM
+
+**Symptoms**:
+
+- Only level 1-2 available
+- Can't progress to higher levels
+- Console shows level loading errors
+
+**Cause**: Levels must be embedded at compile time for WASM (no filesystem access).
+
+**Solution**: Update `embedded_level_str()` in `src/level_loader.rs`:
+
+```rust
+pub fn embedded_level_str(path: &str) -> Option<&'static str> {
+    match path {
+        "assets/levels/level_001.ron" => Some(include_str!("../assets/levels/level_001.ron")),
+        "assets/levels/level_002.ron" => Some(include_str!("../assets/levels/level_002.ron")),
+        // Add entries for all levels...
+        _ => None,
+    }
+}
+```
+
+Then rebuild the WASM binary to bake in the new levels.
+
 ### Performance is poor in the browser
 
 WASM builds are slower than native builds.
@@ -99,6 +196,7 @@ For best web performance:
 - Use Chrome or Firefox (best WASM support)
 - Close other browser tabs
 - Disable browser extensions that might interfere
+- Note: Large WASM binaries (>50MB) may have slow initial load times
 
 ## Level Loading Issues
 

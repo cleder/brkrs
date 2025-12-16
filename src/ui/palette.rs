@@ -1,9 +1,38 @@
+//! Designer palette UI for brick selection and placement.
+//!
+//! Purpose
+//! - Provides a lightweight in-game UI to select brick types and preview their appearance.
+//! - Supports placing bricks onto the playfield grid via mouse drag while a type is selected.
+//!
+//! User flow
+//! - Toggle visibility with `P` (`toggle_palette`).
+//! - When opened, `ensure_palette_ui` spawns a simple UI (idempotent) showing entries for common
+//!   bricks (e.g., simple and indestructible) and small color previews derived from materials.
+//! - Click a preview to select a type (`handle_palette_selection`), which updates `SelectedBrick`.
+//! - A "ghost" preview follows the cursor over the grid (`update_ghost_preview`).
+//! - Hold the left mouse button and drag over grid cells to place bricks (`place_bricks_on_drag`).
+//!
+//! Integration details
+//! - Uses `TypeVariantRegistry` when available to resolve `StandardMaterial` handles for previews;
+//!   falls back to simple colors if materials are not yet ready.
+//! - Text uses `UiFonts` when present; if missing (e.g., early WASM frames), the UI still spawns
+//!   with default font handles.
+//! - Grid conversion uses camera raycasting to map the cursor to world and grid coordinates.
+//!
+//! Scheduling summary (Update)
+//! - `toggle_palette` updates `PaletteState`.
+//! - `ensure_palette_ui` spawns/despawns UI when `PaletteState` changes.
+//! - `handle_palette_selection` reacts to button `Interaction` changes.
+//! - `update_palette_selection_feedback` highlights the selected preview.
+//! - `update_ghost_preview` and `place_bricks_on_drag` manage visual feedback and placement.
+
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 use crate::level_format::{INDESTRUCTIBLE_BRICK, SIMPLE_BRICK};
 use crate::systems::textures::loader::ObjectClass;
 use crate::systems::textures::TypeVariantRegistry;
+use crate::ui::fonts::UiFonts;
 use crate::{
     Brick, BrickTypeId, CountsTowardsCompletion, CELL_HEIGHT, CELL_WIDTH, GRID_HEIGHT, GRID_WIDTH,
     PLANE_H, PLANE_W,
@@ -61,6 +90,7 @@ pub fn ensure_palette_ui(
     registry: Option<Res<'_, TypeVariantRegistry>>,
     materials_res: Option<Res<'_, Assets<StandardMaterial>>>,
     mut meshes_res: Option<ResMut<'_, Assets<Mesh>>>,
+    ui_fonts: Option<Res<UiFonts>>,
     // meshes/materials optional (not present in every test harness) — keep function small for tests
 ) {
     if !state.is_changed() {
@@ -98,6 +128,10 @@ pub fn ensure_palette_ui(
                 parent.spawn((
                     Text::new("Designer Palette"),
                     TextFont {
+                        font: ui_fonts
+                            .as_ref()
+                            .map(|f| f.orbitron.clone())
+                            .unwrap_or_default(),
                         font_size: 16.0,
                         ..default()
                     },
@@ -108,6 +142,10 @@ pub fn ensure_palette_ui(
                 parent.spawn((
                     Text::new(format!("{} — Simple Brick", SIMPLE_BRICK)),
                     TextFont {
+                        font: ui_fonts
+                            .as_ref()
+                            .map(|f| f.orbitron.clone())
+                            .unwrap_or_default(),
                         font_size: 14.0,
                         ..default()
                     },

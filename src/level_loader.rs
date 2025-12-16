@@ -736,6 +736,7 @@ fn advance_level_when_cleared(
     mut commands: Commands,
     mut game_progress: ResMut<GameProgress>,
     mut level_advance: ResMut<LevelAdvanceState>,
+    ui_fonts: Option<Res<crate::ui::fonts::UiFonts>>,
 ) {
     let Some(curr) = current_level else {
         return;
@@ -775,15 +776,19 @@ fn advance_level_when_cleared(
             }
             // Spawn completion text (desktop only UI style similar to wireframe text)
             #[cfg(not(target_arch = "wasm32"))]
-            commands.spawn((
-                Text::new("GAME COMPLETE - Press Q to Quit"),
-                Node {
-                    position_type: PositionType::Absolute,
-                    top: Val::Px(60.0),
-                    left: Val::Px(60.0),
-                    ..default()
-                },
-            ));
+            if let Some(ui_fonts) = ui_fonts {
+                let font = ui_fonts.orbitron.clone();
+                commands.spawn((
+                    Text::new("GAME COMPLETE - Press Q to Quit"),
+                    TextFont { font, ..default() },
+                    Node {
+                        position_type: PositionType::Absolute,
+                        top: Val::Px(60.0),
+                        left: Val::Px(60.0),
+                        ..default()
+                    },
+                ));
+            }
         }
         return;
     }
@@ -831,11 +836,19 @@ fn restart_level_on_key(
     ball_q: Query<Entity, With<Ball>>,
     mut game_progress: ResMut<GameProgress>,
     mut level_advance: ResMut<LevelAdvanceState>,
+    lives_state: Option<ResMut<crate::systems::respawn::LivesState>>,
     #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
 ) {
     if !keyboard.just_pressed(KeyCode::KeyR) {
         return;
     }
+    // Reset lives to 3 when restarting level
+    if let Some(mut lives_state) = lives_state {
+        lives_state.lives_remaining = 3;
+    } else {
+        warn!("LivesState resource missing during level restart; skipping lives reset");
+    }
+
     let level_number = current_level.map(|cl| cl.0.number).unwrap_or(1);
     let path = format!("assets/levels/level_{:03}.ron", level_number);
     match force_load_level_from_path(
@@ -1298,6 +1311,81 @@ fn embedded_level_str(path: &str) -> Option<&'static str> {
     match path {
         "assets/levels/level_001.ron" => Some(include_str!("../assets/levels/level_001.ron")),
         "assets/levels/level_002.ron" => Some(include_str!("../assets/levels/level_002.ron")),
+        "assets/levels/level_003.ron" => Some(include_str!("../assets/levels/level_003.ron")),
+        "assets/levels/level_004.ron" => Some(include_str!("../assets/levels/level_004.ron")),
+        "assets/levels/level_005.ron" => Some(include_str!("../assets/levels/level_005.ron")),
+        "assets/levels/level_006.ron" => Some(include_str!("../assets/levels/level_006.ron")),
+        "assets/levels/level_007.ron" => Some(include_str!("../assets/levels/level_007.ron")),
+        "assets/levels/level_008.ron" => Some(include_str!("../assets/levels/level_008.ron")),
+        "assets/levels/level_009.ron" => Some(include_str!("../assets/levels/level_009.ron")),
+        "assets/levels/level_010.ron" => Some(include_str!("../assets/levels/level_010.ron")),
+        "assets/levels/level_011.ron" => Some(include_str!("../assets/levels/level_011.ron")),
+        "assets/levels/level_012.ron" => Some(include_str!("../assets/levels/level_012.ron")),
+        "assets/levels/level_013.ron" => Some(include_str!("../assets/levels/level_013.ron")),
+        "assets/levels/level_014.ron" => Some(include_str!("../assets/levels/level_014.ron")),
+        "assets/levels/level_015.ron" => Some(include_str!("../assets/levels/level_015.ron")),
+        "assets/levels/level_016.ron" => Some(include_str!("../assets/levels/level_016.ron")),
+        "assets/levels/level_017.ron" => Some(include_str!("../assets/levels/level_017.ron")),
+        "assets/levels/level_018.ron" => Some(include_str!("../assets/levels/level_018.ron")),
+        "assets/levels/level_019.ron" => Some(include_str!("../assets/levels/level_019.ron")),
+        "assets/levels/level_020.ron" => Some(include_str!("../assets/levels/level_020.ron")),
+        "assets/levels/level_021.ron" => Some(include_str!("../assets/levels/level_021.ron")),
+        "assets/levels/level_022.ron" => Some(include_str!("../assets/levels/level_022.ron")),
+        "assets/levels/level_023.ron" => Some(include_str!("../assets/levels/level_023.ron")),
+        "assets/levels/level_024.ron" => Some(include_str!("../assets/levels/level_024.ron")),
+        "assets/levels/level_025.ron" => Some(include_str!("../assets/levels/level_025.ron")),
+        "assets/levels/level_026.ron" => Some(include_str!("../assets/levels/level_026.ron")),
+        "assets/levels/level_027.ron" => Some(include_str!("../assets/levels/level_027.ron")),
+        "assets/levels/level_028.ron" => Some(include_str!("../assets/levels/level_028.ron")),
+        "assets/levels/level_029.ron" => Some(include_str!("../assets/levels/level_029.ron")),
+        "assets/levels/level_030.ron" => Some(include_str!("../assets/levels/level_030.ron")),
+        "assets/levels/level_031.ron" => Some(include_str!("../assets/levels/level_031.ron")),
+        "assets/levels/level_032.ron" => Some(include_str!("../assets/levels/level_032.ron")),
+        "assets/levels/level_033.ron" => Some(include_str!("../assets/levels/level_033.ron")),
+        "assets/levels/level_034.ron" => Some(include_str!("../assets/levels/level_034.ron")),
+        "assets/levels/level_035.ron" => Some(include_str!("../assets/levels/level_035.ron")),
+        "assets/levels/level_036.ron" => Some(include_str!("../assets/levels/level_036.ron")),
+        "assets/levels/level_037.ron" => Some(include_str!("../assets/levels/level_037.ron")),
+        "assets/levels/level_038.ron" => Some(include_str!("../assets/levels/level_038.ron")),
+        "assets/levels/level_039.ron" => Some(include_str!("../assets/levels/level_039.ron")),
+        "assets/levels/level_040.ron" => Some(include_str!("../assets/levels/level_040.ron")),
+        "assets/levels/level_041.ron" => Some(include_str!("../assets/levels/level_041.ron")),
+        "assets/levels/level_042.ron" => Some(include_str!("../assets/levels/level_042.ron")),
+        "assets/levels/level_043.ron" => Some(include_str!("../assets/levels/level_043.ron")),
+        "assets/levels/level_044.ron" => Some(include_str!("../assets/levels/level_044.ron")),
+        "assets/levels/level_045.ron" => Some(include_str!("../assets/levels/level_045.ron")),
+        "assets/levels/level_046.ron" => Some(include_str!("../assets/levels/level_046.ron")),
+        "assets/levels/level_047.ron" => Some(include_str!("../assets/levels/level_047.ron")),
+        "assets/levels/level_048.ron" => Some(include_str!("../assets/levels/level_048.ron")),
+        "assets/levels/level_049.ron" => Some(include_str!("../assets/levels/level_049.ron")),
+        "assets/levels/level_050.ron" => Some(include_str!("../assets/levels/level_050.ron")),
+        "assets/levels/level_051.ron" => Some(include_str!("../assets/levels/level_051.ron")),
+        "assets/levels/level_052.ron" => Some(include_str!("../assets/levels/level_052.ron")),
+        "assets/levels/level_053.ron" => Some(include_str!("../assets/levels/level_053.ron")),
+        "assets/levels/level_054.ron" => Some(include_str!("../assets/levels/level_054.ron")),
+        "assets/levels/level_055.ron" => Some(include_str!("../assets/levels/level_055.ron")),
+        "assets/levels/level_056.ron" => Some(include_str!("../assets/levels/level_056.ron")),
+        "assets/levels/level_057.ron" => Some(include_str!("../assets/levels/level_057.ron")),
+        "assets/levels/level_058.ron" => Some(include_str!("../assets/levels/level_058.ron")),
+        "assets/levels/level_059.ron" => Some(include_str!("../assets/levels/level_059.ron")),
+        "assets/levels/level_060.ron" => Some(include_str!("../assets/levels/level_060.ron")),
+        "assets/levels/level_061.ron" => Some(include_str!("../assets/levels/level_061.ron")),
+        "assets/levels/level_062.ron" => Some(include_str!("../assets/levels/level_062.ron")),
+        "assets/levels/level_063.ron" => Some(include_str!("../assets/levels/level_063.ron")),
+        "assets/levels/level_064.ron" => Some(include_str!("../assets/levels/level_064.ron")),
+        "assets/levels/level_065.ron" => Some(include_str!("../assets/levels/level_065.ron")),
+        "assets/levels/level_066.ron" => Some(include_str!("../assets/levels/level_066.ron")),
+        "assets/levels/level_067.ron" => Some(include_str!("../assets/levels/level_067.ron")),
+        "assets/levels/level_068.ron" => Some(include_str!("../assets/levels/level_068.ron")),
+        "assets/levels/level_069.ron" => Some(include_str!("../assets/levels/level_069.ron")),
+        "assets/levels/level_070.ron" => Some(include_str!("../assets/levels/level_070.ron")),
+        "assets/levels/level_071.ron" => Some(include_str!("../assets/levels/level_071.ron")),
+        "assets/levels/level_072.ron" => Some(include_str!("../assets/levels/level_072.ron")),
+        "assets/levels/level_073.ron" => Some(include_str!("../assets/levels/level_073.ron")),
+        "assets/levels/level_074.ron" => Some(include_str!("../assets/levels/level_074.ron")),
+        "assets/levels/level_997.ron" => Some(include_str!("../assets/levels/level_997.ron")),
+        "assets/levels/level_998.ron" => Some(include_str!("../assets/levels/level_998.ron")),
+        "assets/levels/level_999.ron" => Some(include_str!("../assets/levels/level_999.ron")),
         _ => None,
     }
 }

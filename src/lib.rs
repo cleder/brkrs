@@ -21,6 +21,7 @@ use crate::systems::TextureManifestPlugin;
 use crate::systems::{
     AudioPlugin, InputLocked, LevelSwitchPlugin, PaddleSizePlugin, RespawnPlugin, RespawnSystems,
 };
+use crate::ui::fonts::UiFonts;
 
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
@@ -207,10 +208,23 @@ pub fn run() {
         app.add_plugins(TextureManifestPlugin);
     }
 
+    // FontsPlugin wires platform-appropriate font loading systems
+    app.add_plugins(crate::ui::fonts::FontsPlugin);
+
     app.add_systems(
         Startup,
         (setup, spawn_border, systems::grid_debug::spawn_grid_overlay),
     );
+    // Lives counter HUD (separate add_systems to avoid tuple size limits)
+    app.add_systems(
+        Update,
+        (
+            ui::lives_counter::spawn_lives_counter,
+            ui::lives_counter::update_lives_counter.after(RespawnSystems::Schedule),
+            ui::game_over_overlay::spawn_game_over_overlay.after(RespawnSystems::Schedule),
+        ),
+    );
+
     app.add_systems(
         Update,
         (
@@ -231,8 +245,13 @@ pub fn run() {
             detect_ball_wall_collisions,
             mark_brick_on_ball_collision,
             despawn_marked_entities, // Runs after marking, allowing physics to resolve
-            // display_events,
-            // designer palette - toggle with P
+        ),
+    );
+
+    // Designer palette and brick updates split out for readability
+    app.add_systems(
+        Update,
+        (
             ui::palette::toggle_palette,
             ui::palette::ensure_palette_ui,
             ui::palette::handle_palette_selection,
@@ -258,10 +277,14 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut rapier_config: Query<&mut RapierConfiguration>,
     gravity_cfg: Res<GravityConfig>,
+    ui_fonts: Option<Res<UiFonts>>,
 ) {
-    let rapier_config = rapier_config.single_mut();
     // Set gravity for normal gameplay (respawn will temporarily disable it)
-    rapier_config.unwrap().gravity = gravity_cfg.normal;
+    if let Ok(mut config) = rapier_config.single_mut() {
+        config.gravity = gravity_cfg.normal;
+    } else {
+        warn!("RapierConfiguration not found; gravity not set");
+    }
 
     let _debug_material = materials.add(StandardMaterial {
         base_color_texture: Some(images.add(uv_debug_texture())),
@@ -306,15 +329,19 @@ fn setup(
     struct MainCamera;
 
     #[cfg(not(target_arch = "wasm32"))]
-    commands.spawn((
-        Text::new("Press space to toggle wire frames"),
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(12.0),
-            left: Val::Px(12.0),
-            ..default()
-        },
-    ));
+    if let Some(ui_fonts) = ui_fonts {
+        let font = ui_fonts.orbitron.clone();
+        commands.spawn((
+            Text::new("Press space to toggle wire frames"),
+            TextFont { font, ..default() },
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(12.0),
+                left: Val::Px(12.0),
+                ..default()
+            },
+        ));
+    }
 }
 
 /// Apply speed-dependent damping to control ball velocity

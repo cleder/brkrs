@@ -180,6 +180,11 @@ cargo test
 2. Update the texture manifest in `assets/textures/manifest.ron`
 3. See `assets/textures/README.md` for naming conventions
 
+```{important}
+**WASM Builds**: For textures to load in WASM, you must create a `.meta` file
+alongside each PNG. See the "Building for WASM" section below for details.
+```
+
 ## Architecture overview
 
 brkrs follows Bevy's Entity-Component-System (ECS) architecture:
@@ -346,6 +351,111 @@ commands.trigger(MyEvent { data: "hello".to_string() });
 ```
 
 See the multi-hit brick system for a complete example.
+
+## Building for WASM
+
+```{warning}
+WASM builds have different asset loading requirements than desktop builds.
+Assets must be explicitly described with `.meta` files or embedded at compile time.
+```
+
+### Asset metadata for WASM
+
+Bevy's WASM asset loader uses HTTP to fetch assets, requiring explicit metadata for each asset.
+
+**For each PNG texture**, create a `.meta` file with the same name:
+
+```bash
+# For assets/textures/my_texture.png, create:
+# assets/textures/my_texture.png.meta
+```
+
+**Meta file format** (RON):
+
+```rust
+(
+    asset: Load(
+        loader: "bevy_image::image_loader::ImageLoader",
+        settings: (
+            format: FromExtension,
+            is_srgb: true,
+            sampler: Default,
+            asset_usage: 1,
+        ),
+    ),
+)
+```
+
+**Automated generation**:
+
+```bash
+# Create meta files for all PNG textures
+find assets/textures -name "*.png" -type f | while read png; do
+  cat > "${png}.meta" << 'EOF'
+(
+    asset: Load(
+        loader: "bevy_image::image_loader::ImageLoader",
+        settings: (
+            format: FromExtension,
+            is_srgb: true,
+            sampler: Default,
+            asset_usage: 1,
+        ),
+    ),
+)
+EOF
+done
+```
+
+### Building the WASM binary
+
+```bash
+# Install target if needed
+rustup target add wasm32-unknown-unknown
+
+# Build release WASM
+cargo build --target wasm32-unknown-unknown --release
+
+# Generate JS bindings
+wasm-bindgen --out-dir wasm --target web \
+  target/wasm32-unknown-unknown/release/brkrs.wasm
+```
+
+### Deployment checklist
+
+When deploying to a web server:
+
+- [ ] Copy `brkrs.wasm` and `brkrs.js` from target/wasm output
+- [ ] Copy entire `assets/` directory including all `.meta` files
+- [ ] Preserve directory structure (e.g., `assets/textures/fallback/*.png.meta`)
+- [ ] Serve from a web server (file:// protocol won't work)
+- [ ] Clear browser cache when testing updates
+
+### Platform differences
+
+| Feature | Desktop | WASM |
+|---------|---------|------|
+| Asset Loading | Synchronous from filesystem | Asynchronous via HTTP |
+| Asset Metadata | Inferred from file extension | Requires explicit `.meta` files |
+| Level Loading | Read from `assets/levels/*.ron` | Embedded at compile time |
+| Font Loading | Startup schedule | Deferred to Update schedule |
+| Binary Size | ~20MB (debug) | ~88MB (includes embedded levels) |
+
+### Debugging WASM builds
+
+```{tip}
+Use browser DevTools (F12) to inspect console errors. Look for:
+- 404 errors for `.meta` files (missing metadata)
+- "Failed to deserialize meta" (incorrect `.meta` format)
+- Asset loading timing issues (check debug logs)
+```
+
+**Common issues**:
+
+1. **Textures don't load**: Missing `.meta` files → Check browser console for 404 errors
+2. **Deserialization errors**: Incorrect `.meta` format → Verify RON syntax
+3. **Levels don't load**: Not embedded → Update `embedded_level_str()` in `level_loader.rs`
+4. **Performance issues**: Large binary size → Consider on-demand HTTP fetching for levels
 
 - **Issues**: [GitHub Issues](https://github.com/cleder/brkrs/issues)
 - **Documentation**: This site and the {doc}`api-reference`

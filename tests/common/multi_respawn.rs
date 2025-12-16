@@ -91,7 +91,7 @@ fn game_over_halts_additional_respawns() {
 
     {
         let mut lives = app.world_mut().resource_mut::<LivesState>();
-        lives.lives_remaining = 1;
+        lives.lives_remaining = 2; // Start with 2 lives so first respawn succeeds
     }
 
     let lower_goal = app.world_mut().spawn(LowerGoal).id();
@@ -120,9 +120,10 @@ fn game_over_halts_additional_respawns() {
     advance_time(&mut app, 0.016);
     app.update();
 
+    // After first collision, lives should be decremented from 2 to 1
     {
-        let mut lives = app.world_mut().resource_mut::<LivesState>();
-        lives.lives_remaining = 0;
+        let lives = app.world().resource::<LivesState>();
+        assert_eq!(lives.lives_remaining, 1);
     }
 
     {
