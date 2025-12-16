@@ -4,9 +4,9 @@ Auto-generated from all feature plans.
 Last updated: 2025-11-24
 
 ## Active Technologies
-
 - Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1 (001-ball-lives)
-
+- In-memory ECS state only (no persistent storage) (008-paddle-shrink-feedback)
+- RON files in `assets/levels/` directory (007-level-metadata)
 - In-memory ECS state only (no persistent storage) (008-paddle-shrink-feedback)
 
 - N/A (in-memory ECS state only) (008-paddle-shrink-feedback)
