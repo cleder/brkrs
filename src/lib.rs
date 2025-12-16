@@ -176,6 +176,8 @@ pub fn run() {
     // designer palette UI state
     app.init_resource::<ui::palette::PaletteState>();
     app.init_resource::<ui::palette::SelectedBrick>();
+    // Scoring system state
+    app.init_resource::<systems::scoring::ScoreState>();
     app.insert_resource(level_loader::LevelAdvanceState::default());
     app.add_plugins((
         DefaultPlugins
@@ -213,7 +215,12 @@ pub fn run() {
 
     app.add_systems(
         Startup,
-        (setup, spawn_border, systems::grid_debug::spawn_grid_overlay),
+        (
+            setup,
+            spawn_border,
+            systems::grid_debug::spawn_grid_overlay,
+            ui::score_display::spawn_score_display_system,
+        ),
     );
     // Lives counter HUD (separate add_systems to avoid tuple size limits)
     app.add_systems(

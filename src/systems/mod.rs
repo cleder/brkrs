@@ -8,6 +8,7 @@ pub mod level_switch;
 pub mod multi_hit;
 pub mod paddle_size;
 pub mod respawn;
+pub mod scoring;
 pub mod textures;
 
 pub use audio::{

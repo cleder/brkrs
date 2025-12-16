@@ -65,8 +65,8 @@ Initialize feature branch structure and confirm prerequisites.
 
 ### Tasks
 
-- [ ] T001 Create source files for scoring module in `src/systems/scoring.rs` with module skeleton
-- [ ] T002 Create source files for score display module in `src/ui/score_display.rs` with module skeleton
+- [x] T001 Create source files for scoring module in `src/systems/scoring.rs` with module skeleton
+- [x] T002 Create source files for score display module in `src/ui/score_display.rs` with module skeleton
 
 ---
 
@@ -82,9 +82,9 @@ Implement shared ECS infrastructure that all user stories depend on.
 
 ### Tasks
 
-- [ ] T003 Define `ScoreState` resource in `src/systems/scoring.rs` with `current_score: u32` and `last_milestone_reached: u32` fields
-- [ ] T004 Define `BrickDestroyed` message struct in `src/systems/scoring.rs` with `brick_entity`, `brick_type`, `destroyed_by` fields
-- [ ] T005 Define `MilestoneReached` message struct in `src/systems/scoring.rs` with `milestone_tier`, `total_score` fields
+- [x] T003 Define `ScoreState` resource in `src/systems/scoring.rs` with `current_score: u32` and `last_milestone_reached: u32` fields
+- [x] T004 Define `BrickDestroyed` message struct in `src/systems/scoring.rs` with `brick_entity`, `brick_type`, `destroyed_by` fields
+- [x] T005 Define `MilestoneReached` message struct in `src/systems/scoring.rs` with `milestone_tier`, `total_score` fields
 
 ---
 
@@ -104,9 +104,9 @@ Implement shared ECS infrastructure that all user stories depend on.
 
 ### Tasks
 
-- [ ] T006 [US1] Register `ScoreState` resource in plugin with init value `(current_score: 0, last_milestone_reached: 0)` in `src/systems/scoring.rs`
-- [ ] T007 [US1] Create `ScoreDisplayUi` marker component in `src/ui/score_display.rs` for tagging score display entity
-- [ ] T008 [US1] Implement `spawn_score_display_system` in `src/ui/score_display.rs` that creates TextBundle with score display and `ScoreDisplayUi` marker at startup
+- [x] T006 [US1] Register `ScoreState` resource in plugin with init value `(current_score: 0, last_milestone_reached: 0)` in `src/systems/scoring.rs`
+- [x] T007 [US1] Create `ScoreDisplayUi` marker component in `src/ui/score_display.rs` for tagging score display entity
+- [x] T008 [US1] Implement `spawn_score_display_system` in `src/ui/score_display.rs` that spawns score text with `ScoreDisplayUi` marker at startup
 
 ---
 
