@@ -4,11 +4,37 @@ This guide explains the three main UI systems in Brkrs and how they interact.
 
 ## Overview
 
-The UI is split into three independent but coordinated systems:
+The UI is split into four independent but coordinated systems:
 
-1. **Lives Counter** — Tracks remaining lives in the top-right corner.
-2. **Game-Over Overlay** — Displays a "Game over" message when the player runs out of lives.
-3. **Designer Palette** — Allows designers to select and place bricks on the grid during gameplay (developer feature).
+1. **Score Display** — Shows cumulative score in the top-right corner.
+2. **Lives Counter** — Tracks remaining lives below the score display.
+3. **Game-Over Overlay** — Displays a "Game over" message when the player runs out of lives.
+4. **Designer Palette** — Allows designers to select and place bricks on the grid during gameplay (developer feature).
+
+## Score Display
+
+**Module**: `src/ui/score_display.rs`
+
+**Purpose**: Display the player's cumulative score as a HUD element.
+
+**How it works**:
+
+- `spawn_score_display_system()` runs every Update and creates the display entity once (idempotent) when:
+  - No `ScoreDisplayUi` entity exists, and
+  - The `UiFonts` resource is available (desktop loads at Startup; WASM provides it once assets are ready).
+- `update_score_display_system()` updates the text whenever `ScoreState` changes, using Bevy's change detection to avoid unnecessary updates.
+
+**Spawn location**: Top-right corner (`Node` with `right: Val::Px(12.0)`, `top: Val::Px(40.0)`), positioned below the lives counter to avoid overlap.
+
+**Score mechanics**:
+
+- Points awarded based on brick type (see `docs/bricks.md`)
+- Score persists across level transitions
+- Every 5000 points triggers a milestone bonus (extra life)
+- Special cases: Question brick (53) awards random 25-300 points; Extra Ball (41) and Magnet bricks (55-56) award 0 points
+
+**Dependency**: Requires `UiFonts` resource and `ScoreState` resource.
+If missing, the system logs a warning and defers spawning until fonts become available.
 
 ## Lives Counter
 

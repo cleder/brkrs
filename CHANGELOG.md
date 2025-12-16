@@ -11,6 +11,7 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- **Scoring system** (`009-add-scoring`): Players accumulate points by destroying bricks, with values ranging from 25-300 points based on brick type (documented in `docs/bricks.md`). The score persists across level transitions within a game session and displays in real-time in the top-right corner. Every 5000 points, players earn a bonus life. Special mechanics include random scoring for Question bricks (25-300 points) and zero points for effect-only bricks (Extra Ball, Magnet). Implemented with ECS resources (`ScoreState`), message-based events (`BrickDestroyed`, `MilestoneReached`), and change-detection optimized UI updates.
 - Paddle shrink visual feedback (`008-paddle-shrink-feedback`): When a player loses their last ball, the paddle immediately shrinks from full size to nearly invisible (scale 0.01) over 1 second, providing instant visual feedback while running concurrently with the respawn delay. Smooth animation uses cubic easing interpolation and integrates seamlessly with the existing respawn system and fadeout overlay.
 - Level metadata (`007-level-metadata`): optional `description` and `author` fields in `LevelDefinition` for level design documentation and contributor attribution. Supports plain text and markdown link formats for authors. Fully backward compatible with existing level files.
 

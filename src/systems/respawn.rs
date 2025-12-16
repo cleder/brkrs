@@ -5,8 +5,8 @@ use std::{collections::VecDeque, f32::consts::PI, time::Duration};
 use tracing::{info, warn};
 
 use crate::{
-    Ball, BallFrozen, LowerGoal, Paddle, PaddleGrowing, BALL_RADIUS, PADDLE_GROWTH_DURATION,
-    PADDLE_HEIGHT, PADDLE_RADIUS,
+    systems::scoring::MilestoneReached, Ball, BallFrozen, LowerGoal, Paddle, PaddleGrowing,
+    BALL_RADIUS, PADDLE_GROWTH_DURATION, PADDLE_HEIGHT, PADDLE_RADIUS,
 };
 
 /// Shared lives resource maintained by the lives system.
@@ -394,6 +394,17 @@ fn log_game_over_requested(mut events: MessageReader<GameOverRequested>) {
             remaining_lives = event.remaining_lives,
             "Lives exhausted; requesting game over"
         );
+    }
+}
+
+/// Grants an extra life for each milestone reached.
+pub(crate) fn award_milestone_ball_system(
+    mut milestone_events: MessageReader<MilestoneReached>,
+    mut lives_state: ResMut<LivesState>,
+) {
+    for _ in milestone_events.read() {
+        lives_state.lives_remaining = lives_state.lives_remaining.saturating_add(1);
+        lives_state.on_last_life = lives_state.lives_remaining == 1;
     }
 }
 

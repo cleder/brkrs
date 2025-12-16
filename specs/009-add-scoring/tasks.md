@@ -132,7 +132,7 @@ Implement shared ECS infrastructure that all user stories depend on.
 - [x] T010 [US2] [P] Implement `award_points_system` in `src/systems/scoring.rs` that reads `BrickDestroyed` events and mutates `ScoreState.current_score` using `brick_points()` function
 - [x] T011 [US2] Modify brick destruction logic in `src/systems/bricks/destruction.rs` to emit `BrickDestroyed` event before despawning (coordinate with existing destruction system)
 - [x] T012 [US2] Register `award_points_system` in plugin with label that runs after brick destruction events are emitted and before milestone detection
-- [ ] T013 [US2] Write integration test in `tests/scoring.rs` that destroys various brick types and verifies score accumulation (Simple Stone 25pts, Multi-hit 50pts, Question brick 25-300 range)
+- [x] T013 [US2] Write integration test in `tests/scoring.rs` that destroys various brick types and verifies score accumulation (Simple Stone 25pts, Multi-hit 50pts, Question brick 25-300 range)
 
 ---
 
@@ -153,9 +153,9 @@ Implement shared ECS infrastructure that all user stories depend on.
 
 ### Tasks
 
-- [ ] T014 [US3] [P] Implement `detect_milestone_system` in `src/systems/scoring.rs` that detects when `current_score / 5000 > last_milestone_reached`, emits `MilestoneReached` event, updates `last_milestone_reached`
-- [ ] T015 [US3] [P] Implement `award_milestone_ball_system` in `src/systems/respawn.rs` that reads `MilestoneReached` events and increments `LivesState.lives_remaining` by 1
-- [ ] T016 [US3] Register systems in plugin with ordering: `award_points_system` → `detect_milestone_system` → `award_milestone_ball_system`
+- [x] T014 [US3] [P] Implement `detect_milestone_system` in `src/systems/scoring.rs` that detects when `current_score / 5000 > last_milestone_reached`, emits `MilestoneReached` event, updates `last_milestone_reached`
+- [x] T015 [US3] [P] Implement `award_milestone_ball_system` in `src/systems/respawn.rs` that reads `MilestoneReached` events and increments `LivesState.lives_remaining` by 1
+- [x] T016 [US3] Register systems in plugin with ordering: `award_points_system` → `detect_milestone_system` → `award_milestone_ball_system`
 
 ---
 
@@ -175,9 +175,9 @@ Implement shared ECS infrastructure that all user stories depend on.
 
 ### Tasks
 
-- [ ] T017 [US4] Implement `update_score_display_system` in `src/ui/score_display.rs` with change-detection query `Query<&mut Text, (With<ScoreDisplayUi>, Changed<ScoreState>)>` that updates text content to display `score_state.current_score`
-- [ ] T018 [US4] Register `update_score_display_system` in plugin with label that runs after `award_points_system`
-- [ ] T019 [US4] Write integration test in `tests/score_display.rs` that verifies UI text updates within same frame as score change using Bevy test utilities
+- [x] T017 [US4] Implement `update_score_display_system` in `src/ui/score_display.rs` with change-detection query `Query<&mut Text, (With<ScoreDisplayUi>, Changed<ScoreState>)>` that updates text content to display `score_state.current_score`
+- [x] T018 [US4] Register `update_score_display_system` in plugin with label that runs after `award_points_system`
+- [x] T019 [US4] Write integration test in `tests/score_display.rs` that verifies UI text updates within same frame as score change using Bevy test utilities
 
 ---
 
@@ -185,9 +185,9 @@ Implement shared ECS infrastructure that all user stories depend on.
 
 *Implement alongside development, validate at end:*
 
-- [ ] T020 Add rustdoc comments to all public types and functions (ScoreState, BrickDestroyed, MilestoneReached, brick_points, systems)
-- [ ] T021 Run quality checks: `cargo fmt --all`, `cargo clippy --all-targets`, `cargo test`, `bevy lint`
-- [ ] T022 Create CHANGELOG entry documenting scoring system feature
+- [x] T020 Add rustdoc comments to all public types and functions (ScoreState, BrickDestroyed, MilestoneReached, brick_points, systems)
+- [x] T021 Run quality checks: `cargo fmt --all`, `cargo clippy --all-targets`, `cargo test`, `bevy lint`
+- [x] T022 Create CHANGELOG entry documenting scoring system feature
 
 ---
 
