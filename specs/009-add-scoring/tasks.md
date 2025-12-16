@@ -366,4 +366,3 @@ tests/
 ├── scoring.rs           # NEW - Unit & integration tests
 └── score_display.rs     # NEW - UI update tests
 ```
-
