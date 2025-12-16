@@ -112,6 +112,6 @@ pub fn update_score_display_system(
     }
 
     for mut text in query.iter_mut() {
-        *text = Text::new(format!("Score: {}", score_state.current_score));
+        text.sections[0].value = format!("Score: {}", score_state.current_score);
     }
 }
