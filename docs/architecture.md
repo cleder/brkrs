@@ -46,6 +46,7 @@ The project follows these architectural principles (from the project Constitutio
 | Pause System | Freezes physics, shows overlay | `src/pause.rs` |
 | Respawn | Ball respawn after loss | `src/systems/respawn.rs` |
 | Level Switch | Transitions between levels | `src/systems/level_switch.rs` |
+| Scoring | Tracks points, awards milestone bonuses | `src/systems/scoring.rs` |
 | Grid Debug | Development visualization | `src/systems/grid_debug.rs` |
 
 ### Component Structure
@@ -150,6 +151,51 @@ assets/levels/level_001.ron
 2. Parse new level file
 3. Spawn new entities
 4. Reset ball/paddle positions if needed
+
+## Game State Resources
+
+### Scoring System
+
+The scoring system tracks cumulative points throughout a game session:
+
+```text
+Brick Destroyed
+      |
+      v
+BrickDestroyed (message)
+      |
+      v
+award_points_system
+      |
+      v
+ScoreState (resource)
+   - current_score: u32
+   - last_milestone_reached: u32
+      |
+      v
+detect_milestone_system
+      |
+      v (if milestone crossed)
+MilestoneReached (message)
+      |
+      v
+award_milestone_ball_system
+      |
+      v
+LivesState.lives_remaining += 1
+```
+
+**Point Values**: Defined in `docs/bricks.md`, ranging from 25-300 points per brick
+
+**Milestones**: Every 5000 points awards an extra life
+
+**Special Cases**:
+
+- Question brick (53): Random 25-300 points
+- Extra Ball brick (41): 0 points (grants life via separate mechanism)
+- Magnet bricks (55-56): 0 points (effect-only)
+
+**Persistence**: Score accumulates across level transitions, resets on game restart
 
 ## UI System
 

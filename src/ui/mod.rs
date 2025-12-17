@@ -7,3 +7,4 @@ pub mod game_over_overlay;
 pub mod lives_counter;
 pub mod palette;
 pub mod pause_overlay;
+pub mod score_display;
