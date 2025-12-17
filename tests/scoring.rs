@@ -216,7 +216,7 @@ fn milestone_detection_no_duplicate_events() {
             .resource_mut::<Messages<brkrs::systems::scoring::BrickDestroyed>>();
         msgs.write(brkrs::systems::scoring::BrickDestroyed {
             brick_entity: Entity::from_raw_u32(300).expect("entity id should construct"),
-            brick_type: 22, // Limestone => 100 points
+            brick_type: 22, // Limestone => 75 points
             destroyed_by: None,
         });
     }
