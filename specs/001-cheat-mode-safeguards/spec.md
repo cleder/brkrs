@@ -11,7 +11,8 @@ The cheatmode is activated by pressing 'g'"
 ### Session 2025-12-17
 
 - Q: Which specific keyboard keys are the "level control keys" that should be disabled during normal gameplay? → A: Letter keys - R=respawn, N=next level, P=previous level (Note: P currently invokes texture picker UI which will be removed)
-- Q: What visual style should the cheat mode indicator use? → A: Simple white text "CHEAT MODE" on semi-transparent dark background
+- Q: What visual style should the cheat mode indicator use? → A: An image asset (`assets/textures/default/cheat-mode-128.png`) displayed as a small icon in the corner (recommended display size ~48×48 px).
+  If the asset or `AssetServer` is unavailable (e.g., early WASM frames), the system will log a warning and skip spawning the indicator (no text fallback is guaranteed).
 - Q: Should the cheat mode indicator position be fixed or user-configurable? → A: Fixed to lower right corner
 - Q: What audio feedback should play when level control keys are pressed without cheat mode active? → A: Short soft beep
 - Q: When pressing 'g' during pause/transition, how should toggle behave? → A: Ignore 'g' during pause/transition (no toggle)
@@ -31,7 +32,7 @@ Without this, the feature doesn't exist.
 
 **Acceptance Scenarios**:
 
-1. **Given** player is in an active game level with a non-zero score, **When** player presses 'g' key, **Then** cheat mode activates, score resets to 0, and indicator appears in corner of screen
+1. **Given** player is in an active game level with a non-zero score, **When** player presses 'g' key, **Then** cheat mode activates, score resets to 0, and the image indicator (`assets/textures/default/cheat-mode-128.png`) appears in the corner of the screen.
 2. **Given** player has already activated cheat mode, **When** player presses 'g' again, **Then** cheat mode deactivates, score resets to 0, and indicator disappears from screen
 3. **Given** player activates cheat mode, **When** gameplay continues, **Then** cheat mode indicator remains visible throughout the session
 4. **Given** the player has no remaining lives and a "Game over" overlay is displayed, **When** the player presses 'g' to toggle cheat mode, **Then** cheat mode activates, the remaining lives are set to 3, any active game-over overlay is removed, and the player may resume gameplay. **Note:** toggling cheat mode does NOT reload or reset the current level; gameplay resumes in-place with the level state unchanged.
@@ -66,7 +67,7 @@ A player who has activated cheat mode needs to clearly see that cheat mode is cu
 
 **Acceptance Scenarios**:
 
-1. **Given** cheat mode is activated, **When** player looks at the game screen, **Then** a clear indicator displaying "CHEAT MODE" or similar text appears in the lower right or left corner
+1. **Given** cheat mode is activated, **When** player looks at the game screen, **Then** a clear image indicator (`assets/textures/default/cheat-mode-128.png`) appears in the lower right or left corner
 2. **Given** cheat mode indicator is displayed, **When** player performs game actions, **Then** indicator remains visible and does not obscure critical gameplay elements
 3. **Given** player deactivates cheat mode, **When** cheat mode is disabled, **Then** the indicator disappears from the screen
 
@@ -96,7 +97,9 @@ A player who has activated cheat mode needs to clearly see that cheat mode is cu
 
 - **FR-004**: System MUST display a persistent visual indicator when cheat mode is active
 - **FR-005**: Visual indicator MUST be positioned in the lower right corner of the screen
-- **FR-006**: Visual indicator MUST display white text reading "CHEAT MODE" on a semi-transparent dark background
+- **FR-004a**: Visual indicator MUST use the image asset `assets/textures/default/cheat-mode-128.png` and be rendered at approximately 48×48 pixels (or scaled proportionally).
+  It MUST be unobtrusive and not obscure critical gameplay elements.
+- **FR-006**: If the asset or asset loading system is unavailable, the system MUST log a warning and may skip spawning the visual indicator (no hard text fallback is required).
 - **FR-007**: Visual indicator MUST remain visible throughout the entire duration that cheat mode is active
 - **FR-008**: Visual indicator MUST NOT obscure critical gameplay elements or UI components
 
