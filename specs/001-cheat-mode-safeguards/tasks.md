@@ -20,9 +20,12 @@
 
 ## Phase 4: User Story 3 (Cheat Mode Visual Indicator) [P1]
 
-- [x] T008 [US3] Build cheat mode indicator UI (white "CHEAT MODE" text on semi-transparent dark background) anchored lower-right in src/ui/cheat_indicator.rs
+- [x] T008 [US3] Build cheat mode indicator UI (image asset `assets/textures/default/cheat-mode-128.png`, rendered ~48×48 px) anchored lower-right in src/ui/cheat_indicator.rs
+- [x] T008a [US3] Add image asset file `assets/textures/default/cheat-mode-128.png` and ensure it is included in the project's assets (completed)
+- [x] T008b [US3] Implement fallback behavior when `AssetServer` or asset is unavailable (log a warning and skip spawn) in src/ui/cheat_indicator.rs
 - [x] T009 [US3] Wire indicator visibility to cheat mode state change events with show/hide within 100ms in src/ui/cheat_indicator.rs
 - [x] T010 [US3] Guard indicator against obscuring critical HUD regions (apply padding/margins/layering) in src/ui/cheat_indicator.rs
+- [x] T019 [DOC] Update docs & changelog to reference the image asset filename and behavior (`docs/cheat-mode.md`, `docs/quickstart.md`, `CHANGELOG.md`) (completed)
 
 ## Phase 5: User Story 2 (Accidental Key Press Prevention) [P2]
 

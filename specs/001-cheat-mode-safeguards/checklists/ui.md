@@ -9,7 +9,8 @@
 
 ## Requirement Clarity
 
-- [x] CHK003 - Is the contrast/readability of the white text on semi-transparent dark background specified (e.g., opacity, font size)? [Clarity, Spec §FR-006]
+- [x] CHK003 - Is the size, contrast/readability and opacity of the image indicator specified (e.g., display size ~48×48 px, opacity if overlaid)? [Clarity, Spec §FR-004a]
+- [x] CHK013 - Is the image asset present in the repository and covered by QA (asset file `assets/textures/default/cheat-mode-128.png` exists, visually inspected at several scales)? [Assets & QA]
 - [x] CHK004 - Is "must not obscure critical gameplay elements" defined with which UI regions are protected? [Clarity, Spec §FR-008] — Resolved: Safe corner (lower right with padding)
 
 ## Requirement Consistency

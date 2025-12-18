@@ -7,7 +7,7 @@
 
 ## Summary
 
-Enable a gated cheat mode toggled via 'g' that resets score to 0 on enter/exit, shows a clear indicator (white "CHEAT MODE" text on semi-transparent dark background, fixed lower right), and restricts level control keys (R/N/P) to cheat mode only, with blocked inputs ignored outside gameplay and a soft beep for feedback.
+Enable a gated cheat mode toggled via 'g' that resets score to 0 on enter/exit, shows a clear image indicator (asset `assets/textures/default/cheat-mode-128.png`, rendered ~48×48 px, fixed lower-right, skip spawn if asset unavailable), and restricts level control keys (R/N/P) to cheat mode only, with blocked inputs ignored outside gameplay and a soft beep for feedback.
 
 ## Technical Context
 
