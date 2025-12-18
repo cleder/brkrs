@@ -75,6 +75,8 @@ If missing (WASM startup), the system logs a warning and defers spawning until f
 The overlay becomes the primary focus, and the counter remains visible in the background.
 Future logic can hide the counter if desired.
 
+**Cheat mode interaction**: Toggling cheat mode (pressing `G`) will remove any active *Game Over* overlay so gameplay can resume; this behavior is covered by a unit test (`tests/cheat_mode.rs::toggling_cheat_removes_game_over_overlay`).
+
 ## Designer Palette
 
 **Module**: `src/ui/palette.rs`
