@@ -3,6 +3,7 @@
 //! Contains all game system implementations organized by functionality
 
 pub mod audio;
+pub mod cheat_mode;
 pub mod grid_debug;
 pub mod level_switch;
 pub mod multi_hit;
@@ -14,6 +15,7 @@ pub mod textures;
 pub use audio::{
     AudioConfig, AudioPlugin, BallWallHit, BrickDestroyed, LevelCompleted, LevelStarted, SoundType,
 };
+pub use cheat_mode::{CheatModePlugin, CheatModeState, CheatModeToggled};
 pub use level_switch::{
     LevelSwitchPlugin, LevelSwitchRequested, LevelSwitchSource, LevelSwitchState,
 };

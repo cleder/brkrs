@@ -63,6 +63,7 @@ xcode-select --install
 | Rotate paddle | Mouse scroll wheel |
 | Pause game | ESC |
 | Resume game | Left mouse click |
+| Toggle cheat mode (developer/test) | `G` — toggles Cheat Mode, resets score to 0 and shows a "CHEAT MODE" indicator; if toggled during Game Over, sets lives to 3 and dismisses the Game Over overlay (does not reset the current level) |
 
 ## Playing a specific level
 

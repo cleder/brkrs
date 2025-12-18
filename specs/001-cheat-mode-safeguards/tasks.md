@@ -2,25 +2,27 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Create cheat mode module skeleton and plugin registration hook in src/systems/cheat_mode.rs
+- [x] T001 Create cheat mode module skeleton and plugin registration hook in src/systems/cheat_mode.rs
 
 ## Phase 2: Foundational
 
-- [ ] T002 Define CheatModeState resource and helper accessors in src/systems/cheat_mode.rs
-- [ ] T003 Add score reset helper callable from cheat mode transitions in src/systems/scoring.rs
+- [x] T002 Define CheatModeState resource and helper accessors in src/systems/cheat_mode.rs
+- [x] T003 Add score reset helper callable from cheat mode transitions in src/systems/scoring.rs
 
 ## Phase 3: User Story 1 (Cheat Mode Activation with Score Reset) [P1]
 
-- [ ] T004 [US1] Implement 'g' key handling limited to gameplay states, toggling CheatModeState in src/systems/cheat_mode.rs
-- [ ] T005 [US1] Reset score to 0 on cheat mode activate/deactivate in src/systems/scoring.rs
-- [ ] T006 [US1] Ensure 'g' presses in non-gameplay states are ignored (no toggle) in src/systems/cheat_mode.rs
-- [ ] T007 [US1] Emit state change signal/event for UI indicator consumption in src/systems/cheat_mode.rs
+- [x] T004 [US1] Implement 'g' key handling limited to gameplay states, toggling CheatModeState in src/systems/cheat_mode.rs
+- [x] T005 [US1] Reset score to 0 on cheat mode activate/deactivate in src/systems/scoring.rs
+- [x] T006 [US1] Ensure 'g' presses in non-gameplay states are ignored (no toggle) in src/systems/cheat_mode.rs
+- [x] T007 [US1] Emit state change signal/event for UI indicator consumption in src/systems/cheat_mode.rs
+- [x] T016 [US1] Reset `LivesState.lives_remaining` to 3 on cheat mode activate in src/systems/cheat_mode.rs (ensures player can resume after dying)
+- [x] T017 [US1] Remove any active `GameOverOverlay` when cheat mode is toggled in src/systems/cheat_mode.rs (UI dismissal + tests in tests/cheat_mode.rs)
 
 ## Phase 4: User Story 3 (Cheat Mode Visual Indicator) [P1]
 
-- [ ] T008 [US3] Build cheat mode indicator UI (white "CHEAT MODE" text on semi-transparent dark background) anchored lower-right in src/ui/cheat_indicator.rs
-- [ ] T009 [US3] Wire indicator visibility to cheat mode state change events with show/hide within 100ms in src/ui/cheat_indicator.rs
-- [ ] T010 [US3] Guard indicator against obscuring critical HUD regions (apply padding/margins/layering) in src/ui/cheat_indicator.rs
+- [x] T008 [US3] Build cheat mode indicator UI (white "CHEAT MODE" text on semi-transparent dark background) anchored lower-right in src/ui/cheat_indicator.rs
+- [x] T009 [US3] Wire indicator visibility to cheat mode state change events with show/hide within 100ms in src/ui/cheat_indicator.rs
+- [x] T010 [US3] Guard indicator against obscuring critical HUD regions (apply padding/margins/layering) in src/ui/cheat_indicator.rs
 
 ## Phase 5: User Story 2 (Accidental Key Press Prevention) [P2]
 

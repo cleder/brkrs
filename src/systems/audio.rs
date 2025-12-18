@@ -68,6 +68,8 @@ pub enum SoundType {
     LevelStart,
     /// Level completed.
     LevelComplete,
+    /// UI feedback (short soft beep)
+    UiBeep,
 }
 
 /// User-adjustable audio settings, persisted across sessions.
@@ -194,6 +196,7 @@ impl Plugin for AudioPlugin {
         app.init_resource::<AudioAssets>()
             .init_resource::<ActiveSounds>()
             .init_resource::<ActiveAudioInstances>()
+            .add_message::<UiBeepEvent>()
             .add_systems(Startup, (load_audio_config, load_audio_assets).chain())
             .add_systems(Update, save_audio_config_on_change)
             .add_systems(Update, cleanup_finished_sounds)
@@ -204,7 +207,8 @@ impl Plugin for AudioPlugin {
             .add_observer(on_paddle_wall_hit_sound)
             .add_observer(on_paddle_brick_hit_sound)
             .add_observer(on_level_started_sound)
-            .add_observer(on_level_complete_sound);
+            .add_observer(on_level_complete_sound)
+            .add_observer(on_ui_beep);
     }
 }
 
@@ -221,6 +225,11 @@ fn cleanup_finished_sounds(
         }
     }
 }
+
+/// UI beep event
+use bevy::ecs::message::Message;
+#[derive(Message, Event, Debug, Clone, Copy)]
+pub struct UiBeepEvent;
 
 /// Path to the audio config file.
 const AUDIO_CONFIG_PATH: &str = "config/audio.ron";
@@ -778,6 +787,27 @@ fn on_level_complete_sound(
     );
     play_sound(
         SoundType::LevelComplete,
+        &config,
+        &assets,
+        &mut active_sounds,
+        &mut active_instances,
+        &mut commands,
+    );
+}
+
+/// UI beep observer - plays a short soft beep when requested
+fn on_ui_beep(
+    trigger: On<UiBeepEvent>,
+    config: Res<AudioConfig>,
+    assets: Res<AudioAssets>,
+    mut active_sounds: ResMut<ActiveSounds>,
+    mut active_instances: ResMut<ActiveAudioInstances>,
+    mut commands: Commands,
+) {
+    let _ = trigger.event();
+    debug!(target: "audio", "UI beep requested");
+    play_sound(
+        SoundType::UiBeep,
         &config,
         &assets,
         &mut active_sounds,

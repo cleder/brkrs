@@ -206,6 +206,8 @@ pub fn run() {
     app.add_plugins(crate::pause::PausePlugin);
     app.add_plugins(AudioPlugin);
     app.add_plugins(PaddleSizePlugin);
+    // Cheat mode plugin (feature: toggle, indicator, gated level controls)
+    app.add_plugins(systems::CheatModePlugin);
 
     #[cfg(feature = "texture_manifest")]
     {
@@ -227,6 +229,7 @@ pub fn run() {
             ui::lives_counter::spawn_lives_counter,
             ui::lives_counter::update_lives_counter.after(RespawnSystems::Schedule),
             ui::game_over_overlay::spawn_game_over_overlay.after(RespawnSystems::Schedule),
+            ui::cheat_indicator::handle_cheat_indicator.after(RespawnSystems::Schedule),
         ),
     );
 
