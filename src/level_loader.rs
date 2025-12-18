@@ -859,10 +859,8 @@ fn queue_restart_requests(
             if let Some(r) = restart.as_mut() {
                 r.write(RestartRequested);
             }
-        } else {
-            if let Some(b) = beep.as_mut() {
-                b.write(crate::systems::audio::UiBeepEvent);
-            }
+        } else if let Some(b) = beep.as_mut() {
+            b.write(crate::systems::audio::UiBeepEvent);
         }
     } else {
         // conservative: block if cheat state not present

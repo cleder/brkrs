@@ -207,10 +207,8 @@ fn queue_keyboard_requests(
                     source: LevelSwitchSource::Keyboard,
                     direction: LevelSwitchDirection::Previous,
                 });
-            } else {
-                if let Some(b) = beep.as_mut() {
-                    b.write(crate::systems::audio::UiBeepEvent);
-                }
+            } else if let Some(b) = beep.as_mut() {
+                b.write(crate::systems::audio::UiBeepEvent);
             }
         }
     }
