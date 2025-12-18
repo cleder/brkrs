@@ -83,8 +83,20 @@ pub fn on_level_started(
     trigger: On<crate::systems::LevelStarted>,
     mut query: Query<&mut Text, With<LevelLabelText>>,
     mut announcement: ResMut<AccessibilityAnnouncement>,
+    current_level: Option<Res<crate::level_loader::CurrentLevel>>,
 ) {
     let event = trigger.event();
+    info!("LevelStarted event received: {}", event.level_index);
+
+    if let Some(curr) = current_level.as_ref() {
+        if curr.0.number != event.level_index {
+            warn!(
+                "LevelStarted index ({}) differs from CurrentLevel.number ({})",
+                event.level_index, curr.0.number
+            );
+        }
+    }
+
     let label = format!("Level {}", event.level_index);
 
     if let Ok(mut text) = query.single_mut() {
@@ -94,6 +106,28 @@ pub fn on_level_started(
     // Record announcement for platform integration or tests
     announcement.last = Some(label.clone());
     info!("Accessibility announcement queued: {}", label);
+}
+
+/// Sync HUD label to CurrentLevel when resource changes.
+pub fn sync_with_current_level(
+    current_level: Option<Res<crate::level_loader::CurrentLevel>>,
+    mut query: Query<&mut Text, With<LevelLabelText>>,
+    mut announcement: ResMut<AccessibilityAnnouncement>,
+) {
+    let Some(curr) = current_level else {
+        return;
+    };
+
+    if !curr.is_changed() {
+        return;
+    }
+
+    let label = format!("Level {}", curr.0.number);
+    if let Ok(mut text) = query.single_mut() {
+        **text = label.clone();
+    }
+    announcement.last = Some(label.clone());
+    info!("Accessibility announcement queued (sync): {}", label);
 }
 
 /// Minimal test helper: update nothing when no change

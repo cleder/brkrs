@@ -233,6 +233,8 @@ pub fn run() {
             ui::game_over_overlay::spawn_game_over_overlay.after(RespawnSystems::Schedule),
             ui::cheat_indicator::handle_cheat_indicator.after(RespawnSystems::Schedule),
             ui::level_label::spawn_level_label,
+            // Sync HUD label to CurrentLevel when it changes
+            ui::level_label::sync_with_current_level,
         ),
     );
 
