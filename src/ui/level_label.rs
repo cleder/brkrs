@@ -112,7 +112,7 @@ pub fn on_level_started(
 pub fn sync_with_current_level(
     current_level: Option<Res<crate::level_loader::CurrentLevel>>,
     mut query: Query<&mut Text, With<LevelLabelText>>,
-    mut announcement: ResMut<AccessibilityAnnouncement>,
+    announcement: Option<ResMut<AccessibilityAnnouncement>>,
 ) {
     let Some(curr) = current_level else {
         return;
@@ -126,8 +126,16 @@ pub fn sync_with_current_level(
     if let Ok(mut text) = query.single_mut() {
         **text = label.clone();
     }
-    announcement.last = Some(label.clone());
-    info!("Accessibility announcement queued (sync): {}", label);
+
+    if let Some(mut ann) = announcement {
+        ann.last = Some(label.clone());
+        info!("Accessibility announcement queued (sync): {}", label);
+    } else {
+        debug!(
+            "AccessibilityAnnouncement resource missing; queued label: {} (not recorded)",
+            label
+        );
+    }
 }
 
 /// Minimal test helper: update nothing when no change
