@@ -39,10 +39,10 @@ run these commands to verify your work:
 Rust 2021 edition (toolchain managed by rustup): Follow standard conventions
 
 ## Recent Changes
+- 001-display-current-level: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 - 001-cheat-mode-safeguards: Added Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0 (physics baseline), tracing 0.1
 - 009-add-scoring: Added Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1
 
-- 001-ball-lives: Added Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1
 
 
 

@@ -1,0 +1,40 @@
+openapi: 3.0.1
+info:
+  title: Level HUD Events
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    LevelStarted:
+      type: object
+      properties:
+        number:
+          type: integer
+          description: Level ordinal number
+      required: [number]
+    LevelProgressSummary:
+      type: object
+      properties:
+        completed_objectives:
+          type: integer
+        total_objectives:
+          type: integer
+          nullable: true
+        percentage_complete:
+          type: number
+          format: float
+      required: []
+    HUDUpdate:
+      type: object
+      properties:
+        label:
+          type: string
+        placement:
+          type: string
+          enum: ["top-center","top-left","top-right"]
+      required: [label]
+
+# Usage notes:
+# - LevelStarted is an event emitted when a level starts
+# - HUDUpdate is a local UI contract for updating HUD elements
+# - LevelProgressSummary is used in pause/summary screens

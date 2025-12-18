@@ -176,6 +176,8 @@ pub fn run() {
     // designer palette UI state
     app.init_resource::<ui::palette::PaletteState>();
     app.init_resource::<ui::palette::SelectedBrick>();
+    // Accessibility announcer resource (tracks last announced label for testing/platform bridges)
+    app.insert_resource(ui::level_label::AccessibilityAnnouncement::default());
     // Scoring system state
     app.init_resource::<systems::scoring::ScoreState>();
     app.add_message::<systems::scoring::BrickDestroyed>();
@@ -221,7 +223,7 @@ pub fn run() {
         Startup,
         (setup, spawn_border, systems::grid_debug::spawn_grid_overlay),
     );
-    // Lives counter HUD (separate add_systems to avoid tuple size limits)
+    // Lives counter & level label HUD (separate add_systems to avoid tuple size limits)
     app.add_systems(
         Update,
         (
@@ -230,6 +232,9 @@ pub fn run() {
             ui::lives_counter::update_lives_counter.after(RespawnSystems::Schedule),
             ui::game_over_overlay::spawn_game_over_overlay.after(RespawnSystems::Schedule),
             ui::cheat_indicator::handle_cheat_indicator.after(RespawnSystems::Schedule),
+            ui::level_label::spawn_level_label,
+            // Sync HUD label to CurrentLevel when it changes
+            ui::level_label::sync_with_current_level,
         ),
     );
 
@@ -291,6 +296,8 @@ pub fn run() {
     app.add_observer(on_wall_hit);
     app.add_observer(on_paddle_ball_hit);
     app.add_observer(on_brick_hit);
+    // Level label observer updates HUD text on LevelStarted events
+    app.add_observer(crate::ui::level_label::on_level_started);
     app.add_observer(start_camera_shake);
     // Note: Multi-hit brick sound observer is now registered by AudioPlugin
     app.run();
