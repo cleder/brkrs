@@ -1,5 +1,5 @@
 //! Level label HUD
- //! 
+//!
 //! Spawns a top-left HUD label showing the current level number and updates it on `LevelStarted` events.
 
 use bevy::prelude::*;
