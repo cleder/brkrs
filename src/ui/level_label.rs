@@ -25,6 +25,7 @@ pub fn spawn_level_label(
     mut commands: Commands,
     existing: Query<Entity, With<LevelLabelRoot>>,
     ui_fonts: Option<Res<UiFonts>>,
+    current_level: Option<Res<crate::level_loader::CurrentLevel>>,
 ) {
     if !existing.is_empty() {
         return;
@@ -37,11 +38,27 @@ pub fn spawn_level_label(
 
     let font = fonts.orbitron.clone();
 
+    // Determine initial label: prefer current level if available
+    let initial_label = current_level
+        .as_ref()
+        .map(|c| format!("Level {}", c.0.number))
+        .unwrap_or_else(|| "Level".to_string());
+
+    // Root node spans the full width and aligns content to the left so the label is placed at top-left
     commands
-        .spawn((Node { ..default() }, LevelLabelRoot))
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                width: Val::Percent(100.0),
+                justify_content: JustifyContent::FlexStart,
+                align_items: AlignItems::FlexStart,
+                ..default()
+            },
+            LevelLabelRoot,
+        ))
         .with_children(|parent| {
             parent.spawn((
-                Text::new("Level"),
+                Text::new(initial_label),
                 TextFont {
                     font,
                     font_size: 22.0,
@@ -49,7 +66,11 @@ pub fn spawn_level_label(
                 },
                 TextColor(Color::WHITE),
                 Node {
-                    position_type: PositionType::Relative,
+                    margin: UiRect {
+                        top: Val::Px(12.0),
+                        left: Val::Px(12.0),
+                        ..default()
+                    },
                     ..default()
                 },
                 LevelLabelText,
