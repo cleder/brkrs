@@ -55,7 +55,9 @@ As a player, I want a clear "Game over" message when I run out of lives so I imm
 
 3. **Given** the "Game over" message is displayed, **When** the player attempts to pause or perform gameplay input, **Then** pause/input is disabled and the modal "Game over" message remains above overlays [covers FR-008, FR-009].
 
-4. **Given** the remaining lives count transitions from 1 to 0 due to a LifeLostEvent, **When** the same frame is processed, **Then** the HUD shows 0 and the "Game over" message appears within that frame [covers FR-005, FR-006].
+4. **Given** the "Game over" message is displayed, **When** the player toggles cheat mode (presses 'g'), **Then** the system sets remaining lives to 3, removes the "Game over" overlay, and gameplay may resume. **Note:** The current level is not reloaded or reset by this action; the player resumes within the same level state.
+
+5. **Given** the remaining lives count transitions from 1 to 0 due to a LifeLostEvent, **When** the same frame is processed, **Then** the HUD shows 0 and the "Game over" message appears within that frame [covers FR-005, FR-006].
 
 ---
 

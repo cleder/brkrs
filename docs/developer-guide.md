@@ -130,6 +130,29 @@ bevy lint
 cargo test
 ```
 
+## Cheat Mode (developer/testing)
+
+Cheat Mode is a testing/developer feature that allows quick exploration and debugging of levels and mechanics.
+
+### How to toggle
+
+- Press `G` during active gameplay to toggle Cheat Mode on or off.
+
+### Behavior
+
+- When Cheat Mode is toggled (either on or off), the player's current **score** is reset to `0`.
+- When Cheat Mode is enabled, a persistent image indicator appears in the lower-right corner of the screen (asset: `assets/textures/default/cheat-mode-128.png`) so the player knows the session is in cheat mode.
+- Level-control keys (R = respawn, N = next level, P = previous level) are gated to Cheat Mode: they only execute when Cheat Mode is active.
+  If they are pressed while Cheat Mode is inactive, a short soft UI beep plays and the action is ignored.
+- If Cheat Mode is toggled while a **Game Over** overlay is active (i.e., the player has 0 lives), Cheat Mode activation will set `LivesState.lives_remaining` to `3` and remove the Game Over overlay so the player can resume play.
+  Note: toggling Cheat Mode does **not** reload or reset the current level — gameplay resumes in-place with the level state unchanged.
+
+### Notes & Testing
+
+- Use Cheat Mode for rapid iteration or to explore levels without the normal gating of level-control keys.
+- The feature is intended for debugging and testing; enable it intentionally — the UI indicates when it's active.
+- Unit and integration tests for Cheat Mode are in `tests/cheat_mode.rs` and `tests/restart_cheat.rs`.
+
 ## Adding content
 
 ### Adding a new level
@@ -168,22 +191,11 @@ cargo test
    BK_LEVEL=3 cargo run
    ```
 
-4. Run migration checks:
-
-   ```bash
-   ./scripts/migrate-assets.sh --check assets/levels/level_003.ron
-   ```
-
 ### Adding textures
 
 1. Place texture files in `assets/textures/`
 2. Update the texture manifest in `assets/textures/manifest.ron`
 3. See `assets/textures/README.md` for naming conventions
-
-```{important}
-**WASM Builds**: For textures to load in WASM, you must create a `.meta` file
-alongside each PNG. See the "Building for WASM" section below for details.
-```
 
 ## Architecture overview
 
@@ -356,55 +368,7 @@ See the multi-hit brick system for a complete example.
 
 ```{warning}
 WASM builds have different asset loading requirements than desktop builds.
-Assets must be explicitly described with `.meta` files or embedded at compile time.
-```
-
-### Asset metadata for WASM
-
-Bevy's WASM asset loader uses HTTP to fetch assets, requiring explicit metadata for each asset.
-
-**For each PNG texture**, create a `.meta` file with the same name:
-
-```bash
-# For assets/textures/my_texture.png, create:
-# assets/textures/my_texture.png.meta
-```
-
-**Meta file format** (RON):
-
-```rust
-(
-    asset: Load(
-        loader: "bevy_image::image_loader::ImageLoader",
-        settings: (
-            format: FromExtension,
-            is_srgb: true,
-            sampler: Default,
-            asset_usage: 1,
-        ),
-    ),
-)
-```
-
-**Automated generation**:
-
-```bash
-# Create meta files for all PNG textures
-find assets/textures -name "*.png" -type f | while read png; do
-  cat > "${png}.meta" << 'EOF'
-(
-    asset: Load(
-        loader: "bevy_image::image_loader::ImageLoader",
-        settings: (
-            format: FromExtension,
-            is_srgb: true,
-            sampler: Default,
-            asset_usage: 1,
-        ),
-    ),
-)
-EOF
-done
+Assets should be embedded at compile time.
 ```
 
 ### Building the WASM binary
@@ -421,22 +385,11 @@ wasm-bindgen --out-dir wasm --target web \
   target/wasm32-unknown-unknown/release/brkrs.wasm
 ```
 
-### Deployment checklist
-
-When deploying to a web server:
-
-- [ ] Copy `brkrs.wasm` and `brkrs.js` from target/wasm output
-- [ ] Copy entire `assets/` directory including all `.meta` files
-- [ ] Preserve directory structure (e.g., `assets/textures/fallback/*.png.meta`)
-- [ ] Serve from a web server (file:// protocol won't work)
-- [ ] Clear browser cache when testing updates
-
 ### Platform differences
 
 | Feature | Desktop | WASM |
 |---------|---------|------|
 | Asset Loading | Synchronous from filesystem | Asynchronous via HTTP |
-| Asset Metadata | Inferred from file extension | Requires explicit `.meta` files |
 | Level Loading | Read from `assets/levels/*.ron` | Embedded at compile time |
 | Font Loading | Startup schedule | Deferred to Update schedule |
 | Binary Size | ~20MB (debug) | ~88MB (includes embedded levels) |
@@ -444,18 +397,13 @@ When deploying to a web server:
 ### Debugging WASM builds
 
 ```{tip}
-Use browser DevTools (F12) to inspect console errors. Look for:
-- 404 errors for `.meta` files (missing metadata)
-- "Failed to deserialize meta" (incorrect `.meta` format)
-- Asset loading timing issues (check debug logs)
+Use browser DevTools (F12) to inspect console errors.
 ```
 
 **Common issues**:
 
-1. **Textures don't load**: Missing `.meta` files → Check browser console for 404 errors
-2. **Deserialization errors**: Incorrect `.meta` format → Verify RON syntax
-3. **Levels don't load**: Not embedded → Update `embedded_level_str()` in `level_loader.rs`
-4. **Performance issues**: Large binary size → Consider on-demand HTTP fetching for levels
+1. **Levels don't load**: Not embedded → Update `embedded_level_str()` in `level_loader.rs`
+2. **Performance issues**: Large binary size → Consider on-demand HTTP fetching for levels
 
 - **Issues**: [GitHub Issues](https://github.com/cleder/brkrs/issues)
 - **Documentation**: This site and the {doc}`api-reference`

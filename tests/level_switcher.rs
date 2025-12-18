@@ -3,6 +3,7 @@ use bevy_rapier3d::prelude::RapierConfiguration;
 use brkrs::level_loader::{
     self, CurrentLevel, LevelAdvanceState, LevelDefinition, LevelLoaderPlugin,
 };
+use brkrs::systems::level_switch::LevelSwitchDirection;
 use brkrs::systems::respawn::SpawnPoints;
 use brkrs::systems::{
     LevelSwitchPlugin, LevelSwitchRequested, LevelSwitchSource, LevelSwitchState,
@@ -34,6 +35,7 @@ fn initialize_level_systems(app: &mut App) {
 fn trigger_level_switch(app: &mut App) {
     app.world_mut().write_message(LevelSwitchRequested {
         source: LevelSwitchSource::Keyboard,
+        direction: LevelSwitchDirection::Next,
     });
     // First update processes the event and queues commands.
     app.update();

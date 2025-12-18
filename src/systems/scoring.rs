@@ -215,3 +215,9 @@ pub fn detect_milestone_system(
         score_state.last_milestone_reached = reached_tier;
     }
 }
+
+/// Helper to reset score state to initial values
+pub fn reset_score(score_state: &mut ResMut<ScoreState>) {
+    score_state.current_score = 0;
+    score_state.last_milestone_reached = 0;
+}

@@ -23,6 +23,7 @@
 - Session start → `lives_remaining = 3`
 - On `LifeLostEvent` when `lives_remaining > 0` → `lives_remaining = lives_remaining - 1`
 - On `LifeLostEvent` when `lives_remaining == 0` → no change
+- On cheat mode toggle (activated) → `lives_remaining = 3` and any active "Game over" overlay should be removed so the player can resume play (UI systems should respond to the altered `LivesState` and/or explicit overlay removal)
 
 ### LifeLostEvent (Message)
 

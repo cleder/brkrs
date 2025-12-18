@@ -1,5 +1,3 @@
-:orphan:
-
 # Macuilxochitl
 
 Macuilxochitl ("Five Flower") is a significant Aztec deity associated with art, music, dance, games, and excessive pleasures like gambling and drinking.
@@ -23,3 +21,9 @@ Macuilxochitl is the Chief of the Ahuiateteo (gods of excess) and the God of:
 - 🍩️ Hemorrhoids
 - 💐️ Flowers
 - 👻️ Souls
+
+## Images
+
+Disclaimer: These images were generated with AI, they do not represent actual historic artwork and are wildly inaccurate.
+
+![Macuilxochitl](png/macuilxochitl-00-256.png) ![Macuilxochitl](png/macuilxochitl-01-256.png) ![Macuilxochitl](png/macuilxochitl-03-256.png) ![Macuilxochitl](png/macuilxochitl-04-256.png) ![Macuilxochitl](png/macuilxochitl-05-256.png)

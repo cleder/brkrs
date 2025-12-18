@@ -123,45 +123,62 @@ pub struct LevelLoaderPlugin;
 impl Plugin for LevelLoaderPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GravityConfig>();
+        app.add_message::<RestartRequested>();
         app.add_systems(Startup, (load_level, spawn_level_entities).chain());
         #[cfg(feature = "texture_manifest")]
-        app.add_systems(
-            Update,
-            (
+        {
+            app.add_systems(
+                Update,
                 (
                     advance_level_when_cleared,
                     handle_level_advance_delay,
                     finalize_level_advance.after(handle_level_advance_delay),
                     spawn_fade_overlay_if_needed,
-                ),
+                )
+                    .in_set(LevelAdvanceSystems),
+            );
+
+            app.add_systems(
+                Update,
                 (
                     update_fade_overlay,
-                    restart_level_on_key,
                     destroy_all_bricks_on_key,
                     process_level_switch_requests,
                     sync_level_presentation,
                 ),
-            )
-                .in_set(LevelAdvanceSystems),
-        );
+            );
+            // Register restart queue and processor
+            // Run the restart producer in PreUpdate so it observes just_pressed reliably
+            app.add_systems(PreUpdate, queue_restart_requests);
+            // Keep the heavy restart processing in Update
+            app.add_systems(Update, process_restart_requests);
+        }
         #[cfg(not(feature = "texture_manifest"))]
-        app.add_systems(
-            Update,
-            (
+        {
+            app.add_systems(
+                Update,
                 (
                     advance_level_when_cleared,
                     handle_level_advance_delay,
                     finalize_level_advance.after(handle_level_advance_delay),
                     spawn_fade_overlay_if_needed,
-                ),
+                )
+                    .in_set(LevelAdvanceSystems),
+            );
+
+            app.add_systems(
+                Update,
                 (
                     update_fade_overlay,
-                    restart_level_on_key,
                     destroy_all_bricks_on_key,
                     process_level_switch_requests,
                 ),
-            ),
-        );
+            );
+            // Run the restart producer in PreUpdate so it observes just_pressed reliably
+            app.add_systems(PreUpdate, queue_restart_requests);
+            // Keep the heavy restart processing in Update
+            app.add_systems(Update, process_restart_requests);
+        }
     }
 }
 
@@ -822,8 +839,40 @@ fn advance_level_when_cleared(
 }
 
 /// Restart the current level when the user presses R.
-fn restart_level_on_key(
+// Restart messaging: small producer + heavy consumer split so registration is reliable
+
+#[derive(Message, Debug, Clone, Copy)]
+pub struct RestartRequested;
+
+/// Producer: queue restart requests when 'R' is pressed; emits UiBeepEvent when blocked.
+fn queue_restart_requests(
     keyboard: Res<ButtonInput<KeyCode>>,
+    cheat: Option<Res<crate::systems::cheat_mode::CheatModeState>>,
+    mut restart: Option<MessageWriter<RestartRequested>>,
+    mut beep: Option<MessageWriter<crate::systems::audio::UiBeepEvent>>,
+) {
+    if !keyboard.just_pressed(KeyCode::KeyR) {
+        return;
+    }
+    if let Some(cheat) = cheat.as_ref() {
+        if cheat.is_active() {
+            if let Some(r) = restart.as_mut() {
+                r.write(RestartRequested);
+            }
+        } else if let Some(b) = beep.as_mut() {
+            b.write(crate::systems::audio::UiBeepEvent);
+        }
+    } else {
+        // conservative: block if cheat state not present
+        if let Some(b) = beep.as_mut() {
+            b.write(crate::systems::audio::UiBeepEvent);
+        }
+    }
+}
+
+/// Consumer: handle restart requests and perform the heavy restart operation.
+fn process_restart_requests(
+    mut requests: bevy::ecs::message::MessageReader<RestartRequested>,
     current_level: Option<Res<CurrentLevel>>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -839,9 +888,16 @@ fn restart_level_on_key(
     lives_state: Option<ResMut<crate::systems::respawn::LivesState>>,
     #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
 ) {
-    if !keyboard.just_pressed(KeyCode::KeyR) {
+    if requests.is_empty() {
         return;
     }
+
+    // Only process the first request per frame
+    let Some(_) = requests.read().next() else {
+        requests.clear();
+        return;
+    };
+
     // Reset lives to 3 when restarting level
     if let Some(mut lives_state) = lives_state {
         lives_state.lives_remaining = 3;
@@ -874,6 +930,7 @@ fn restart_level_on_key(
         Ok(_) => info!("Restarted level {level_number}"),
         Err(err) => warn!("Failed to restart level {level_number}: {err}"),
     }
+    requests.clear();
 }
 
 /// Destroy all bricks when K is pressed (for testing level transitions).
@@ -926,7 +983,21 @@ pub(crate) fn process_level_switch_requests(
         return;
     }
     let current_number = current_level.map(|c| c.0.number).unwrap_or(0);
-    let Some(target_slot) = switch_state.next_level_after(current_number).cloned() else {
+    let Some(request) = requests.read().next() else {
+        requests.clear();
+        return;
+    };
+
+    let maybe_slot = match request.direction {
+        crate::systems::level_switch::LevelSwitchDirection::Next => {
+            switch_state.next_level_after(current_number).cloned()
+        }
+        crate::systems::level_switch::LevelSwitchDirection::Previous => {
+            switch_state.previous_level_before(current_number).cloned()
+        }
+    };
+
+    let Some(target_slot) = maybe_slot else {
         warn!(target: "level_switch", "No level entries available for switching");
         requests.clear();
         return;
@@ -1597,5 +1668,91 @@ mod tests {
                 assert_eq!(val, input[r][c]);
             }
         }
+    }
+
+    // Unit tests for restart gating
+
+    use super::*;
+    use bevy::prelude::*;
+
+    #[derive(Resource, Default)]
+    struct BeepCount(u32);
+
+    fn capture_beep(
+        mut reader: bevy::ecs::message::MessageReader<crate::systems::audio::UiBeepEvent>,
+        mut c: ResMut<BeepCount>,
+    ) {
+        for _ in reader.read() {
+            c.0 += 1;
+        }
+    }
+
+    fn app_with_plugins() -> App {
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, bevy::input::InputPlugin));
+        app.add_plugins(crate::systems::audio::AudioPlugin);
+        // Register level switch plugin so LevelSwitchRequested message is initialized for processing
+        app.add_plugins(crate::systems::level_switch::LevelSwitchPlugin);
+        app.add_plugins(LevelLoaderPlugin);
+        // Minimal resources required by level loader systems (spawn_level_entities, restarts, etc.)
+        app.insert_resource(Assets::<Mesh>::default());
+        app.insert_resource(Assets::<StandardMaterial>::default());
+        app.insert_resource(GameProgress::default());
+        app.insert_resource(LevelAdvanceState::default());
+        app.insert_resource(SpawnPoints::default());
+        // Capture beeps
+        app.init_resource::<BeepCount>();
+        // Pause state required by run conditions
+        app.init_resource::<crate::pause::PauseState>();
+        // Scoring state required by cheat-mode toggle
+        app.init_resource::<crate::systems::scoring::ScoreState>();
+        // capture after restart system to ensure we observe writes
+        app.add_systems(Update, capture_beep);
+        app
+    }
+
+    #[test]
+    fn restart_blocks_when_cheat_inactive_emits_beep() {
+        let mut app = app_with_plugins();
+        app.add_plugins(crate::systems::cheat_mode::CheatModePlugin);
+        // ensure cheat off
+        {
+            let mut cheat = app
+                .world_mut()
+                .resource_mut::<crate::systems::cheat_mode::CheatModeState>();
+            cheat.active = false;
+        }
+        // press R
+        {
+            let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+            input.press(KeyCode::KeyR);
+        }
+        app.update();
+        app.update();
+        // capture runs on second frame and should observe the beep
+        let beep = app.world().resource::<BeepCount>();
+        assert!(beep.0 >= 1, "Blocked restart should emit a UI beep");
+    }
+
+    #[test]
+    fn restart_allowed_when_cheat_active_no_beep() {
+        let mut app = app_with_plugins();
+        app.add_plugins(crate::systems::cheat_mode::CheatModePlugin);
+        // ensure cheat on
+        {
+            let mut cheat = app
+                .world_mut()
+                .resource_mut::<crate::systems::cheat_mode::CheatModeState>();
+            cheat.active = true;
+        }
+        // press R
+        {
+            let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+            input.press(KeyCode::KeyR);
+        }
+        app.update();
+        app.update();
+        let beep = app.world().resource::<BeepCount>();
+        assert_eq!(beep.0, 0, "Allowed restart should not emit a UI beep");
     }
 }
