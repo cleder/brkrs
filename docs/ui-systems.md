@@ -313,7 +313,7 @@ pub fn update_palette_selection_feedback(
 
 ```rust
 // Observer: reacts to a raised event
-pub fn on_level_started(level: Trigger<LevelStarted>, mut query: Query<&mut Text, With<LevelLabelText>>) -> Result<(), UiSystemError> {
+pub fn on_level_started(level: Trigger<On<LevelStarted>>, mut query: Query<&mut Text, With<LevelLabelText>>) -> Result<(), UiSystemError> {
   let Some(mut text) = query.iter_mut().next() else { return Ok(()); };
   **text = format!("Level {}", level.level_index).into();
   Ok(())
