@@ -289,13 +289,15 @@ pub fn handle_palette_selection(
 /// Update visual feedback for selected palette item.
 pub fn update_palette_selection_feedback(
     selected: Res<SelectedBrick>,
-    mut previews: Query<(&PalettePreview, &mut BackgroundColor)>,
-    mut new_previews: Query<(&PalettePreview, &mut BackgroundColor), Added<PalettePreview>>,
+    mut param_set: ParamSet<(
+        Query<(&PalettePreview, &mut BackgroundColor)>,
+        Query<(&PalettePreview, &mut BackgroundColor), Added<PalettePreview>>,
+    )>,
     materials_res: Option<Res<Assets<StandardMaterial>>>,
 ) {
     // Constitution VIII: Change-driven updates — only run when SelectedBrick changes or new previews spawn
     let selection_changed = selected.is_changed();
-    let has_new_previews = !new_previews.is_empty();
+    let has_new_previews = !param_set.p1().is_empty();
 
     if !selection_changed && !has_new_previews {
         return; // No change, skip per-frame work
@@ -303,7 +305,7 @@ pub fn update_palette_selection_feedback(
 
     // Update existing previews if selection changed
     if selection_changed {
-        for (preview, mut bg_color) in previews.iter_mut() {
+        for (preview, mut bg_color) in param_set.p0().iter_mut() {
             if Some(preview.type_id) == selected.type_id {
                 // Highlight selected item with brighter color
                 *bg_color = BackgroundColor(Color::srgba(1.0, 1.0, 0.0, 1.0));
@@ -321,7 +323,7 @@ pub fn update_palette_selection_feedback(
 
     // Initialize colors for newly spawned previews
     if has_new_previews {
-        for (preview, mut bg_color) in new_previews.iter_mut() {
+        for (preview, mut bg_color) in param_set.p1().iter_mut() {
             if Some(preview.type_id) == selected.type_id {
                 *bg_color = BackgroundColor(Color::srgba(1.0, 1.0, 0.0, 1.0));
             } else {

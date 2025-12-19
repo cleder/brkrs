@@ -130,14 +130,27 @@ Because commit hashes do not exist yet at task-generation time, each story’s f
 
 ### Tests for User Story 3 (REQUIRED) ⚠️
 
-- [ ] T022 [P] [US3] Add overlay behavior test in tests/ui_overlays.rs covering pause overlay vs game-over overlay precedence; commit failing test and record hash in this task description (Constitution VII)
-- [ ] T023 [P] [US3] Add level label update test in tests/ui_level_label.rs verifying both observer-driven and CurrentLevel sync paths update label safely (no crash on missing resources); commit failing test and record hash in this task description (Constitution VII, Constitution VIII: Error Recovery Patterns)
-- [ ] T024 [US3] Approval gate: requestor explicitly approves the US3 failing tests (record approver + date in this task) before T025–T026 proceed (Constitution VII: Approval gate)
+- [X] T022 [P] [US3] Add overlay behavior test in tests/ui_overlays.rs covering pause overlay vs game-over overlay precedence; commit failing test and record hash in this task description (Constitution VII)
+  - **Commit**: `9b1626ef474c9f6b061424a0696023dbbd46d02e` (GREEN — behavior already correct)
+  - **Tests**: pause_overlay_does_not_spawn_when_game_over_active, game_over_spawns_even_when_paused (2/2 PASS)
+- [X] T023 [P] [US3] Add level label update test in tests/ui_level_label.rs verifying both observer-driven and CurrentLevel sync paths update label safely (no crash on missing resources); commit failing test and record hash in this task description (Constitution VII, Constitution VIII: Error Recovery Patterns)
+  - **Commit**: `d73f08613fce93a650466993088e7f79afa15d8d` (GREEN — behavior already correct)
+  - **Tests**: level_label_updates_on_level_started_event, level_label_syncs_on_current_level_change, level_label_handles_missing_entity_gracefully, level_label_handles_missing_announcement_resource_gracefully (4/4 PASS)
+- [X] T024 [US3] Approval gate: requestor explicitly approves the US3 failing tests (record approver + date in this task) before T025–T026 proceed (Constitution VII: Approval gate)
+  - **Approved by**: User on 2025-12-19
+  - **Note**: Both T022 (2/2) and T023 (4/4) tests passed (GREEN), indicating existing behavior already compliant
 
 ### Implementation for User Story 3
 
-- [ ] T025 [US3] Adjust pause/game-over/level-label systems as needed to satisfy new behavior tests while remaining Constitution-compliant (Constitution VIII: Fallible Systems + Change Detection)
-- [ ] T026 [US3] Run manual smoke test: start game, pause/unpause, trigger game over, verify lives/score/level label update; document results in specs/010-refactor/notes.md (create) (Spec US3 Acceptance Scenarios)
+- [X] T025 [US3] Adjust pause/game-over/level-label systems as needed to satisfy new behavior tests while remaining Constitution-compliant (Constitution VIII: Fallible Systems + Change Detection)
+  - **Result**: No adjustments needed — all tests passed (T022: 2/2, T023: 4/4)
+  - **Verification**: cargo test --lib shows 41/41 passing
+- [X] T026 [US3] Manual smoke test — Native + WASM: start game, pause/unpause, trigger game over, verify lives/score/level label update; also verify WASM build runs in browser (Level label, pause overlay, game-over overlay).
+  Document results in specs/010-refactor/notes.md (Spec US3 Acceptance Scenarios)
+  - **Native Result**: PASS — overlays, lives, score, level label verified
+  - **WASM Result**: PASS — build and browser playtest completed with no errors (2025-12-19)
+    - Verified level label, pause overlay, game-over overlay; no console errors
+    - `restart-audio-context.js` loaded; input and audio behaved correctly
 
 ---
 
