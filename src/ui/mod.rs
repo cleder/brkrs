@@ -84,3 +84,88 @@ pub mod score_display;
 //
 // This pattern allows Result-returning systems without breaking Bevy 0.17 compatibility
 // while maintaining clear error boundaries and fallible semantics in the UI module.
+
+// ============================================================================
+// UI Plugin (Constitution VIII: Plugin-Based Architecture)
+// ============================================================================
+
+use bevy::prelude::*;
+
+/// System sets for organizing UI systems.
+/// Constitution VIII: System Organization — use system sets with `*Systems` suffix.
+#[derive(SystemSet, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum UiSystems {
+    /// UI spawning systems (run once or idempotent).
+    Spawn,
+    /// UI update systems (change-driven or per-frame as needed).
+    Update,
+    /// Input-driven UI systems (palette, cheats).
+    Input,
+}
+
+/// Self-contained UI plugin that registers all UI resources and systems.
+/// Constitution VIII: Plugin-Based Architecture — keep related code together.
+pub struct UiPlugin;
+
+impl Plugin for UiPlugin {
+    fn build(&self, app: &mut App) {
+        use crate::systems::RespawnSystems;
+
+        // Configure system sets
+        app.configure_sets(
+            Update,
+            (
+                UiSystems::Spawn,
+                UiSystems::Update.after(RespawnSystems::Schedule),
+                UiSystems::Input,
+            ),
+        );
+
+        // Initialize resources
+        app.init_resource::<palette::PaletteState>();
+        app.init_resource::<palette::SelectedBrick>();
+        app.insert_resource(level_label::AccessibilityAnnouncement::default());
+
+        // UI spawn systems
+        app.add_systems(
+            Update,
+            (
+                score_display::spawn_score_display_system,
+                lives_counter::spawn_lives_counter,
+                level_label::spawn_level_label,
+            )
+                .in_set(UiSystems::Spawn),
+        );
+
+        // UI update systems (change-driven)
+        app.add_systems(
+            Update,
+            (
+                lives_counter::update_lives_counter,
+                game_over_overlay::spawn_game_over_overlay,
+                cheat_indicator::handle_cheat_indicator,
+                level_label::sync_with_current_level,
+                score_display::update_score_display_system
+                    .after(crate::systems::scoring::detect_milestone_system),
+            )
+                .in_set(UiSystems::Update),
+        );
+
+        // Palette input systems
+        app.add_systems(
+            Update,
+            (
+                palette::toggle_palette,
+                palette::ensure_palette_ui,
+                palette::handle_palette_selection,
+                palette::update_palette_selection_feedback,
+                palette::update_ghost_preview,
+                palette::place_bricks_on_drag,
+            )
+                .in_set(UiSystems::Input),
+        );
+
+        // Observer for level started events
+        app.add_observer(level_label::on_level_started);
+    }
+}

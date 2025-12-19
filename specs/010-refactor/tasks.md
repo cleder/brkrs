@@ -115,8 +115,10 @@ Because commit hashes do not exist yet at task-generation time, each story’s f
   - **Completed**: Added #[require(Transform, Visibility)] to GhostPreview + PreviewViewport (2025-12-19)
 - [X] T019 [US2] Fill rustdoc gaps for public items in src/ui/{cheat_indicator,fonts,palette}.rs (Constitution VI)
   - **Completed**: Added missing rustdoc for CheatModeIndicator + PaletteRoot; verified no warnings from cargo doc (2025-12-19)
-- [ ] T020 [US2] Implement a self-contained UI plugin in src/ui/mod.rs that registers UI resources + systems; apply minimal supporting edits outside src/ui to use it (Constitution VIII: Plugin-Based Architecture; Spec FR-010)
-- [ ] T021 [US2] Organize UI systems into system sets with `*Systems` suffix and use `.configure_sets()`; avoid chaining individual systems (Constitution VIII: System Organization; Constitution VIII Prohibitions: NO Over-Chaining Systems)
+- [X] T020 [US2] Implement a self-contained UI plugin in src/ui/mod.rs that registers UI resources + systems; apply minimal supporting edits outside src/ui to use it (Constitution VIII: Plugin-Based Architecture; Spec FR-010)
+  - **Completed**: Created UiPlugin; moved resource registrations + system registration to plugin; updated lib.rs to use plugin (2025-12-19)
+- [X] T021 [US2] Organize UI systems into system sets with `*Systems` suffix and use `.configure_sets()`; avoid chaining individual systems (Constitution VIII: System Organization; Constitution VIII Prohibitions: NO Over-Chaining Systems)
+  - **Completed**: Created UiSystems enum (Spawn, Update, Input); configured system sets with .configure_sets(); grouped systems by set (2025-12-19)
 
 ---
 
