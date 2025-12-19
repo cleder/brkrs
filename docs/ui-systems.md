@@ -265,3 +265,69 @@ If a query is expected to match 0 or 1 entities but sometimes matches multiple (
 3. Return `Ok(())` so the game doesn't crash.
 
 **Do not** use `.unwrap()` or `.expect()` in hot UI paths.
+
+## Constitution Compliance Cheatsheet (Bevy 0.17)
+
+The UI follows Brkrs Constitution Section VIII and Bevy 0.17 mandates:
+
+- **Fallible Systems**: UI systems return `Result<(), UiSystemError>` and avoid panics.
+  Prefer early returns on missing entities/resources.
+- **Reactive Change Detection**: Use `Changed<T>` to avoid per-frame work for unchanged data.
+  Example: update text only when `LivesState` or `CurrentLevel` changes.
+
+```rust
+pub fn sync_with_current_level(
+  current: Option<Res<CurrentLevel>>, // Optional during early startup
+  mut query: Query<&mut Text, With<LevelLabelText>>, // Specific query
+) -> Result<(), UiSystemError> {
+  let Some(current) = current.filter(|c| c.is_changed()) else { return Ok(()); };
+  let Some(mut text) = query.iter_mut().next() else { return Ok(()); };
+  **text = format!("Level {}", current.0.number).into();
+  Ok(())
+}
+```
+
+- **Query Specificity**: Use `With<T>` / `Without<T>` to target only relevant entities and maximize parallelism.
+- **Safe Queries**: Prefer `iter().next()` (or `get_single().ok()`) patterns over `.unwrap()`/`.expect()` in hot paths.
+- **Scheduling Conflict Avoidance**: When multiple queries access the same component mutably, merge them via `ParamSet` to avoid B0001.
+
+```rust
+pub fn update_palette_selection_feedback(
+  selected: Res<SelectedBrick>,
+  mut param_set: ParamSet<(
+    Query<(&PalettePreview, &mut BackgroundColor)>,
+    Query<(&PalettePreview, &mut BackgroundColor), Added<PalettePreview>>,
+  )>,
+  materials_res: Option<Res<Assets<StandardMaterial>>>,
+) -> Result<(), UiSystemError> {
+  let selection_changed = selected.is_changed();
+  let has_new_previews = !param_set.p1().is_empty();
+  if !selection_changed && !has_new_previews { return Ok(()); }
+  // ... update existing via p0(); init new via p1()
+  Ok(())
+}
+```
+
+- **Messages vs Events**: Use observers for event-driven updates (e.g., `LevelStarted`).
+  Use the project's `Messages<T>` resource for queued requests (e.g., `GameOverRequested`) and keep these patterns distinct.
+
+```rust
+// Observer: reacts to a raised event
+pub fn on_level_started(level: Trigger<LevelStarted>, mut query: Query<&mut Text, With<LevelLabelText>>) -> Result<(), UiSystemError> {
+  let Some(mut text) = query.iter_mut().next() else { return Ok(()); };
+  **text = format!("Level {}", level.index).into();
+  Ok(())
+}
+
+// Message: enqueue a request handled by a system later
+fn request_game_over(world: &mut World) {
+  world.resource_mut::<Messages<GameOverRequested>>().write(GameOverRequested { remaining_lives: 0 });
+}
+```
+
+- **Asset Handle Reuse**: Load assets once and store handles in resources (e.g., `UiFonts`).
+  Do not call `asset_server.load()` inside spawn/update loops; reuse the cached handles instead.
+- **WASM Parity**: Fonts may appear later on web; use `Option<Res<UiFonts>>` and defer spawning gracefully.
+  For WASM builds, configure `getrandom` for web (`RUSTFLAGS='--cfg getrandom_backend="wasm_js"'`).
+
+These patterns are enforced in tests under `tests/` and verified by the US3 behavior preservation suite.
