@@ -51,6 +51,17 @@ pub struct SelectedBrick {
     pub type_id: Option<u8>,
 }
 
+/// Cached ghost preview material handle (loaded once at startup).
+/// Used as fallback when `TypeVariantRegistry` doesn't have a material for the selected brick type.
+/// Constitution VIII: Asset Handle Reuse — load once, reuse everywhere.
+#[derive(Resource)]
+pub struct GhostPreviewMaterial {
+    pub handle: Handle<StandardMaterial>,
+}
+
+/// Marker component for the root node of the designer palette UI.
+///
+/// Used to identify and manage the palette container entity for spawning/despawning.
 #[derive(Component)]
 pub struct PaletteRoot;
 
@@ -63,13 +74,17 @@ pub struct PalettePreview {
 }
 
 /// Marker for ghost preview brick that follows cursor during placement.
+/// Constitution VIII: Required Components — all 3D entities require Transform + Visibility.
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct GhostPreview;
 
 // (duplicate removed)
 
 /// 3D preview viewport marker — small entity that stores mesh & material handles for a mini-preview.
+/// Constitution VIII: Required Components — all 3D entities require Transform + Visibility.
 #[derive(Component, Debug)]
+#[require(Transform, Visibility)]
 pub struct PreviewViewport {
     pub type_id: u8,
     pub mesh: Handle<Mesh>,
@@ -271,26 +286,60 @@ pub fn handle_palette_selection(
     }
 }
 
+/// Resolve the base color to use for a palette preview, falling back to grey when the material is missing.
+fn base_color_for(
+    material: &Option<Handle<StandardMaterial>>,
+    materials_res: &Option<Res<Assets<StandardMaterial>>>,
+) -> Color {
+    material
+        .as_ref()
+        .and_then(|h| {
+            materials_res
+                .as_ref()
+                .and_then(|m| m.get(h).map(|mat| mat.base_color))
+        })
+        .unwrap_or(Color::srgba(0.5, 0.5, 0.5, 1.0))
+}
+
 /// Update visual feedback for selected palette item.
 pub fn update_palette_selection_feedback(
     selected: Res<SelectedBrick>,
-    mut previews: Query<(&PalettePreview, &mut BackgroundColor)>,
+    mut param_set: ParamSet<(
+        Query<(&PalettePreview, &mut BackgroundColor)>,
+        Query<(&PalettePreview, &mut BackgroundColor), Added<PalettePreview>>,
+    )>,
     materials_res: Option<Res<Assets<StandardMaterial>>>,
 ) {
-    // Always run - don't skip based on is_changed() because we want to update
-    // when palette is first opened or when previews are spawned
-    for (preview, mut bg_color) in previews.iter_mut() {
-        if Some(preview.type_id) == selected.type_id {
-            // Highlight selected item with brighter color
-            *bg_color = BackgroundColor(Color::srgba(1.0, 1.0, 0.0, 1.0));
-        } else {
-            // Restore original color from material
-            let base_color = preview.material.as_ref().and_then(|h| {
-                materials_res
-                    .as_ref()
-                    .and_then(|m| m.get(h).map(|mat| mat.base_color))
-            });
-            *bg_color = BackgroundColor(base_color.unwrap_or(Color::srgba(0.5, 0.5, 0.5, 1.0)));
+    // Constitution VIII: Change-driven updates — only run when SelectedBrick changes or new previews spawn
+    let selection_changed = selected.is_changed();
+    let has_new_previews = !param_set.p1().is_empty();
+
+    if !selection_changed && !has_new_previews {
+        return; // No change, skip per-frame work
+    }
+
+    // Update existing previews if selection changed
+    // Only process new previews when selection is unchanged to avoid double-processing
+    if selection_changed {
+        for (preview, mut bg_color) in param_set.p0().iter_mut() {
+            let base = base_color_for(&preview.material, &materials_res);
+            if Some(preview.type_id) == selected.type_id {
+                // Highlight selected item with brighter yellow
+                *bg_color = BackgroundColor(Color::srgba(1.0, 1.0, 0.0, 1.0));
+            } else {
+                // Restore original color from material
+                *bg_color = BackgroundColor(base);
+            }
+        }
+    } else if has_new_previews {
+        // Initialize colors for newly spawned previews only (selection unchanged)
+        for (preview, mut bg_color) in param_set.p1().iter_mut() {
+            let base = base_color_for(&preview.material, &materials_res);
+            if Some(preview.type_id) == selected.type_id {
+                *bg_color = BackgroundColor(Color::srgba(1.0, 1.0, 0.0, 1.0));
+            } else {
+                *bg_color = BackgroundColor(base);
+            }
         }
     }
 }
@@ -345,8 +394,8 @@ pub fn update_ghost_preview(
     camera_query: Query<(&GlobalTransform, &Camera), With<Camera3d>>,
     ghost: Query<Entity, With<GhostPreview>>,
     registry: Option<Res<TypeVariantRegistry>>,
+    cached_material: Option<Res<GhostPreviewMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let Ok(window) = window.single() else {
         return;
@@ -389,17 +438,23 @@ pub fn update_ghost_preview(
     let world_z = -PLANE_W / 2.0 + (grid_z as f32 + 0.5) * CELL_WIDTH;
     let world_pos = Vec3::new(world_x, 0.5, world_z);
 
-    // Get material for this brick type
-    let material = registry
+    // Get material for this brick type from registry or use cached fallback
+    // Constitution VIII: Asset Handle Reuse — no per-frame material allocation
+    let Some(material) = registry
         .as_ref()
         .and_then(|r| r.get(ObjectClass::Brick, type_id))
-        .unwrap_or_else(|| {
-            materials.add(StandardMaterial {
-                base_color: Color::srgba(0.5, 0.5, 0.5, 0.5),
-                alpha_mode: AlphaMode::Blend,
-                ..default()
-            })
-        });
+        .or_else(|| cached_material.as_ref().map(|c| c.handle.clone()))
+    else {
+        // No material available; log warning and remove ghost to avoid rendering with invalid handle
+        warn!(
+            "No material available for ghost preview (type {}); registry and cached fallback both missing",
+            type_id
+        );
+        for entity in ghost.iter() {
+            commands.entity(entity).despawn();
+        }
+        return;
+    };
 
     // Update existing ghost or spawn new one
     if let Some(ghost_entity) = ghost.iter().next() {

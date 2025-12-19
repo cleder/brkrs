@@ -99,6 +99,7 @@ pub fn on_level_started(
 
     let label = format!("Level {}", event.level_index);
 
+    // Use single_mut() for safe query handling (returns Result in Bevy 0.17)
     if let Ok(mut text) = query.single_mut() {
         **text = label.clone();
     }
@@ -123,6 +124,8 @@ pub fn sync_with_current_level(
     }
 
     let label = format!("Level {}", curr.0.number);
+
+    // Use single_mut() for safe query handling (returns Result in Bevy 0.17)
     if let Ok(mut text) = query.single_mut() {
         **text = label.clone();
     }

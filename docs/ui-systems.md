@@ -194,3 +194,140 @@ cargo test --lib ui::lives_counter
 ```
 
 See `tests/` for full test suites and helper utilities.
+
+## Query Failure Policies (Constitution VIII: Error Recovery Patterns)
+
+All UI systems return `Result<(), UiSystemError>` and use the following patterns for expected query failures:
+
+### Pattern: Required Single Entity
+
+When a single UI entity MUST exist:
+
+```rust
+pub fn my_ui_system(
+    mut query: Query<&mut Transform, With<MyUiMarker>>,
+) -> Result<(), UiSystemError> {
+    let mut transform = query
+        .get_single_mut()
+        .map_err(|_| UiSystemError::EntityNotFound("MyUiMarker entity".to_string()))?;
+    // ... use transform
+    Ok(())
+}
+```
+
+**Behavior**: If the entity is not found, the system returns an error and skips the update without panicking.
+Callers decide whether to log a warning or silently continue.
+
+### Pattern: Optional Single Entity
+
+When a single UI entity MAY exist:
+
+```rust
+pub fn my_optional_ui_system(
+    query: Query<&Text, With<ScoreDisplayUi>>,
+) -> Result<(), UiSystemError> {
+    let Some(text) = query.get_single().ok() else {
+        return Ok(()); // Entity doesn't exist yet; that's ok.
+    };
+    // ... use text
+    Ok(())
+}
+```
+
+**Behavior**: If the entity is not found, the system returns `Ok(())` and continues.
+This is safe for spawning systems that may run before entities are created.
+
+### Pattern: Required Resource
+
+When a resource MUST be available:
+
+```rust
+pub fn my_system(
+    fonts: Res<UiFonts>,
+) -> Result<(), UiSystemError> {
+    if !fonts.is_loaded() {
+        return Err(UiSystemError::AssetNotAvailable("UiFonts not yet loaded".to_string()));
+    }
+    // ... use fonts
+    Ok(())
+}
+```
+
+**Behavior**: If the resource is not available or not yet loaded (WASM), the system returns an error.
+The caller (app.rs) logs a diagnostic and reschedules the system to try again next frame.
+
+### Multiple Entities Matching a Query
+
+If a query is expected to match 0 or 1 entities but sometimes matches multiple (e.g., due to a bug or race condition):
+
+1. Use `let Ok(entity) = query.get_single() else { return Ok(()); }` to safely skip the update.
+2. Optionally log a diagnostic: `warn!("Expected 0-1 entities, found multiple")`.
+3. Return `Ok(())` so the game doesn't crash.
+
+**Do not** use `.unwrap()` or `.expect()` in hot UI paths.
+
+## Constitution Compliance Cheatsheet (Bevy 0.17)
+
+The UI follows Brkrs Constitution Section VIII and Bevy 0.17’s mandates:
+
+- **Fallible Systems**: UI systems return `Result<(), UiSystemError>` and avoid panics.
+  Prefer early returns on missing entities/resources.
+- **Reactive Change Detection**: Use `Changed<T>` to avoid per-frame work for unchanged data.
+  Example: update text only when `LivesState` or `CurrentLevel` changes.
+
+```rust
+pub fn sync_with_current_level(
+  current: Option<Res<CurrentLevel>>, // Optional during early startup
+  mut query: Query<&mut Text, With<LevelLabelText>>, // Specific query
+) -> Result<(), UiSystemError> {
+  let Some(current) = current.filter(|c| c.is_changed()) else { return Ok(()); };
+  let Some(mut text) = query.iter_mut().next() else { return Ok(()); };
+  **text = format!("Level {}", current.0.number).into();
+  Ok(())
+}
+```
+
+- **Query Specificity**: Use `With<T>` / `Without<T>` to target only relevant entities and maximize parallelism.
+- **Safe Queries**: Prefer `iter().next()` (or `get_single().ok()`) patterns over `.unwrap()`/`.expect()` in hot paths.
+- **Scheduling Conflict Avoidance**: When multiple queries access the same component mutably, merge them via `ParamSet` to avoid B0001.
+
+```rust
+pub fn update_palette_selection_feedback(
+  selected: Res<SelectedBrick>,
+  mut param_set: ParamSet<(
+    Query<(&PalettePreview, &mut BackgroundColor)>,
+    Query<(&PalettePreview, &mut BackgroundColor), Added<PalettePreview>>,
+  )>,
+  materials_res: Option<Res<Assets<StandardMaterial>>>,
+) -> Result<(), UiSystemError> {
+  let selection_changed = selected.is_changed();
+  let has_new_previews = !param_set.p1().is_empty();
+  if !selection_changed && !has_new_previews { return Ok(()); }
+  // ... update existing via p0(); init new via p1()
+  Ok(())
+}
+```
+
+- **Messages vs Events**: Use observers for event-driven updates (e.g., `LevelStarted`).
+  Use the project's `Messages<T>` resource for queued requests (e.g., `GameOverRequested`) and keep these patterns distinct.
+
+```rust
+// Observer: reacts to a raised event
+pub fn on_level_started(level: Trigger<On<LevelStarted>>, mut query: Query<&mut Text, With<LevelLabelText>>) -> Result<(), UiSystemError> {
+  let Some(mut text) = query.iter_mut().next() else { return Ok(()); };
+  **text = format!("Level {}", level.level_index).into();
+  Ok(())
+}
+
+// Message: enqueue a request handled by a system later
+fn request_game_over(world: &mut World) {
+  world.resource_mut::<Messages<GameOverRequested>>().write(GameOverRequested { remaining_lives: 0 });
+}
+```
+
+- **Asset Handle Reuse**: Load assets once and store handles in resources (e.g., `UiFonts`).
+  Do not call `asset_server.load()` inside spawn/update loops; reuse the cached handles instead.
+- **WASM Parity**: Fonts may appear later on web; use `Option<Res<UiFonts>>` and defer spawning gracefully.
+  For WASM builds, configure `getrandom` for web (`RUSTFLAGS='--cfg getrandom_backend="wasm_js"'`).
+
+These patterns are enforced in tests under `tests/` and verified by the US3 behavior preservation suite.

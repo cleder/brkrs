@@ -173,11 +173,6 @@ pub fn run() {
 
     app.insert_resource(GravityConfig::default());
     app.insert_resource(GameProgress::default());
-    // designer palette UI state
-    app.init_resource::<ui::palette::PaletteState>();
-    app.init_resource::<ui::palette::SelectedBrick>();
-    // Accessibility announcer resource (tracks last announced label for testing/platform bridges)
-    app.insert_resource(ui::level_label::AccessibilityAnnouncement::default());
     // Scoring system state
     app.init_resource::<systems::scoring::ScoreState>();
     app.add_message::<systems::scoring::BrickDestroyed>();
@@ -218,24 +213,12 @@ pub fn run() {
 
     // FontsPlugin wires platform-appropriate font loading systems
     app.add_plugins(crate::ui::fonts::FontsPlugin);
+    // UI plugin (Constitution VIII: Plugin-Based Architecture)
+    app.add_plugins(crate::ui::UiPlugin);
 
     app.add_systems(
         Startup,
         (setup, spawn_border, systems::grid_debug::spawn_grid_overlay),
-    );
-    // Lives counter & level label HUD (separate add_systems to avoid tuple size limits)
-    app.add_systems(
-        Update,
-        (
-            ui::score_display::spawn_score_display_system,
-            ui::lives_counter::spawn_lives_counter,
-            ui::lives_counter::update_lives_counter.after(RespawnSystems::Schedule),
-            ui::game_over_overlay::spawn_game_over_overlay.after(RespawnSystems::Schedule),
-            ui::cheat_indicator::handle_cheat_indicator.after(RespawnSystems::Schedule),
-            ui::level_label::spawn_level_label,
-            // Sync HUD label to CurrentLevel when it changes
-            ui::level_label::sync_with_current_level,
-        ),
     );
 
     app.add_systems(
@@ -273,31 +256,13 @@ pub fn run() {
             .after(despawn_marked_entities),
     );
 
-    app.add_systems(
-        Update,
-        ui::score_display::update_score_display_system
-            .after(systems::scoring::detect_milestone_system),
-    );
+    // Texture manifest system (conditional on feature flag)
+    #[cfg(feature = "texture_manifest")]
+    app.add_systems(Update, systems::multi_hit::watch_brick_type_changes);
 
-    // Designer palette and brick updates split out for readability
-    app.add_systems(
-        Update,
-        (
-            ui::palette::toggle_palette,
-            ui::palette::ensure_palette_ui,
-            ui::palette::handle_palette_selection,
-            ui::palette::update_palette_selection_feedback,
-            ui::palette::update_ghost_preview,
-            ui::palette::place_bricks_on_drag,
-            #[cfg(feature = "texture_manifest")]
-            systems::multi_hit::watch_brick_type_changes,
-        ),
-    );
     app.add_observer(on_wall_hit);
     app.add_observer(on_paddle_ball_hit);
     app.add_observer(on_brick_hit);
-    // Level label observer updates HUD text on LevelStarted events
-    app.add_observer(crate::ui::level_label::on_level_started);
     app.add_observer(start_camera_shake);
     // Note: Multi-hit brick sound observer is now registered by AudioPlugin
     app.run();
