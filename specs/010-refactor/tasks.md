@@ -90,9 +90,9 @@ Because commit hashes do not exist yet at task-generation time, each story’s f
   - **Test file**: tests/ui_fallible_systems.rs (created)
   - **Commit**: `f1dc84dcd4b3e7e555d3df30ae489d6b762327d9` (documentation tests)
   - **Tests**: `ui_systems_should_return_result`, `ui_systems_must_not_panic_on_missing_entities`, etc.
-- [ ] T012 [US2] Approval gate: requestor explicitly approves the US2 failing tests (record approver + date in this task) before T013+ proceed (Constitution VII: Approval gate)
-  - **Pending**: Tests in place; awaiting approval before implementation begins
-  - **Documentation tests**: All currently pass (placeholder implementations)
+- [X] T012 [US2] Approval gate: requestor explicitly approves the US2 failing tests (record approver + date in this task) before T013+ proceed (Constitution VII: Approval gate)
+  - **Approver**: User (approved 2025-12-19)
+  - **Approved**: Documentation tests in place; implementation can begin
 
 ### Implementation for User Story 2
 
