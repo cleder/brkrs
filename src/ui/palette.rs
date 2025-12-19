@@ -51,6 +51,14 @@ pub struct SelectedBrick {
     pub type_id: Option<u8>,
 }
 
+/// Cached ghost preview material handle (loaded once at startup).
+/// Used as fallback when `TypeVariantRegistry` doesn't have a material for the selected brick type.
+/// Constitution VIII: Asset Handle Reuse — load once, reuse everywhere.
+#[derive(Resource)]
+pub struct GhostPreviewMaterial {
+    pub handle: Handle<StandardMaterial>,
+}
+
 #[derive(Component)]
 pub struct PaletteRoot;
 
@@ -63,13 +71,17 @@ pub struct PalettePreview {
 }
 
 /// Marker for ghost preview brick that follows cursor during placement.
+/// Constitution VIII: Required Components — all 3D entities require Transform + Visibility.
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct GhostPreview;
 
 // (duplicate removed)
 
 /// 3D preview viewport marker — small entity that stores mesh & material handles for a mini-preview.
+/// Constitution VIII: Required Components — all 3D entities require Transform + Visibility.
 #[derive(Component, Debug)]
+#[require(Transform, Visibility)]
 pub struct PreviewViewport {
     pub type_id: u8,
     pub mesh: Handle<Mesh>,
@@ -371,8 +383,8 @@ pub fn update_ghost_preview(
     camera_query: Query<(&GlobalTransform, &Camera), With<Camera3d>>,
     ghost: Query<Entity, With<GhostPreview>>,
     registry: Option<Res<TypeVariantRegistry>>,
+    cached_material: Option<Res<GhostPreviewMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let Ok(window) = window.single() else {
         return;
@@ -415,17 +427,13 @@ pub fn update_ghost_preview(
     let world_z = -PLANE_W / 2.0 + (grid_z as f32 + 0.5) * CELL_WIDTH;
     let world_pos = Vec3::new(world_x, 0.5, world_z);
 
-    // Get material for this brick type
+    // Get material for this brick type from registry or use cached fallback
+    // Constitution VIII: Asset Handle Reuse — no per-frame material allocation
     let material = registry
         .as_ref()
         .and_then(|r| r.get(ObjectClass::Brick, type_id))
-        .unwrap_or_else(|| {
-            materials.add(StandardMaterial {
-                base_color: Color::srgba(0.5, 0.5, 0.5, 0.5),
-                alpha_mode: AlphaMode::Blend,
-                ..default()
-            })
-        });
+        .or_else(|| cached_material.as_ref().map(|c| c.handle.clone()))
+        .unwrap_or_default(); // If no cached material, use default (empty handle)
 
     // Update existing ghost or spawn new one
     if let Some(ghost_entity) = ghost.iter().next() {
