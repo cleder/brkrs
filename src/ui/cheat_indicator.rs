@@ -3,6 +3,10 @@ use bevy::prelude::*;
 
 use crate::systems::cheat_mode::CheatModeToggled;
 
+/// Marker component for the cheat mode indicator UI element.
+///
+/// This component tags the UI entity that displays the cheat mode status icon.
+/// The icon appears in the bottom-right corner when cheat mode is active.
 #[derive(Component)]
 pub struct CheatModeIndicator;
 

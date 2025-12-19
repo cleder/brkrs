@@ -113,7 +113,8 @@ Because commit hashes do not exist yet at task-generation time, each story’s f
   - **Completed**: Created CheatIndicatorTexture resource; loaded texture once at startup; handle_cheat_indicator now reuses cached handle (2025-12-19)
 - [X] T018 [US2] Add `#[require(Transform, Visibility)]` to relevant marker components (e.g., GhostPreview, PreviewViewport) and ensure spawns rely on required components (Constitution VIII: Required Components; Constitution VIII: Mesh3d Components)
   - **Completed**: Added #[require(Transform, Visibility)] to GhostPreview + PreviewViewport (2025-12-19)
-- [ ] T019 [US2] Fill rustdoc gaps for public items in src/ui/{cheat_indicator,fonts,palette}.rs (Constitution VI)
+- [X] T019 [US2] Fill rustdoc gaps for public items in src/ui/{cheat_indicator,fonts,palette}.rs (Constitution VI)
+  - **Completed**: Added missing rustdoc for CheatModeIndicator + PaletteRoot; verified no warnings from cargo doc (2025-12-19)
 - [ ] T020 [US2] Implement a self-contained UI plugin in src/ui/mod.rs that registers UI resources + systems; apply minimal supporting edits outside src/ui to use it (Constitution VIII: Plugin-Based Architecture; Spec FR-010)
 - [ ] T021 [US2] Organize UI systems into system sets with `*Systems` suffix and use `.configure_sets()`; avoid chaining individual systems (Constitution VIII: System Organization; Constitution VIII Prohibitions: NO Over-Chaining Systems)
 

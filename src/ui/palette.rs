@@ -59,6 +59,9 @@ pub struct GhostPreviewMaterial {
     pub handle: Handle<StandardMaterial>,
 }
 
+/// Marker component for the root node of the designer palette UI.
+///
+/// Used to identify and manage the palette container entity for spawning/despawning.
 #[derive(Component)]
 pub struct PaletteRoot;
 
