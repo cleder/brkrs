@@ -17,19 +17,19 @@ or Xcode Command Line Tools on macOS.
 
 ## SpecKit Quickstart
 
-Read through the official [SpecKit quickstart documentation](https://github.github.io/spec-kit/quickstart.html).
-You will need to follow the whole process (with the exception of `/speckit.constitution`, the constitution exist).
+Read the official 📌 [SpecKit quickstart documentation](https://github.github.io/spec-kit/quickstart.html) ‼️
 
 ### Start using slash commands with your AI agent
 
-1. `/speckit.constitution` - Establish project principles (already done ✅, but can be used to amend the constition)
-2. `/speckit.specify` - Create baseline specification. 👈 Start here!
-   - `/speckit.clarify` (optional) - Ask structured questions to de-risk ambiguous areas before planning (run before `/speckit.plan` if used)
-3. `/speckit.plan` - Create implementation plan
-   - `/speckit.checklist` (optional) - Generate quality checklists to validate requirements completeness, clarity, and consistency (after `/speckit.plan`)
-4. `/speckit.tasks` - Generate actionable
-   - `/speckit.analyze` (optional) - Cross-artifact consistency & alignment report (after `/speckit.tasks`, before `/speckit.implement`)
-5. `/speckit.implement` - Execute implementation
+The constitution ⚖️ is already established ✅, so you don't have to execute `/speckit.constitution` - but it can be used to amend the constition.
+
+1. `/speckit.specify` - Create baseline specification. 👈 Describe in detail **what** feature you want to implement, NOT *how* (implementation details)
+   - `/speckit.clarify` (optional) - Ask structured questions to de-risk ⚠️ ambiguous areas before planning (run before `/speckit.plan` if used)
+2. `/speckit.plan` - Create implementation plan
+   - `/speckit.checklist` (optional) - Generate quality checklists 📋 to validate requirements completeness, clarity, and consistency (after `/speckit.plan`)
+3. `/speckit.tasks` - Generate actionable tasks 📝
+   - `/speckit.analyze` (optional) - Cross-artifact consistency & alignment 🔎 report (after `/speckit.tasks`, before `/speckit.implement`)
+4. `/speckit.implement` - Execute implementation 🔧
 
 ## Repository structure
 

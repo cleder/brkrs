@@ -4,7 +4,7 @@
 If you’ve contributed to this project, please add yourself to the list below.
 To do so:
 
-- Add a new row in the table.
+- Add a new row at the end of the table.
 - Fill in **either your GitHub User ID** (e.g., `@octocat`) **or your Name** (or both).
 - If you’d like to include your email, wrap your name in a `mailto:` link (e.g., `[Alice Smith](mailto:alice@example.com)`).
 - Provide your **Role** (choose from the common roles listed below).
@@ -43,6 +43,7 @@ To do so:
 | | drummyfish | Artwork, Textures | [Big pack of hand painted tiling textures](https://opengameart.org/content/big-pack-of-hand-painted-tiling-textures) |
 | | [Robin Wood](https://www.robinwood.com/) | Artwork, Textures | [Texture Maps for Balls](https://www.robinwood.com/Catalog/FreeStuff/Textures/TextureSet.html) |
 | [micahbrich](https://github.com/micahbrich) | Micah Rich | Artwork, Fonts | [Orbitron](https://github.com/theleagueof/orbitron) |
+| [SairajJadhav08](https://github.com/SairajJadhav08)  | Sairaj Jadhav | Documentation |  |
 
 ---
 
