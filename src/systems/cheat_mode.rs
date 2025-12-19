@@ -36,22 +36,49 @@ pub struct CheatModeToggled {
     pub active: bool,
 }
 
-/// Plugin skeleton for cheat mode systems
+/// System sets for cheat mode organization.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum CheatModeSystems {
+    /// Input handling for cheat mode toggle
+    Input,
+}
+
+/// Plugin for cheat mode systems
 pub struct CheatModePlugin;
 
 impl Plugin for CheatModePlugin {
     fn build(&self, app: &mut App) {
+        app.configure_sets(PreUpdate, CheatModeSystems::Input);
+        
         app.init_resource::<CheatModeState>()
             .add_message::<CheatModeToggled>()
-            // Run the toggle producer in PreUpdate so it observes `just_pressed` reliably
             .add_systems(
                 PreUpdate,
-                toggle_cheat_mode_input.run_if(crate::pause::not_paused),
+                toggle_cheat_mode_input
+                    .run_if(crate::pause::not_paused)
+                    .in_set(CheatModeSystems::Input),
             );
     }
 }
 
-/// Toggle cheat mode when G is pressed during gameplay
+/// Toggle cheat mode when G is pressed during gameplay.
+///
+/// # Purpose
+///
+/// Provides debug mode toggle for testing and development. When activated,
+/// cheat mode resets the score and lives, allowing unrestricted gameplay.
+///
+/// # When to Use
+///
+/// Automatically registered by CheatModePlugin. Runs in PreUpdate schedule
+/// to observe `just_pressed` reliably.
+///
+/// # Behavior
+///
+/// - Press G to toggle cheat mode on/off
+/// - On activation: Reset score to 0, reset lives to 3, remove game-over overlay
+/// - On deactivation: Reset score to 0 (score during cheat mode doesn't count)
+/// - Emits CheatModeToggled message for UI/audio feedback
 fn toggle_cheat_mode_input(
     keyboard: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
@@ -61,7 +88,7 @@ fn toggle_cheat_mode_input(
     mut commands: Commands,
     overlays: Query<Entity, With<crate::ui::game_over_overlay::GameOverOverlay>>,
     mut lives_state: Option<ResMut<crate::systems::respawn::LivesState>>,
-) {
+) -> Result<(), Box<dyn std::error::Error>> {
     if keyboard.just_pressed(KeyCode::KeyG) {
         let now = time.elapsed_secs_f64();
         cheat.toggle(now);
@@ -85,4 +112,5 @@ fn toggle_cheat_mode_input(
             }
         }
     }
+    Ok(())
 }
