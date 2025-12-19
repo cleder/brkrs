@@ -194,3 +194,74 @@ cargo test --lib ui::lives_counter
 ```
 
 See `tests/` for full test suites and helper utilities.
+
+## Query Failure Policies (Constitution VIII: Error Recovery Patterns)
+
+All UI systems return `Result<(), UiSystemError>` and use the following patterns for expected query failures:
+
+### Pattern: Required Single Entity
+
+When a single UI entity MUST exist:
+
+```rust
+pub fn my_ui_system(
+    mut query: Query<&mut Transform, With<MyUiMarker>>,
+) -> Result<(), UiSystemError> {
+    let mut transform = query
+        .get_single_mut()
+        .map_err(|_| UiSystemError::EntityNotFound("MyUiMarker entity".to_string()))?;
+    // ... use transform
+    Ok(())
+}
+```
+
+**Behavior**: If the entity is not found, the system returns an error and skips the update without panicking.
+Callers decide whether to log a warning or silently continue.
+
+### Pattern: Optional Single Entity
+
+When a single UI entity MAY exist:
+
+```rust
+pub fn my_optional_ui_system(
+    query: Query<&Text, With<ScoreDisplayUi>>,
+) -> Result<(), UiSystemError> {
+    let Some(text) = query.get_single().ok() else {
+        return Ok(()); // Entity doesn't exist yet; that's ok.
+    };
+    // ... use text
+    Ok(())
+}
+```
+
+**Behavior**: If the entity is not found, the system returns `Ok(())` and continues.
+This is safe for spawning systems that may run before entities are created.
+
+### Pattern: Required Resource
+
+When a resource MUST be available:
+
+```rust
+pub fn my_system(
+    fonts: Res<UiFonts>,
+) -> Result<(), UiSystemError> {
+    if !fonts.is_loaded() {
+        return Err(UiSystemError::AssetNotAvailable("UiFonts not yet loaded".to_string()));
+    }
+    // ... use fonts
+    Ok(())
+}
+```
+
+**Behavior**: If the resource is not available or not yet loaded (WASM), the system returns an error.
+The caller (app.rs) logs a diagnostic and reschedules the system to try again next frame.
+
+### Multiple Entities Matching a Query
+
+If a query is expected to match 0 or 1 entities but sometimes matches multiple (e.g., due to a bug or race condition):
+
+1. Use `let Ok(entity) = query.get_single() else { return Ok(()); }` to safely skip the update.
+2. Optionally log a diagnostic: `warn!("Expected 0-1 entities, found multiple")`.
+3. Return `Ok(())` so the game doesn't crash.
+
+**Do not** use `.unwrap()` or `.expect()` in hot UI paths.

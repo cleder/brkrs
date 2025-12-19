@@ -20,8 +20,10 @@ Because commit hashes do not exist yet at task-generation time, each story’s f
 
 **Purpose**: Prepare documentation, task tracking, and test scaffolding for a refactor-focused feature.
 
-- [ ] T001 Ensure feature docs are present in specs/010-refactor/ (plan.md, spec.md, compliance-audit.md, refactoring-plan.md)
-- [ ] T002 [P] Add CI/local verification notes to specs/010-refactor/quickstart.md (create if missing) for `cargo test`, `cargo fmt --all`, `cargo clippy --all-targets --all-features`, `bevy lint`
+- [X] T001 Ensure feature docs are present in specs/010-refactor/ (plan.md, spec.md, compliance-audit.md, refactoring-plan.md)
+  - ✓ All 4 core docs verified present
+- [X] T002 [P] Add CI/local verification notes to specs/010-refactor/quickstart.md (create if missing) for `cargo test`, `cargo fmt --all`, `cargo clippy --all-targets --all-features`, `bevy lint`
+  - ✓ quickstart.md created with verification workflow
 
 ---
 
@@ -29,8 +31,10 @@ Because commit hashes do not exist yet at task-generation time, each story’s f
 
 **Purpose**: Shared foundations required before any story work begins.
 
-- [ ] T003 Define shared UI error type `UiSystemError` in src/ui/mod.rs (or src/ui/error.rs) for fallible systems (Constitution VIII: Fallible Systems)
-- [ ] T004 Define a consistent “expected failure” policy for UI queries (0/1/many entities): document in docs/developer-guide.md or docs/ui-systems.md (Constitution VIII: Error Recovery Patterns)
+- [X] T003 Define shared UI error type `UiSystemError` in src/ui/mod.rs (or src/ui/error.rs) for fallible systems (Constitution VIII: Fallible Systems)
+  - ✓ Added `UiSystemError` enum with Display/Error trait impls
+- [X] T004 Define a consistent "expected failure" policy for UI queries (0/1/many entities): document in docs/developer-guide.md or docs/ui-systems.md (Constitution VIII: Error Recovery Patterns)
+  - ✓ Added "Query Failure Policies" section to docs/ui-systems.md with code examples and expected behaviors
 
 **Checkpoint**: Foundation ready — user story work can begin.
 
