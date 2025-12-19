@@ -24,16 +24,12 @@ You will need to follow the whole process (with the exception of `/speckit.const
 
 1. `/speckit.constitution` - Establish project principles (already done, but can be used to amend the constition)
 2. `/speckit.specify` - Create baseline specification
+   - `/speckit.clarify` (optional) - Ask structured questions to de-risk ambiguous areas before planning (run before `/speckit.plan` if used)
 3. `/speckit.plan` - Create implementation plan
-4. `/speckit.tasks` - Generate actionable tasks
+   - `/speckit.checklist` (optional) - Generate quality checklists to validate requirements completeness, clarity, and consistency (after `/speckit.plan`)
+4. `/speckit.tasks` - Generate actionable
+   - `/speckit.analyze` (optional) - Cross-artifact consistency & alignment report (after `/speckit.tasks`, before `/speckit.implement`)
 5. `/speckit.implement` - Execute implementation
-
-### Optional commands that you can use for your specs (improve quality & confidence)
-
-- `/speckit.clarify` (optional) - Ask structured questions to de-risk ambiguous areas before planning (run before `/speckit.plan` if used)
-- `/speckit.analyze` (optional) - Cross-artifact consistency & alignment report (after `/speckit.tasks`, before `/speckit.implement`)
-- `/speckit.checklist` (optional) - Generate quality checklists to validate requirements completeness, clarity, and consistency (after
-  `/speckit.plan`)
 
 ## Repository structure
 
