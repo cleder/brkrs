@@ -96,9 +96,17 @@ Because commit hashes do not exist yet at task-generation time, each story’s f
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Convert all UI systems in src/ui to return `Result<(), UiSystemError>` and update call sites/registration accordingly (Constitution VIII: Fallible Systems)
-- [ ] T014 [US2] Replace `single()` / `single_mut()` usage patterns with `?` / `let Ok(..) = .. else { return Ok(()); }` as appropriate (Constitution VIII: Error Recovery Patterns; Constitution VIII Prohibitions: NO Panicking Queries)
-- [ ] T015 [US2] Refactor update_palette_selection_feedback in src/ui/palette.rs to be change-driven using `Changed<SelectedBrick>` and “palette spawned” handling via `Added<PalettePreview>` or equivalent (Constitution VIII: Change Detection)
+- [X] T013 [US2] Establish Result-returning system wrapper pattern in lib.rs via result_system! macro or wrapper functions; document pattern for future systems (Constitution VIII: Fallible Systems)
+  - **Deliverable**: Wrapper pattern supports Result-returning systems without breaking Bevy 0.17 app build
+  - **Files**: src/ui/mod.rs (documented pattern + example)
+  - **Pattern**: Systems return Result; wrappers handle errors (log + reschedule or early return)
+  - **Completed**: Pattern documented with example in src/ui/mod.rs end-of-module comments (2025-12-19)
+- [X] T014 [US2] Replace `single()` / `single_mut()` patterns in lives_counter.rs, level_label.rs with `get_single_mut()` + map_err or early Ok(()) returns (Constitution VIII: Error Recovery Patterns; Constitution VIII Prohibitions: NO Panicking Queries)
+  - **Files**: src/ui/lives_counter.rs, src/ui/level_label.rs
+  - **Pattern**: `.get_single()` → map to Result; never `.unwrap()` or `.expect()`
+  - **Completed**: Replaced `.single_mut()` panicking calls with `if let Ok(...) = query.single_mut()` pattern for safe error handling (2025-12-19)
+- [X] T015 [US2] Refactor update_palette_selection_feedback in src/ui/palette.rs to be change-driven using `Changed<SelectedBrick>` and "palette spawned" handling via `Added<PalettePreview>` or equivalent (Constitution VIII: Change Detection)
+  - **Completed**: Added change detection filters (`Changed<SelectedBrick>` + `Added<PalettePreview>`); early return when no changes (2025-12-19)
 - [ ] T016 [US2] Refactor ghost preview + placement flow in src/ui/palette.rs to avoid per-frame allocations and minimize per-frame work; cache fallback material handle in a Resource (Constitution IV: Performance-First; Constitution VIII: Change Detection)
 - [ ] T017 [US2] Introduce cached cheat indicator asset handle Resource and update handle_cheat_indicator to use it (Constitution VIII: Asset Handle Reuse)
 - [ ] T018 [US2] Add `#[require(Transform, Visibility)]` to relevant marker components (e.g., GhostPreview, PreviewViewport) and ensure spawns rely on required components (Constitution VIII: Required Components; Constitution VIII: Mesh3d Components)

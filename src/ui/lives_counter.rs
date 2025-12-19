@@ -82,7 +82,12 @@ pub fn update_lives_counter(
         return;
     }
 
-    if let Ok(mut text) = counter_query.single_mut() {
-        **text = format!("Lives: {}", lives_state.lives_remaining);
+    // Use single_mut() with safe error handling (returns Result in Bevy 0.17)
+    match counter_query.single_mut() {
+        Ok(mut text) => **text = format!("Lives: {}", lives_state.lives_remaining),
+        Err(_) => {
+            // LivesCounter not spawned yet or multiple instances (should not occur with idempotent spawn).
+            // This is a graceful degradation; the text will update once the entity exists.
+        }
     }
 }

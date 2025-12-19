@@ -53,3 +53,34 @@ pub mod lives_counter;
 pub mod palette;
 pub mod pause_overlay;
 pub mod score_display;
+
+// ============================================================================
+// Result-Returning System Wrapper Pattern (Constitution VIII: Fallible Systems)
+// ============================================================================
+//
+// Future UI systems should return `Result<(), UiSystemError>` for fallible operations.
+// However, Bevy 0.17's `.add_systems()` expects functions with `()` return type.
+//
+// **Solution: Use wrapper functions in lib.rs registration:**
+//
+// Example (future implementation):
+// ```rust
+// // In src/ui/some_system.rs (returns Result):
+// pub fn my_system_result(/* queries/resources */) -> Result<(), UiSystemError> {
+//     // Fallible work
+//     Ok(())
+// }
+//
+// // In src/lib.rs (wrapper to register):
+// fn my_system_wrapper(/* queries/resources */) {
+//     if let Err(e) = ui::some_system::my_system_result(/* params */) {
+//         warn!("UI system error: {}", e);
+//         // Optionally reschedule, log diagnostic, or gracefully degrade.
+//     }
+// }
+//
+// app.add_systems(Update, my_system_wrapper);
+// ```
+//
+// This pattern allows Result-returning systems without breaking Bevy 0.17 compatibility
+// while maintaining clear error boundaries and fallible semantics in the UI module.
