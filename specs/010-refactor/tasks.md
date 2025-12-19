@@ -156,9 +156,12 @@ Because commit hashes do not exist yet at task-generation time, each story’s f
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T027 [P] Run `cargo fmt --all` and commit formatting-only changes
-- [ ] T028 Run `cargo clippy --all-targets --all-features` and fix clippy issues introduced by refactor (do not fix unrelated lint)
-- [ ] T029 [P] Run `bevy lint` and fix Bevy-specific lint issues introduced by refactor
+- [X] T027 [P] Run `cargo fmt --all` and commit formatting-only changes
+  - **Result**: PASS — no formatting changes required
+- [X] T028 Run `cargo clippy --all-targets --all-features` and fix clippy issues introduced by refactor (do not fix unrelated lint)
+  - **Result**: PASS — no clippy warnings/errors introduced by US3 changes
+- [X] T029 [P] Run `bevy lint` and fix Bevy-specific lint issues introduced by refactor
+  - **Result**: PASS — only unrelated warnings (unused imports in legacy modules); no issues from US3 changes
 - [ ] T030 Update docs/ui-systems.md with any new UI patterns adopted (fallible systems, change-detection patterns, asset caching resources)
 
 ---
