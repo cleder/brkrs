@@ -268,7 +268,7 @@ If a query is expected to match 0 or 1 entities but sometimes matches multiple (
 
 ## Constitution Compliance Cheatsheet (Bevy 0.17)
 
-The UI follows Brkrs Constitution Section VIII and Bevy 0.17 mandates:
+The UI follows Brkrs Constitution Section VIII and Bevy 0.17’s mandates:
 
 - **Fallible Systems**: UI systems return `Result<(), UiSystemError>` and avoid panics.
   Prefer early returns on missing entities/resources.
@@ -315,7 +315,7 @@ pub fn update_palette_selection_feedback(
 // Observer: reacts to a raised event
 pub fn on_level_started(level: Trigger<LevelStarted>, mut query: Query<&mut Text, With<LevelLabelText>>) -> Result<(), UiSystemError> {
   let Some(mut text) = query.iter_mut().next() else { return Ok(()); };
-  **text = format!("Level {}", level.index).into();
+  **text = format!("Level {}", level.level_index).into();
   Ok(())
 }
 
