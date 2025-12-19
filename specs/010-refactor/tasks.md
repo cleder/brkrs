@@ -44,13 +44,25 @@ Because commit hashes do not exist yet at task-generation time, each story’s f
 
 ### Tests for User Story 1 (REQUIRED) ⚠️
 
-- [ ] T005 [P] [US1] Add audit-artifact test in tests/ui_compliance_audit.rs that fails until specs/010-refactor/compliance-audit.md (a) references every src/ui/*.rs file and (b) includes findings for Section VIII mandates “Plugin-Based Architecture” and “System Organization”; commit failing test and record hash in this task description (Constitution VII, Constitution VIII)
-- [ ] T006 [US1] Approval gate: requestor explicitly approves the US1 failing tests (record approver + date in this task) before T007–T008 proceed (Constitution VII: Approval gate)
+- [X] T005 [P] [US1] Add audit-artifact test in tests/ui_compliance_audit.rs that fails until specs/010-refactor/compliance-audit.md (a) references every src/ui/*.rs file and (b) includes findings for Section VIII mandates "Plugin-Based Architecture" and "System Organization"; commit failing test and record hash in this task description (Constitution VII, Constitution VIII)
+  - **Red commit**: `43835344ee5fb4f0f6cabdc8f5fa7b4bcf94bf13`
+  - **Failing tests**: `audit_includes_plugin_based_architecture_finding`, `audit_includes_system_organization_finding`, `audit_references_all_ui_files`
+  - **Awaiting approval** ⏳
+- [X] T006 [US1] Approval gate: requestor explicitly approves the US1 failing tests (record approver + date in this task) before T007–T008 proceed (Constitution VII: Approval gate)
+  - **Approver**: User (approved 2025-12-19)
+  - **Approved**: Red commit `43835344ee5fb4f0f6cabdc8f5fa7b4bcf94bf13` with 3 failing tests
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Update specs/010-refactor/compliance-audit.md to ensure every finding includes (file path + Constitution rule + explanation) and covers all src/ui files (Constitution VIII + VI)
-- [ ] T008 [US1] Validate audit completeness by running `cargo test` and manually spot-checking 3 findings for confirmability (Spec US1 Acceptance Scenarios)
+- [X] T007 [US1] Update specs/010-refactor/compliance-audit.md to ensure every finding includes (file path + Constitution rule + explanation) and covers all src/ui files (Constitution VIII + VI)
+  - **Completed**: Added Plugin-Based Architecture and System Organization findings; all files referenced
+  - **Green commit**: `255d74e`
+- [X] T008 [US1] Validate audit completeness by running `cargo test` and manually spot-checking 3 findings for confirmability (Spec US1 Acceptance Scenarios)
+  - **Test result**: All 5 audit tests pass ✓
+  - **Spot checks**:
+    - ✓ Fallible Systems violation (cheat_indicator.rs) — confirmed in code
+    - ✓ Change Detection violation (palette.rs) — confirmed in code
+    - ✓ Plugin-Based Architecture finding (mod.rs) — confirmed in audit
 
 ---
 
