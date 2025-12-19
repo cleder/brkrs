@@ -74,6 +74,27 @@ NEVER call `asset_server.load()` repeatedly for the same path in spawn systems.
 - [src/ui/fonts.rs](../../src/ui/fonts.rs): `UiFonts` and `FontsPlugin` lack rustdoc.
 - [src/ui/palette.rs](../../src/ui/palette.rs): multiple public types and systems lack rustdoc (e.g., `PaletteState`, `SelectedBrick`, `PaletteRoot`, `PalettePreview`, `GhostPreview`, `PreviewViewport`, and several `pub fn` systems).
 
+### VIII. Bevy 0.17 ECS Architecture Mandates — Plugin-Based Architecture
+
+**Rule**: UI code MUST be organized as a self-contained plugin registered in the app builder; all UI setup/systems MUST be encapsulated in the plugin, not scattered across main setup.
+
+**Violations / risks**:
+
+- [src/ui/mod.rs](../../src/ui/mod.rs): UI systems and resources are registered directly in the app builder in `main.rs` rather than through a cohesive `UiPlugin` struct; this prevents the UI module from being independently enabled/disabled or composed into other apps.
+
+### VIII. Bevy 0.17 ECS Architecture Mandates — System Organization
+
+**Rule**: Systems MUST be organized into explicit system sets (e.g., `UiSystems::Update`, `UiSystems::Spawn`) using `.configure_sets()`.
+Do NOT chain individual systems directly; use sets to express dependencies and enable parallel execution.
+
+**Violations / risks**:
+
+- [src/ui/palette.rs](../../src/ui/palette.rs): UI systems (`toggle_palette`, `ensure_palette_ui`, `handle_palette_selection`, `update_palette_selection_feedback`, `update_ghost_preview`, `place_bricks_on_drag`) are chained or registered independently without system sets, preventing reusable composition and forcing sequential execution.
+- [src/ui/lives_counter.rs](../../src/ui/lives_counter.rs): `spawn_lives_counter` and `update_lives_counter` are registered without system set organization.
+- [src/ui/score_display.rs](../../src/ui/score_display.rs): `spawn_score_display_system` and `update_score_display_system` lack system set organization.
+- [src/ui/level_label.rs](../../src/ui/level_label.rs): `spawn_level_label`, `on_level_started`, `sync_with_current_level` are registered independently without set organization.
+- [src/ui/cheat_indicator.rs](../../src/ui/cheat_indicator.rs): `handle_cheat_indicator` lacks system set organization.
+
 ### IV. Performance-First Implementation (supporting)
 
 **Rule**: Game code MUST meet 60 FPS; minimize allocations in hot loops.
