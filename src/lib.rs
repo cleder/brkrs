@@ -276,7 +276,6 @@ fn setup(
     mut rapier_config: Query<&mut RapierConfiguration>,
     gravity_cfg: Res<GravityConfig>,
     ui_fonts: Option<Res<UiFonts>>,
-    asset_server: Res<AssetServer>,
 ) {
     // Set gravity for normal gameplay (respawn will temporarily disable it)
     if let Ok(mut config) = rapier_config.single_mut() {
@@ -288,24 +287,6 @@ fn setup(
     let _debug_material = materials.add(StandardMaterial {
         base_color_texture: Some(images.add(uv_debug_texture())),
         ..default()
-    });
-
-    // Initialize ghost preview material (cached for palette system)
-    // Constitution VIII: Asset Handle Reuse — load once at startup, reuse in update_ghost_preview
-    let ghost_material = materials.add(StandardMaterial {
-        base_color: Color::srgba(0.5, 0.5, 0.5, 0.5),
-        alpha_mode: AlphaMode::Blend,
-        ..default()
-    });
-    commands.insert_resource(ui::palette::GhostPreviewMaterial {
-        handle: ghost_material,
-    });
-
-    // Initialize cheat indicator texture (cached for cheat mode system)
-    // Constitution VIII: Asset Handle Reuse — load once at startup, reuse on toggle
-    let cheat_texture = asset_server.load("textures/default/cheat-mode-128.png");
-    commands.insert_resource(ui::cheat_indicator::CheatIndicatorTexture {
-        handle: cheat_texture,
     });
 
     // Level entities (paddle, ball, bricks) are spawned by LevelLoaderPlugin after level parsing.

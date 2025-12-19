@@ -126,6 +126,9 @@ impl Plugin for UiPlugin {
         app.init_resource::<palette::SelectedBrick>();
         app.insert_resource(level_label::AccessibilityAnnouncement::default());
 
+        // UI asset initialization
+        app.add_systems(Startup, setup_ui_assets);
+
         // UI spawn systems
         app.add_systems(
             Update,
@@ -168,4 +171,35 @@ impl Plugin for UiPlugin {
         // Observer for level started events
         app.add_observer(level_label::on_level_started);
     }
+}
+
+/// Initialize UI assets at startup.
+///
+/// Creates and caches materials/textures used by UI systems:
+/// - Ghost preview material for palette system
+/// - Cheat indicator texture for cheat mode display
+///
+/// Constitution VIII: Asset Handle Reuse — load once at startup, reuse in update systems.
+fn setup_ui_assets(
+    mut commands: Commands,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
+) {
+    use bevy::prelude::*;
+
+    // Initialize ghost preview material (cached for palette system)
+    let ghost_material = materials.add(StandardMaterial {
+        base_color: Color::srgba(0.5, 0.5, 0.5, 0.5),
+        alpha_mode: AlphaMode::Blend,
+        ..default()
+    });
+    commands.insert_resource(palette::GhostPreviewMaterial {
+        handle: ghost_material,
+    });
+
+    // Initialize cheat indicator texture (cached for cheat mode system)
+    let cheat_texture = asset_server.load("textures/default/cheat-mode-128.png");
+    commands.insert_resource(cheat_indicator::CheatIndicatorTexture {
+        handle: cheat_texture,
+    });
 }

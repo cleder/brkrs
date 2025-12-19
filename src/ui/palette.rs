@@ -286,6 +286,21 @@ pub fn handle_palette_selection(
     }
 }
 
+/// Resolve the base color to use for a palette preview, falling back to grey when the material is missing.
+fn base_color_for(
+    material: &Option<Handle<StandardMaterial>>,
+    materials_res: &Option<Res<Assets<StandardMaterial>>>,
+) -> Color {
+    material
+        .as_ref()
+        .and_then(|h| {
+            materials_res
+                .as_ref()
+                .and_then(|m| m.get(h).map(|mat| mat.base_color))
+        })
+        .unwrap_or(Color::srgba(0.5, 0.5, 0.5, 1.0))
+}
+
 /// Update visual feedback for selected palette item.
 pub fn update_palette_selection_feedback(
     selected: Res<SelectedBrick>,
@@ -304,35 +319,26 @@ pub fn update_palette_selection_feedback(
     }
 
     // Update existing previews if selection changed
+    // Only process new previews when selection is unchanged to avoid double-processing
     if selection_changed {
         for (preview, mut bg_color) in param_set.p0().iter_mut() {
+            let base = base_color_for(&preview.material, &materials_res);
             if Some(preview.type_id) == selected.type_id {
-                // Highlight selected item with brighter color
+                // Highlight selected item with brighter yellow
                 *bg_color = BackgroundColor(Color::srgba(1.0, 1.0, 0.0, 1.0));
             } else {
                 // Restore original color from material
-                let base_color = preview.material.as_ref().and_then(|h| {
-                    materials_res
-                        .as_ref()
-                        .and_then(|m| m.get(h).map(|mat| mat.base_color))
-                });
-                *bg_color = BackgroundColor(base_color.unwrap_or(Color::srgba(0.5, 0.5, 0.5, 1.0)));
+                *bg_color = BackgroundColor(base);
             }
         }
-    }
-
-    // Initialize colors for newly spawned previews
-    if has_new_previews {
+    } else if has_new_previews {
+        // Initialize colors for newly spawned previews only (selection unchanged)
         for (preview, mut bg_color) in param_set.p1().iter_mut() {
+            let base = base_color_for(&preview.material, &materials_res);
             if Some(preview.type_id) == selected.type_id {
                 *bg_color = BackgroundColor(Color::srgba(1.0, 1.0, 0.0, 1.0));
             } else {
-                let base_color = preview.material.as_ref().and_then(|h| {
-                    materials_res
-                        .as_ref()
-                        .and_then(|m| m.get(h).map(|mat| mat.base_color))
-                });
-                *bg_color = BackgroundColor(base_color.unwrap_or(Color::srgba(0.5, 0.5, 0.5, 1.0)));
+                *bg_color = BackgroundColor(base);
             }
         }
     }
@@ -434,11 +440,21 @@ pub fn update_ghost_preview(
 
     // Get material for this brick type from registry or use cached fallback
     // Constitution VIII: Asset Handle Reuse — no per-frame material allocation
-    let material = registry
+    let Some(material) = registry
         .as_ref()
         .and_then(|r| r.get(ObjectClass::Brick, type_id))
         .or_else(|| cached_material.as_ref().map(|c| c.handle.clone()))
-        .unwrap_or_default(); // If no cached material, use default (empty handle)
+    else {
+        // No material available; log warning and remove ghost to avoid rendering with invalid handle
+        warn!(
+            "No material available for ghost preview (type {}); registry and cached fallback both missing",
+            type_id
+        );
+        for entity in ghost.iter() {
+            commands.entity(entity).despawn();
+        }
+        return;
+    };
 
     // Update existing ghost or spawn new one
     if let Some(ghost_entity) = ghost.iter().next() {
