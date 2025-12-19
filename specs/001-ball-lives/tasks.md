@@ -10,7 +10,9 @@ description: "Task list for Ball Lives Counter feature implementation"
 - Required: [plan.md](plan.md), [spec.md](spec.md)
 - Optional (available): [research.md](research.md), [data-model.md](data-model.md), [contracts/events.openapi.yaml](contracts/events.openapi.yaml), [quickstart.md](quickstart.md)
 
-**Note on tests**: No new tests are included because the feature spec did not request a TDD approach.
+**Note on tests**: Tests are REQUIRED for this feature.
+Add unit tests for lives state behavior and integration/acceptance tests for the user scenarios.
+**TDD workflow**: write tests first, commit the failing tests (include failing-test commit hash in task descriptions), obtain approval, then implement until tests pass.
 
 ## Phase 1: Setup (Shared Infrastructure)
 

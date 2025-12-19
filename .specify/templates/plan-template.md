@@ -31,6 +31,20 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
+This check MUST verify compliance with the constitution, including **Test-Driven Development (TDD)** gates:
+
+- Tests are defined and committed prior to implementation efforts for each story/feature.
+- A proof-of-failure commit (tests that FAIL) MUST exist in the branch history prior to implementation commits.
+- Tests MUST be reviewed and approved by the feature owner or requestor before implementation begins.
+
+This check MUST also verify compliance with **Bevy 0.17 mandates & prohibitions** (if the feature touches ECS, rendering, assets, or scheduling):
+
+- Systems are fallible (`Result`) and do not panic on query outcomes (`?`, no `.unwrap()` on queries).
+- Queries use `With<T>`/`Without<T>` filters and `Changed<T>` where appropriate (especially UI).
+- Message vs Event usage follows Bevy 0.17 APIs (`MessageWriter/Reader` vs observers).
+- Assets are loaded once and handles are stored in Resources (no repeated `asset_server.load()` in loops).
+- Hierarchies use `ChildOf::parent()` and `add_children()`/`remove::<Children>()` patterns.
+
 [Gates determined based on constitution file]
 
 ## Project Structure

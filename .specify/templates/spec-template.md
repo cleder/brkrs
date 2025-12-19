@@ -7,6 +7,10 @@
 
 ## User Scenarios & Testing *(mandatory)*
 
+**TDD REQUIREMENT**: For every user story, **tests must be written first** and included in this spec as testable acceptance scenarios. Tests MUST be committed before implementation and a failing-test commit (red) MUST exist in the branch history as proof.
+
+**BEVY 0.17 REQUIREMENT**: If the feature touches ECS systems, queries, events/messages, rendering, assets, UI updates, or hierarchy, the implementation MUST comply with the constitution's **Bevy 0.17 mandates & prohibitions**. Acceptance scenarios SHOULD include at least one check that guards against prohibited patterns (e.g., panicking queries or per-frame UI updates without `Changed<T>`).
+
 <!--
   IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
   Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,

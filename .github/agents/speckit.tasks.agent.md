@@ -44,7 +44,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Phase 1: Setup tasks (project initialization)
    - Phase 2: Foundational tasks (blocking prerequisites for all user stories)
    - Phase 3+: One phase per user story (in priority order from spec.md)
-   - Each phase includes: story goal, independent test criteria, tests (if requested), implementation tasks
+   - Each phase includes: story goal, independent test criteria, tests (REQUIRED), implementation tasks. Tests MUST follow TDD pattern: failing test proof before implementation.
    - Final Phase: Polish & cross-cutting concerns
    - All tasks must follow the strict checklist format (see Task Generation Rules below)
    - Clear file paths for each task
@@ -68,7 +68,9 @@ The tasks.md should be immediately executable - each task must be specific enoug
 
 **CRITICAL**: Tasks MUST be organized by user story to enable independent implementation and testing.
 
-**Tests are OPTIONAL**: Only generate test tasks if explicitly requested in the feature specification or if user requests TDD approach.
+**Tests are REQUIRED**: Always generate test tasks for each user story. Tests MUST be written first and committed before implementation and a failing-test commit (red) MUST be present in the branch history as proof; include the failing-test commit hash in the task metadata.
+
+**Bevy 0.17 compliance is REQUIRED when applicable**: If the feature touches ECS systems, queries, events/messages, rendering, assets, UI updates, or hierarchy, tasks MUST include explicit acceptance criteria or checklist tasks to enforce the constitution's Bevy 0.17 mandates & prohibitions (e.g., no panicking queries, `With`/`Without` filters, `Changed<T>` for reactive UI, message vs event distinction, asset handle reuse, and correct hierarchy APIs).
 
 ### Checklist Format (REQUIRED)
 

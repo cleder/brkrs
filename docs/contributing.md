@@ -34,7 +34,9 @@ This guide covers the contribution workflow.
 - [ ] Run `cargo clippy --all-targets --all-features` — no warnings
 - [ ] Run `bevy lint` — bevy-specific checks pass
 - [ ] Update documentation if adding new features
-- [ ] Add tests for new functionality
+- [ ] Follow strict TDD-first: tests written first, approved, and failing (red) before implementation
+- [ ] Add tests for new functionality (unit + integration/acceptance where appropriate)
+- [ ] Verify Bevy 0.17 mandate compliance (no panicking queries, filtered queries, `Changed<T>` for reactive UI, correct message vs event usage)
 
 ### Submitting a PR
 
@@ -113,12 +115,19 @@ pub fn spawn_brick(commands: &mut Commands, grid_pos: (usize, usize), brick_type
 
 ### ECS Patterns
 
-brkrs follows Bevy's ECS architecture:
+brkrs follows Bevy's ECS architecture and the project constitution mandates Bevy 0.17 patterns:
 
 - **Components**: Pure data, no behavior
 - **Systems**: Functions that operate on component queries
 - **Resources**: Global state shared across systems
-- **Events**: Decoupled communication between systems
+- **Messages**: Buffered communication between systems via `MessageWriter`/`MessageReader`
+- **Events**: Observer-triggered signals via `commands.trigger(...)` and `app.add_observer(...)`
+
+Key Bevy 0.17 rules (non-exhaustive):
+
+- Systems should be fallible (`Result`) and MUST avoid panicking query paths (no `.unwrap()` on query results).
+- Queries MUST be specific (`With<T>`/`Without<T>`) and UI updates MUST use `Changed<T>` where applicable.
+- Never conflate `Message` (buffered) with `Event` (observers).
 
 ## Commit Messages
 

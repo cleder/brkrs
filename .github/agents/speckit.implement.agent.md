@@ -105,7 +105,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 6. Execute implementation following the task plan:
    - **Phase-by-phase execution**: Complete each phase before moving to the next
-   - **Respect dependencies**: Run sequential tasks in order, parallel tasks [P] can run together  
+   - **Respect dependencies**: Run sequential tasks in order, parallel tasks [P] can run together
    - **Follow TDD approach**: Execute test tasks before their corresponding implementation tasks
    - **File-based coordination**: Tasks affecting the same files must run sequentially
    - **Validation checkpoints**: Verify each phase completion before proceeding
@@ -116,6 +116,13 @@ You **MUST** consider the user input before proceeding (if not empty).
    - **Core development**: Implement models, services, CLI commands, endpoints
    - **Integration work**: Database connections, middleware, logging, external services
    - **Polish and validation**: Unit tests, performance optimization, documentation
+
+   - **Bevy 0.17 mandate enforcement (where applicable)**:
+     - Systems MUST be fallible (`Result`) and MUST avoid panicking query paths (no `.unwrap()` on query results; prefer `?`, `let Ok(_) = ... else { return Ok(()); }`, and `let Some(_) = ... else { return Ok(()); }`).
+     - Queries MUST be specific (`With<T>`/`Without<T>`) to maximize parallelism and avoid `&mut Transform` scheduling conflicts.
+     - Reactive systems (especially UI) MUST use `Changed<T>` and MUST NOT run every frame for unchanged data.
+     - Message vs Event MUST follow Bevy 0.17 APIs (`MessageWriter/Reader` vs observers) and must not be conflated.
+     - Assets MUST be loaded once and handles reused via Resources (no repeated `asset_server.load()` in spawn/update loops).
 
 8. Progress tracking and error handling:
    - Report progress after each completed task

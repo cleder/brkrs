@@ -35,6 +35,9 @@ The project follows these architectural principles (from the project Constitutio
 3. **Modular Features**: Each feature is independently testable
 4. **Performance-First**: 60 FPS target on native and WASM
 5. **Cross-Platform**: Supports native (Linux/Windows/macOS) and WASM
+6. **Rustdoc**: Public APIs are documented (intent-focused)
+7. **TDD-First**: Tests are written first, fail (red), and are approved before implementation
+8. **Bevy 0.17 mandates**: Follow Bevy 0.17 ECS/graphics/performance rules and prohibitions
 
 ## System Overview
 
@@ -196,6 +199,11 @@ LivesState.lives_remaining += 1
 - Magnet bricks (55-56): 0 points (effect-only)
 
 **Persistence**: Score accumulates across level transitions, resets on game restart
+
+**Messages vs Events**:
+
+- `BrickDestroyed` and `MilestoneReached` in the scoring flow are **messages** (`#[derive(Message)]`) consumed via `MessageReader`.
+- Observer-driven signals (like audio triggers) are **events** (`#[derive(Event)]`) observed via `On<T>` and emitted via `commands.trigger(...)`.
 
 ## UI System
 

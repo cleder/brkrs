@@ -182,6 +182,11 @@ Unit tests for UI systems are in `tests/` and focus on:
 - State transitions and event handling.
 - Material/preview resolution when registries are available.
 
+UI update systems MUST be reactive where possible:
+
+- Prefer queries filtered with `Changed<T>` so updates only run when source data changes.
+- Avoid per-frame UI updates that re-write unchanged text/material state.
+
 Example:
 
 ```bash

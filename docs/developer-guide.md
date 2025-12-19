@@ -21,7 +21,8 @@ Read the official 📌 [SpecKit quickstart documentation](https://github.github.
 
 ### Start using slash commands with your AI agent
 
-The constitution ⚖️ is already established ✅, so you don't have to execute `/speckit.constitution` - but it can be used to amend the constition.
+The constitution ⚖️ is already established ✅.
+See `.specify/memory/constitution.md` for the non-negotiable rules, including strict **TDD-first** and **Bevy 0.17 mandates & prohibitions**.
 
 1. `/speckit.specify` - Create baseline specification. 👈 Describe in detail **what** feature you want to implement, NOT *how* (implementation details)
    - `/speckit.clarify` (optional) - Ask structured questions to de-risk ⚠️ ambiguous areas before planning (run before `/speckit.plan` if used)
@@ -117,6 +118,15 @@ cargo test -- --test-threads=1
 Tests that use environment variables (like `BK_LEVEL`) can conflict when run
 in parallel. Use `--test-threads=1` if you see flaky test failures.
 ```
+
+### TDD workflow (required)
+
+All implementation work follows strict Test-Driven Development (TDD):
+
+1. Write unit/integration tests first.
+2. Get tests validated/approved (by the feature owner/requestor).
+3. Confirm tests fail (red).
+4. Only then implement until tests pass (green).
 
 ## Code quality checks
 
@@ -246,7 +256,17 @@ fn on_brick_hit(trigger: On<MultiHitBrickHit>) {
 }
 ```
 
-### Event handling with observers
+### Messages vs events (Bevy 0.17)
+
+brkrs uses two distinct signalling patterns.
+They are not interchangeable:
+
+- **Messages** (`#[derive(Message)]`) are buffered queues consumed via `MessageReader`
+  and produced via `MessageWriter`.
+- **Events** (`#[derive(Event)]`) are used exclusively with Bevy's observer pattern via
+  `commands.trigger(...)` and `app.add_observer(...)`.
+
+#### Events (observers)
 
 Bevy 0.17 uses the **observer pattern** for custom events:
 
@@ -261,6 +281,30 @@ pub fn my_observer(trigger: On<MyEvent>) {
 
 // In app setup:
 app.add_observer(my_observer);
+```
+
+#### Messages (buffered)
+
+For buffered queues, use `MessageReader`/`MessageWriter`:
+
+```rust
+use bevy::ecs::message::{Message, MessageReader, MessageWriter};
+use bevy::prelude::*;
+
+#[derive(Message, Debug, Clone, Copy)]
+pub struct BrickDestroyed {
+   pub brick_entity: Entity,
+   pub brick_type: u8,
+}
+
+fn award_points(
+   mut destroyed: MessageReader<BrickDestroyed>,
+) -> Result<(), ()> {
+   for msg in destroyed.read() {
+      debug!(?msg, "Award points");
+   }
+   Ok(())
+}
 ```
 
 See {doc}`architecture` for a detailed breakdown.
@@ -302,8 +346,8 @@ Enable it when ball behavior seems unexpected.
 Enable physics debug rendering:
 
 ```rust
-// In your system
-commands.spawn(RapierDebugRenderPlugin::default());
+// In app/plugin setup
+app.add_plugins(RapierDebugRenderPlugin::default());
 ```
 
 ### Inspecting entities
@@ -342,7 +386,9 @@ use bevy::prelude::*;
 
 ### Working with Events and Observers
 
-Bevy 0.17 uses the **observer pattern** for custom events.
+Bevy 0.17 uses the **observer pattern** for `Event` types.
+For buffered communication between systems, use `Message` types.
+
 Events are structs that derive `Event`:
 
 ```rust
