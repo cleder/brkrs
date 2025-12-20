@@ -118,6 +118,64 @@ BK_LEVEL=997 cargo run --release
 - Unit and integration tests exercise level loading and migration tooling.
   See `tests/` for examples.
 
+## Assigning Per-Level Ground Textures
+
+You can assign unique ground textures to each level automatically or manually:
+
+### Automatic Assignment (Recommended)
+
+Use the helper script:
+
+```bash
+python scripts/assign_and_add_ground_profiles.py --mode=all      # Reassigns all levels
+python scripts/assign_and_add_ground_profiles.py --mode=missing  # Only assigns to levels without a ground_profile
+```
+
+This script:
+
+- Randomly assigns a unique texture from `assets/textures/background/` to each level's ground plane (as a `ground_profile` in the `presentation` field)
+- Updates `assets/textures/manifest.ron` to add any missing ground profiles for the assigned textures
+- Can be run multiple times to reshuffle textures or fill in missing assignments
+
+### Manual Assignment
+
+1. **Choose a texture** from `assets/textures/background/` (e.g., `nsTile1044.png`).
+2. **Add a profile** to `assets/textures/manifest.ron` if not already present:
+
+    ```rust
+    (
+        id: "ground/nsTile1044",
+        albedo_path: "background/nsTile1044.png",
+        normal_path: None,
+        roughness: 0.9,
+        metallic: 0.0,
+        uv_scale: (4.0, 3.0),
+        uv_offset: (0.0, 0.0),
+        fallback_chain: ["ground/default"],
+    ),
+    ```
+
+3. **Edit the level file** (e.g., `assets/levels/level_001.ron`) and add or update the `presentation` field:
+
+    ```rust
+    LevelDefinition(
+      number: 1,
+      ...
+      presentation: Some((
+        level_number: 1,
+        ground_profile: Some("ground/nsTile1044"),
+        background_profile: None,
+        sidewall_profile: None,
+        tint: None,
+        notes: Some("Custom ground texture"),
+      )),
+    )
+    ```
+
+4. **Save and reload the game** (or use hot-reload if supported) to see the new ground texture in-game.
+
+See also: `assets/textures/README.md` for more on texture profiles and manifest editing.
+
 ## Visual / texture mapping
 
 If the `texture_manifest` feature is enabled, a texture registry maps `BrickTypeId`s (tile values) to visual assets.
