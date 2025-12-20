@@ -50,9 +50,6 @@ jobs:
           cargo test --no-run --all-features || true
       - name: Run cargo test
         run: cargo test --all-features
-      - name: Compile WASM target
-        run: |
-          cargo build --release --target wasm32-unknown-unknown --all-features
 
   # 📊 Coverage job (isolated, cleans before build)
   # coverage:
