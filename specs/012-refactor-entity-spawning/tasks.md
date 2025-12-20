@@ -28,7 +28,7 @@ Tests MUST be written and committed first, verified to FAIL (red), and then appr
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create `src/systems/spawning.rs` module file
+- [x] T001 Create `src/systems/spawning.rs` module file
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
@@ -46,18 +46,18 @@ Tests MUST be written and committed first, verified to FAIL (red), and then appr
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation; include failing-test commit hash in task**
 
-- [ ] T002 [US1] Create unit test in `tests/spawning_systems.rs` to verify `spawn_camera` creates entity with `MainCamera` and `Camera3d` (Red state)
-- [ ] T003 [US1] Create unit test in `tests/spawning_systems.rs` to verify `spawn_ground_plane` creates entity with `GroundPlane` and `Mesh3d` (Red state)
-- [ ] T004 [US1] Create unit test in `tests/spawning_systems.rs` to verify `spawn_light` creates entity with `PointLight` (Red state)
+- [x] T002 [US1] Create unit test in `tests/spawning_systems.rs` to verify `spawn_camera` creates entity with `MainCamera` and `Camera3d` (Red state)
+- [x] T003 [US1] Create unit test in `tests/spawning_systems.rs` to verify `spawn_ground_plane` creates entity with `GroundPlane` and `Mesh3d` (Red state)
+- [x] T004 [US1] Create unit test in `tests/spawning_systems.rs` to verify `spawn_light` creates entity with `PointLight` (Red state)
 
 ### Implementation for User Story 1
 
-- [ ] T005 [US1] Define `MainCamera` component in `src/systems/spawning.rs`
-- [ ] T006 [US1] Implement `spawn_camera` system in `src/systems/spawning.rs`
-- [ ] T007 [US1] Implement `spawn_ground_plane` system in `src/systems/spawning.rs`
-- [ ] T008 [US1] Implement `spawn_light` system in `src/systems/spawning.rs`
-- [ ] T009 [US1] Register `spawning` module in `src/systems/mod.rs`
-- [ ] T010 [US1] Update `src/lib.rs` to register new systems and remove spawning logic from `setup`
+- [x] T005 [US1] Define `MainCamera` component in `src/systems/spawning.rs`
+- [x] T006 [US1] Implement `spawn_camera` system in `src/systems/spawning.rs`
+- [x] T007 [US1] Implement `spawn_ground_plane` system in `src/systems/spawning.rs`
+- [x] T008 [US1] Implement `spawn_light` system in `src/systems/spawning.rs`
+- [x] T009 [US1] Register `spawning` module in `src/systems/mod.rs`
+- [x] T010 [US1] Update `src/lib.rs` to register new systems, remove spawning logic from `setup`, and ensure gravity config remains
 
 **Checkpoint**: At this point, the game should compile and run with the new spawning systems.
 
@@ -65,8 +65,8 @@ Tests MUST be written and committed first, verified to FAIL (red), and then appr
 
 **Purpose**: Final polish, cleanup, and non-functional requirements
 
-- [ ] T011 Verify no visual regressions by running the game and comparing with `develop` branch
-- [ ] T012 Run `cargo clippy` and `cargo fmt` to ensure code quality
+- [x] T011 Verify no visual regressions by running the game and comparing with `develop` branch
+- [x] T012 Run `cargo clippy` and `cargo fmt` to ensure code quality
 
 ## Dependencies
 
