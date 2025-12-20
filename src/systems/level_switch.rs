@@ -173,14 +173,22 @@ fn queue_keyboard_requests(
     keyboard: Res<ButtonInput<KeyCode>>,
     cheat: Option<Res<crate::systems::cheat_mode::CheatModeState>>,
     mut events: MessageWriter<LevelSwitchRequested>,
-    mut beep: Option<MessageWriter<crate::systems::audio::UiBeepEvent>>,
+    mut beep: Option<MessageWriter<crate::signals::UiBeep>>,
 ) {
     // L always allowed to cycle forward
     if keyboard.just_pressed(KeyCode::KeyL) {
-        events.write(LevelSwitchRequested {
-            source: LevelSwitchSource::Keyboard,
-            direction: LevelSwitchDirection::Next,
-        });
+        if let Some(cheat) = cheat.as_ref() {
+            if cheat.is_active() {
+                events.write(LevelSwitchRequested {
+                    source: LevelSwitchSource::Keyboard,
+                    direction: LevelSwitchDirection::Next,
+                });
+            } else if let Some(b) = beep.as_mut() {
+                b.write(crate::signals::UiBeep);
+            }
+        } else if let Some(b) = beep.as_mut() {
+            b.write(crate::signals::UiBeep);
+        }
     }
 
     // N/P reserved for cheat mode only
@@ -194,7 +202,7 @@ fn queue_keyboard_requests(
             } else {
                 // blocked - play soft beep (optional if audio plugin not present)
                 if let Some(b) = beep.as_mut() {
-                    b.write(crate::systems::audio::UiBeepEvent);
+                    b.write(crate::signals::UiBeep);
                 }
             }
         }
@@ -208,7 +216,7 @@ fn queue_keyboard_requests(
                     direction: LevelSwitchDirection::Previous,
                 });
             } else if let Some(b) = beep.as_mut() {
-                b.write(crate::systems::audio::UiBeepEvent);
+                b.write(crate::signals::UiBeep);
             }
         }
     }
@@ -242,7 +250,6 @@ fn poll_contract_trigger(
 mod tests {
     use super::*;
     use crate::systems::audio::AudioPlugin;
-    use bevy::prelude::*;
     use bevy::MinimalPlugins;
 
     #[derive(Resource, Default)]
@@ -252,7 +259,7 @@ mod tests {
     struct SwitchCount(u32);
 
     fn capture_beep(
-        mut reader: bevy::ecs::message::MessageReader<crate::systems::audio::UiBeepEvent>,
+        mut reader: bevy::ecs::message::MessageReader<crate::signals::UiBeep>,
         mut c: ResMut<BeepCount>,
     ) {
         for _ in reader.read() {

@@ -19,10 +19,10 @@ fn level_label_spawns_and_updates_on_level_started() {
     app.update();
 
     // There should be one LevelLabelText entity
-    let world = app.world();
+    let world = app.world_mut();
     // Find the LevelLabelText entity by scanning entities and checking for the marker component
     let mut found = None;
-    for entity_ref in world.iter_entities() {
+    for entity_ref in world.query::<EntityRef>().iter(world) {
         let id = entity_ref.id();
         if world
             .get::<brkrs::ui::level_label::LevelLabelText>(id)
@@ -45,7 +45,7 @@ fn level_label_spawns_and_updates_on_level_started() {
     });
     app.update();
 
-    let world = app.world();
+    let world = app.world_mut();
     let text = world
         .get::<Text>(entity)
         .expect("Level label entity should still exist");
@@ -72,9 +72,9 @@ fn level_label_is_left_aligned() {
     app.update();
 
     // Find the LevelLabelRoot entity and assert its Node has left justification
-    let world = app.world();
+    let world = app.world_mut();
     let mut root = None;
-    for entity_ref in world.iter_entities() {
+    for entity_ref in world.query::<EntityRef>().iter(world) {
         let id = entity_ref.id();
         if world
             .get::<brkrs::ui::level_label::LevelLabelRoot>(id)
@@ -119,9 +119,9 @@ fn spawn_shows_current_level_if_present() {
     app.update();
 
     // Find spawned level label and assert it shows the level number
-    let world = app.world();
+    let world = app.world_mut();
     let mut found = None;
-    for entity_ref in world.iter_entities() {
+    for entity_ref in world.query::<EntityRef>().iter(world) {
         let id = entity_ref.id();
         if world
             .get::<brkrs::ui::level_label::LevelLabelText>(id)
@@ -167,10 +167,10 @@ fn updates_when_current_level_changes() {
 
     app.update();
 
-    let world = app.world();
+    let world = app.world_mut();
     // find the text entity
     let mut found = None;
-    for entity_ref in world.iter_entities() {
+    for entity_ref in world.query::<EntityRef>().iter(world) {
         let id = entity_ref.id();
         if world
             .get::<brkrs::ui::level_label::LevelLabelText>(id)

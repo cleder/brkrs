@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use bevy::MinimalPlugins;
 
 use brkrs::level_loader::LevelLoaderPlugin;
+use brkrs::signals::UiBeep;
 use brkrs::systems::audio::AudioPlugin;
-use brkrs::systems::audio::UiBeepEvent;
 use brkrs::systems::cheat_mode::CheatModePlugin;
 use brkrs::systems::level_switch::LevelSwitchPlugin;
 use brkrs::systems::respawn::LivesState;
@@ -11,10 +11,7 @@ use brkrs::systems::respawn::LivesState;
 #[derive(Resource, Default)]
 struct BeepCount(u32);
 
-fn capture_beeps(
-    mut reader: bevy::ecs::message::MessageReader<UiBeepEvent>,
-    mut c: ResMut<BeepCount>,
-) {
+fn capture_beeps(mut reader: bevy::ecs::message::MessageReader<UiBeep>, mut c: ResMut<BeepCount>) {
     for _ in reader.read() {
         c.0 += 1;
     }
@@ -24,7 +21,7 @@ fn make_app() -> App {
     let mut app = App::new();
     app.add_plugins((MinimalPlugins, bevy::input::InputPlugin));
 
-    // Register audio first so UiBeepEvent is available, then level loader
+    // Register audio first so UiBeep is available, then level loader
     app.add_plugins(AudioPlugin);
     app.add_plugins(LevelLoaderPlugin);
     // Level loader expects LevelSwitchRequested message to exist; register level switch plugin

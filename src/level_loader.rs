@@ -844,12 +844,12 @@ fn advance_level_when_cleared(
 #[derive(Message, Debug, Clone, Copy)]
 pub struct RestartRequested;
 
-/// Producer: queue restart requests when 'R' is pressed; emits UiBeepEvent when blocked.
+/// Producer: queue restart requests when 'R' is pressed; emits UiBeep when blocked.
 fn queue_restart_requests(
     keyboard: Res<ButtonInput<KeyCode>>,
     cheat: Option<Res<crate::systems::cheat_mode::CheatModeState>>,
     mut restart: Option<MessageWriter<RestartRequested>>,
-    mut beep: Option<MessageWriter<crate::systems::audio::UiBeepEvent>>,
+    mut beep: Option<MessageWriter<crate::signals::UiBeep>>,
 ) {
     if !keyboard.just_pressed(KeyCode::KeyR) {
         return;
@@ -860,12 +860,12 @@ fn queue_restart_requests(
                 r.write(RestartRequested);
             }
         } else if let Some(b) = beep.as_mut() {
-            b.write(crate::systems::audio::UiBeepEvent);
+            b.write(crate::signals::UiBeep);
         }
     } else {
         // conservative: block if cheat state not present
         if let Some(b) = beep.as_mut() {
-            b.write(crate::systems::audio::UiBeepEvent);
+            b.write(crate::signals::UiBeep);
         }
     }
 }
@@ -936,6 +936,7 @@ fn process_restart_requests(
 /// Destroy all bricks when K is pressed (for testing level transitions).
 fn destroy_all_bricks_on_key(
     keyboard: Res<ButtonInput<KeyCode>>,
+    cheat: Option<Res<crate::systems::cheat_mode::CheatModeState>>,
     // Only destroy bricks that count towards completion. Indestructible bricks (no
     // CountsTowardsCompletion) should remain in the scene even when testing with K.
     bricks: Query<Entity, (With<Brick>, With<crate::CountsTowardsCompletion>)>,
@@ -947,6 +948,16 @@ fn destroy_all_bricks_on_key(
     // Accept either a single-frame `just_pressed` or continuous `pressed` state so
     // test harnesses and interactive play both trigger the test-delete behaviour.
     if keyboard.just_pressed(KeyCode::KeyK) || keyboard.pressed(KeyCode::KeyK) {
+        // Check cheat mode
+        if let Some(cheat) = cheat {
+            if !cheat.is_active() {
+                return;
+            }
+        } else {
+            // If cheat resource is missing, default to blocked
+            return;
+        }
+
         // KeyK detected — destroy destructible bricks for testing
         for entity in bricks.iter() {
             commands.entity(entity).despawn();
@@ -1673,13 +1684,12 @@ mod tests {
     // Unit tests for restart gating
 
     use super::*;
-    use bevy::prelude::*;
 
     #[derive(Resource, Default)]
     struct BeepCount(u32);
 
     fn capture_beep(
-        mut reader: bevy::ecs::message::MessageReader<crate::systems::audio::UiBeepEvent>,
+        mut reader: bevy::ecs::message::MessageReader<crate::signals::UiBeep>,
         mut c: ResMut<BeepCount>,
     ) {
         for _ in reader.read() {

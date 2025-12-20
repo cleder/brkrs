@@ -1,16 +1,19 @@
 //!
-//! You can toggle wireframes with the space bar except on wasm. Wasm does not support
+//! You can toggle wireframes with the space bar (in cheat mode only) except on wasm. Wasm does not support
 //! `POLYGON_MODE_LINE` on the gpu.
 //!
 //! Keyboard commands:
-//! - R: Restart current level
-//! - L: Switch to next level
-//! - K: Destroy all bricks (for testing level transitions)
+//! - R: Restart current level (only in cheat mode)
+//! - L: Switch to next level (only in cheat mode)
+//! - K: Destroy all bricks (for testing level transitions, only in cheat mode)
+//! - G: Toggle cheat mode
+//! - Space: Toggle wireframe (only in cheat mode)
 //! - ESC: Pause game (click to resume)
 
 pub mod level_format;
 pub mod level_loader;
 pub mod pause;
+pub mod signals;
 pub mod systems;
 pub mod ui;
 
@@ -21,19 +24,16 @@ use crate::systems::TextureManifestPlugin;
 use crate::systems::{
     AudioPlugin, InputLocked, LevelSwitchPlugin, PaddleSizePlugin, RespawnPlugin, RespawnSystems,
 };
-use crate::ui::fonts::UiFonts;
 
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::window::MonitorSelection;
 use bevy::{
-    asset::RenderAssetUsages,
     color::palettes::{basic::SILVER, css::RED},
     ecs::message::{MessageReader, MessageWriter},
     input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
     prelude::*,
-    render::render_resource::{Extent3d, TextureDimension, TextureFormat},
     window::{CursorGrabMode, CursorOptions, PrimaryWindow, Window, WindowMode, WindowPlugin},
 };
 use bevy_rapier3d::prelude::*;
@@ -69,8 +69,10 @@ const CELL_HEIGHT: f32 = PLANE_H / GRID_HEIGHT as f32; // 1.5 (X dimension)
                                                        // Cell aspect ratio: CELL_HEIGHT / CELL_WIDTH = 30/40 * 20/20 = 3/4 = 0.75
 /// A marker component for our shapes so we can query them separately from the ground plane
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct Paddle;
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct Ball;
 
 /// Type ID for ball variants (used by texture manifest type_variants).
@@ -81,16 +83,19 @@ pub struct BallTypeId(pub u8);
 /// Marker component for sidewall/border entities.
 /// Used by per-level texture override system to apply custom sidewall materials.
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct Border;
 
 /// Marker component for the ground plane entity.
 /// Used by per-level texture override system to apply custom ground materials.
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct GroundPlane;
 
 #[derive(Component)]
 pub struct LowerGoal;
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct GridOverlay;
 #[derive(Component)]
 pub struct Brick;
@@ -175,7 +180,7 @@ pub fn run() {
     app.insert_resource(GameProgress::default());
     // Scoring system state
     app.init_resource::<systems::scoring::ScoreState>();
-    app.add_message::<systems::scoring::BrickDestroyed>();
+    app.add_message::<crate::signals::BrickDestroyed>();
     app.add_message::<systems::scoring::MilestoneReached>();
     app.insert_resource(level_loader::LevelAdvanceState::default());
     app.add_plugins((
@@ -271,11 +276,9 @@ pub fn run() {
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut rapier_config: Query<&mut RapierConfiguration>,
     gravity_cfg: Res<GravityConfig>,
-    ui_fonts: Option<Res<UiFonts>>,
 ) {
     // Set gravity for normal gameplay (respawn will temporarily disable it)
     if let Ok(mut config) = rapier_config.single_mut() {
@@ -283,11 +286,6 @@ fn setup(
     } else {
         warn!("RapierConfiguration not found; gravity not set");
     }
-
-    let _debug_material = materials.add(StandardMaterial {
-        base_color_texture: Some(images.add(uv_debug_texture())),
-        ..default()
-    });
 
     // Level entities (paddle, ball, bricks) are spawned by LevelLoaderPlugin after level parsing.
 
@@ -325,21 +323,6 @@ fn setup(
 
     #[derive(Component)]
     struct MainCamera;
-
-    #[cfg(not(target_arch = "wasm32"))]
-    if let Some(ui_fonts) = ui_fonts {
-        let font = ui_fonts.orbitron.clone();
-        commands.spawn((
-            Text::new("Press space to toggle wire frames"),
-            TextFont { font, ..default() },
-            Node {
-                position_type: PositionType::Absolute,
-                top: Val::Px(12.0),
-                left: Val::Px(12.0),
-                ..default()
-            },
-        ));
-    }
 }
 
 /// Apply speed-dependent damping to control ball velocity
@@ -587,35 +570,6 @@ fn spawn_border(
     ));
 }
 
-/// Creates a colorful test pattern
-fn uv_debug_texture() -> Image {
-    const TEXTURE_SIZE: usize = 8;
-
-    let mut palette: [u8; 32] = [
-        255, 102, 159, 255, 255, 159, 102, 255, 236, 255, 102, 255, 121, 255, 102, 255, 102, 255,
-        198, 255, 102, 198, 255, 255, 121, 102, 255, 255, 236, 102, 255, 255,
-    ];
-
-    let mut texture_data = [0; TEXTURE_SIZE * TEXTURE_SIZE * 4];
-    for y in 0..TEXTURE_SIZE {
-        let offset = TEXTURE_SIZE * y * 4;
-        texture_data[offset..(offset + TEXTURE_SIZE * 4)].copy_from_slice(&palette);
-        palette.rotate_right(4);
-    }
-
-    Image::new_fill(
-        Extent3d {
-            width: TEXTURE_SIZE as u32,
-            height: TEXTURE_SIZE as u32,
-            depth_or_array_layers: 1,
-        },
-        TextureDimension::D2,
-        &texture_data,
-        TextureFormat::Rgba8UnormSrgb,
-        RenderAssetUsages::RENDER_WORLD,
-    )
-}
-
 /// Mark bricks for despawn when hit by the ball, or transition multi-hit bricks.
 ///
 /// Multi-hit bricks (indices 10-13) transition to the next lower index instead of
@@ -715,23 +669,17 @@ fn detect_ball_wall_collisions(
 }
 
 /// Despawn entities marked for removal (runs after physics step).
-/// Emits BrickDestroyed events for audio system integration.
+/// Emits BrickDestroyed messages for audio/scoring integration.
 fn despawn_marked_entities(
     marked: Query<(Entity, Option<&BrickTypeId>), With<MarkedForDespawn>>,
     mut commands: Commands,
-    mut scoring_events: Option<MessageWriter<systems::scoring::BrickDestroyed>>,
+    mut brick_events: Option<MessageWriter<crate::signals::BrickDestroyed>>,
 ) {
     for (entity, brick_type) in marked.iter() {
-        // Emit BrickDestroyed event for audio system
+        // Emit BrickDestroyed message for audio/scoring systems
         if let Some(brick_type) = brick_type {
-            commands.trigger(systems::BrickDestroyed {
-                entity,
-                brick_type: brick_type.0,
-            });
-
-            // Emit scoring message for point award
-            if let Some(writer) = scoring_events.as_mut() {
-                writer.write(systems::scoring::BrickDestroyed {
+            if let Some(writer) = brick_events.as_mut() {
+                writer.write(crate::signals::BrickDestroyed {
                     brick_entity: entity,
                     brick_type: brick_type.0,
                     destroyed_by: None,
@@ -755,8 +703,10 @@ pub fn register_brick_collision_systems(app: &mut App) {
 fn toggle_wireframe(
     mut wireframe_config: ResMut<WireframeConfig>,
     keyboard: Res<ButtonInput<KeyCode>>,
+    cheat_mode: Option<Res<systems::cheat_mode::CheatModeState>>,
 ) {
-    if keyboard.just_pressed(KeyCode::Space) {
+    let cheat_active = cheat_mode.map(|c| c.active).unwrap_or(false);
+    if cheat_active && keyboard.just_pressed(KeyCode::Space) {
         wireframe_config.global = !wireframe_config.global;
     }
 }

@@ -8,6 +8,7 @@ fn setup_test_app() -> App {
     let mut app = App::new();
     app.add_plugins(MinimalPlugins);
     app.insert_resource(Assets::<StandardMaterial>::default());
+    app.insert_resource(Assets::<Image>::default());
     app.add_plugins(TextureMaterialsPlugin);
     app
 }

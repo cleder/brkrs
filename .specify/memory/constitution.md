@@ -192,8 +192,21 @@ It provides objective verification (tests) for requirement fulfillment and disco
 
 #### Bevy 0.17 ECS Architecture Mandates
 
-- **Fallible Systems:** All systems MUST return `Result` and use the `?` operator for error propagation.
-  Query methods like `single()`, `single_mut()`, and `get_many()` MUST have the `?` operator applied to their `Result` return values, never `.unwrap()`.
+- **Fallible Systems:** Systems MUST return `()` (Bevy requirement).
+  Handle errors gracefully using early returns and logging.
+  Helper functions CAN return `Result` and use `?` for error propagation.
+  Example:
+
+  ```rust
+  fn my_system(res: Option<Res<Foo>>) {
+      let Some(res) = res else { return; };  // Early return
+      if let Err(e) = helper(&res) {
+          error!("Failed: {e}");
+      }
+  }
+  fn helper(res: &Res<Foo>) -> anyhow::Result<()> { ... }
+  ```
+
 - **Required Components:** Component structs MUST use `#[require(Transform, Visibility)]` attributes to automatically include mandatory dependencies.
   NEVER manually spawn entities with redundant component bundles.
 - **Query Specificity:** All queries MUST include precise filters using `With<T>` and `Without<T>` to enable system parallelism.
@@ -207,8 +220,8 @@ It provides objective verification (tests) for requirement fulfillment and disco
   This prevents archetype thrashing.
 - **Relationship API:** Access parent entities using `ChildOf::parent()` method.
   Use `commands.entity(parent).add_children()` and `.remove::<Children>()` for hierarchy manipulation.
-- **Error Recovery Patterns:** Use `let Ok(value) = result else { return Ok(()); }` for expected failures.
-  Use `let Some(value) = option else { return Ok(()); }` for missing optional data.
+- **Error Recovery Patterns:** Use `let Some(value) = optional else { return; }` for graceful handling of missing resources.
+  Use `let Some(value) = option else { return; }` for missing optional data.
 - **System Organization:** Define system sets with `*Systems` suffix (e.g., `GameplaySystems::Input`).
   Use `.configure_sets()` with `.chain()` only between sets, not individual systems.
   Group parallelizable systems within the same set.

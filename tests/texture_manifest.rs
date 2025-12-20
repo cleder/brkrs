@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 
-use bevy::prelude::Color;
+use bevy::prelude::*;
 
 use brkrs::systems::textures::loader::{
     LevelSwitchState, LevelTextureSet, ObjectClass, RawTextureManifest, TextureManifest,
@@ -97,6 +97,88 @@ fn runtime_manifest_indexes_profiles_and_variants() {
         .find(|variant| variant.object_class == ObjectClass::Brick && variant.type_id == 90)
         .expect("expected a brick/indestructible variant entry");
     assert_eq!(brick_indestruct.profile_id, "brick/indestructible");
+}
+
+#[derive(bevy::prelude::Resource, Default)]
+struct ChangeResult(bool);
+
+fn verify_change(
+    query: bevy::prelude::Query<
+        bevy::prelude::Ref<bevy::prelude::MeshMaterial3d<bevy::prelude::StandardMaterial>>,
+        bevy::prelude::With<brkrs::Paddle>,
+    >,
+    mut result: bevy::prelude::ResMut<ChangeResult>,
+) {
+    for mat in query.iter() {
+        if mat.is_changed() {
+            result.0 = true;
+        }
+    }
+}
+
+#[test]
+fn apply_materials_runs_once_on_transition() {
+    use bevy::prelude::*;
+    use brkrs::systems::textures::loader::{TextureManifest, VisualAssetProfile};
+    use brkrs::systems::textures::materials::TextureMaterialsPlugin;
+    use brkrs::Paddle;
+
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins);
+    app.add_plugins(AssetPlugin::default());
+    app.add_plugins(MaterialPlugin::<StandardMaterial>::default());
+    app.add_plugins(ImagePlugin::default());
+    app.add_plugins(TextureMaterialsPlugin);
+    app.init_resource::<ChangeResult>();
+    app.add_systems(PostUpdate, verify_change);
+
+    // Spawn a paddle
+    app.world_mut().spawn((
+        Paddle,
+        MeshMaterial3d(Handle::<StandardMaterial>::default()),
+        Transform::default(),
+        Visibility::default(),
+    ));
+
+    // Initial update - Manifest missing, so Canonical not ready.
+    app.update();
+
+    // Insert Manifest to trigger hydration
+    let mut manifest = TextureManifest::default();
+    manifest.profiles.insert(
+        "paddle/default".to_string(),
+        VisualAssetProfile {
+            id: "paddle/default".to_string(),
+            albedo_path: "paddle.png".to_string(),
+            normal_path: None,
+            roughness: 0.5,
+            metallic: 0.5,
+            uv_scale: Vec2::ONE,
+            uv_offset: Vec2::ZERO,
+            fallback_chain: vec![],
+        },
+    );
+    app.insert_resource(manifest);
+
+    // Update - Hydrate runs, Canonical becomes ready. Apply runs.
+    app.world_mut().resource_mut::<ChangeResult>().0 = false;
+    app.update();
+
+    // Verify material changed
+    assert!(
+        app.world().resource::<ChangeResult>().0,
+        "Material should be updated when manifest is provided"
+    );
+
+    // Update again
+    app.world_mut().resource_mut::<ChangeResult>().0 = false;
+    app.update();
+
+    // Verify material NOT changed
+    assert!(
+        !app.world().resource::<ChangeResult>().0,
+        "Material should NOT be updated on subsequent frames"
+    );
 }
 
 #[test]

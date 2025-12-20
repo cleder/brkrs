@@ -309,6 +309,10 @@ fn k_key_only_destroys_destructible_bricks() {
     // the InputPlugin updates `just_pressed` and the destruction system runs.
     app.update();
     {
+        app.insert_resource(brkrs::systems::cheat_mode::CheatModeState {
+            active: true,
+            ..default()
+        });
         let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
         input.press(KeyCode::KeyK);
     }

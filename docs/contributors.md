@@ -44,6 +44,7 @@ To do so:
 | | [Robin Wood](https://www.robinwood.com/) | Artwork, Textures | [Texture Maps for Balls](https://www.robinwood.com/Catalog/FreeStuff/Textures/TextureSet.html) |
 | [micahbrich](https://github.com/micahbrich) | Micah Rich | Artwork, Fonts | [Orbitron](https://github.com/theleagueof/orbitron) |
 | [SairajJadhav08](https://github.com/SairajJadhav08)  | Sairaj Jadhav | Documentation |  |
+|  | [Harm](https://harmware.net/) | Artwork | [Backgrounds](https://harmware.net/stile.html) |
 
 ---
 

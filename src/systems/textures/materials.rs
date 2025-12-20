@@ -1,14 +1,34 @@
 //! Material and fallback plumbing for the texture subsystem.
+//!
+//! # System Organization
+//!
+//! Systems are organized using the [`TextureOverrideSystems`] SystemSet enum:
+//! - [`TextureOverrideSystems::Refresh`]: Refresh the registries/banks based on manifest changes
+//! - [`TextureOverrideSystems::Apply`]: Apply canonical or override materials when presentation changes
+//!
+//! Ordering: Refresh -> Apply
 
 use super::loader::ObjectClass;
 use std::collections::{HashMap, HashSet};
 
-use bevy::ecs::message::{MessageReader, Messages};
+use bevy::asset::AssetEvent;
+use bevy::asset::RenderAssetUsages;
+use bevy::ecs::message::Messages;
 use bevy::prelude::*;
+use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 use tracing::{debug, info, warn};
 
 use super::loader::{TextureManifest, VisualAssetProfile};
 use crate::{Ball, BallTypeId};
+
+/// System set organization for texture overrides.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemSet)]
+pub enum TextureOverrideSystems {
+    /// Refresh the registries/banks based on manifest changes
+    Refresh,
+    /// Apply canonical or override materials when presentation changes
+    Apply,
+}
 
 /// Registers the fallback materials used whenever a texture fails to load.
 pub struct TextureMaterialsPlugin;
@@ -19,14 +39,33 @@ impl Plugin for TextureMaterialsPlugin {
         app.init_resource::<ProfileMaterialBank>();
         app.init_resource::<CanonicalMaterialHandles>();
         app.init_resource::<TypeVariantRegistry>();
+
+        // Configure system set ordering: Refresh → Apply
+        app.configure_sets(
+            Update,
+            TextureOverrideSystems::Refresh.before(TextureOverrideSystems::Apply),
+        );
+
+        // Refresh systems: rebuild material banks from manifest
         app.add_systems(
             Update,
-            (
-                hydrate_texture_materials,
-                watch_ball_type_changes,
-                set_texture_repeat_mode.run_if(resource_exists::<Messages<AssetEvent<Image>>>),
-                apply_canonical_materials_to_existing_entities,
-            ),
+            hydrate_texture_materials.in_set(TextureOverrideSystems::Refresh),
+        );
+        app.add_systems(
+            Update,
+            watch_ball_type_changes.in_set(TextureOverrideSystems::Refresh),
+        );
+
+        // Apply systems: apply materials to entities based on current banks
+        app.add_systems(
+            Update,
+            set_texture_repeat_mode
+                .in_set(TextureOverrideSystems::Apply)
+                .run_if(resource_exists::<Messages<AssetEvent<Image>>>),
+        );
+        app.add_systems(
+            Update,
+            apply_canonical_materials_to_existing_entities.in_set(TextureOverrideSystems::Apply),
         );
     }
 }
@@ -44,14 +83,39 @@ pub struct FallbackRegistry {
 }
 
 impl FallbackRegistry {
-    fn new(materials: &mut Assets<StandardMaterial>) -> Self {
+    fn new(materials: &mut Assets<StandardMaterial>, images: &mut Assets<Image>) -> Self {
+        let debug_texture = images.add(uv_debug_texture());
         Self {
-            ball: add_unlit_color(materials, Color::srgb(0.95, 0.95, 0.95)),
-            paddle: add_unlit_color(materials, Color::srgb(0.82, 0.35, 0.14)),
-            brick: add_unlit_color(materials, Color::srgb(0.75, 0.18, 0.18)),
-            sidewall: add_unlit_color(materials, Color::srgb(0.25, 0.25, 0.35)),
-            ground: add_unlit_color(materials, Color::srgb(0.18, 0.18, 0.18)),
-            background: add_unlit_color(materials, Color::srgb(0.05, 0.08, 0.15)),
+            ball: add_unlit_debug(
+                materials,
+                debug_texture.clone(),
+                Color::srgb(0.95, 0.95, 0.95),
+            ),
+            paddle: add_unlit_debug(
+                materials,
+                debug_texture.clone(),
+                Color::srgb(0.82, 0.35, 0.14),
+            ),
+            brick: add_unlit_debug(
+                materials,
+                debug_texture.clone(),
+                Color::srgb(0.75, 0.18, 0.18),
+            ),
+            sidewall: add_unlit_debug(
+                materials,
+                debug_texture.clone(),
+                Color::srgb(0.25, 0.25, 0.35),
+            ),
+            ground: add_unlit_debug(
+                materials,
+                debug_texture.clone(),
+                Color::srgb(0.18, 0.18, 0.18),
+            ),
+            background: add_unlit_debug(
+                materials,
+                debug_texture.clone(),
+                Color::srgb(0.05, 0.08, 0.15),
+            ),
             warned: HashSet::new(),
         }
     }
@@ -226,6 +290,13 @@ impl CanonicalMaterialHandles {
             self.handles.insert(*kind, handle);
         }
         self.ready = true;
+        debug!(
+            target: "textures::materials",
+            paddle = self.handles.contains_key(&BaselineMaterialKind::Paddle),
+            ball = self.handles.contains_key(&BaselineMaterialKind::Ball),
+            brick = self.handles.contains_key(&BaselineMaterialKind::Brick),
+            "CanonicalMaterialHandles marked ready"
+        );
     }
 
     pub fn get(&self, kind: BaselineMaterialKind) -> Option<Handle<StandardMaterial>> {
@@ -239,14 +310,20 @@ impl CanonicalMaterialHandles {
 
 fn initialize_fallback_registry(
     mut commands: Commands,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    materials: Option<ResMut<Assets<StandardMaterial>>>,
+    images: Option<ResMut<Assets<Image>>>,
 ) {
-    commands.insert_resource(FallbackRegistry::new(materials.as_mut()));
+    if let (Some(materials), Some(images)) = (materials, images) {
+        commands.insert_resource(FallbackRegistry::new(
+            materials.into_inner(),
+            images.into_inner(),
+        ));
+    }
 }
 
 fn set_texture_repeat_mode(
     images: Option<ResMut<Assets<Image>>>,
-    mut events: MessageReader<AssetEvent<Image>>,
+    mut events: bevy::ecs::message::MessageReader<AssetEvent<Image>>,
 ) {
     use bevy::image::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor};
 
@@ -273,10 +350,10 @@ fn set_texture_repeat_mode(
 fn hydrate_texture_materials(
     manifest: Option<Res<TextureManifest>>,
     asset_server: Option<Res<AssetServer>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut bank: ResMut<ProfileMaterialBank>,
     mut canonical: ResMut<CanonicalMaterialHandles>,
-    mut fallback: ResMut<FallbackRegistry>,
+    fallback: Option<ResMut<FallbackRegistry>>,
     type_variants: Option<ResMut<TypeVariantRegistry>>,
     mut hydrated: Local<bool>,
 ) {
@@ -284,6 +361,12 @@ fn hydrate_texture_materials(
         return;
     };
     let Some(asset_server) = asset_server else {
+        return;
+    };
+    let Some(materials) = materials else {
+        return;
+    };
+    let Some(mut fallback) = fallback else {
         return;
     };
 
@@ -294,7 +377,7 @@ fn hydrate_texture_materials(
     }
     *hydrated = true;
 
-    bank.rebuild(&manifest, &asset_server, materials.as_mut());
+    bank.rebuild(&manifest, &asset_server, materials.into_inner());
     if let Some(mut registry) = type_variants {
         // Need to call rebuild with mutable fallback which consumes &mut FallbackRegistry
         registry.rebuild(&manifest, &bank, fallback.as_mut());
@@ -316,17 +399,6 @@ fn hydrate_texture_materials(
         profiles = manifest.profiles.len(),
         "Canonical materials baked"
     );
-}
-
-fn add_unlit_color(
-    materials: &mut Assets<StandardMaterial>,
-    color: Color,
-) -> Handle<StandardMaterial> {
-    materials.add(StandardMaterial {
-        base_color: color,
-        unlit: true,
-        ..default()
-    })
 }
 
 fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> StandardMaterial {
@@ -477,7 +549,8 @@ pub fn brick_type_material_handle(
 /// This ensures paddle, balls, and bricks spawned during Startup get proper textures
 /// once the manifest finishes loading.
 ///
-/// Runs continuously to handle async asset loading consistently across all platforms.
+/// Runs every frame but no-ops when materials not ready (internal is_ready() guard).
+/// Updated count optimization prevents redundant re-applications.
 fn apply_canonical_materials_to_existing_entities(
     canonical: Option<Res<CanonicalMaterialHandles>>,
     type_registry: Option<Res<TypeVariantRegistry>>,
@@ -487,14 +560,17 @@ fn apply_canonical_materials_to_existing_entities(
         &mut MeshMaterial3d<StandardMaterial>,
         (With<crate::Paddle>, Without<crate::Brick>, Without<Ball>),
     >,
+    added_paddles: Query<Entity, Added<crate::Paddle>>,
     mut ball_query: Query<
         (&mut MeshMaterial3d<StandardMaterial>, &BallTypeId),
         (With<Ball>, Without<crate::Paddle>, Without<crate::Brick>),
     >,
+    added_balls: Query<Entity, Added<Ball>>,
     mut brick_query: Query<
         (&mut MeshMaterial3d<StandardMaterial>, &crate::BrickTypeId),
         (With<crate::Brick>, Without<crate::Paddle>, Without<Ball>),
     >,
+    added_bricks: Query<Entity, Added<crate::Brick>>,
 ) {
     let Some(canonical) = canonical else {
         return;
@@ -502,6 +578,24 @@ fn apply_canonical_materials_to_existing_entities(
 
     // Skip if materials not ready
     if !canonical.is_ready() {
+        debug!(
+            target: "textures::materials",
+            "Canonical materials not ready yet"
+        );
+        return;
+    }
+
+    let force_update = canonical.is_changed()
+        || (type_registry
+            .as_ref()
+            .map(|r| r.is_changed())
+            .unwrap_or(false));
+
+    if !force_update
+        && added_paddles.is_empty()
+        && added_balls.is_empty()
+        && added_bricks.is_empty()
+    {
         return;
     }
 
@@ -509,52 +603,70 @@ fn apply_canonical_materials_to_existing_entities(
 
     // Update paddle materials
     if let Some(paddle_handle) = canonical.get(BaselineMaterialKind::Paddle) {
-        for mut material in paddle_query.iter_mut() {
-            material.0 = paddle_handle.clone();
-            updated_count += 1;
+        if force_update {
+            for mut material in paddle_query.iter_mut() {
+                if material.0 != paddle_handle {
+                    material.0 = paddle_handle.clone();
+                    updated_count += 1;
+                }
+            }
+        } else {
+            for entity in added_paddles.iter() {
+                if let Ok(mut material) = paddle_query.get_mut(entity) {
+                    if material.0 != paddle_handle {
+                        material.0 = paddle_handle.clone();
+                        updated_count += 1;
+                    }
+                }
+            }
         }
     }
 
     // Update ball materials based on type
-    for (mut material, ball_type) in ball_query.iter_mut() {
+    let mut update_ball = |material: &mut MeshMaterial3d<StandardMaterial>,
+                           ball_type: &BallTypeId| {
         if let Some(registry) = type_registry.as_ref() {
             if let Some(handle) = registry.get(ObjectClass::Ball, ball_type.0) {
-                material.0 = handle;
-                updated_count += 1;
-                continue;
+                if material.0 != handle {
+                    material.0 = handle;
+                    updated_count += 1;
+                }
+                return;
             }
         }
         // Fall back to canonical ball material
-        debug!(
-            target: "textures::materials",
-            ball_type = ball_type.0,
-            "No type variant for ball; falling back to canonical material"
-        );
         if let Some(ball_handle) = canonical.get(BaselineMaterialKind::Ball) {
-            material.0 = ball_handle.clone();
-            updated_count += 1;
+            if material.0 != ball_handle {
+                material.0 = ball_handle.clone();
+                updated_count += 1;
+            }
+        }
+    };
+
+    if force_update {
+        for (mut material, ball_type) in ball_query.iter_mut() {
+            update_ball(&mut material, ball_type);
+        }
+    } else {
+        for entity in added_balls.iter() {
+            if let Ok((mut material, ball_type)) = ball_query.get_mut(entity) {
+                update_ball(&mut material, ball_type);
+            }
         }
     }
 
     // Update brick materials based on type
-    let brick_count = brick_query.iter().count();
-    if brick_count > 0 {
-        debug!(
-            target: "textures::materials",
-            brick_count,
-            has_registry = type_registry.is_some(),
-            "Processing brick materials"
-        );
-    }
-
-    if let Some(registry) = type_registry.as_ref() {
-        *logged_missing_type_registry = false;
-        for (mut material, brick_type) in brick_query.iter_mut() {
+    let mut process_brick = |material: &mut MeshMaterial3d<StandardMaterial>,
+                             brick_type: &crate::BrickTypeId| {
+        if let Some(registry) = type_registry.as_ref() {
+            *logged_missing_type_registry = false;
             if let Some(handle) = registry.get(ObjectClass::Brick, brick_type.0) {
-                material.0 = handle;
-                updated_count += 1;
+                if material.0 != handle {
+                    material.0 = handle;
+                    updated_count += 1;
+                }
                 *logged_missing_type_variant = false;
-                continue;
+                return;
             }
 
             if !*logged_missing_type_variant {
@@ -567,23 +679,25 @@ fn apply_canonical_materials_to_existing_entities(
             }
 
             if let Some(brick_handle) = canonical.get(BaselineMaterialKind::Brick) {
-                material.0 = brick_handle.clone();
-                updated_count += 1;
+                if material.0 != brick_handle {
+                    material.0 = brick_handle.clone();
+                    updated_count += 1;
+                }
             }
-        }
-    } else {
-        if !*logged_missing_type_registry {
-            debug!(
-                target: "textures::materials",
-                "TypeVariantRegistry not available for brick material application"
-            );
-            *logged_missing_type_registry = true;
-        }
+        } else {
+            if !*logged_missing_type_registry {
+                debug!(
+                    target: "textures::materials",
+                    "TypeVariantRegistry not available for brick material application"
+                );
+                *logged_missing_type_registry = true;
+            }
 
-        for (mut material, brick_type) in brick_query.iter_mut() {
             if let Some(brick_handle) = canonical.get(BaselineMaterialKind::Brick) {
-                material.0 = brick_handle.clone();
-                updated_count += 1;
+                if material.0 != brick_handle {
+                    material.0 = brick_handle.clone();
+                    updated_count += 1;
+                }
             } else if !*logged_missing_type_variant {
                 debug!(
                     target: "textures::materials",
@@ -591,6 +705,18 @@ fn apply_canonical_materials_to_existing_entities(
                     "No canonical brick material available; using fallback"
                 );
                 *logged_missing_type_variant = true;
+            }
+        }
+    };
+
+    if force_update {
+        for (mut material, brick_type) in brick_query.iter_mut() {
+            process_brick(&mut material, brick_type);
+        }
+    } else {
+        for entity in added_bricks.iter() {
+            if let Ok((mut material, brick_type)) = brick_query.get_mut(entity) {
+                process_brick(&mut material, brick_type);
             }
         }
     }
@@ -603,4 +729,46 @@ fn apply_canonical_materials_to_existing_entities(
             "Applied canonical materials to existing entities"
         );
     }
+}
+
+fn add_unlit_debug(
+    materials: &mut Assets<StandardMaterial>,
+    texture: Handle<Image>,
+    color: Color,
+) -> Handle<StandardMaterial> {
+    materials.add(StandardMaterial {
+        base_color: color,
+        base_color_texture: Some(texture),
+        unlit: true,
+        ..default()
+    })
+}
+
+/// Creates a colorful test pattern
+fn uv_debug_texture() -> Image {
+    const TEXTURE_SIZE: usize = 8;
+
+    let mut palette: [u8; 32] = [
+        255, 102, 159, 255, 255, 159, 102, 255, 236, 255, 102, 255, 121, 255, 102, 255, 102, 255,
+        198, 255, 102, 198, 255, 255, 121, 102, 255, 255, 236, 102, 255, 255,
+    ];
+
+    let mut texture_data = [0; TEXTURE_SIZE * TEXTURE_SIZE * 4];
+    for y in 0..TEXTURE_SIZE {
+        let offset = TEXTURE_SIZE * y * 4;
+        texture_data[offset..(offset + TEXTURE_SIZE * 4)].copy_from_slice(&palette);
+        palette.rotate_right(4);
+    }
+
+    Image::new_fill(
+        Extent3d {
+            width: TEXTURE_SIZE as u32,
+            height: TEXTURE_SIZE as u32,
+            depth_or_array_layers: 1,
+        },
+        TextureDimension::D2,
+        &texture_data,
+        TextureFormat::Rgba8UnormSrgb,
+        RenderAssetUsages::RENDER_WORLD,
+    )
 }

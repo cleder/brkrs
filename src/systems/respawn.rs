@@ -229,39 +229,72 @@ impl Plugin for RespawnPlugin {
                     RespawnSystems::Control,
                 )
                     .chain(),
-            )
-            .add_systems(
-                Update,
-                (
-                    detect_ball_loss.in_set(RespawnSystems::Detect),
-                    life_loss_logging
-                        .in_set(RespawnSystems::Detect)
-                        .after(detect_ball_loss),
-                    apply_paddle_shrink
-                        .in_set(RespawnSystems::Detect)
-                        .after(detect_ball_loss),
-                    enqueue_respawn_requests.in_set(RespawnSystems::Schedule),
-                    process_respawn_queue
-                        .in_set(RespawnSystems::Schedule)
-                        .after(enqueue_respawn_requests),
-                    log_respawn_scheduled
-                        .in_set(RespawnSystems::Schedule)
-                        .after(process_respawn_queue),
-                    log_game_over_requested
-                        .in_set(RespawnSystems::Schedule)
-                        .after(enqueue_respawn_requests),
-                    respawn_executor.in_set(RespawnSystems::Execute),
-                    (respawn_visual_trigger, animate_respawn_visual)
-                        .chain()
-                        .in_set(RespawnSystems::Visual),
-                    restore_paddle_control.in_set(RespawnSystems::Control),
-                ),
             );
+
+        // Detect phase systems
+        app.add_systems(Update, detect_ball_loss.in_set(RespawnSystems::Detect));
+        app.add_systems(
+            Update,
+            life_loss_logging
+                .in_set(RespawnSystems::Detect)
+                .after(detect_ball_loss),
+        );
+        app.add_systems(
+            Update,
+            apply_paddle_shrink
+                .in_set(RespawnSystems::Detect)
+                .after(detect_ball_loss),
+        );
+
+        // Schedule phase systems
+        app.add_systems(
+            Update,
+            enqueue_respawn_requests.in_set(RespawnSystems::Schedule),
+        );
+        app.add_systems(
+            Update,
+            process_respawn_queue
+                .in_set(RespawnSystems::Schedule)
+                .after(enqueue_respawn_requests),
+        );
+        app.add_systems(
+            Update,
+            log_respawn_scheduled
+                .in_set(RespawnSystems::Schedule)
+                .after(process_respawn_queue),
+        );
+        app.add_systems(
+            Update,
+            log_game_over_requested
+                .in_set(RespawnSystems::Schedule)
+                .after(enqueue_respawn_requests),
+        );
+
+        // Execute phase system
+        app.add_systems(Update, respawn_executor.in_set(RespawnSystems::Execute));
+
+        // Visual phase systems
+        app.add_systems(
+            Update,
+            respawn_visual_trigger.in_set(RespawnSystems::Visual),
+        );
+        app.add_systems(
+            Update,
+            animate_respawn_visual
+                .in_set(RespawnSystems::Visual)
+                .after(respawn_visual_trigger),
+        );
+
+        // Control phase system
+        app.add_systems(
+            Update,
+            restore_paddle_control.in_set(RespawnSystems::Control),
+        );
     }
 }
 
 fn detect_ball_loss(
-    mut collision_events: MessageReader<CollisionEvent>,
+    collision_events: Option<MessageReader<CollisionEvent>>,
     balls: Query<Entity, With<Ball>>,
     ball_handles: Query<&RespawnHandle, With<Ball>>,
     lower_goals: Query<Entity, With<LowerGoal>>,
@@ -269,6 +302,10 @@ fn detect_ball_loss(
     mut commands: Commands,
     mut life_lost_events: MessageWriter<LifeLostEvent>,
 ) {
+    let Some(mut collision_events) = collision_events else {
+        return;
+    };
+
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
             let e1_is_ball = balls.get(*e1).is_ok();
@@ -579,8 +616,8 @@ fn respawn_executor(
     time: Res<Time>,
     mut respawn_schedule: ResMut<RespawnSchedule>,
     spawn_points: Res<SpawnPoints>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    meshes: Option<ResMut<Assets<Mesh>>>,
+    materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut paddles: Query<(Entity, &mut Transform, Option<&mut Velocity>), With<Paddle>>,
     mut respawn_completed_events: MessageWriter<RespawnCompleted>,
     mut commands: Commands,
@@ -594,6 +631,13 @@ fn respawn_executor(
     if respawn_schedule.pending.is_none() {
         return;
     }
+
+    let Some(mut meshes) = meshes else {
+        return;
+    };
+    let Some(mut materials) = materials else {
+        return;
+    };
 
     respawn_schedule.timer.tick(time.delta());
     if !respawn_schedule.timer.is_finished() {

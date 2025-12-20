@@ -302,7 +302,7 @@ Expected log output:
 
 ### Debug Systems
 
-- **Space bar**: Toggle wireframe mode (works while paused)
+- **Space bar**: Toggle wireframe mode (works while paused, requires cheat mode)
 - Grid overlay: Visible with wireframe (unaffected by pause)
 
 ---

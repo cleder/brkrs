@@ -119,16 +119,16 @@ Press Alt+Enter to toggle between windowed and fullscreen modes (native platform
 - **Mouse Wheel**: Rotate paddle
 - **Left Click**: Lock cursor for gameplay
 - **Escape**: Unlock cursor / Pause game
-- **Space**: Toggle wireframe mode (native only)
+- **Space**: Toggle wireframe mode (native only, requires cheat mode)
 
 ### Development
 
-- **Space**: Toggle wireframe mode (native only) - Also shows 22x22 debug grid overlay
+- **Space**: Toggle wireframe mode (native only, requires cheat mode) - Also shows 22x22 debug grid overlay
 - **F3**: Toggle FPS counter (if implemented)
 - **F5**: Reload current level
 - **F12**: Toggle debug physics rendering
 
-**Debug Grid Overlay**: When wireframe mode is enabled (Space key on native platforms), a 22x22 grid overlay becomes visible.
+**Debug Grid Overlay**: When wireframe mode is enabled (Space key on native platforms, requires cheat mode), a 22x22 grid overlay becomes visible.
 This grid aligns with the game's logical grid cells and helps with:
 
 - Verifying brick alignment
