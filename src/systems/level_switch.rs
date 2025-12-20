@@ -177,10 +177,18 @@ fn queue_keyboard_requests(
 ) {
     // L always allowed to cycle forward
     if keyboard.just_pressed(KeyCode::KeyL) {
-        events.write(LevelSwitchRequested {
-            source: LevelSwitchSource::Keyboard,
-            direction: LevelSwitchDirection::Next,
-        });
+        if let Some(cheat) = cheat.as_ref() {
+            if cheat.is_active() {
+                events.write(LevelSwitchRequested {
+                    source: LevelSwitchSource::Keyboard,
+                    direction: LevelSwitchDirection::Next,
+                });
+            } else if let Some(b) = beep.as_mut() {
+                b.write(crate::signals::UiBeep);
+            }
+        } else if let Some(b) = beep.as_mut() {
+            b.write(crate::signals::UiBeep);
+        }
     }
 
     // N/P reserved for cheat mode only

@@ -1,11 +1,13 @@
 //!
-//! You can toggle wireframes with the space bar except on wasm. Wasm does not support
+//! You can toggle wireframes with the space bar (in cheat mode only) except on wasm. Wasm does not support
 //! `POLYGON_MODE_LINE` on the gpu.
 //!
 //! Keyboard commands:
-//! - R: Restart current level
-//! - L: Switch to next level
-//! - K: Destroy all bricks (for testing level transitions)
+//! - R: Restart current level (only in cheat mode)
+//! - L: Switch to next level (only in cheat mode)
+//! - K: Destroy all bricks (for testing level transitions, only in cheat mode)
+//! - G: Toggle cheat mode
+//! - Space: Toggle wireframe (only in cheat mode)
 //! - ESC: Pause game (click to resume)
 
 pub mod level_format;
@@ -701,8 +703,10 @@ pub fn register_brick_collision_systems(app: &mut App) {
 fn toggle_wireframe(
     mut wireframe_config: ResMut<WireframeConfig>,
     keyboard: Res<ButtonInput<KeyCode>>,
+    cheat_mode: Option<Res<systems::cheat_mode::CheatModeState>>,
 ) {
-    if keyboard.just_pressed(KeyCode::Space) {
+    let cheat_active = cheat_mode.map(|c| c.active).unwrap_or(false);
+    if cheat_active && keyboard.just_pressed(KeyCode::Space) {
         wireframe_config.global = !wireframe_config.global;
     }
 }
