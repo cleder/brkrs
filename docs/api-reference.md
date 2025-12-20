@@ -29,7 +29,7 @@ The crate is organized into the following modules:
 | `level_format` | Level file parsing and RON deserialization |
 | `level_loader` | Level loading, entity spawning, and grid management |
 | `pause` | Pause system state machine and UI overlay |
-| `systems` | Game systems (respawn, textures, level switching, debug) |
+| `systems` | Game systems (respawn, spawning, textures, level switching, debug) |
 | `ui` | User interface components and palette definitions |
 
 ## Building Documentation Locally

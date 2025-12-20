@@ -30,7 +30,7 @@ use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 #[cfg(not(target_arch = "wasm32"))]
 use bevy::window::MonitorSelection;
 use bevy::{
-    color::palettes::{basic::SILVER, css::RED},
+    color::palettes::css::RED,
     ecs::message::{MessageReader, MessageWriter},
     input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
     prelude::*,
@@ -38,11 +38,11 @@ use bevy::{
 };
 use bevy_rapier3d::prelude::*;
 
-const BALL_RADIUS: f32 = 0.3;
-const PADDLE_RADIUS: f32 = 0.3;
-const PADDLE_HEIGHT: f32 = 3.0;
-const PLANE_H: f32 = 30.0;
-const PLANE_W: f32 = 40.0;
+pub const BALL_RADIUS: f32 = 0.3;
+pub const PADDLE_RADIUS: f32 = 0.3;
+pub const PADDLE_HEIGHT: f32 = 3.0;
+pub const PLANE_H: f32 = 30.0;
+pub const PLANE_W: f32 = 40.0;
 
 // Bounce/impulse tuning
 // How strongly the wall collision pushes the ball (ExternalImpulse on balls)
@@ -86,11 +86,7 @@ pub struct BallTypeId(pub u8);
 #[require(Transform, Visibility)]
 pub struct Border;
 
-/// Marker component for the ground plane entity.
-/// Used by per-level texture override system to apply custom ground materials.
-#[derive(Component)]
-#[require(Transform, Visibility)]
-pub struct GroundPlane;
+pub use systems::spawning::{GroundPlane, MainCamera};
 
 #[derive(Component)]
 pub struct LowerGoal;
@@ -223,7 +219,14 @@ pub fn run() {
 
     app.add_systems(
         Startup,
-        (setup, spawn_border, systems::grid_debug::spawn_grid_overlay),
+        (
+            setup,
+            spawn_border,
+            systems::grid_debug::spawn_grid_overlay,
+            systems::spawning::spawn_camera,
+            systems::spawning::spawn_ground_plane,
+            systems::spawning::spawn_light,
+        ),
     );
 
     app.add_systems(
@@ -273,56 +276,13 @@ pub fn run() {
     app.run();
 }
 
-fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut rapier_config: Query<&mut RapierConfiguration>,
-    gravity_cfg: Res<GravityConfig>,
-) {
+fn setup(mut rapier_config: Query<&mut RapierConfiguration>, gravity_cfg: Res<GravityConfig>) {
     // Set gravity for normal gameplay (respawn will temporarily disable it)
     if let Ok(mut config) = rapier_config.single_mut() {
         config.gravity = gravity_cfg.normal;
     } else {
         warn!("RapierConfiguration not found; gravity not set");
     }
-
-    // Level entities (paddle, ball, bricks) are spawned by LevelLoaderPlugin after level parsing.
-
-    // light
-    commands.spawn((
-        PointLight {
-            shadows_enabled: true,
-            intensity: 10_000_000.,
-            range: 100.0,
-            shadow_depth_bias: 0.2,
-            ..default()
-        },
-        Transform::from_xyz(-4.0, 20.0, 2.0),
-    ));
-
-    // ground plane
-    commands.spawn((
-        Mesh3d(
-            meshes.add(
-                Plane3d::default()
-                    .mesh()
-                    .size(PLANE_H, PLANE_W)
-                    .subdivisions(4),
-            ),
-        ),
-        MeshMaterial3d(materials.add(Color::from(SILVER))),
-        GroundPlane,
-    ));
-
-    commands.spawn((
-        Camera3d::default(),
-        Transform::from_xyz(0.0, 37., 0.0).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
-        MainCamera,
-    ));
-
-    #[derive(Component)]
-    struct MainCamera;
 }
 
 /// Apply speed-dependent damping to control ball velocity

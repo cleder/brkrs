@@ -10,6 +10,7 @@ pub mod multi_hit;
 pub mod paddle_size;
 pub mod respawn;
 pub mod scoring;
+pub mod spawning;
 pub mod textures;
 
 pub use audio::{AudioConfig, AudioPlugin, BallWallHit, LevelCompleted, LevelStarted, SoundType};
