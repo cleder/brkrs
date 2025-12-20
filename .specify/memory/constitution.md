@@ -221,7 +221,7 @@ It provides objective verification (tests) for requirement fulfillment and disco
 - **Relationship API:** Access parent entities using `ChildOf::parent()` method.
   Use `commands.entity(parent).add_children()` and `.remove::<Children>()` for hierarchy manipulation.
 - **Error Recovery Patterns:** Use `let Some(value) = optional else { return; }` for graceful handling of missing resources.
-  Use `let Some(value) = option else { return Ok(()); }` for missing optional data.
+  Use `let Some(value) = option else { return; }` for missing optional data.
 - **System Organization:** Define system sets with `*Systems` suffix (e.g., `GameplaySystems::Input`).
   Use `.configure_sets()` with `.chain()` only between sets, not individual systems.
   Group parallelizable systems within the same set.
