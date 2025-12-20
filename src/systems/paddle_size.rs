@@ -5,6 +5,17 @@
 //! - Brick Type 32: Enlarges paddle to 150% (30 units) for 10 seconds
 //!
 //! Effects are temporary, replace each other, and clear on level changes or life loss.
+//!
+//! # System Organization
+//!
+//! Systems are organized using the [`PaddleSizeSystems`] SystemSet enum:
+//! - [`PaddleSizeSystems::Detect`]: Detect collisions / inputs
+//! - [`PaddleSizeSystems::UpdateTimers`]: Update effect timers
+//! - [`PaddleSizeSystems::Cleanup`]: Cleanup expired effects
+//! - [`PaddleSizeSystems::Visual`]: Visual updates (change-driven)
+//! - [`PaddleSizeSystems::Audio`]: Optional audio feedback
+//!
+//! Ordering: Detect -> UpdateTimers -> Cleanup -> Visual -> Audio
 
 use bevy::ecs::message::{Message, MessageReader, MessageWriter};
 use bevy::prelude::*;
@@ -26,6 +37,21 @@ pub const EFFECT_DURATION: f32 = 10.0;
 pub const MIN_PADDLE_WIDTH: f32 = 10.0;
 /// Maximum paddle width
 pub const MAX_PADDLE_WIDTH: f32 = 30.0;
+
+/// System set organization for paddle size feature.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemSet)]
+pub enum PaddleSizeSystems {
+    /// Detect collisions / inputs
+    Detect,
+    /// Update effect timers
+    UpdateTimers,
+    /// Cleanup expired effects
+    Cleanup,
+    /// Visual updates (change-driven)
+    Visual,
+    /// Optional audio feedback
+    Audio,
+}
 
 /// Brick type ID for shrink powerup
 pub const BRICK_TYPE_30: u8 = 30;
@@ -184,8 +210,12 @@ pub fn remove_expired_effects(
 }
 
 /// System to update paddle visual feedback based on active effect
+/// Only runs when PaddleSizeEffect changes (reactive updates)
 pub fn update_paddle_visual_feedback(
-    paddles: Query<(&PaddleSizeEffect, &MeshMaterial3d<StandardMaterial>)>,
+    paddles: Query<
+        (&PaddleSizeEffect, &MeshMaterial3d<StandardMaterial>),
+        Changed<PaddleSizeEffect>,
+    >,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (effect, material_handle) in paddles.iter() {
@@ -197,17 +227,16 @@ pub fn update_paddle_visual_feedback(
 }
 
 /// System to restore paddle visual appearance when effect is removed
-/// Note: Assumes default paddle color is WHITE. This matches the rest of the codebase.
-/// TODO: Consider storing original color when effect is applied for better flexibility
+/// Uses RemovedComponents for event-driven restoration (only runs when effect removed)
 pub fn restore_paddle_visual(
-    paddles: Query<&MeshMaterial3d<StandardMaterial>, (With<Paddle>, Without<PaddleSizeEffect>)>,
+    mut removed_effects: RemovedComponents<PaddleSizeEffect>,
+    paddles: Query<&MeshMaterial3d<StandardMaterial>, With<Paddle>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    for material_handle in paddles.iter() {
-        if let Some(material) = materials.get_mut(&material_handle.0) {
-            // Only restore if it's currently tinted (to avoid resetting on every frame)
-            // Note: This check provides a simple optimization to avoid unnecessary updates
-            if material.base_color != Color::WHITE {
+    for entity in removed_effects.read() {
+        // Check if entity still exists and has a paddle material
+        if let Ok(material_handle) = paddles.get(entity) {
+            if let Some(material) = materials.get_mut(&material_handle.0) {
                 material.base_color = Color::WHITE;
                 material.emissive = LinearRgba::BLACK;
             }
@@ -281,17 +310,18 @@ impl Plugin for PaddleSizePlugin {
         app.add_message::<PaddleSizeEffectApplied>();
 
         // Register systems with explicit ordering to ensure deterministic execution
-        // Chain: collision detection → timer updates → effect removal → visual feedback
+        // Ordering: collision detection → timer updates → effect removal → visual feedback
+        app.add_systems(Update, detect_powerup_brick_collisions);
         app.add_systems(
             Update,
-            (
-                detect_powerup_brick_collisions,
-                update_effect_timers,
-                remove_expired_effects,
-                (update_paddle_visual_feedback, restore_paddle_visual),
-            )
-                .chain(),
+            update_effect_timers.after(detect_powerup_brick_collisions),
         );
+        app.add_systems(Update, remove_expired_effects.after(update_effect_timers));
+        app.add_systems(
+            Update,
+            update_paddle_visual_feedback.after(remove_expired_effects),
+        );
+        app.add_systems(Update, restore_paddle_visual.after(remove_expired_effects));
 
         // Event-driven cleanup systems can run independently
         app.add_systems(Update, clear_effects_on_level_change);

@@ -3,16 +3,16 @@
 //! Tests for audio event types and graceful degradation behavior.
 
 use bevy::prelude::*;
+use brkrs::signals::BrickDestroyed;
 use brkrs::systems::audio::AudioAssets;
-use brkrs::systems::{
-    AudioConfig, AudioPlugin, BallWallHit, BrickDestroyed, LevelCompleted, LevelStarted,
-};
+use brkrs::systems::{AudioConfig, AudioPlugin, BallWallHit, LevelCompleted, LevelStarted};
 
 #[test]
-fn brick_destroyed_event_has_correct_fields() {
+fn brick_destroyed_message_has_correct_fields() {
     let event = BrickDestroyed {
-        entity: Entity::PLACEHOLDER,
+        brick_entity: Entity::PLACEHOLDER,
         brick_type: 20,
+        destroyed_by: None,
     };
     assert_eq!(event.brick_type, 20);
 }
@@ -80,10 +80,11 @@ fn audio_config_mute_toggle_works() {
 #[test]
 fn audio_events_are_cloneable() {
     let brick_destroyed = BrickDestroyed {
-        entity: Entity::PLACEHOLDER,
+        brick_entity: Entity::PLACEHOLDER,
         brick_type: 20,
+        destroyed_by: None,
     };
-    let cloned = brick_destroyed.clone();
+    let cloned = brick_destroyed;
     assert_eq!(cloned.brick_type, 20);
 
     let ball_wall_hit = BallWallHit {

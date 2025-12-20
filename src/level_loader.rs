@@ -844,12 +844,12 @@ fn advance_level_when_cleared(
 #[derive(Message, Debug, Clone, Copy)]
 pub struct RestartRequested;
 
-/// Producer: queue restart requests when 'R' is pressed; emits UiBeepEvent when blocked.
+/// Producer: queue restart requests when 'R' is pressed; emits UiBeep when blocked.
 fn queue_restart_requests(
     keyboard: Res<ButtonInput<KeyCode>>,
     cheat: Option<Res<crate::systems::cheat_mode::CheatModeState>>,
     mut restart: Option<MessageWriter<RestartRequested>>,
-    mut beep: Option<MessageWriter<crate::systems::audio::UiBeepEvent>>,
+    mut beep: Option<MessageWriter<crate::signals::UiBeep>>,
 ) {
     if !keyboard.just_pressed(KeyCode::KeyR) {
         return;
@@ -860,12 +860,12 @@ fn queue_restart_requests(
                 r.write(RestartRequested);
             }
         } else if let Some(b) = beep.as_mut() {
-            b.write(crate::systems::audio::UiBeepEvent);
+            b.write(crate::signals::UiBeep);
         }
     } else {
         // conservative: block if cheat state not present
         if let Some(b) = beep.as_mut() {
-            b.write(crate::systems::audio::UiBeepEvent);
+            b.write(crate::signals::UiBeep);
         }
     }
 }
@@ -1673,13 +1673,12 @@ mod tests {
     // Unit tests for restart gating
 
     use super::*;
-    use bevy::prelude::*;
 
     #[derive(Resource, Default)]
     struct BeepCount(u32);
 
     fn capture_beep(
-        mut reader: bevy::ecs::message::MessageReader<crate::systems::audio::UiBeepEvent>,
+        mut reader: bevy::ecs::message::MessageReader<crate::signals::UiBeep>,
         mut c: ResMut<BeepCount>,
     ) {
         for _ in reader.read() {

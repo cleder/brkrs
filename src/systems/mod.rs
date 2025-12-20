@@ -12,9 +12,7 @@ pub mod respawn;
 pub mod scoring;
 pub mod textures;
 
-pub use audio::{
-    AudioConfig, AudioPlugin, BallWallHit, BrickDestroyed, LevelCompleted, LevelStarted, SoundType,
-};
+pub use audio::{AudioConfig, AudioPlugin, BallWallHit, LevelCompleted, LevelStarted, SoundType};
 pub use cheat_mode::{CheatModePlugin, CheatModeState, CheatModeToggled};
 pub use level_switch::{
     LevelSwitchPlugin, LevelSwitchRequested, LevelSwitchSource, LevelSwitchState,

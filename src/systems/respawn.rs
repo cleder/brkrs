@@ -229,34 +229,67 @@ impl Plugin for RespawnPlugin {
                     RespawnSystems::Control,
                 )
                     .chain(),
-            )
-            .add_systems(
-                Update,
-                (
-                    detect_ball_loss.in_set(RespawnSystems::Detect),
-                    life_loss_logging
-                        .in_set(RespawnSystems::Detect)
-                        .after(detect_ball_loss),
-                    apply_paddle_shrink
-                        .in_set(RespawnSystems::Detect)
-                        .after(detect_ball_loss),
-                    enqueue_respawn_requests.in_set(RespawnSystems::Schedule),
-                    process_respawn_queue
-                        .in_set(RespawnSystems::Schedule)
-                        .after(enqueue_respawn_requests),
-                    log_respawn_scheduled
-                        .in_set(RespawnSystems::Schedule)
-                        .after(process_respawn_queue),
-                    log_game_over_requested
-                        .in_set(RespawnSystems::Schedule)
-                        .after(enqueue_respawn_requests),
-                    respawn_executor.in_set(RespawnSystems::Execute),
-                    (respawn_visual_trigger, animate_respawn_visual)
-                        .chain()
-                        .in_set(RespawnSystems::Visual),
-                    restore_paddle_control.in_set(RespawnSystems::Control),
-                ),
             );
+
+        // Detect phase systems
+        app.add_systems(Update, detect_ball_loss.in_set(RespawnSystems::Detect));
+        app.add_systems(
+            Update,
+            life_loss_logging
+                .in_set(RespawnSystems::Detect)
+                .after(detect_ball_loss),
+        );
+        app.add_systems(
+            Update,
+            apply_paddle_shrink
+                .in_set(RespawnSystems::Detect)
+                .after(detect_ball_loss),
+        );
+
+        // Schedule phase systems
+        app.add_systems(
+            Update,
+            enqueue_respawn_requests.in_set(RespawnSystems::Schedule),
+        );
+        app.add_systems(
+            Update,
+            process_respawn_queue
+                .in_set(RespawnSystems::Schedule)
+                .after(enqueue_respawn_requests),
+        );
+        app.add_systems(
+            Update,
+            log_respawn_scheduled
+                .in_set(RespawnSystems::Schedule)
+                .after(process_respawn_queue),
+        );
+        app.add_systems(
+            Update,
+            log_game_over_requested
+                .in_set(RespawnSystems::Schedule)
+                .after(enqueue_respawn_requests),
+        );
+
+        // Execute phase system
+        app.add_systems(Update, respawn_executor.in_set(RespawnSystems::Execute));
+
+        // Visual phase systems
+        app.add_systems(
+            Update,
+            respawn_visual_trigger.in_set(RespawnSystems::Visual),
+        );
+        app.add_systems(
+            Update,
+            animate_respawn_visual
+                .in_set(RespawnSystems::Visual)
+                .after(respawn_visual_trigger),
+        );
+
+        // Control phase system
+        app.add_systems(
+            Update,
+            restore_paddle_control.in_set(RespawnSystems::Control),
+        );
     }
 }
 

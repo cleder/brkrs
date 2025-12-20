@@ -11,6 +11,7 @@
 pub mod level_format;
 pub mod level_loader;
 pub mod pause;
+pub mod signals;
 pub mod systems;
 pub mod ui;
 
@@ -69,8 +70,10 @@ const CELL_HEIGHT: f32 = PLANE_H / GRID_HEIGHT as f32; // 1.5 (X dimension)
                                                        // Cell aspect ratio: CELL_HEIGHT / CELL_WIDTH = 30/40 * 20/20 = 3/4 = 0.75
 /// A marker component for our shapes so we can query them separately from the ground plane
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct Paddle;
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct Ball;
 
 /// Type ID for ball variants (used by texture manifest type_variants).
@@ -81,16 +84,19 @@ pub struct BallTypeId(pub u8);
 /// Marker component for sidewall/border entities.
 /// Used by per-level texture override system to apply custom sidewall materials.
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct Border;
 
 /// Marker component for the ground plane entity.
 /// Used by per-level texture override system to apply custom ground materials.
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct GroundPlane;
 
 #[derive(Component)]
 pub struct LowerGoal;
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct GridOverlay;
 #[derive(Component)]
 pub struct Brick;
@@ -175,7 +181,7 @@ pub fn run() {
     app.insert_resource(GameProgress::default());
     // Scoring system state
     app.init_resource::<systems::scoring::ScoreState>();
-    app.add_message::<systems::scoring::BrickDestroyed>();
+    app.add_message::<crate::signals::BrickDestroyed>();
     app.add_message::<systems::scoring::MilestoneReached>();
     app.insert_resource(level_loader::LevelAdvanceState::default());
     app.add_plugins((
@@ -715,23 +721,17 @@ fn detect_ball_wall_collisions(
 }
 
 /// Despawn entities marked for removal (runs after physics step).
-/// Emits BrickDestroyed events for audio system integration.
+/// Emits BrickDestroyed messages for audio/scoring integration.
 fn despawn_marked_entities(
     marked: Query<(Entity, Option<&BrickTypeId>), With<MarkedForDespawn>>,
     mut commands: Commands,
-    mut scoring_events: Option<MessageWriter<systems::scoring::BrickDestroyed>>,
+    mut brick_events: Option<MessageWriter<crate::signals::BrickDestroyed>>,
 ) {
     for (entity, brick_type) in marked.iter() {
-        // Emit BrickDestroyed event for audio system
+        // Emit BrickDestroyed message for audio/scoring systems
         if let Some(brick_type) = brick_type {
-            commands.trigger(systems::BrickDestroyed {
-                entity,
-                brick_type: brick_type.0,
-            });
-
-            // Emit scoring message for point award
-            if let Some(writer) = scoring_events.as_mut() {
-                writer.write(systems::scoring::BrickDestroyed {
+            if let Some(writer) = brick_events.as_mut() {
+                writer.write(crate::signals::BrickDestroyed {
                     brick_entity: entity,
                     brick_type: brick_type.0,
                     destroyed_by: None,

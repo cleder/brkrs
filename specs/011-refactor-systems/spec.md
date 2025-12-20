@@ -83,8 +83,10 @@ As a player, I want smooth gameplay at target frame rates so interactions feel r
 ### Edge Cases
 
 - Missing or partial resources at startup (e.g., `AssetServer`, `Messages<AssetEvent<Image>>` unavailable in minimal test app) must not cause panics; systems no-op gracefully.
-- WASM environment without file system must not attempt blocking file I/O; configuration and manifests load via supported mechanisms only.
+- WASM environment without file system must not attempt blocking file I/O; configuration and manifests load via supported mechanisms only (e.g., `AssetServer::load`).
 - Multiple brick-destroy events in a single frame must result in exactly one score update per event and a single audio play per brick, respecting concurrency limits.
+- Respawn execution with missing paddle or ball entities must return gracefully without panic (FR-006).
+- Message buffering: Signals in `crate::signals` use Bevy's `Messages` which are buffered until read; systems must consume all pending messages in each frame to avoid overflow.
 
 ## Requirements *(mandatory)*
 

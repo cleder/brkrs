@@ -6,6 +6,7 @@
 //! - Milestone detection at 5000-point intervals
 //! - Event communication with other game systems
 
+use crate::signals::BrickDestroyed;
 use bevy::ecs::message::{Message, MessageReader, MessageWriter};
 use bevy::prelude::*;
 use rand::{rng, Rng};
@@ -25,18 +26,7 @@ pub struct ScoreState {
     pub last_milestone_reached: u32,
 }
 
-/// Domain signal that a brick was destroyed by ball collision, triggering point award.
-#[derive(Message, Debug, Clone, Copy)]
-pub struct BrickDestroyed {
-    /// The brick entity that was destroyed
-    pub brick_entity: Entity,
-
-    /// Type/index of brick (determines point value)
-    pub brick_type: u8,
-
-    /// The ball entity that destroyed the brick (optional, for future features)
-    pub destroyed_by: Option<Entity>,
-}
+// BrickDestroyed message is defined in `crate::signals`.
 
 /// Domain signal that score crossed a 5000-point threshold, triggering an extra ball/life award.
 #[derive(Message, Debug, Clone, Copy)]

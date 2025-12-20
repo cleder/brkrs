@@ -2,10 +2,9 @@ use bevy::prelude::*;
 use bevy::MinimalPlugins;
 
 use bevy::ecs::entity::Entity;
-use brkrs::systems::audio::UiBeepEvent;
+use brkrs::signals::UiBeep;
 use brkrs::systems::cheat_mode::CheatModeState;
-use brkrs::systems::level_switch::LevelSwitchSource;
-use brkrs::systems::level_switch::{LevelSwitchDirection, LevelSwitchPlugin, LevelSwitchRequested};
+use brkrs::systems::level_switch::{LevelSwitchPlugin, LevelSwitchRequested};
 use brkrs::ui::game_over_overlay::GameOverOverlay;
 
 use brkrs::level_loader::LevelLoaderPlugin;
@@ -18,9 +17,9 @@ struct BeepCount(u32);
 #[derive(Resource, Default)]
 struct SwitchRequests(Vec<LevelSwitchRequested>);
 
-// Reader-based capture for UiBeepEvent messages
+// Reader-based capture for UiBeep messages
 fn capture_beep(
-    mut reader: bevy::ecs::message::MessageReader<UiBeepEvent>,
+    mut reader: bevy::ecs::message::MessageReader<UiBeep>,
     mut counter: ResMut<BeepCount>,
 ) {
     for _ in reader.read() {
@@ -78,7 +77,7 @@ fn toggling_cheat_removes_game_over_overlay() {
 
     // Spawn game-over overlay entity, set lives to 0, and assert initial state
     {
-        let mut world = app.world_mut();
+        let world = app.world_mut();
         world.spawn((GameOverOverlay,));
         // Simulate player has no lives left
         world.insert_resource(brkrs::systems::respawn::LivesState {
@@ -87,7 +86,7 @@ fn toggling_cheat_removes_game_over_overlay() {
         });
         let mut q = world.query_filtered::<Entity, With<GameOverOverlay>>();
         assert!(
-            q.iter(&world).next().is_some(),
+            q.iter(world).next().is_some(),
             "GameOverOverlay should exist before toggle"
         );
         let lives = world.resource::<brkrs::systems::respawn::LivesState>();
@@ -108,10 +107,10 @@ fn toggling_cheat_removes_game_over_overlay() {
 
     // GameOverOverlay should be removed and lives reset to 3
     {
-        let mut world = app.world_mut();
+        let world = app.world_mut();
         let mut q = world.query_filtered::<Entity, With<GameOverOverlay>>();
         assert!(
-            q.iter(&world).next().is_none(),
+            q.iter(world).next().is_none(),
             "GameOverOverlay should be removed when toggling cheat mode"
         );
         let lives = world.resource::<brkrs::systems::respawn::LivesState>();
@@ -124,12 +123,7 @@ fn toggling_cheat_removes_game_over_overlay() {
 
 // Blocked N/P behavior is covered by unit tests in `src/systems/level_switch.rs`.
 
-fn load_level_definition(number: u32) -> brkrs::level_loader::LevelDefinition {
-    let path = format!("assets/levels/level_{number:03}.ron");
-    let contents =
-        std::fs::read_to_string(&path).unwrap_or_else(|err| panic!("failed to read {path}: {err}"));
-    ron::de::from_str(&contents).unwrap_or_else(|err| panic!("failed to parse {path}: {err}"))
-}
+// Removed unused helper `load_level_definition` to silence dead_code warnings.
 
 #[test]
 fn n_and_p_allowed_when_cheat_active_no_beep() {
@@ -195,4 +189,33 @@ fn r_allowed_when_cheat_active_no_beep() {
     // No beep emitted for allowed restart
     let beep = app.world().resource::<BeepCount>();
     assert_eq!(beep.0, 0, "Allowed restart should not emit UI beep");
+}
+
+#[test]
+fn blocked_level_switch_emits_beep_only() {
+    let mut app = test_app();
+
+    // Ensure cheat mode is disabled (default)
+    // Press 'N' for next level
+    app.world_mut()
+        .resource_mut::<ButtonInput<KeyCode>>()
+        .press(KeyCode::KeyN);
+    app.update();
+    app.world_mut()
+        .resource_mut::<ButtonInput<KeyCode>>()
+        .release(KeyCode::KeyN);
+
+    // Verify UiBeep received
+    let beep_count = app.world().resource::<BeepCount>().0;
+    assert_eq!(
+        beep_count, 1,
+        "Should emit one beep when level switch is blocked"
+    );
+
+    // Verify NO LevelSwitchRequested received
+    let switch_requests = app.world().resource::<SwitchRequests>().0.len();
+    assert_eq!(
+        switch_requests, 0,
+        "Should NOT emit switch request when blocked"
+    );
 }

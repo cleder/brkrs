@@ -1,16 +1,32 @@
 //! Audio system module for the brick-breaker game.
 //!
-//! This module provides an event-driven audio system that plays sounds in response
-//! to game events such as brick collisions, wall bounces, and level transitions.
+//! This module provides a message-driven audio system that plays sounds in response
+//! to game events via Constitution-compliant Message boundaries.
 //!
 //! # Architecture
 //!
-//! The audio system uses Bevy's observer pattern to react to game events:
+//! The audio system uses Bevy's Message pattern for clean inter-system communication:
 //!
-//! - [`AudioPlugin`] registers all audio resources and observers
+//! - [`AudioPlugin`] registers all audio resources and message consumer systems
+//! - [`consume_ui_beep_messages`] reads [`UiBeep`](crate::signals::UiBeep) messages
+//! - [`consume_brick_destroyed_messages`] reads [`BrickDestroyed`](crate::signals::BrickDestroyed) messages
 //! - [`AudioConfig`] stores user-adjustable volume and mute settings
 //! - [`AudioAssets`] holds loaded audio asset handles keyed by [`SoundType`]
 //! - [`ActiveSounds`] tracks concurrent playback to limit simultaneous sounds
+//!
+//! # Message Boundaries (Constitution Compliance)
+//!
+//! The system follows the Constitution requirement for unified message boundaries:
+//!
+//! - **UiBeep**: Consumed by [`consume_ui_beep_messages`] system
+//!   - Single message path (no observer callbacks)
+//!   - Triggered by UI interactions, pause menu, game state changes
+//!   - Produces: Short beep audio feedback
+//!
+//! - **BrickDestroyed**: Consumed by [`consume_brick_destroyed_messages`] system
+//!   - Single message path (no dual producer/consumer)
+//!   - Fired by collision/despawn systems with destruction context
+//!   - Produces: Brick break sound effect based on brick type
 //!
 //! # Sound Types
 //!
@@ -25,6 +41,13 @@
 //! - `LevelStart` - Level begins
 //! - `LevelComplete` - Level completed
 //!
+//! # System Organization
+//!
+//! Systems are organized using the [`AudioSystems`] SystemSet enum:
+//! - [`AudioSystems::Startup`]: Load manifest and asset handles
+//! - [`AudioSystems::Update`]: Message consumer systems run here
+//! - [`AudioSystems::Cleanup`]: Remove stale active sound tracking
+//!
 //! # Graceful Degradation
 //!
 //! The system handles missing audio assets gracefully by logging warnings
@@ -36,15 +59,31 @@
 //! // Register the audio plugin in your app
 //! app.add_plugins(AudioPlugin);
 //!
-//! // Audio will automatically play when game events occur
+//! // Audio will automatically play when game events occur via messages
+//! // Sending a UI beep:
+//! fn my_system(mut writer: MessageWriter<UiBeep>) {
+//!     writer.write(UiBeep);
+//! }
 //! ```
 
+use crate::signals::{BrickDestroyed as BrickDestroyedMsg, UiBeep};
+use bevy::ecs::message::MessageReader;
 use bevy::prelude::*;
 use ron::de::from_str;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 #[cfg(target_arch = "wasm32")]
 use web_sys;
+/// System set organization for audio-related systems.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemSet)]
+pub enum AudioSystems {
+    /// Startup initialization (config, assets)
+    Startup,
+    /// Regular update consumers and management
+    Update,
+    /// Cleanup finished sounds / instances
+    Cleanup,
+}
 
 /// Maximum number of concurrent sounds of the same type.
 const MAX_CONCURRENT_SOUNDS: u8 = 4;
@@ -196,19 +235,20 @@ impl Plugin for AudioPlugin {
         app.init_resource::<AudioAssets>()
             .init_resource::<ActiveSounds>()
             .init_resource::<ActiveAudioInstances>()
-            .add_message::<UiBeepEvent>()
-            .add_systems(Startup, (load_audio_config, load_audio_assets).chain())
+            .add_message::<UiBeep>()
+            .add_systems(Startup, load_audio_config)
+            .add_systems(Startup, load_audio_assets)
             .add_systems(Update, save_audio_config_on_change)
             .add_systems(Update, cleanup_finished_sounds)
             .add_observer(on_multi_hit_brick_sound)
-            .add_observer(on_brick_destroyed_sound)
             .add_observer(on_ball_wall_hit_sound)
             .add_observer(on_paddle_ball_hit_sound)
             .add_observer(on_paddle_wall_hit_sound)
             .add_observer(on_paddle_brick_hit_sound)
             .add_observer(on_level_started_sound)
             .add_observer(on_level_complete_sound)
-            .add_observer(on_ui_beep);
+            .add_systems(Update, consume_brick_destroyed_messages)
+            .add_systems(Update, consume_ui_beep_messages);
     }
 }
 
@@ -226,10 +266,7 @@ fn cleanup_finished_sounds(
     }
 }
 
-/// UI beep event
-use bevy::ecs::message::Message;
-#[derive(Message, Event, Debug, Clone, Copy)]
-pub struct UiBeepEvent;
+// UiBeep buffered message consumed via MessageReader
 
 /// Path to the audio config file.
 const AUDIO_CONFIG_PATH: &str = "config/audio.ron";
@@ -546,15 +583,7 @@ fn play_sound(
 // Event definitions
 // =============================================================================
 
-/// Emitted when a destructible brick is removed from the game.
-/// Used by audio system to play brick destruction sound.
-#[derive(Event, Debug, Clone)]
-pub struct BrickDestroyed {
-    /// The entity that was destroyed.
-    pub entity: Entity,
-    /// The brick type that was destroyed.
-    pub brick_type: u8,
-}
+// BrickDestroyed moved to `crate::signals` and is now a Message.
 
 /// Emitted when the ball bounces off a wall boundary.
 /// Used by audio system to play wall bounce sound.
@@ -613,34 +642,38 @@ fn on_multi_hit_brick_sound(
     );
 }
 
-/// Observer for brick destruction sound.
-fn on_brick_destroyed_sound(
-    trigger: On<BrickDestroyed>,
+/// Consumer for brick destruction messages to play destruction sound.
+fn consume_brick_destroyed_messages(
+    reader: Option<MessageReader<BrickDestroyedMsg>>,
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
     mut active_sounds: ResMut<ActiveSounds>,
     mut active_instances: ResMut<ActiveAudioInstances>,
     mut commands: Commands,
 ) {
-    let event = trigger.event();
-    // Don't play destruction sound for multi-hit bricks (they use MultiHitImpact)
-    if crate::level_format::is_multi_hit_brick(event.brick_type) {
+    let Some(mut reader) = reader else {
         return;
+    };
+    for event in reader.read() {
+        // Don't play destruction sound for multi-hit bricks (they use MultiHitImpact)
+        if crate::level_format::is_multi_hit_brick(event.brick_type) {
+            continue;
+        }
+        debug!(
+            target: "audio",
+            entity = ?event.brick_entity,
+            brick_type = event.brick_type,
+            "Brick destroyed"
+        );
+        play_sound(
+            SoundType::BrickDestroy,
+            &config,
+            &assets,
+            &mut active_sounds,
+            &mut active_instances,
+            &mut commands,
+        );
     }
-    debug!(
-        target: "audio",
-        entity = ?event.entity,
-        brick_type = event.brick_type,
-        "Brick destroyed"
-    );
-    play_sound(
-        SoundType::BrickDestroy,
-        &config,
-        &assets,
-        &mut active_sounds,
-        &mut active_instances,
-        &mut commands,
-    );
 }
 
 /// Observer for ball wall hit sound.
@@ -796,24 +829,29 @@ fn on_level_complete_sound(
 }
 
 /// UI beep observer - plays a short soft beep when requested
-fn on_ui_beep(
-    trigger: On<UiBeepEvent>,
+fn consume_ui_beep_messages(
+    mut reader: MessageReader<UiBeep>,
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
     mut active_sounds: ResMut<ActiveSounds>,
     mut active_instances: ResMut<ActiveAudioInstances>,
     mut commands: Commands,
 ) {
-    let _ = trigger.event();
-    debug!(target: "audio", "UI beep requested");
-    play_sound(
-        SoundType::UiBeep,
-        &config,
-        &assets,
-        &mut active_sounds,
-        &mut active_instances,
-        &mut commands,
-    );
+    let mut count = 0u32;
+    for _ in reader.read() {
+        count += 1;
+        play_sound(
+            SoundType::UiBeep,
+            &config,
+            &assets,
+            &mut active_sounds,
+            &mut active_instances,
+            &mut commands,
+        );
+    }
+    if count > 0 {
+        debug!(target: "audio", messages = count, "UI beep messages consumed");
+    }
 }
 
 #[cfg(test)]
@@ -898,10 +936,11 @@ mod tests {
     }
 
     #[test]
-    fn brick_destroyed_event_fields() {
-        let event = BrickDestroyed {
-            entity: Entity::PLACEHOLDER,
+    fn brick_destroyed_message_fields() {
+        let event = BrickDestroyedMsg {
+            brick_entity: Entity::PLACEHOLDER,
             brick_type: 20,
+            destroyed_by: None,
         };
         assert_eq!(event.brick_type, 20);
     }
