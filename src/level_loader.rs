@@ -1071,7 +1071,9 @@ fn handle_level_advance_delay(
     if !level_advance.timer.is_finished() {
         return;
     }
-    let def = level_advance.pending.as_ref().unwrap();
+    let Some(def) = level_advance.pending.as_ref() else {
+        return;
+    };
 
     // Spawn bricks at peak of fade (when screen is fully black)
     #[cfg(feature = "texture_manifest")]
@@ -1257,7 +1259,9 @@ fn finalize_level_advance(
     }
 
     // Stage 2: Now BallFrozen is removed, stabilize_frozen_balls won't act anymore
-    let def = level_advance.pending.take().unwrap();
+    let Some(def) = level_advance.pending.take() else {
+        return;
+    };
 
     for (entity, mut gravity_scale, _velocity) in balls.iter_mut() {
         // Remove Velocity component so Rapier manages it internally (like R/L do)

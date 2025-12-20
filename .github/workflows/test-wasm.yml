@@ -1,0 +1,49 @@
+name: CI WASM
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUSTUP_MAX_RETRIES: 10
+  # Use all available cores for compilation
+  CARGO_BUILD_JOBS: 4
+
+jobs:
+  wasm-build:
+    name: WASM build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RUST_TEST_THREADS: 1
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          # Ensure pkg-config and development headers are available so native
+          # crates like wayland-sys can find system libraries (wayland-client.pc)
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Set PKG_CONFIG_PATH for native libs
+        run: echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig" >> $GITHUB_ENV
+      - name: Compile WASM target
+        run: |
+          cargo build --release --target wasm32-unknown-unknown --all-features
