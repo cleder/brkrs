@@ -449,6 +449,7 @@ fn save_audio_config_on_change(config: Res<AudioConfig>) {
 fn load_audio_assets(
     asset_server: Option<Res<AssetServer>>,
     mut audio_assets: ResMut<AudioAssets>,
+    audio_sources: Option<Res<Assets<AudioSource>>>,
 ) {
     // If there's no AssetServer available, skip loading (graceful degradation).
     let asset_server = match asset_server {
@@ -458,6 +459,13 @@ fn load_audio_assets(
             return;
         }
     };
+
+    // If AudioSource is not registered (e.g. AudioPlugin not added), skip loading
+    if audio_sources.is_none() {
+        warn!(target: "audio", "AudioSource asset not registered; skipping audio asset loading");
+        return;
+    }
+
     // Try to read the manifest file
     #[cfg(not(target_arch = "wasm32"))]
     let manifest_content = std::fs::read_to_string("assets/audio/manifest.ron");
@@ -645,15 +653,28 @@ fn on_multi_hit_brick_sound(
 /// Consumer for brick destruction messages to play destruction sound.
 fn consume_brick_destroyed_messages(
     reader: Option<MessageReader<BrickDestroyedMsg>>,
-    config: Res<AudioConfig>,
-    assets: Res<AudioAssets>,
-    mut active_sounds: ResMut<ActiveSounds>,
-    mut active_instances: ResMut<ActiveAudioInstances>,
+    config: Option<Res<AudioConfig>>,
+    assets: Option<Res<AudioAssets>>,
+    active_sounds: Option<ResMut<ActiveSounds>>,
+    active_instances: Option<ResMut<ActiveAudioInstances>>,
     mut commands: Commands,
 ) {
     let Some(mut reader) = reader else {
         return;
     };
+    let Some(config) = config else {
+        return;
+    };
+    let Some(assets) = assets else {
+        return;
+    };
+    let Some(mut active_sounds) = active_sounds else {
+        return;
+    };
+    let Some(mut active_instances) = active_instances else {
+        return;
+    };
+
     for event in reader.read() {
         // Don't play destruction sound for multi-hit bricks (they use MultiHitImpact)
         if crate::level_format::is_multi_hit_brick(event.brick_type) {
@@ -830,13 +851,23 @@ fn on_level_complete_sound(
 
 /// UI beep observer - plays a short soft beep when requested
 fn consume_ui_beep_messages(
-    mut reader: MessageReader<UiBeep>,
-    config: Res<AudioConfig>,
-    assets: Res<AudioAssets>,
-    mut active_sounds: ResMut<ActiveSounds>,
-    mut active_instances: ResMut<ActiveAudioInstances>,
+    reader: Option<MessageReader<UiBeep>>,
+    config: Option<Res<AudioConfig>>,
+    assets: Option<Res<AudioAssets>>,
+    active_sounds: Option<ResMut<ActiveSounds>>,
+    active_instances: Option<ResMut<ActiveAudioInstances>>,
     mut commands: Commands,
 ) {
+    let Some(mut reader) = reader else { return };
+    let Some(config) = config else { return };
+    let Some(assets) = assets else { return };
+    let Some(mut active_sounds) = active_sounds else {
+        return;
+    };
+    let Some(mut active_instances) = active_instances else {
+        return;
+    };
+
     let mut count = 0u32;
     for _ in reader.read() {
         count += 1;

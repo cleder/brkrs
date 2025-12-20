@@ -120,13 +120,17 @@ pub fn effect_to_glow(effect_type: SizeEffectType) -> LinearRgba {
 
 /// System to detect ball-brick collisions and apply paddle size effects
 pub fn detect_powerup_brick_collisions(
-    mut collision_events: MessageReader<CollisionEvent>,
+    collision_events: Option<MessageReader<CollisionEvent>>,
     balls: Query<Entity, With<Ball>>,
     bricks: Query<&BrickTypeId, With<Brick>>,
     mut paddles: Query<(Entity, &mut Transform), With<Paddle>>,
     mut commands: Commands,
     mut effect_applied_events: MessageWriter<PaddleSizeEffectApplied>,
 ) {
+    let Some(mut collision_events) = collision_events else {
+        return;
+    };
+
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
             // Determine which entity is the ball and which is the brick
@@ -216,8 +220,11 @@ pub fn update_paddle_visual_feedback(
         (&PaddleSizeEffect, &MeshMaterial3d<StandardMaterial>),
         Changed<PaddleSizeEffect>,
     >,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    materials: Option<ResMut<Assets<StandardMaterial>>>,
 ) {
+    let Some(mut materials) = materials else {
+        return;
+    };
     for (effect, material_handle) in paddles.iter() {
         if let Some(material) = materials.get_mut(&material_handle.0) {
             material.base_color = effect_to_color(effect.effect_type);
@@ -231,8 +238,11 @@ pub fn update_paddle_visual_feedback(
 pub fn restore_paddle_visual(
     mut removed_effects: RemovedComponents<PaddleSizeEffect>,
     paddles: Query<&MeshMaterial3d<StandardMaterial>, With<Paddle>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    materials: Option<ResMut<Assets<StandardMaterial>>>,
 ) {
+    let Some(mut materials) = materials else {
+        return;
+    };
     for entity in removed_effects.read() {
         // Check if entity still exists and has a paddle material
         if let Ok(material_handle) = paddles.get(entity) {

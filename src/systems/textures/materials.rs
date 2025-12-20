@@ -12,8 +12,10 @@ use super::loader::ObjectClass;
 use std::collections::{HashMap, HashSet};
 
 use bevy::asset::AssetEvent;
+use bevy::asset::RenderAssetUsages;
 use bevy::ecs::message::Messages;
 use bevy::prelude::*;
+use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 use tracing::{debug, info, warn};
 
 use super::loader::{TextureManifest, VisualAssetProfile};
@@ -81,14 +83,39 @@ pub struct FallbackRegistry {
 }
 
 impl FallbackRegistry {
-    fn new(materials: &mut Assets<StandardMaterial>) -> Self {
+    fn new(materials: &mut Assets<StandardMaterial>, images: &mut Assets<Image>) -> Self {
+        let debug_texture = images.add(uv_debug_texture());
         Self {
-            ball: add_unlit_color(materials, Color::srgb(0.95, 0.95, 0.95)),
-            paddle: add_unlit_color(materials, Color::srgb(0.82, 0.35, 0.14)),
-            brick: add_unlit_color(materials, Color::srgb(0.75, 0.18, 0.18)),
-            sidewall: add_unlit_color(materials, Color::srgb(0.25, 0.25, 0.35)),
-            ground: add_unlit_color(materials, Color::srgb(0.18, 0.18, 0.18)),
-            background: add_unlit_color(materials, Color::srgb(0.05, 0.08, 0.15)),
+            ball: add_unlit_debug(
+                materials,
+                debug_texture.clone(),
+                Color::srgb(0.95, 0.95, 0.95),
+            ),
+            paddle: add_unlit_debug(
+                materials,
+                debug_texture.clone(),
+                Color::srgb(0.82, 0.35, 0.14),
+            ),
+            brick: add_unlit_debug(
+                materials,
+                debug_texture.clone(),
+                Color::srgb(0.75, 0.18, 0.18),
+            ),
+            sidewall: add_unlit_debug(
+                materials,
+                debug_texture.clone(),
+                Color::srgb(0.25, 0.25, 0.35),
+            ),
+            ground: add_unlit_debug(
+                materials,
+                debug_texture.clone(),
+                Color::srgb(0.18, 0.18, 0.18),
+            ),
+            background: add_unlit_debug(
+                materials,
+                debug_texture.clone(),
+                Color::srgb(0.05, 0.08, 0.15),
+            ),
             warned: HashSet::new(),
         }
     }
@@ -283,9 +310,15 @@ impl CanonicalMaterialHandles {
 
 fn initialize_fallback_registry(
     mut commands: Commands,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    materials: Option<ResMut<Assets<StandardMaterial>>>,
+    images: Option<ResMut<Assets<Image>>>,
 ) {
-    commands.insert_resource(FallbackRegistry::new(materials.as_mut()));
+    if let (Some(materials), Some(images)) = (materials, images) {
+        commands.insert_resource(FallbackRegistry::new(
+            materials.into_inner(),
+            images.into_inner(),
+        ));
+    }
 }
 
 fn set_texture_repeat_mode(
@@ -317,10 +350,10 @@ fn set_texture_repeat_mode(
 fn hydrate_texture_materials(
     manifest: Option<Res<TextureManifest>>,
     asset_server: Option<Res<AssetServer>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut bank: ResMut<ProfileMaterialBank>,
     mut canonical: ResMut<CanonicalMaterialHandles>,
-    mut fallback: ResMut<FallbackRegistry>,
+    fallback: Option<ResMut<FallbackRegistry>>,
     type_variants: Option<ResMut<TypeVariantRegistry>>,
     mut hydrated: Local<bool>,
 ) {
@@ -328,6 +361,12 @@ fn hydrate_texture_materials(
         return;
     };
     let Some(asset_server) = asset_server else {
+        return;
+    };
+    let Some(materials) = materials else {
+        return;
+    };
+    let Some(mut fallback) = fallback else {
         return;
     };
 
@@ -338,7 +377,7 @@ fn hydrate_texture_materials(
     }
     *hydrated = true;
 
-    bank.rebuild(&manifest, &asset_server, materials.as_mut());
+    bank.rebuild(&manifest, &asset_server, materials.into_inner());
     if let Some(mut registry) = type_variants {
         // Need to call rebuild with mutable fallback which consumes &mut FallbackRegistry
         registry.rebuild(&manifest, &bank, fallback.as_mut());
@@ -360,17 +399,6 @@ fn hydrate_texture_materials(
         profiles = manifest.profiles.len(),
         "Canonical materials baked"
     );
-}
-
-fn add_unlit_color(
-    materials: &mut Assets<StandardMaterial>,
-    color: Color,
-) -> Handle<StandardMaterial> {
-    materials.add(StandardMaterial {
-        base_color: color,
-        unlit: true,
-        ..default()
-    })
 }
 
 fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> StandardMaterial {
@@ -701,4 +729,46 @@ fn apply_canonical_materials_to_existing_entities(
             "Applied canonical materials to existing entities"
         );
     }
+}
+
+fn add_unlit_debug(
+    materials: &mut Assets<StandardMaterial>,
+    texture: Handle<Image>,
+    color: Color,
+) -> Handle<StandardMaterial> {
+    materials.add(StandardMaterial {
+        base_color: color,
+        base_color_texture: Some(texture),
+        unlit: true,
+        ..default()
+    })
+}
+
+/// Creates a colorful test pattern
+fn uv_debug_texture() -> Image {
+    const TEXTURE_SIZE: usize = 8;
+
+    let mut palette: [u8; 32] = [
+        255, 102, 159, 255, 255, 159, 102, 255, 236, 255, 102, 255, 121, 255, 102, 255, 102, 255,
+        198, 255, 102, 198, 255, 255, 121, 102, 255, 255, 236, 102, 255, 255,
+    ];
+
+    let mut texture_data = [0; TEXTURE_SIZE * TEXTURE_SIZE * 4];
+    for y in 0..TEXTURE_SIZE {
+        let offset = TEXTURE_SIZE * y * 4;
+        texture_data[offset..(offset + TEXTURE_SIZE * 4)].copy_from_slice(&palette);
+        palette.rotate_right(4);
+    }
+
+    Image::new_fill(
+        Extent3d {
+            width: TEXTURE_SIZE as u32,
+            height: TEXTURE_SIZE as u32,
+            depth_or_array_layers: 1,
+        },
+        TextureDimension::D2,
+        &texture_data,
+        TextureFormat::Rgba8UnormSrgb,
+        RenderAssetUsages::RENDER_WORLD,
+    )
 }

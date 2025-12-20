@@ -294,7 +294,7 @@ impl Plugin for RespawnPlugin {
 }
 
 fn detect_ball_loss(
-    mut collision_events: MessageReader<CollisionEvent>,
+    collision_events: Option<MessageReader<CollisionEvent>>,
     balls: Query<Entity, With<Ball>>,
     ball_handles: Query<&RespawnHandle, With<Ball>>,
     lower_goals: Query<Entity, With<LowerGoal>>,
@@ -302,6 +302,10 @@ fn detect_ball_loss(
     mut commands: Commands,
     mut life_lost_events: MessageWriter<LifeLostEvent>,
 ) {
+    let Some(mut collision_events) = collision_events else {
+        return;
+    };
+
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
             let e1_is_ball = balls.get(*e1).is_ok();
@@ -612,8 +616,8 @@ fn respawn_executor(
     time: Res<Time>,
     mut respawn_schedule: ResMut<RespawnSchedule>,
     spawn_points: Res<SpawnPoints>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    meshes: Option<ResMut<Assets<Mesh>>>,
+    materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut paddles: Query<(Entity, &mut Transform, Option<&mut Velocity>), With<Paddle>>,
     mut respawn_completed_events: MessageWriter<RespawnCompleted>,
     mut commands: Commands,
@@ -627,6 +631,13 @@ fn respawn_executor(
     if respawn_schedule.pending.is_none() {
         return;
     }
+
+    let Some(mut meshes) = meshes else {
+        return;
+    };
+    let Some(mut materials) = materials else {
+        return;
+    };
 
     respawn_schedule.timer.tick(time.delta());
     if !respawn_schedule.timer.is_finished() {

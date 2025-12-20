@@ -11,6 +11,7 @@ fn palette_test_app() -> App {
     // Provide asset containers used by the texture system and initialize texture plugin.
     app.insert_resource(Assets::<StandardMaterial>::default());
     app.insert_resource(Assets::<Mesh>::default());
+    app.insert_resource(Assets::<Image>::default());
     app.add_plugins(TextureMaterialsPlugin);
     // run once so TextureMaterialsPlugin initializes fallback/bank/registry resources
     app.update();
