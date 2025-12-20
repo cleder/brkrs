@@ -47,6 +47,7 @@ brkrs/
 │   │   ├── level_switch.rs # Level transition logic
 │   │   ├── multi_hit.rs    # Multi-hit brick events and systems
 │   │   ├── respawn.rs      # Ball respawn system
+│   │   ├── spawning.rs     # Entity spawning (camera, light, ground)
 │   │   └── textures/       # Texture loading systems
 │   └── ui/                 # User interface components
 │       ├── palette.rs      # Color palette

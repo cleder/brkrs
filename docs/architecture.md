@@ -51,6 +51,7 @@ The project follows these architectural principles (from the project Constitutio
 | Level Switch | Transitions between levels | `src/systems/level_switch.rs` |
 | Scoring | Tracks points, awards milestone bonuses | `src/systems/scoring.rs` |
 | Grid Debug | Development visualization | `src/systems/grid_debug.rs` |
+| Spawning | Initial scene setup (camera, light, ground) | `src/systems/spawning.rs` |
 
 ### Component Structure
 
