@@ -25,4 +25,12 @@ LevelDefinition(
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ],
+presentation: Some((
+  level_number: 70,
+  ground_profile: Some("ground/nsTile1048"),
+  background_profile: None,
+  sidewall_profile: None,
+  tint: None,
+  notes: Some("Assigned by script"),
+)),
 )
