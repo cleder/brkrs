@@ -644,7 +644,9 @@ fn respawn_executor(
         return;
     }
 
-    let request = respawn_schedule.pending.take().unwrap();
+    let Some(request) = respawn_schedule.pending.take() else {
+        return;
+    };
     respawn_schedule.timer.reset();
 
     let paddle_spawn = request
