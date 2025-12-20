@@ -38,9 +38,9 @@ use bevy::{
 };
 use bevy_rapier3d::prelude::*;
 
-pub const BALL_RADIUS: f32 = 0.3;
-pub const PADDLE_RADIUS: f32 = 0.3;
-pub const PADDLE_HEIGHT: f32 = 3.0;
+pub(crate) const BALL_RADIUS: f32 = 0.3;
+pub(crate) const PADDLE_RADIUS: f32 = 0.3;
+pub(crate) const PADDLE_HEIGHT: f32 = 3.0;
 pub const PLANE_H: f32 = 30.0;
 pub const PLANE_W: f32 = 40.0;
 
@@ -226,7 +226,8 @@ pub fn run() {
             systems::spawning::spawn_camera,
             systems::spawning::spawn_ground_plane,
             systems::spawning::spawn_light,
-        ),
+        )
+            .chain(),
     );
 
     app.add_systems(
