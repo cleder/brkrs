@@ -164,7 +164,6 @@ Because commit hashes do not exist yet at task-generation time, each story’s f
   - **Result**: PASS — only unrelated warnings (unused imports in legacy modules); no issues from US3 changes
 - [X] T030 Update docs/ui-systems.md with any new UI patterns adopted (fallible systems, change-detection patterns, asset caching resources)
   - **Result**: Added "Constitution Compliance Cheatsheet" documenting fallible systems, `Changed<T>` usage, query specificity, safe query patterns, `ParamSet` for conflicts, messages vs events, asset handle reuse, and WASM parity.
-- [ ] T030 Update docs/ui-systems.md with any new UI patterns adopted (fallible systems, change-detection patterns, asset caching resources)
 
 ---
 
