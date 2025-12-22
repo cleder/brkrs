@@ -300,14 +300,14 @@ fn limit_ball_velocity(mut balls: Query<(&Velocity, &mut Damping), With<Ball>>) 
             damping.linear_damping = 0.5 + (speed_ratio - 1.0) * 2.0;
         } else if speed_ratio < 0.5 {
             // Below half target: reduce damping to allow acceleration
-            damping.linear_damping = 0.01 + speed_ratio * 0.8;
+            damping.linear_damping = 0.001 + speed_ratio * 0.8;
         } else {
             // Near target: moderate damping
-            damping.linear_damping = 0.1;
+            damping.linear_damping = 0.001;
         }
 
         // Clamp damping to reasonable bounds
-        damping.linear_damping = damping.linear_damping.clamp(0.1, 5.0);
+        damping.linear_damping = damping.linear_damping.clamp(0.001, 10.0);
     }
 }
 
@@ -494,25 +494,25 @@ fn spawn_border(
 
     // upper border
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.0, 5.0, PLANE_W).mesh())),
+        Mesh3d(meshes.add(Cuboid::new(5.0, 5.0, PLANE_W + 5.0).mesh())),
         MeshMaterial3d(border_material.clone()),
-        Transform::from_xyz(-15.5, 0.0, 0.0),
-        Collider::cuboid(1.0, 2.5, PLANE_W / 2.0),
+        Transform::from_xyz(-17.5, 0.0, 0.0),
+        Collider::cuboid(2.5, 2.5, PLANE_W / 2.0),
         Border,
     ));
-    //
+    // side borders
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(PLANE_H, 5.0, 1.0).mesh())),
+        Mesh3d(meshes.add(Cuboid::new(PLANE_H, 5.0, 5.0).mesh())),
         MeshMaterial3d(border_material.clone()),
-        Transform::from_xyz(-0.0, 0.0, -20.5),
-        Collider::cuboid(PLANE_H / 2.0, 2.5, 0.5),
+        Transform::from_xyz(-0.0, 0.0, -22.5),
+        Collider::cuboid(PLANE_H / 2.0, 2.5, 2.5),
         Border,
     ));
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(PLANE_H, 5.0, 1.0).mesh())),
+        Mesh3d(meshes.add(Cuboid::new(PLANE_H, 5.0, 5.0).mesh())),
         MeshMaterial3d(border_material.clone()),
-        Transform::from_xyz(-0.0, 0.0, 20.5),
-        Collider::cuboid(PLANE_H / 2.0, 2.5, 0.5),
+        Transform::from_xyz(-0.0, 0.0, 22.5),
+        Collider::cuboid(PLANE_H / 2.0, 2.5, 2.5),
         Border,
     ));
     //  lower border

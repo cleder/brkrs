@@ -127,15 +127,21 @@ impl Plugin for LevelLoaderPlugin {
         app.add_systems(Startup, (load_level, spawn_level_entities).chain());
         #[cfg(feature = "texture_manifest")]
         {
+            use crate::systems::sets::LevelFadeInStartSet;
             app.add_systems(
                 Update,
                 (
                     advance_level_when_cleared,
                     handle_level_advance_delay,
+                    // Insert LevelFadeInStartSet after handle_level_advance_delay
                     finalize_level_advance.after(handle_level_advance_delay),
                     spawn_fade_overlay_if_needed,
                 )
                     .in_set(LevelAdvanceSystems),
+            );
+            app.configure_sets(
+                Update,
+                LevelFadeInStartSet.after(handle_level_advance_delay),
             );
 
             app.add_systems(
@@ -144,9 +150,16 @@ impl Plugin for LevelLoaderPlugin {
                     update_fade_overlay,
                     destroy_all_bricks_on_key,
                     process_level_switch_requests,
-                    sync_level_presentation,
                 ),
             );
+            // Run sync_level_presentation in PreUpdate, before apply_level_overrides
+            app.add_systems(
+                PreUpdate,
+                sync_level_presentation.in_set(SyncLevelPresentationSet),
+            );
+
+            // Use shared system set for ordering background/material override after sync_level_presentation
+            use crate::systems::sets::SyncLevelPresentationSet;
             // Register restart queue and processor
             // Run the restart producer in PreUpdate so it observes just_pressed reliably
             app.add_systems(PreUpdate, queue_restart_requests);
@@ -1217,6 +1230,10 @@ fn handle_level_advance_delay(
             ))
             .insert(ball_respawn_handle(ball_pos));
     }
+    // At the end of fade-out, before fade-in, set CurrentLevel to the new level
+    if let Some(def) = level_advance.pending.as_ref() {
+        commands.insert_resource(CurrentLevel(def.clone()));
+    }
     level_advance.growth_spawned = true;
 }
 
@@ -1259,9 +1276,7 @@ fn finalize_level_advance(
     }
 
     // Stage 2: Now BallFrozen is removed, stabilize_frozen_balls won't act anymore
-    let Some(def) = level_advance.pending.take() else {
-        return;
-    };
+    let _ = level_advance.pending.take();
 
     for (entity, mut gravity_scale, _velocity) in balls.iter_mut() {
         // Remove Velocity component so Rapier manages it internally (like R/L do)
@@ -1278,8 +1293,6 @@ fn finalize_level_advance(
     if let Ok(mut config) = rapier_config.single_mut() {
         config.gravity = gravity_cfg.normal;
     }
-    // Update CurrentLevel resource.
-    commands.insert_resource(CurrentLevel(def));
     // Reset state.
     level_advance.active = false;
     level_advance.growth_spawned = false;

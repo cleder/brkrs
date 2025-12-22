@@ -1,7 +1,6 @@
-//! Game systems module
-//!
-//! Contains all game system implementations organized by functionality
-
+/// Game systems module
+///
+/// Contains all game system implementations organized by functionality
 pub mod audio;
 pub mod cheat_mode;
 pub mod grid_debug;
@@ -10,6 +9,7 @@ pub mod multi_hit;
 pub mod paddle_size;
 pub mod respawn;
 pub mod scoring;
+pub mod sets;
 pub mod spawning;
 pub mod textures;
 
