@@ -10,5 +10,6 @@ AudioManifest(
         PaddleBrickHit: "paddle_brick_hit.ogg",
         LevelStart: "level_start.ogg",
         LevelComplete: "level_complete.ogg",
+        UiBeep: "cheat_mode_toggle.ogg",
     }
 )

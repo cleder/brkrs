@@ -29,7 +29,6 @@ Instead of bouncing the ball upward from a paddle that only moves sideways at th
   Levels are human-readable and easy to modify
 - 🕵 Encounter many different brick types with special behaviors (things like gravity effects, magnets, teleporters, explosive bricks, and more), which make the puzzles more complex than simple ball-bouncing.
 - 📦 Crate-ready and cross-platform (desktop + WebAssembly builds)
-- 🥳 A **fun, approachable way to learn Rust, Bevy, and modern coding practices**
 
 [![Gameplay Screenshot](docs/img/screenshot-v-0.0.1.png)](https://cleder.github.io/brkrs/)
 
@@ -37,8 +36,7 @@ It’s also a **hands-on learning project**, letting you explore:
 
 - 📝 **Spec-first development** with GitHub **[speckit](https://github.com/github/spec-kit)**
 - 🤖 AI-assisted and agentic coding experiments
-- Spec-first workflow: every feature begins as a spec and ends as working Rust code
-- Small, incremental PRs demonstrate the development workflow and learning path
+- 🥳 A **fun, approachable way to learn Rust, Bevy, and modern coding practices**
 
 Every feature starts as a spec, flows through an issue (recommended) or directly via PR (if you are bold), and ends as working Rust code.
 You can **play the game, explore the code, and learn modern Rust/Bevy workflows all at the same time**.

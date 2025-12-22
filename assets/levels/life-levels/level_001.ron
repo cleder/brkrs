@@ -1,6 +1,6 @@
 LevelDefinition(
     number: 1,
-    description: Some("YAAC - MapIntro - Standard Level"),
+    description: Some("YAAC - Intro - Level to show the brick types."),
     author: Some("Christian Ledermann"),
     gravity: None,
     matrix: [
