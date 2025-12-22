@@ -758,8 +758,8 @@ pub fn set_spawn_points_only(def: &LevelDefinition, spawn_points: &mut SpawnPoin
 
 /// Advance to the next level when all bricks have been cleared.
 fn advance_level_when_cleared(
-    // Only consider bricks that count towards completion
     destructible_bricks: Query<Entity, (With<Brick>, With<crate::CountsTowardsCompletion>)>,
+    bricks: Query<Entity, With<Brick>>,
     paddle_q: Query<Entity, With<Paddle>>,
     ball_q: Query<Entity, With<Ball>>,
     current_level: Option<Res<CurrentLevel>>,
@@ -783,6 +783,11 @@ fn advance_level_when_cleared(
     commands.trigger(crate::systems::LevelCompleted {
         level_index: curr.0.number,
     });
+
+    // Despawn all bricks before fade-out and next level setup
+    for entity in bricks.iter() {
+        commands.entity(entity).despawn();
+    }
 
     let next_number = curr.0.number + 1;
     let path = format!("assets/levels/level_{:03}.ron", next_number);
@@ -920,6 +925,10 @@ fn process_restart_requests(
 
     let level_number = current_level.map(|cl| cl.0.number).unwrap_or(1);
     let path = format!("assets/levels/level_{:03}.ron", level_number);
+    // Despawn all bricks before restarting the level
+    for entity in bricks.iter() {
+        commands.entity(entity).despawn();
+    }
     match force_load_level_from_path(
         &path,
         &mut commands,
@@ -1027,6 +1036,10 @@ pub(crate) fn process_level_switch_requests(
         return;
     };
     switch_state.mark_transition_start();
+    // Despawn all bricks before loading the new level
+    for entity in bricks.iter() {
+        commands.entity(entity).despawn();
+    }
     match force_load_level_from_path(
         &target_slot.path,
         &mut commands,
