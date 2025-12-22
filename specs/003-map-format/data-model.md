@@ -422,11 +422,11 @@ let y = 0.0;  // All entities spawn at ground level
 
 **Example (20x20 grid)**:
 
-- Cell (0, 0): (-13.5, 0.0, -19.0)  [top-left]
-- Cell (0, 19): (-13.5, 0.0, +19.0)  [top-right]
-- Cell (19, 0): (+13.5, 0.0, -19.0)  [bottom-left]
-- Cell (19, 19): (+13.5, 0.0, +19.0)  [bottom-right]
-- Cell (10, 10): (0.75, 0.0, 1.0)  [near center]
+- Cell (0, 0): (-13.5, 0.0, -19.0) [top-left]
+- Cell (0, 19): (-13.5, 0.0, +19.0) [top-right]
+- Cell (19, 0): (+13.5, 0.0, -19.0) [bottom-left]
+- Cell (19, 19): (+13.5, 0.0, +19.0) [bottom-right]
+- Cell (10, 10): (0.75, 0.0, 1.0) [near center]
 
 **Spacing**:
 
