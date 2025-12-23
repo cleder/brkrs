@@ -1,6 +1,6 @@
 # Specification Quality Checklist: Display Current Level
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning  **Created**: 2025-12-18  **Feature**: ../spec.md
+**Purpose**: Validate specification completeness and quality before proceeding to planning **Created**: 2025-12-18 **Feature**: ../spec.md
 
 ## Content Quality
 

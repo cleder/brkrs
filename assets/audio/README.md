@@ -58,4 +58,5 @@ AudioManifest(
 - If you add a new sound type, update the code to support it.
 
 ---
+
 For more details, see the audio system documentation in `src/systems/audio.rs`.
