@@ -45,7 +45,7 @@ To do so:
 | [micahbrich](https://github.com/micahbrich) | Micah Rich | Artwork, Fonts | [Orbitron](https://github.com/theleagueof/orbitron) |
 | [SairajJadhav08](https://github.com/SairajJadhav08)  | Sairaj Jadhav | Documentation |  |
 |  | [Harm](https://harmware.net/) | Artwork | [Backgrounds](https://harmware.net/stile.html) |
-
+| [daneeflow] | [danilo lobozzo](daneeflowsound@gmail.com) | Sound Design, Music Composition | Sound effects, and music |
 ---
 
 ✍️ **Starter row templates** (copy-paste one of these and edit):
