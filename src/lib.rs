@@ -20,9 +20,12 @@ pub mod ui;
 pub use level_loader::extract_author_name;
 
 #[cfg(feature = "texture_manifest")]
+use crate::systems::textures::materials::TextureOverrideSystems;
+#[cfg(feature = "texture_manifest")]
 use crate::systems::TextureManifestPlugin;
 use crate::systems::{
-    AudioPlugin, InputLocked, LevelSwitchPlugin, PaddleSizePlugin, RespawnPlugin, RespawnSystems,
+    brick_decals::BrickDecalSystems, AudioPlugin, InputLocked, LevelSwitchPlugin, PaddleSizePlugin,
+    RespawnPlugin, RespawnSystems,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -209,15 +212,21 @@ pub fn run() {
     // Cheat mode plugin (feature: toggle, indicator, gated level controls)
     app.add_plugins(systems::CheatModePlugin);
 
+    // UI plugin and font loading
+    app.add_plugins(crate::ui::UiPlugin);
+    app.add_plugins(crate::ui::fonts::FontsPlugin);
+
     #[cfg(feature = "texture_manifest")]
     {
         app.add_plugins(TextureManifestPlugin);
     }
 
-    // FontsPlugin wires platform-appropriate font loading systems
-    app.add_plugins(crate::ui::fonts::FontsPlugin);
-    // UI plugin (Constitution VIII: Plugin-Based Architecture)
-    app.add_plugins(crate::ui::UiPlugin);
+    // Configure system ordering for decal systems to run after texture overrides
+    #[cfg(feature = "texture_manifest")]
+    app.configure_sets(
+        Update,
+        BrickDecalSystems.after(TextureOverrideSystems::Apply),
+    );
 
     app.add_systems(
         Startup,
@@ -243,8 +252,12 @@ pub fn run() {
             update_paddle_growth,
             stabilize_frozen_balls.before(crate::level_loader::LevelAdvanceSystems),
             restore_gravity_post_growth,
-            systems::brick_decals::assign_brick_decals,
-            systems::brick_decals::assign_brick_decals_fallback,
+            systems::brick_decals::assign_brick_decals.in_set(BrickDecalSystems),
+            systems::brick_decals::assign_brick_decals_fallback.in_set(BrickDecalSystems),
+            systems::brick_decals::apply_decal_normal_maps.in_set(BrickDecalSystems),
+            // One-shot debug: inspect brick materials after decals applied to detect invisible materials
+            crate::level_loader::debug_brick_materials_once,
+            crate::level_loader::debug_brick_texture_assets_once,
             #[cfg(not(target_arch = "wasm32"))]
             toggle_wireframe,
             #[cfg(not(target_arch = "wasm32"))]

@@ -21,18 +21,18 @@ Tests MUST be written and committed first, verified to FAIL (red), and then appr
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Create project structure per implementation plan
-- [ ] T002 [P] Add Bevy, bevy_rapier3d, tracing, serde, ron dependencies to Cargo.toml
-- [ ] T003 [P] Configure cargo fmt, cargo clippy, and bevy lint
+- [x] T001 Create project structure per implementation plan
+- [x] T002 [P] Add Bevy, bevy_rapier3d, tracing, serde, ron dependencies to Cargo.toml
+- [x] T003 [P] Configure cargo fmt, cargo clippy, and bevy lint
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-- [ ] T004 [P] Create BrickType enum and Decal struct in src/level_format/brick_types.rs
+- [x] T004 [P] Create BrickType enum and Decal struct in src/level_format/brick_types.rs
 - [ ] T005 [P] Add asset loading system for decals and normal maps in src/systems/asset_loading.rs
-- [ ] T006 [P] Add test assets for decals and normal maps in assets/textures/decals/
-- [ ] T007 [P] Add BrickType and Decal to test level RON in assets/levels/test_decals.ron
+- [x] T006 [P] Add test assets for decals and normal maps in assets/textures/decals/
+- [x] T007 [P] Add BrickType and Decal to test level RON in assets/levels/test_decals.ron
 
 ---
 
@@ -46,7 +46,7 @@ Tests MUST be written and committed first, verified to FAIL (red), and then appr
 
 - [x] T008 [P] [US1] Contract test: All brick types in test level have correct decals assigned in tests/contract/test_brick_decals.rs
 - [x] T009 [P] [US1] Integration test: Decals are visible and centered in tests/integration/test_decal_rendering.rs
-- [x] T010 [P] [US1] Bevy 0.17 compliance test: No panicking queries, correct With<T>/Without<T> filters, asset handle reuse in tests/ui_compliance_audit.rs
+- [ ] T010 [P] [US1] Bevy 0.17 compliance test: No panicking queries, correct With<T>/Without<T> filters, asset handle reuse in tests/ui_compliance_audit.rs
 
 ### Implementation for User Story 1
 
@@ -65,8 +65,8 @@ Tests MUST be written and committed first, verified to FAIL (red), and then appr
 ### Tests for User Story 2 (REQUIRED)
 
 - [x] T014 [P] [US2] Contract test: Normal/bump mapping is applied and visible under lighting in tests/contract/test_decal_normals.rs
-- [x] T015 [P] [US2] Integration test: 3D effect of decals is consistent from different angles in tests/integration/test_decal_normals.rs
-- [x] T016 [P] [US2] Bevy 0.17 compliance test: No per-frame UI updates without Changed<T>, correct asset handle reuse in tests/ui_compliance_audit.rs
+- [x] T015 [P] [US2] Integration test: 3D effect of decals is consistent from different angles in tests/integration/test_decal_normals_integration.rs
+- [ ] T016 [P] [US2] Bevy 0.17 compliance test: No per-frame UI updates without Changed<T>, correct asset handle reuse in tests/ui_compliance_audit.rs
 
 ### Implementation for User Story 2
 

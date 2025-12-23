@@ -723,6 +723,104 @@ fn spawn_bricks_only(
     }
 }
 
+// One-shot debug system: inspect brick material handles and detect missing/transparent materials.
+pub(crate) fn debug_brick_materials_once(
+    bricks: Query<&MeshMaterial3d<StandardMaterial>, With<crate::Brick>>,
+    materials: Res<Assets<StandardMaterial>>,
+    current_level: Option<Res<CurrentLevel>>,
+    mut last_seen_level: Local<Option<u32>>,
+) {
+    let Some(curr) = current_level else {
+        return;
+    };
+
+    if *last_seen_level == Some(curr.0.number) {
+        // Already inspected this level
+        return;
+    }
+
+    let total = bricks.iter().count();
+    if total == 0 {
+        // No bricks yet; defer inspection until spawn completes
+        return;
+    }
+    let mut missing_handle = 0usize;
+    let mut missing_texture = 0usize;
+    for mat in bricks.iter() {
+        if mat.0 == Handle::<StandardMaterial>::default() {
+            missing_handle += 1;
+            continue;
+        }
+        if let Some(material) = materials.get(&mat.0) {
+            if material.base_color_texture.is_none() {
+                missing_texture += 1;
+            }
+        } else {
+            missing_handle += 1;
+        }
+    }
+
+    info!(
+        target: "debug",
+        level = curr.0.number,
+        total = total,
+        missing_handle = missing_handle,
+        missing_texture = missing_texture,
+        "Brick material inspection"
+    );
+
+    *last_seen_level = Some(curr.0.number);
+}
+
+// One-shot debug system: verify that base_color_texture handles resolve to loaded `Image` assets.
+pub(crate) fn debug_brick_texture_assets_once(
+    bricks: Query<&MeshMaterial3d<StandardMaterial>, With<crate::Brick>>,
+    materials: Res<Assets<StandardMaterial>>,
+    images: Res<Assets<Image>>,
+    current_level: Option<Res<CurrentLevel>>,
+    mut last_seen_level: Local<Option<u32>>,
+) {
+    let Some(curr) = current_level else {
+        return;
+    };
+
+    if *last_seen_level == Some(curr.0.number) {
+        // Already inspected this level
+        return;
+    }
+
+    let total = bricks.iter().count();
+    if total == 0 {
+        return;
+    }
+
+    let mut missing_image_count = 0usize;
+    for mat in bricks.iter() {
+        if let Some(material) = materials.get(&mat.0) {
+            if let Some(img_handle) = &material.base_color_texture {
+                if images.get(img_handle).is_none() {
+                    missing_image_count += 1;
+                    debug!(
+                        target: "debug",
+                        "Missing Image asset for material handle: {:?}",
+                        img_handle
+                    );
+                }
+            }
+        }
+    }
+
+    info!(
+        target: "debug",
+        level = curr.0.number,
+        total = total,
+        missing_image_count = missing_image_count,
+        "Brick texture asset resolution"
+    );
+
+    *last_seen_level = Some(curr.0.number);
+}
+
 /// Extract and set spawn points for paddle & ball from a level definition (without spawning bricks).
 /// Recomputes paddle and ball spawn points from a level definition.
 ///
@@ -1727,6 +1825,48 @@ mod tests {
         for _ in reader.read() {
             c.0 += 1;
         }
+    }
+
+    // One-shot debug system: inspect brick material handles and detect missing/transparent materials.
+    fn debug_brick_materials_once(
+        bricks: Query<&MeshMaterial3d<StandardMaterial>, With<Brick>>,
+        materials: Res<Assets<StandardMaterial>>,
+        mut done: Local<bool>,
+    ) {
+        if *done {
+            return;
+        }
+        *done = true;
+
+        let total = bricks.iter().count();
+        let mut missing_handle = 0usize;
+        let mut missing_texture = 0usize;
+        let mut transparent = 0usize;
+        for mat in bricks.iter() {
+            if mat.0 == Handle::<StandardMaterial>::default() {
+                missing_handle += 1;
+                continue;
+            }
+            if let Some(material) = materials.get(&mat.0) {
+                if material.base_color_texture.is_none() {
+                    missing_texture += 1;
+                }
+                if material.base_color.a() <= 0.01 {
+                    transparent += 1;
+                }
+            } else {
+                missing_handle += 1;
+            }
+        }
+
+        info!(
+            target: "debug",
+            total = total,
+            missing_handle = missing_handle,
+            missing_texture = missing_texture,
+            transparent = transparent,
+            "Brick material inspection"
+        );
     }
 
     fn app_with_plugins() -> App {

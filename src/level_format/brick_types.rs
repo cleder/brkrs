@@ -59,8 +59,8 @@ impl BrickType {
     /// This mapping should match the level format specification.
     pub fn from_id(id: u8) -> Option<Self> {
         match id {
-            3 => Some(BrickType::Standard), // Legacy destructible brick
-            4 => Some(BrickType::Indestructible),
+            20 => Some(BrickType::Standard), // destructible brick
+            90 => Some(BrickType::Indestructible),
             5 => Some(BrickType::MultiHit),
             // Add more mappings as needed
             _ => None, // Unknown brick type

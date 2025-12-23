@@ -7,6 +7,11 @@ use crate::level_format::brick_types::{BrickType, Decal};
 use crate::BrickTypeId;
 use bevy::prelude::*;
 
+/// System set for brick decal systems.
+/// These systems must run after texture override systems to ensure decal modifications persist.
+#[derive(SystemSet, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct BrickDecalSystems;
+
 /// System that assigns decals to bricks based on their type.
 /// Runs during level loading to ensure all bricks have appropriate decals.
 pub fn assign_brick_decals(
@@ -64,5 +69,40 @@ fn create_fallback_decal(brick_type_id: u8, asset_server: &AssetServer) -> Decal
     Decal {
         brick_type: BrickType::Standard, // Fallback to standard
         normal_map_handle: Some(asset_server.load("textures/decals/standard_normal.png")),
+    }
+}
+
+/// System that applies decal normal maps to brick materials.
+/// This system updates the StandardMaterial of bricks to include normal mapping for 3D decal effects.
+pub fn apply_decal_normal_maps(
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    query: Query<(&Decal, &MeshMaterial3d<StandardMaterial>), Changed<Decal>>,
+) {
+    for (decal, material_handle) in query.iter() {
+        if let Some(normal_map_handle) = &decal.normal_map_handle {
+            if let Some(material) = materials.get_mut(material_handle) {
+                // Log material state for debugging invisible brick issues
+                info!(
+                    target: "brick_decals",
+                    "Applying normal map to material - base_color_texture_present={} normal_map_present_before={}",
+                    material.base_color_texture.is_some(),
+                    material.normal_map_texture.is_some()
+                );
+
+                // Apply the normal map to the material for 3D embossed/engraved effect
+                material.normal_map_texture = Some(normal_map_handle.clone());
+
+                info!(
+                    target: "brick_decals",
+                    "Applied normal map to material - normal_map_present_after={}",
+                    material.normal_map_texture.is_some()
+                );
+            } else {
+                warn!(
+                    target: "brick_decals",
+                    "Material handle missing in Assets for decal apply"
+                );
+            }
+        }
     }
 }

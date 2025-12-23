@@ -15,7 +15,9 @@ pub mod spawning;
 pub mod textures;
 
 pub use audio::{AudioConfig, AudioPlugin, BallWallHit, LevelCompleted, LevelStarted, SoundType};
-pub use brick_decals::{assign_brick_decals, assign_brick_decals_fallback};
+pub use brick_decals::{
+    apply_decal_normal_maps, assign_brick_decals, assign_brick_decals_fallback,
+};
 pub use cheat_mode::{CheatModePlugin, CheatModeState, CheatModeToggled};
 pub use level_switch::{
     LevelSwitchPlugin, LevelSwitchRequested, LevelSwitchSource, LevelSwitchState,

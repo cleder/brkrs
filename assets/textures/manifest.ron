@@ -34,7 +34,7 @@
         (
             id: "brick/default",
             albedo_path: "fallback/brick_base.png",
-            normal_path: None,
+            normal_path: Some("decals/standard_normal.png"),
             roughness: 0.7,
             metallic: 0.0,
             uv_scale: (1.0, 1.0),
@@ -74,7 +74,7 @@
         (
             id: "brick/type20",
             albedo_path: "fallback/brick_type5.png",
-            normal_path: None,
+            normal_path: Some("decals/standard_normal.png"),
             roughness: 0.4,
             metallic: 0.0,
             uv_scale: (1.0, 1.0),
