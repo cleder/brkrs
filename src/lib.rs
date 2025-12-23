@@ -45,8 +45,10 @@ pub(crate) const PLANE_H: f32 = 30.0;
 pub(crate) const PLANE_W: f32 = 40.0;
 
 // Bounce/impulse tuning
-// How strongly the wall collision pushes the ball (ExternalImpulse on balls)
+// How strongly the paddle/wall collision pushes the ball (ExternalImpulse on balls)
 const BALL_WALL_IMPULSE_FACTOR: f32 = 0.001;
+// How strongly the paddle/brick collision pushes the ball (ExternalImpulse on balls)
+const BALL_BRICK_IMPULSE_FACTOR: f32 = 0.000_5;
 // How strongly the paddle bounces back when hitting a wall
 const PADDLE_BOUNCE_WALL_FACTOR: f32 = 0.03;
 // How strongly the paddle bounces back when hitting a brick (separate from walls)
@@ -783,10 +785,16 @@ struct StartCameraShake {
 
 fn on_brick_hit(
     trigger: On<BrickHit>,
+    mut balls: Query<&mut ExternalImpulse, With<Ball>>,
     mut controllers: Query<&mut KinematicCharacterController, With<Paddle>>,
     mut commands: Commands,
 ) {
     let event = trigger.event();
+
+    // give the balls an impulse
+    for mut impulse in balls.iter_mut() {
+        impulse.impulse = event.impulse * BALL_BRICK_IMPULSE_FACTOR;
+    }
 
     // let the paddle bounce back on brick collisions only
     for mut controller in controllers.iter_mut() {
