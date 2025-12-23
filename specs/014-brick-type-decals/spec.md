@@ -3,8 +3,8 @@
 
 **Feature Branch**: `014-brick-type-decals` **Created**: 2025-12-23 **Status**: Draft **Input**: User description: "For an easy recognition of the brick type, a visual hint should be displayed, centred on the top side of the brick.
 The decals should support a normal map/bump map so that they can be embossed or engraved.
-The bevy example: experiments/bevy-examples/parallax_mapping.rs See : User description: "For an easy recognition of the brick type, a visual hint should be displayed, centred on the top side of the brick.
-See <attachments> above for file contents.
+The bevy example experiments/bevy-examples/parallax_mapping.rs for User description: "For an easy recognition of the brick type, a visual hint should be displayed, centred on the top side of the brick.
+See `<attachments>` above for file contents.
 You may not need to search or read the file again.
 
 ## User Scenarios & Testing *(mandatory)*

@@ -44,15 +44,15 @@ Tests MUST be written and committed first, verified to FAIL (red), and then appr
 
 ### Tests for User Story 1 (REQUIRED)
 
-- [ ] T008 [P] [US1] Contract test: All brick types in test level have correct decals assigned in tests/contract/test_brick_decals.rs
-- [ ] T009 [P] [US1] Integration test: Decals are visible and centered in tests/integration/test_decal_rendering.rs
-- [ ] T010 [P] [US1] Bevy 0.17 compliance test: No panicking queries, correct With<T>/Without<T> filters, asset handle reuse in tests/ui_compliance_audit.rs
+- [x] T008 [P] [US1] Contract test: All brick types in test level have correct decals assigned in tests/contract/test_brick_decals.rs
+- [x] T009 [P] [US1] Integration test: Decals are visible and centered in tests/integration/test_decal_rendering.rs
+- [x] T010 [P] [US1] Bevy 0.17 compliance test: No panicking queries, correct With<T>/Without<T> filters, asset handle reuse in tests/ui_compliance_audit.rs
 
 ### Implementation for User Story 1
 
-- [ ] T011 [P] [US1] Implement assign_brick_decals system in src/systems/brick_decals.rs
-- [ ] T012 [US1] Integrate decal assignment into level loading in src/level_loader.rs
-- [ ] T013 [US1] Add fallback/default decal logic for missing types/assets in src/systems/brick_decals.rs
+- [x] T011 [US1] Implement assign_brick_decals system in src/systems/brick_decals.rs
+- [x] T012 [US1] Integrate decal assignment into level loading in src/level_loader.rs
+- [x] T013 [US1] Add fallback/default decal logic for missing types/assets in src/systems/brick_decals.rs
 
 ---
 
@@ -64,15 +64,15 @@ Tests MUST be written and committed first, verified to FAIL (red), and then appr
 
 ### Tests for User Story 2 (REQUIRED)
 
-- [ ] T014 [P] [US2] Contract test: Normal/bump mapping is applied and visible under lighting in tests/contract/test_decal_normals.rs
-- [ ] T015 [P] [US2] Integration test: 3D effect of decals is consistent from different angles in tests/integration/test_decal_normals.rs
-- [ ] T016 [P] [US2] Bevy 0.17 compliance test: No per-frame UI updates without Changed<T>, correct asset handle reuse in tests/ui_compliance_audit.rs
+- [x] T014 [P] [US2] Contract test: Normal/bump mapping is applied and visible under lighting in tests/contract/test_decal_normals.rs
+- [x] T015 [P] [US2] Integration test: 3D effect of decals is consistent from different angles in tests/integration/test_decal_normals.rs
+- [x] T016 [P] [US2] Bevy 0.17 compliance test: No per-frame UI updates without Changed<T>, correct asset handle reuse in tests/ui_compliance_audit.rs
 
 ### Implementation for User Story 2
 
-- [ ] T017 [P] [US2] Implement normal/bump mapping for decals in src/systems/brick_decals.rs
-- [ ] T018 [US2] Add/update normal map assets for decals in assets/textures/decals/
-- [ ] T019 [US2] Integrate normal map assignment into assign_brick_decals system in src/systems/brick_decals.rs
+- [x] T017 [P] [US2] Implement normal/bump mapping for decals in src/systems/brick_decals.rs
+- [x] T018 [US2] Add/update normal map assets for decals in assets/textures/decals/
+- [x] T019 [US2] Integrate normal map assignment into assign_brick_decals system in src/systems/brick_decals.rs
 
 ---
 

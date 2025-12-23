@@ -1,8 +1,6 @@
 # Specification Quality Checklist: Paddle Size Powerups
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning  
-**Created**: 2025-12-12  
-**Feature**: [spec.md](../spec.md)
+**Purpose**: Validate specification completeness and quality before proceeding to planning **Created**: 2025-12-12 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 

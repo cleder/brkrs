@@ -1,4 +1,4 @@
-use crate::level_format::{normalize_matrix_simple, INDESTRUCTIBLE_BRICK};
+use crate::level_format::{brick_types::BrickType, normalize_matrix_simple, INDESTRUCTIBLE_BRICK};
 use crate::systems::level_switch::{LevelSwitchRequested, LevelSwitchState};
 use crate::systems::respawn::{RespawnEntityKind, RespawnHandle, SpawnPoints, SpawnTransform};
 #[cfg(feature = "texture_manifest")]
@@ -553,6 +553,8 @@ fn spawn_level_entities_impl(
                         Transform::from_xyz(x, 2.0, z),
                         Brick,
                         BrickTypeId(brick_type_id),
+                        // Add BrickType component for decal assignment
+                        BrickType::from_id(brick_type_id).unwrap_or(BrickType::Standard),
                         // Brick counts towards level completion unless it's the indestructible tile.
                         // Legacy index `3` is considered destructible (compatibility window); newly authored simple bricks should use 20.
                         RigidBody::Fixed,

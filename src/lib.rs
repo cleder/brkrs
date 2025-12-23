@@ -243,6 +243,8 @@ pub fn run() {
             update_paddle_growth,
             stabilize_frozen_balls.before(crate::level_loader::LevelAdvanceSystems),
             restore_gravity_post_growth,
+            systems::brick_decals::assign_brick_decals,
+            systems::brick_decals::assign_brick_decals_fallback,
             #[cfg(not(target_arch = "wasm32"))]
             toggle_wireframe,
             #[cfg(not(target_arch = "wasm32"))]

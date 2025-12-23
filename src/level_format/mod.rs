@@ -153,6 +153,8 @@ pub fn normalize_matrix_simple(matrix: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
     normalize_matrix(matrix).matrix
 }
 
+pub mod brick_types;
+
 #[cfg(test)]
 mod tests {
     use super::*;
