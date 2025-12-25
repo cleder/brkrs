@@ -39,6 +39,9 @@ fn capture_switch(
 
 fn test_app() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins((MinimalPlugins, bevy::input::InputPlugin));
     app.insert_resource(GameProgress::default());
     app.insert_resource(ButtonInput::<KeyCode>::default());

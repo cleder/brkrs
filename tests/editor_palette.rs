@@ -7,6 +7,9 @@ use brkrs::systems::textures::{FallbackRegistry, ProfileMaterialBank, TypeVarian
 
 fn palette_test_app() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
     // Provide asset containers used by the texture system and initialize texture plugin.
     app.insert_resource(Assets::<StandardMaterial>::default());

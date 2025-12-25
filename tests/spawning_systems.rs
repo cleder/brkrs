@@ -6,6 +6,10 @@ use brkrs::systems::spawning::{
 #[test]
 fn test_spawn_camera() {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
+
     app.add_systems(Startup, spawn_camera);
     app.update();
 

@@ -16,6 +16,9 @@ use std::time::Duration;
 
 fn test_app() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins)
         .insert_resource(Assets::<Mesh>::default())
         .insert_resource(Assets::<StandardMaterial>::default())

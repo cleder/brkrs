@@ -2,6 +2,9 @@ use bevy::{app::App, ecs::message::Messages, prelude::*, MinimalPlugins};
 
 fn test_app() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
     app.add_message::<brkrs::signals::BrickDestroyed>();
     app.insert_resource(brkrs::systems::scoring::ScoreState::default());
@@ -11,6 +14,9 @@ fn test_app() -> App {
 
 fn milestone_test_app() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
     app.add_message::<brkrs::signals::BrickDestroyed>();
     app.add_message::<brkrs::systems::scoring::MilestoneReached>();

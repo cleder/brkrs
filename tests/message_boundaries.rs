@@ -10,6 +10,9 @@ use brkrs::signals::{BrickDestroyed, UiBeep};
 fn ui_beep_is_message_not_event() {
     // Verify UiBeep exists as a Message type
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
 
     // Add UiBeep as a Message (via MessageWriter/MessageReader)
@@ -35,6 +38,9 @@ fn ui_beep_is_message_not_event() {
 fn brick_destroyed_is_message_not_event() {
     // Verify BrickDestroyed exists as a Message type
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
 
     // Add BrickDestroyed as a Message
@@ -68,6 +74,9 @@ fn audio_system_reads_ui_beep_messages() {
     use brkrs::systems::audio::AudioPlugin;
 
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
     app.add_plugins(AudioPlugin);
 
@@ -94,6 +103,9 @@ fn no_observer_path_for_ui_beep() {
     // This test verifies no observer is registered for UiBeep
 
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
     app.add_message::<UiBeep>();
 
@@ -113,6 +125,9 @@ fn no_observer_path_for_brick_destroyed() {
     // Verify BrickDestroyed uses Message path, not observers
 
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
     app.add_message::<BrickDestroyed>();
 
