@@ -116,8 +116,10 @@ def main():
     for path, line_num, fn_name, pattern in total_violations:
         print(f"- {path}:{line_num} in fn `{fn_name}` — matched side-effect pattern: {pattern}")
 
-    print("Guidance: Systems that use `MessageWriter<T>` are buffered and should NOT be used for immediate side-effects.")
-    print("Consider using an observer pattern (Trigger<T> or `commands.observe()`) or move the immediate effect into a separate observer system.")
+    print("Guidance: Systems that use `MessageWriter<T>` are for double-buffered, frame-agnostic data streams and should NOT be used for immediate side-effects.")
+    print("If the side-effect is immediate and reactive (e.g., UI, sound, spawning), use an `Event` (with #[derive(Event)]) and an observer system (`commands.observe()`).")
+    print("If the data is meant to be buffered and processed later (e.g., logs, telemetry), keep the `MessageWriter` but ensure no immediate side-effects are in the same function.")
+    print("Refactor by moving immediate side-effects into a separate system that observes the appropriate `Event` or `Trigger<T>`, not the `Message`.")
     return 2
 
 

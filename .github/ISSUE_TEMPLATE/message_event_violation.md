@@ -13,8 +13,9 @@ The Message/Event static analysis linter detected likely misuse of `MessageWrite
 > Use `MessageWriter<T>` strictly for double-buffered, frame-agnostic data streams (e.g., telemetry, combat logs, physics collisions). Use observer systems and `Trigger<T>` for immediate, reactive logic (e.g., UI interactions, Sound effects, OnAdd/OnRemove lifecycle hooks).
 
 ### Guidance
-- Move immediate side-effects into a separate observer system that reacts to the message/event.
-- Or, if the logic is truly immediate, use an observer/trigger pattern instead of a buffered message.
+- If the side-effect is immediate and reactive (e.g., UI, sound, spawning), use an `Event` (with `#[derive(Event)]`) and an observer system (`commands.observe()`).
+- If the data is meant to be buffered and processed later (e.g., logs, telemetry), use `MessageWriter`/`MessageReader` but ensure no immediate side-effects are in the same function.
+- Refactor by moving immediate side-effects into a separate system that observes the appropriate `Event` or `Trigger<T>`. **Do not create observer systems for Messages.**
 
 ---
 

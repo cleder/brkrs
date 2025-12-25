@@ -156,7 +156,7 @@ jobs:
           cargo test -q --manifest-path tools/message_event_lint/Cargo.toml
       - name: Run message_event_rust linter against repo
         run: |
-          git ls-files '*.rs' | xargs -r cargo run --manifest-path tools/message_event_lint/Cargo.toml --
+          find . -name '*.rs' -not -path './target/*' -print0 | xargs -0 cargo run --manifest-path tools/message_event_lint/Cargo.toml --
       - name: Run python message/event lint tests
         run: |
           python3 -m pip install --user pytest
