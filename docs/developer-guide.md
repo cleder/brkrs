@@ -282,23 +282,6 @@ brkrs uses two distinct signalling patterns, which are **not interchangeable**:
 
 #### Events (observers)
 
-Bevy 0.17 uses the **observer pattern** for custom events:
-
-```rust
-#[derive(Event)]
-pub struct MyEvent { /* fields */ }
-
-pub fn my_observer(trigger: On<MyEvent>) {
-    let event = trigger.event();
-    // Handle event
-}
-
-// In app setup:
-app.add_observer(my_observer);
-```
-
-pub fn my_observer(trigger: On<MyEvent>) {
-
 #### Events (immediate, observer pattern)
 
 Use the observer pattern for any logic that must react immediately (e.g., play a sound, update UI):
