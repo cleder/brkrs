@@ -127,7 +127,7 @@ impl Plugin for LevelLoaderPlugin {
         app.add_systems(Startup, (load_level, spawn_level_entities).chain());
         #[cfg(feature = "texture_manifest")]
         {
-            use crate::systems::sets::LevelFadeInStartSet;
+            use crate::systems::sets::LevelFadeInStartSystems;
             app.add_systems(
                 Update,
                 (
@@ -141,7 +141,7 @@ impl Plugin for LevelLoaderPlugin {
             );
             app.configure_sets(
                 Update,
-                LevelFadeInStartSet.after(handle_level_advance_delay),
+                LevelFadeInStartSystems.after(handle_level_advance_delay),
             );
 
             app.add_systems(
@@ -155,11 +155,11 @@ impl Plugin for LevelLoaderPlugin {
             // Run sync_level_presentation in PreUpdate, before apply_level_overrides
             app.add_systems(
                 PreUpdate,
-                sync_level_presentation.in_set(SyncLevelPresentationSet),
+                sync_level_presentation.in_set(SyncLevelPresentationSystems),
             );
 
             // Use shared system set for ordering background/material override after sync_level_presentation
-            use crate::systems::sets::SyncLevelPresentationSet;
+            use crate::systems::sets::SyncLevelPresentationSystems;
             // Register restart queue and processor
             // Run the restart producer in PreUpdate so it observes just_pressed reliably
             app.add_systems(PreUpdate, queue_restart_requests);
