@@ -38,9 +38,10 @@ fi
 echo "Found test-introducing commit: $first_test_commit"
 
 # Check out that commit and run tests; we expect tests to FAIL (non-zero)
-git checkout $first_test_commit
+git checkout "$first_test_commit"
 set +e
-cargo test --all-features
+TEST_CMD=${TEST_COMMAND:-"cargo test --all-features"}
+$TEST_CMD
 rc=$?
 set -e
 if [ $rc -eq 0 ]; then
@@ -52,7 +53,7 @@ else
 fi
 
 # Now run tests on PR HEAD and expect success
-git checkout $HEAD
-cargo test --all-features
+git checkout "$HEAD"
+$TEST_CMD
 echo "Tests pass at PR HEAD — tests-first (red→green) requirement satisfied."
 exit 0

@@ -275,30 +275,14 @@ brkrs uses two distinct signalling patterns, which are **not interchangeable**:
   They are emitted via `commands.trigger(...)` and observed via `On<T>`/ `Trigger<T>` and observer systems (`commands.observe()`).
 
 > **Guidance:**
-> 
+>
 > - Use `Event`/`Trigger<T>` and observer systems for immediate side-effects.
 > - Use `MessageWriter`/`MessageReader` for buffered, non-immediate data.
 > - **Never** create observer systems that listen to Messages; only Events/Triggers are valid for observers.
 
-#### Events (observers)
+#### Events (immediate, observer pattern)
 
-Bevy 0.17 uses the **observer pattern** for custom events:
-
-```rust
-#[derive(Event)]
-pub struct MyEvent { /* fields */ }
-
-pub fn my_observer(trigger: On<MyEvent>) {
-    let event = trigger.event();
-    // Handle event
-}
-
-// In app setup:
-app.add_observer(my_observer);
-```
-
-Bevy 0.17 uses the **observer pattern** for custom events.
-Use this for any logic that must react immediately (e.g., play a sound, update UI):
+Use the observer pattern for any logic that must react immediately (e.g., play a sound, update UI):
 
 ```rust
 #[derive(Event)]
@@ -313,20 +297,9 @@ pub fn my_observer(trigger: On<MyEvent>) {
 app.add_observer(my_observer);
 ```
 
-```text
-
-#### Messages (buffered)
-
-For buffered queues, use `MessageReader`/`MessageWriter`:
-
-```
-
-```rust
-
+#### Messages (buffered, frame-agnostic)
 
 For buffered, frame-agnostic data, use `MessageReader`/`MessageWriter`. **Do not perform immediate side-effects in the same system that writes messages.**
-
-```
 
 ```rust
 use bevy::ecs::message::{Message, MessageReader, MessageWriter};
@@ -348,8 +321,6 @@ fn award_points(
    Ok(())
 }
 ```
-
-See {doc}`architecture` for a detailed breakdown.
 
 See {doc}`architecture` for a detailed breakdown.
 

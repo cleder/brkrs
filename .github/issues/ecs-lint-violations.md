@@ -8,9 +8,9 @@ This issue tracks all current violations of the MessageWriter/Event separation r
 
 **How to fix:**
 ### Guidance
-- If the side-effect is immediate and reactive (e.g., UI, sound, spawning), consider using an `Event` (with `#[derive(Event)]`) and an observer system (`commands.observe()`).
-- If the data is meant to be buffered and processed later (e.g., logs, telemetry), keep the `MessageWriter` but ensure no immediate side-effects are in the same function.
-- Refactor by moving immediate side-effects into a separate system that observes the appropriate `Event` or `Trigger<T>`, not the `Message`.
+- If the side-effect is immediate and reactive (e.g., UI, sound, spawning), use an `Event` (with `#[derive(Event)]`) and an observer system (`commands.observe()`).
+- If the data is meant to be buffered and processed later (e.g., logs, telemetry), use `MessageWriter`/`MessageReader` but ensure no immediate side-effects are in the same function.
+- Refactor by moving immediate side-effects into a separate system that observes the appropriate `Event` or `Trigger<T>`. **Do not create observer systems for Messages.**
 **Reference:** See `.specify/memory/constitution.md` (VIII. Bevy 0.17 Mandates & Prohibitions) for architectural requirements.
 
 ---
