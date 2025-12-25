@@ -186,7 +186,7 @@ pub fn run() {
             .set(ImagePlugin::default_nearest())
             .set(WindowPlugin {
                 primary_window: Some(Window {
-                    title: "Brkrs".to_string(),
+                    title: "brkrs".to_string(),
                     #[cfg(not(target_arch = "wasm32"))]
                     mode: WindowMode::BorderlessFullscreen(MonitorSelection::Current),
                     #[cfg(target_arch = "wasm32")]

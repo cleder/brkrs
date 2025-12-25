@@ -10,7 +10,7 @@ description: "Task list template for feature implementation"
 
 **Tests**: Tests are MANDATORY for all user stories. Each story MUST include unit tests and feature-level acceptance tests (integration or contract tests as appropriate). Tests MUST be written and committed first, verified to FAIL (red), and then approved before implementation begins; record the test-proof commit hash in the task description.
 
-**Bevy 0.17 compliance**: When generating tasks for ECS/rendering/UI work, include explicit tasks (or acceptance criteria within test tasks) to ensure compliance with the constitution's Bevy 0.17 mandates & prohibitions (no panicking queries, filtered queries, `Changed<T>` for reactive UI, message vs event correctness, asset handle reuse, and correct hierarchy APIs).
+**Bevy 0.17 compliance**: When generating tasks for ECS/rendering/UI work, include explicit tasks (or acceptance criteria within test tasks) to ensure compliance with the constitution's Bevy 0.17 mandates & prohibitions (no panicking queries, filtered queries, `Changed<T>` for reactive UI, message vs event correctness, asset handle reuse, and correct hierarchy APIs). Include acceptance criteria that explicitly check **Message-Event Separation** (e.g., verify buffered messages used for frame-agnostic logs and observers used for immediate UI/sound triggers) and **Hierarchy Safety** (verifying use of `commands.entity(parent).add_child(child)` or `EntityCommands::set_parent`).
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 

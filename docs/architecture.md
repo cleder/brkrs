@@ -201,10 +201,18 @@ LivesState.lives_remaining += 1
 
 **Persistence**: Score accumulates across level transitions, resets on game restart
 
-**Messages vs Events**:
+**Messages vs Events (Bevy 0.17)**:
 
-- `BrickDestroyed` and `MilestoneReached` in the scoring flow are **messages** (`#[derive(Message)]`) consumed via `MessageReader`.
-- Observer-driven signals (like audio triggers) are **events** (`#[derive(Event)]`) observed via `On<T>` and emitted via `commands.trigger(...)`.
+- `BrickDestroyed` and `MilestoneReached` in the scoring flow are **messages** (`#[derive(Message)]`) consumed via `MessageReader` and produced via `MessageWriter`.
+  Messages are for double-buffered, frame-agnostic data streams (e.g., scoring, telemetry) and are **not** for immediate side-effects.
+- Observer-driven signals (like audio triggers, UI, or spawning) are **events** (`#[derive(Event)]`) observed via `On<T>`/ `Trigger<T>` and emitted via `commands.trigger(...)`.
+  Events are for immediate, reactive logic and should use Bevy's observer pattern.
+
+> **Guidance:**
+> 
+> - If you need an immediate side-effect (e.g., sound, UI, spawning), use an `Event`/`Trigger<T>` and an observer system (`commands.observe()`).
+> - If you need buffered, frame-agnostic data, use a `Message` and process it in a separate system with no immediate side-effects.
+> - **Never** create observer systems that listen to Messages; only Events/Triggers are valid for observers.
 
 ## UI System
 

@@ -267,6 +267,19 @@ They are not interchangeable:
 - **Events** (`#[derive(Event)]`) are used exclusively with Bevy's observer pattern via
   `commands.trigger(...)` and `app.add_observer(...)`.
 
+brkrs uses two distinct signalling patterns, which are **not interchangeable**:
+
+- **Messages** (`#[derive(Message)]`) are for double-buffered, frame-agnostic data streams (e.g., scoring, telemetry).
+  They are produced via `MessageWriter` and consumed via `MessageReader`. **Messages are not for immediate side-effects.**
+- **Events** (`#[derive(Event)]`) and `Trigger<T>` are for immediate, reactive logic (e.g., UI, sound, spawning).
+  They are emitted via `commands.trigger(...)` and observed via `On<T>`/ `Trigger<T>` and observer systems (`commands.observe()`).
+
+> **Guidance:**
+> 
+> - Use `Event`/`Trigger<T>` and observer systems for immediate side-effects.
+> - Use `MessageWriter`/`MessageReader` for buffered, non-immediate data.
+> - **Never** create observer systems that listen to Messages; only Events/Triggers are valid for observers.
+
 #### Events (observers)
 
 Bevy 0.17 uses the **observer pattern** for custom events:
@@ -284,9 +297,36 @@ pub fn my_observer(trigger: On<MyEvent>) {
 app.add_observer(my_observer);
 ```
 
+Bevy 0.17 uses the **observer pattern** for custom events.
+Use this for any logic that must react immediately (e.g., play a sound, update UI):
+
+```rust
+#[derive(Event)]
+pub struct MyEvent { /* fields */ }
+
+pub fn my_observer(trigger: On<MyEvent>) {
+   let event = trigger.event();
+   // Handle event (immediate side-effect)
+}
+
+// In app setup:
+app.add_observer(my_observer);
+```
+
+```text
+
 #### Messages (buffered)
 
 For buffered queues, use `MessageReader`/`MessageWriter`:
+
+```
+
+```rust
+
+
+For buffered, frame-agnostic data, use `MessageReader`/`MessageWriter`. **Do not perform immediate side-effects in the same system that writes messages.**
+
+```
 
 ```rust
 use bevy::ecs::message::{Message, MessageReader, MessageWriter};
@@ -303,10 +343,13 @@ fn award_points(
 ) -> Result<(), ()> {
    for msg in destroyed.read() {
       debug!(?msg, "Award points");
+      // Do NOT trigger sounds or UI here; use an Event for that.
    }
    Ok(())
 }
 ```
+
+See {doc}`architecture` for a detailed breakdown.
 
 See {doc}`architecture` for a detailed breakdown.
 
