@@ -280,8 +280,6 @@ brkrs uses two distinct signalling patterns, which are **not interchangeable**:
 > - Use `MessageWriter`/`MessageReader` for buffered, non-immediate data.
 > - **Never** create observer systems that listen to Messages; only Events/Triggers are valid for observers.
 
-#### Events (observers)
-
 #### Events (immediate, observer pattern)
 
 Use the observer pattern for any logic that must react immediately (e.g., play a sound, update UI):
