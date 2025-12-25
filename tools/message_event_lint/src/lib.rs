@@ -1,5 +1,5 @@
 use std::path::Path;
-use syn::{visit::Visit, Expr, ExprMethodCall, File, ItemFn, Path as SynPath, Type, TypePath};
+use syn::{visit::Visit, Expr, ExprMethodCall, File, ItemFn, Type, TypePath};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Finding {
