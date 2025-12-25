@@ -4,17 +4,13 @@ This issue tracks all current violations of the MessageWriter/Event separation r
 
 ## Violations
 
-- [ ] `toggle_cheat_mode_input` in `src/systems/cheat_mode.rs`
-- [ ] `detect_powerup_brick_collisions` in `src/systems/paddle_size.rs`
-- [ ] `detect_ball_loss` in `src/systems/respawn.rs`
-- [ ] `respawn_executor` in `src/systems/respawn.rs`
 
----
 
 **How to fix:**
-- Move any `commands.spawn`, `commands.entity`, `audio.play`, etc. out of the function that uses `MessageWriter<T>`, and into a separate observer system that reacts to the message/event.
-- If the logic is truly immediate, use an observer/trigger pattern instead of a buffered message.
-
+### Guidance
+- If the side-effect is immediate and reactive (e.g., UI, sound, spawning), consider using an `Event` (with `#[derive(Event)]`) and an observer system (`commands.observe()`).
+- If the data is meant to be buffered and processed later (e.g., logs, telemetry), keep the `MessageWriter` but ensure no immediate side-effects are in the same function.
+- Refactor by moving immediate side-effects into a separate system that observes the appropriate `Event` or `Trigger<T>`, not the `Message`.
 **Reference:** See `.specify/memory/constitution.md` (VIII. Bevy 0.17 Mandates & Prohibitions) for architectural requirements.
 
 ---
