@@ -1,19 +1,18 @@
 <!--
 SYNC IMPACT REPORT
-- Version change: 1.2.0 → 1.3.0
-- Modified principles: Added "VIII. Bevy 0.17 Mandates & Prohibitions"
-- Added sections: "VIII. Bevy 0.17 Mandates & Prohibitions" (new)
+- Version change: 1.3.1 → 1.3.2
+- Modified principles: VIII. Bevy 0.17 Mandates & Prohibitions (clarifications and additions: Message-Event Separation, Hierarchy Safety); added enforcement infrastructure (linters + CI test)
+- Added sections: None (clarifications and tools)
 - Removed sections: None
 - Templates requiring updates:
   - .specify/templates/plan-template.md: ✅ updated
   - .specify/templates/spec-template.md: ✅ updated
   - .specify/templates/tasks-template.md: ✅ updated
   - .specify/templates/agent-file-template.md: ✅ updated
-  - .github/agents/speckit.tasks.agent.md: ✅ updated
-  - .github/agents/speckit.implement.agent.md: ✅ updated
+  - specs/013-post-refactor-qa/checklists/qa-compliance.md: ✅ updated
 - Follow-up TODOs:
-  - Add CI job to validate tests-first commit pattern and enforce failing tests proof: TODO(.github/workflows/*)
   - Validate any open plans/specs for compliance with TDD + Bevy 0.17 mandates (spot-check in /specs/)
+  - Add static analysis check for Message vs Event misuse: ✅ implemented (Python: .github/lint/message_event_lint.py + tests; Rust: tools/message_event_lint + unit tests; CI integration in `.github/workflows/ci.yaml`)
 -->
 
 # Brkrs Constitution
@@ -213,13 +212,14 @@ It provides objective verification (tests) for requirement fulfillment and disco
   Queries accessing `&mut Transform` MUST differentiate entity types to prevent scheduling conflicts.
 - **Change Detection:** Systems that react to component changes MUST use `Changed<T>` filters in queries.
   UI update systems MUST ONLY execute when source data changes, not every frame.
-- **Message vs Event Distinction:** Use `#[derive(Message)]` for buffered event queues with `MessageWriter`/ `MessageReader`.
-  Use `#[derive(Event)]` exclusively for observer patterns with `commands.observe()`.
-  NEVER conflate these two patterns.
+- **Message-Event Separation:** Use `MessageWriter<T>` strictly for double-buffered, frame-agnostic data streams (e.g., telemetry, combat logs, physics collisions).
+  Use observer systems and `Trigger<T>` for immediate, reactive logic (e.g., UI interactions, sound effects, `OnAdd`/ `OnRemove` lifecycle hooks).
+  Use `#[derive(Message)]` for buffered queues with `MessageWriter`/ `MessageReader`, and `#[derive(Event)]` for observer patterns with `commands.observe()`; NEVER conflate these patterns.
 - **Component Mutation Over Insertion:** State changes MUST modify existing component data (e.g., enum variants) rather than inserting/removing components.
   This prevents archetype thrashing.
-- **Relationship API:** Access parent entities using `ChildOf::parent()` method.
-  Use `commands.entity(parent).add_children()` and `.remove::<Children>()` for hierarchy manipulation.
+- **Hierarchy Safety / Relationship API:** Construct and modify scene graphs strictly using `commands.entity(parent).add_child(child)` or `EntityCommands::set_parent` (or `commands.entity(parent).add_children()` where batching makes sense).
+  Trust the internal `ChildOf` relationship management and use `ChildOf::parent()` to query parentage.
+  NEVER manually mutate `Children` or `Parent` components or call `.replace_children()`.
 - **Error Recovery Patterns:** Use `let Some(value) = optional else { return; }` for graceful handling of missing resources.
   Use `let Some(value) = option else { return; }` for missing optional data.
 - **System Organization:** Define system sets with `*Systems` suffix (e.g., `GameplaySystems::Input`).
@@ -338,4 +338,4 @@ All contributions MUST comply with these principles.
 - Performance targets may be adjusted based on platform evolution
 - Development workflow may be optimized as team/tools evolve
 
-**Version**: 1.3.0 | **Ratified**: 2025-10-30 | **Last Amended**: 2025-12-19
+**Version**: 1.3.2 | **Ratified**: 2025-10-30 | **Last Amended**: 2025-12-25

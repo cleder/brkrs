@@ -17,6 +17,8 @@
 - [x] CHK008 - Is the scope of the compliance audit defined (e.g., entire codebase vs. specific modules)? [Scope, Spec §User Story 2]
 - [x] CHK009 - Are the remediation steps for found violations specified? [Completeness, Spec §User Story 2]
 - [x] CHK010 - Is the "pass" condition for the compliance sweep objectively verifiable? [Measurability, Spec §Success Criteria]
+- [ ] CHK016 - Is **Message-Event Separation** enforced and audited (MessageWriter used for double-buffered streams; Trigger/observers used for immediate reactive logic)? [Traceability, Spec §User Story 2]
+- [ ] CHK017 - Is **Hierarchy Safety** enforced and audited (scene graph modifications only via `add_child`/`set_parent`/`add_children` and no manual `Children`/`Parent` mutations)? [Traceability, Spec §User Story 2]
 
 ## Code Review Fix Requirements
 

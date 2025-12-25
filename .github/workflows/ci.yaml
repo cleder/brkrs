@@ -151,3 +151,34 @@ jobs:
           cache: true
       - name: Run `bevy_lint`
         run: bevy_lint --workspace
+      - name: Run message_event_rust linter tests
+        run: |
+          cargo test -q --manifest-path tools/message_event_lint/Cargo.toml
+      - name: Run message_event_rust linter against repo
+        run: |
+          git ls-files '*.rs' | xargs -r cargo run --manifest-path tools/message_event_lint/Cargo.toml --
+      - name: Run python message/event lint tests
+        run: |
+          python3 -m pip install --user pytest
+          python3 -m pytest .github/lint/tests/test_message_event_lint.py -q
+
+
+  tests_first_check:
+    name: Tests-first (red→green) check
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Checkout sources (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Make tests-first script executable
+        run: |
+          chmod +x .github/scripts/tests_first_check.sh
+      - name: Run tests-first check
+        env:
+          GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          GITHUB_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: .github/scripts/tests_first_check.sh
