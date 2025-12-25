@@ -1,10 +1,6 @@
 //! Integration tests for physics config usage in entity spawns
 
-use bevy::prelude::*;
 use brkrs::physics_config::{BallPhysicsConfig, BrickPhysicsConfig, PaddlePhysicsConfig};
-use brkrs::Ball;
-use brkrs::Brick;
-use brkrs::Paddle;
 
 #[test]
 fn ball_spawn_uses_config() {
