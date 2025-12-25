@@ -1,5 +1,5 @@
 use std::path::Path;
-use syn::{visit::Visit, Expr, ExprMethodCall, File, ItemFn, Type, TypePath};
+use syn::{visit::Visit, Expr, File, ItemFn, Type, TypePath};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Finding {
@@ -7,56 +7,24 @@ pub struct Finding {
     pub fn_name: String,
 }
 
-struct FnVisitor<'a> {
-    src: &'a str,
+struct FnVisitor {
     findings: Vec<Finding>,
-    current_fn: Option<String>,
+}
+
+impl FnVisitor {
+    fn new(_src: &str) -> Self {
+        Self {
+            findings: Vec::new(),
+        }
+    }
+}
+
+struct BodyVisitor {
     has_message_writer: bool,
     has_side_effect: bool,
 }
 
-impl<'a> FnVisitor<'a> {
-    fn new(src: &'a str) -> Self {
-        Self {
-            src,
-            findings: Vec::new(),
-            current_fn: None,
-            has_message_writer: false,
-            has_side_effect: false,
-        }
-    }
-
-    fn check_and_reset(&mut self, span_fn_name: &str, file: &Path) {
-        if self.has_message_writer && self.has_side_effect {
-            self.findings.push(Finding {
-                file: file.to_string_lossy().to_string(),
-                fn_name: span_fn_name.to_string(),
-            });
-        }
-        self.has_message_writer = false;
-        self.has_side_effect = false;
-    }
-}
-
-impl<'ast> Visit<'ast> for FnVisitor<'_> {
-    fn visit_item_fn(&mut self, i: &'ast ItemFn) {
-        // set current fn
-        let fn_name = i.sig.ident.to_string();
-        self.current_fn = Some(fn_name.clone());
-        // inspect arguments types for MessageWriter
-        for input in i.sig.inputs.iter() {
-            if let syn::FnArg::Typed(pat_ty) = input {
-                if matches_message_writer(&*pat_ty.ty) {
-                    self.has_message_writer = true;
-                }
-            }
-        }
-        // visit body
-        syn::visit::visit_block(self, &i.block);
-        // after visiting, check combination
-        self.check_and_reset(&fn_name, Path::new("<in-memory>"));
-    }
-
+impl<'ast> Visit<'ast> for BodyVisitor {
     fn visit_type_path(&mut self, i: &'ast TypePath) {
         // detect local MessageWriter mentions in types
         if i.path.segments.iter().any(|s| s.ident == "MessageWriter") {
@@ -65,7 +33,7 @@ impl<'ast> Visit<'ast> for FnVisitor<'_> {
         syn::visit::visit_type_path(self, i);
     }
 
-    fn visit_expr_method_call(&mut self, node: &'ast ExprMethodCall) {
+    fn visit_expr_method_call(&mut self, node: &'ast syn::ExprMethodCall) {
         // detect commands.spawn(), commands.entity(), asset_server.load(), audio.play(), .play()
         if let Expr::Path(ref p) = *node.receiver {
             if let Some(ident) = p.path.segments.last() {
@@ -87,6 +55,36 @@ impl<'ast> Visit<'ast> for FnVisitor<'_> {
             }
         }
         syn::visit::visit_expr_method_call(self, node);
+    }
+}
+
+impl<'ast> Visit<'ast> for FnVisitor {
+    fn visit_item_fn(&mut self, i: &'ast ItemFn) {
+        let fn_name = i.sig.ident.to_string();
+        // Check if any argument is MessageWriter
+        let has_mw_arg = i.sig.inputs.iter().any(|input| {
+            if let syn::FnArg::Typed(pat_ty) = input {
+                matches_message_writer(&*pat_ty.ty)
+            } else {
+                false
+            }
+        });
+
+        let mut body_visitor = BodyVisitor {
+            has_message_writer: has_mw_arg,
+            has_side_effect: false,
+        };
+        body_visitor.visit_block(&i.block);
+
+        if body_visitor.has_message_writer && body_visitor.has_side_effect {
+            self.findings.push(Finding {
+                file: "<in-memory>".to_string(),
+                fn_name: fn_name.clone(),
+            });
+        }
+
+        // Continue traversal to find nested functions
+        syn::visit::visit_item_fn(self, i);
     }
 }
 
@@ -119,7 +117,6 @@ pub fn analyze_file(path: &Path, src: &str) -> Vec<Finding> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Write;
     use tempfile::NamedTempFile;
 
     #[test]
