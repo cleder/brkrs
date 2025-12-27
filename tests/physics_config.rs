@@ -1,5 +1,18 @@
-//! Unit tests for BallPhysicsConfig, PaddlePhysicsConfig, and BrickPhysicsConfig validation
+#[test]
+fn ball_physics_config_default_is_valid() {
+    assert!(BallPhysicsConfig::default().validate().is_ok());
+}
 
+#[test]
+fn paddle_physics_config_default_is_valid() {
+    assert!(PaddlePhysicsConfig::default().validate().is_ok());
+}
+
+#[test]
+fn brick_physics_config_default_is_valid() {
+    assert!(BrickPhysicsConfig::default().validate().is_ok());
+}
+/// Unit tests for BallPhysicsConfig, PaddlePhysicsConfig, and BrickPhysicsConfig validation
 use brkrs::physics_config::{BallPhysicsConfig, BrickPhysicsConfig, PaddlePhysicsConfig};
 
 #[test]

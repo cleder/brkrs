@@ -215,6 +215,9 @@ impl Plugin for RespawnPlugin {
             .init_resource::<LivesState>()
             .init_resource::<SpawnPoints>()
             .init_resource::<RespawnVisualState>()
+            .init_resource::<crate::physics_config::BallPhysicsConfig>()
+            .init_resource::<crate::physics_config::PaddlePhysicsConfig>()
+            .init_resource::<crate::physics_config::BrickPhysicsConfig>()
             .add_message::<LifeLostEvent>()
             .add_message::<RespawnScheduled>()
             .add_message::<RespawnCompleted>()
@@ -719,8 +722,10 @@ fn respawn_executor(
         let mut transform = paddle_spawn.to_transform();
         transform.scale = Vec3::splat(0.01);
         // Use PaddlePhysicsConfig resource for physics parameters
-        let paddle_config = (*paddle_config_res).clone();
-        let _ = paddle_config.validate(); // Optionally handle error
+        let paddle_config = &*paddle_config_res;
+        if let Err(err) = paddle_config.validate() {
+            bevy::log::error!("Invalid PaddlePhysicsConfig during respawn: {}", err);
+        }
 
         let new_entity = commands
             .spawn((
@@ -767,8 +772,10 @@ fn respawn_executor(
 
     let ball_transform = ball_spawn.to_transform();
     // Use BallPhysicsConfig resource for physics parameters
-    let ball_config = (*ball_config_res).clone();
-    let _ = ball_config.validate(); // Optionally handle error
+    let ball_config = &*ball_config_res;
+    if let Err(err) = ball_config.validate() {
+        bevy::log::error!("Invalid BallPhysicsConfig during respawn: {}", err);
+    }
 
     let respawned_ball = commands
         .spawn((

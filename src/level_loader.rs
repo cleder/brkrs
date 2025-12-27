@@ -549,19 +549,10 @@ fn spawn_level_entities_impl(
                     };
                     #[cfg(not(feature = "texture_manifest"))]
                     let brick_mat = brick_material.clone();
-
-                    // Accept brick_config_res: Res<crate::physics_config::BrickPhysicsConfig> as a system parameter
-                    // Accept brick_config_res: Res<crate::physics_config::BrickPhysicsConfig> as a system parameter
-                    // Example system signature:
-                    // pub fn brick_spawn_system(..., brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>) { ... }
-                    let brick_config = (*brick_config_res).clone();
-                    let _ = brick_config.validate(); // Optionally handle error
-                                                     // In the system function signature, add:
-                                                     // pub fn brick_spawn_system(
-                                                     //     ...existing params...
-                                                     //     brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
-                                                     // ) {
-                    let _ = brick_config.validate(); // Optionally handle error
+                    let brick_config = &*brick_config_res;
+                    if let Err(err) = brick_config.validate() {
+                        bevy::log::error!("Invalid BrickPhysicsConfig during brick spawn: {}", err);
+                    }
                     let mut entity = commands.spawn((
                         Mesh3d(meshes.add(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9))),
                         MeshMaterial3d(brick_mat),

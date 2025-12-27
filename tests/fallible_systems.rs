@@ -63,31 +63,27 @@ fn paddle_size_plugin_initializes() {
 }
 
 #[test]
-fn physics_config_resources_are_inserted() {
+fn physics_config_resources_are_inserted_by_production_plugins() {
     let mut app = App::new();
-    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
-    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
-    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
-
-    // Resources should be inserted correctly
+    app.add_plugins(MinimalPlugins);
+    app.add_plugins(brkrs::systems::respawn::RespawnPlugin);
     app.update();
-
     assert!(
         app.world()
             .get_resource::<brkrs::physics_config::BallPhysicsConfig>()
             .is_some(),
-        "BallPhysicsConfig should be inserted"
+        "BallPhysicsConfig should be registered by RespawnPlugin"
     );
     assert!(
         app.world()
             .get_resource::<brkrs::physics_config::PaddlePhysicsConfig>()
             .is_some(),
-        "PaddlePhysicsConfig should be inserted"
+        "PaddlePhysicsConfig should be registered by RespawnPlugin"
     );
     assert!(
         app.world()
             .get_resource::<brkrs::physics_config::BrickPhysicsConfig>()
             .is_some(),
-        "BrickPhysicsConfig should be inserted"
+        "BrickPhysicsConfig should be registered by RespawnPlugin"
     );
 }
