@@ -127,7 +127,7 @@ impl Plugin for LevelLoaderPlugin {
         app.add_systems(Startup, (load_level, spawn_level_entities).chain());
         #[cfg(feature = "texture_manifest")]
         {
-            use crate::systems::sets::LevelFadeInStartSet;
+            use crate::systems::sets::LevelFadeInStartSystems;
             app.add_systems(
                 Update,
                 (
@@ -141,7 +141,7 @@ impl Plugin for LevelLoaderPlugin {
             );
             app.configure_sets(
                 Update,
-                LevelFadeInStartSet.after(handle_level_advance_delay),
+                LevelFadeInStartSystems.after(handle_level_advance_delay),
             );
 
             app.add_systems(
@@ -155,11 +155,11 @@ impl Plugin for LevelLoaderPlugin {
             // Run sync_level_presentation in PreUpdate, before apply_level_overrides
             app.add_systems(
                 PreUpdate,
-                sync_level_presentation.in_set(SyncLevelPresentationSet),
+                sync_level_presentation.in_set(SyncLevelPresentationSystems),
             );
 
             // Use shared system set for ordering background/material override after sync_level_presentation
-            use crate::systems::sets::SyncLevelPresentationSet;
+            use crate::systems::sets::SyncLevelPresentationSystems;
             // Register restart queue and processor
             // Run the restart producer in PreUpdate so it observes just_pressed reliably
             app.add_systems(PreUpdate, queue_restart_requests);
@@ -340,6 +340,7 @@ fn spawn_level_entities(
     #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
     #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
     #[cfg(feature = "texture_manifest")] type_registry: Option<Res<TypeVariantRegistry>>,
+    brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
     let Some(level) = level else {
         return;
@@ -357,6 +358,7 @@ fn spawn_level_entities(
         fallback.as_deref_mut(),
         #[cfg(feature = "texture_manifest")]
         type_registry.as_deref(),
+        brick_config_res,
     );
 
     // Emit LevelStarted event for audio system
@@ -374,6 +376,7 @@ fn spawn_level_entities_impl(
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
     #[cfg(feature = "texture_manifest")] mut fallback: Option<&mut FallbackRegistry>,
     #[cfg(feature = "texture_manifest")] type_registry: Option<&TypeVariantRegistry>,
+    brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
     debug!("Spawning entities for level {}", def.number);
     // Shared material
@@ -546,19 +549,24 @@ fn spawn_level_entities_impl(
                     };
                     #[cfg(not(feature = "texture_manifest"))]
                     let brick_mat = brick_material.clone();
-
+                    let brick_config = &*brick_config_res;
+                    if let Err(err) = brick_config.validate() {
+                        bevy::log::error!("Invalid BrickPhysicsConfig during brick spawn: {}", err);
+                    }
                     let mut entity = commands.spawn((
                         Mesh3d(meshes.add(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9))),
                         MeshMaterial3d(brick_mat),
                         Transform::from_xyz(x, 2.0, z),
                         Brick,
                         BrickTypeId(brick_type_id),
-                        // Brick counts towards level completion unless it's the indestructible tile.
-                        // Legacy index `3` is considered destructible (compatibility window); newly authored simple bricks should use 20.
                         RigidBody::Fixed,
                         Collider::cuboid(CELL_HEIGHT * 0.9 / 2.0, 0.25, CELL_WIDTH * 0.9 / 2.0),
                         Restitution {
-                            coefficient: 1.0,
+                            coefficient: brick_config.restitution,
+                            combine_rule: CoefficientCombineRule::Max,
+                        },
+                        Friction {
+                            coefficient: brick_config.friction,
                             combine_rule: CoefficientCombineRule::Max,
                         },
                         CollidingEntities::default(),
@@ -905,6 +913,7 @@ fn process_restart_requests(
     mut level_advance: ResMut<LevelAdvanceState>,
     lives_state: Option<ResMut<crate::systems::respawn::LivesState>>,
     #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
+    brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
     if requests.is_empty() {
         return;
@@ -948,6 +957,7 @@ fn process_restart_requests(
         tex_res.fallback.as_deref_mut(),
         #[cfg(feature = "texture_manifest")]
         tex_res.type_registry.as_deref(),
+        brick_config_res,
     ) {
         Ok(_) => info!("Restarted level {level_number}"),
         Err(err) => warn!("Failed to restart level {level_number}: {err}"),
@@ -1003,6 +1013,7 @@ pub(crate) fn process_level_switch_requests(
     mut game_progress: ResMut<GameProgress>,
     mut level_advance: ResMut<LevelAdvanceState>,
     #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
+    brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
     if requests.is_empty() {
         return;
@@ -1059,6 +1070,7 @@ pub(crate) fn process_level_switch_requests(
         tex_res.fallback.as_deref_mut(),
         #[cfg(feature = "texture_manifest")]
         tex_res.type_registry.as_deref(),
+        brick_config_res,
     ) {
         Ok(def) => info!(
             target: "level_switch",
@@ -1380,6 +1392,7 @@ fn force_load_level_from_path(
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
     #[cfg(feature = "texture_manifest")] fallback: Option<&mut FallbackRegistry>,
     #[cfg(feature = "texture_manifest")] type_registry: Option<&TypeVariantRegistry>,
+    brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) -> Result<LevelDefinition, String> {
     reset_level_state(
         commands,
@@ -1412,6 +1425,7 @@ fn force_load_level_from_path(
         fallback,
         #[cfg(feature = "texture_manifest")]
         type_registry,
+        brick_config_res,
     );
     commands.insert_resource(CurrentLevel(def.clone()));
     Ok(def)
@@ -1539,6 +1553,7 @@ fn apply_level_definition(
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
     #[cfg(feature = "texture_manifest")] fallback: Option<&mut FallbackRegistry>,
     #[cfg(feature = "texture_manifest")] type_registry: Option<&TypeVariantRegistry>,
+    brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
     if let Some((x, y, z)) = def.gravity {
         gravity_cfg.normal = Vec3::new(x, y, z);
@@ -1561,6 +1576,7 @@ fn apply_level_definition(
         fallback,
         #[cfg(feature = "texture_manifest")]
         type_registry,
+        brick_config_res,
     );
 }
 
@@ -1729,6 +1745,9 @@ mod tests {
 
     fn app_with_plugins() -> App {
         let mut app = App::new();
+        app.insert_resource(crate::physics_config::BallPhysicsConfig::default());
+        app.insert_resource(crate::physics_config::PaddlePhysicsConfig::default());
+        app.insert_resource(crate::physics_config::BrickPhysicsConfig::default());
         app.add_plugins((MinimalPlugins, bevy::input::InputPlugin));
         app.add_plugins(crate::systems::audio::AudioPlugin);
         // Register level switch plugin so LevelSwitchRequested message is initialized for processing

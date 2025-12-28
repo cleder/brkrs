@@ -1,14 +1,5 @@
-//!
-//! You can toggle wireframes with the space bar (in cheat mode only) except on wasm. Wasm does not support
-//! `POLYGON_MODE_LINE` on the gpu.
-//!
-//! Keyboard commands:
-//! - R: Restart current level (only in cheat mode)
-//! - L: Switch to next level (only in cheat mode)
-//! - K: Destroy all bricks (for testing level transitions, only in cheat mode)
-//! - G: Toggle cheat mode
-//! - Space: Toggle wireframe (only in cheat mode)
-//! - ESC: Pause game (click to resume)
+pub mod physics_config;
+// brkrs: see README.md for usage and controls.
 
 pub mod level_format;
 pub mod level_loader;
@@ -176,6 +167,10 @@ pub fn run() {
 
     app.insert_resource(GravityConfig::default());
     app.insert_resource(GameProgress::default());
+    // Physics config resources
+    app.insert_resource(crate::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(crate::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(crate::physics_config::BrickPhysicsConfig::default());
     // Scoring system state
     app.init_resource::<systems::scoring::ScoreState>();
     app.add_message::<crate::signals::BrickDestroyed>();
@@ -302,14 +297,14 @@ fn limit_ball_velocity(mut balls: Query<(&Velocity, &mut Damping), With<Ball>>) 
             damping.linear_damping = 0.5 + (speed_ratio - 1.0) * 2.0;
         } else if speed_ratio < 0.5 {
             // Below half target: reduce damping to allow acceleration
-            damping.linear_damping = 0.001 + speed_ratio * 0.8;
+            damping.linear_damping = 0.000_1 + speed_ratio * 0.08;
         } else {
             // Near target: moderate damping
-            damping.linear_damping = 0.001;
+            damping.linear_damping = 0.000_1;
         }
 
         // Clamp damping to reasonable bounds
-        damping.linear_damping = damping.linear_damping.clamp(0.001, 10.0);
+        damping.linear_damping = damping.linear_damping.clamp(0.000_1, 10.0);
     }
 }
 

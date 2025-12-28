@@ -19,6 +19,9 @@ fn capture_beeps(mut reader: bevy::ecs::message::MessageReader<UiBeep>, mut c: R
 
 fn make_app() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins((MinimalPlugins, bevy::input::InputPlugin));
 
     // Register audio first so UiBeep is available, then level loader

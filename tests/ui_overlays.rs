@@ -24,6 +24,9 @@ use brkrs::ui::pause_overlay::{spawn_pause_overlay, PauseOverlay};
 #[test]
 fn pause_overlay_does_not_spawn_when_game_over_active() {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
 
     // Add required resources
     app.add_message::<GameOverRequested>();
@@ -86,6 +89,9 @@ fn pause_overlay_does_not_spawn_when_game_over_active() {
 #[test]
 fn game_over_spawns_even_when_paused() {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
 
     // Add required resources
     app.add_message::<GameOverRequested>();

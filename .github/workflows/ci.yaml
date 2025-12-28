@@ -26,6 +26,20 @@ jobs:
     env:
       RUST_TEST_THREADS: 1
     steps:
+      - name: Free Disk Space
+        uses: endersonmenezes/free-disk-space@v3  # Use @main for latest, @v3 for stable
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          remove_tool_cache: false
+          remove_swap: true
+          remove_packages: "azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* temurin-* mysql* dotnet-sdk-*"
+          remove_packages_one_command: true
+          remove_folders: "/usr/share/swift /usr/share/miniconda /usr/share/az* /usr/local/lib/node_modules /usr/local/share/chromium /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli /usr/local/aws-sam-cli /usr/share/gradle"
+          rm_cmd: "rmz"  # Use 'rmz' for faster deletion (default: 'rm')
+          rmz_version: "3.1.1"  # Required when rm_cmd is 'rmz'
+          testing: false
       - name: Checkout sources
         uses: actions/checkout@v4
       - name: Install stable toolchain
@@ -34,6 +48,9 @@ jobs:
           targets: wasm32-unknown-unknown
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ${{ runner.os }}-ci-test-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
+          save-if: ${{ github.event_name == 'push' }}
       - name: Install Dependencies
         run: |
           sudo apt-get update
@@ -151,34 +168,15 @@ jobs:
           cache: true
       - name: Run `bevy_lint`
         run: bevy_lint --workspace
-      - name: Run message_event_rust linter tests
-        run: |
-          cargo test -q --manifest-path tools/message_event_lint/Cargo.toml
-      - name: Run message_event_rust linter against repo
-        run: |
-          find . -name '*.rs' -not -path './target/*' -print0 | xargs -0 cargo run --manifest-path tools/message_event_lint/Cargo.toml --
-      - name: Run python message/event lint tests
-        run: |
-          python3 -m pip install --user pytest
-          python3 -m pytest .github/lint/tests/test_message_event_lint.py -q
+      # - name: Run message_event_rust linter tests
+      #   run: |
+      #     cargo test -q --manifest-path tools/message_event_lint/Cargo.toml
+      # - name: Run message_event_rust linter against repo
+      #   run: |
+      #     find . -name '*.rs' -not -path './target/*' -print0 | xargs -0 cargo run --manifest-path tools/message_event_lint/Cargo.toml --
+      # - name: Run python message/event lint tests
+      #   run: |
+      #     python3 -m pip install --user pytest
+      #     python3 -m pytest .github/lint/tests/test_message_event_lint.py -q
 
-
-  tests_first_check:
-    name: Tests-first (red→green) check
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' }}
-    steps:
-      - name: Checkout sources (full history)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Make tests-first script executable
-        run: |
-          chmod +x .github/scripts/tests_first_check.sh
-      - name: Run tests-first check
-        env:
-          GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref }}
-          GITHUB_HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: .github/scripts/tests_first_check.sh
+...

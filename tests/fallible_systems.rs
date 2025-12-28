@@ -35,6 +35,9 @@ fn respawn_plugin_initializes_required_resources() {
     use brkrs::systems::respawn::{LivesState, RespawnPlugin};
 
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
     app.add_plugins(RespawnPlugin);
 
@@ -57,4 +60,30 @@ fn paddle_size_plugin_initializes() {
 
     // Plugin should initialize without panic
     app.update();
+}
+
+#[test]
+fn physics_config_resources_are_inserted_by_production_plugins() {
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins);
+    app.add_plugins(brkrs::systems::respawn::RespawnPlugin);
+    app.update();
+    assert!(
+        app.world()
+            .get_resource::<brkrs::physics_config::BallPhysicsConfig>()
+            .is_some(),
+        "BallPhysicsConfig should be registered by RespawnPlugin"
+    );
+    assert!(
+        app.world()
+            .get_resource::<brkrs::physics_config::PaddlePhysicsConfig>()
+            .is_some(),
+        "PaddlePhysicsConfig should be registered by RespawnPlugin"
+    );
+    assert!(
+        app.world()
+            .get_resource::<brkrs::physics_config::BrickPhysicsConfig>()
+            .is_some(),
+        "BrickPhysicsConfig should be registered by RespawnPlugin"
+    );
 }

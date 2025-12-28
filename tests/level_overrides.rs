@@ -16,6 +16,9 @@ use brkrs::systems::textures::{
 
 fn app_with_texture_system() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
     app.insert_resource(Assets::<StandardMaterial>::default());
     app.add_plugins(TextureMaterialsPlugin);

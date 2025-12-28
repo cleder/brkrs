@@ -3,6 +3,9 @@ use bevy::{app::App, prelude::*, MinimalPlugins};
 #[test]
 fn level_label_spawns_and_updates_on_level_started() {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
 
     // Provide a UiFonts resource so spawn doesn't bail out
@@ -62,6 +65,9 @@ fn level_label_spawns_and_updates_on_level_started() {
 #[test]
 fn level_label_is_left_aligned() {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
 
     app.insert_resource(brkrs::ui::fonts::UiFonts {
@@ -95,6 +101,9 @@ fn level_label_is_left_aligned() {
 #[test]
 fn spawn_shows_current_level_if_present() {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
 
     app.insert_resource(brkrs::ui::fonts::UiFonts {
@@ -142,6 +151,9 @@ fn spawn_shows_current_level_if_present() {
 #[test]
 fn updates_when_current_level_changes() {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
 
     app.insert_resource(brkrs::ui::fonts::UiFonts {

@@ -21,6 +21,34 @@ The rustdoc includes:
 
 ## Module Overview
 
+## Physics Config Resources
+
+The following resources centralize physics configuration for balls, paddles, and bricks:
+
+### BallPhysicsConfig
+
+- `restitution: f32` — Bounciness coefficient (0.0–2.0 recommended)
+- `friction: f32` — Friction coefficient (0.0–2.0 recommended)
+- `linear_damping: f32` — Linear velocity damping (0.0–10.0 recommended)
+- `angular_damping: f32` — Angular velocity damping (0.0–10.0 recommended)
+
+### PaddlePhysicsConfig
+
+- `restitution: f32` — Bounciness coefficient
+- `friction: f32` — Friction coefficient
+- `linear_damping: f32` — Linear velocity damping
+- `angular_damping: f32` — Angular velocity damping
+
+### BrickPhysicsConfig
+
+- `restitution: f32` — Bounciness coefficient
+- `friction: f32` — Friction coefficient
+
+All configs provide a `validate()` method to check for finite, non-negative, and reasonable values.
+Use these resources in spawn systems to ensure consistent physics parameters and prevent hardcoded values.
+
+See `src/physics_config.rs` for implementation and extension notes.
+
 The crate is organized into the following modules:
 
 | Module | Description |

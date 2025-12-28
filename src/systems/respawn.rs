@@ -215,6 +215,9 @@ impl Plugin for RespawnPlugin {
             .init_resource::<LivesState>()
             .init_resource::<SpawnPoints>()
             .init_resource::<RespawnVisualState>()
+            .init_resource::<crate::physics_config::BallPhysicsConfig>()
+            .init_resource::<crate::physics_config::PaddlePhysicsConfig>()
+            .init_resource::<crate::physics_config::BrickPhysicsConfig>()
             .add_message::<LifeLostEvent>()
             .add_message::<RespawnScheduled>()
             .add_message::<RespawnCompleted>()
@@ -627,6 +630,8 @@ fn respawn_executor(
     #[cfg(feature = "texture_manifest")] mut fallback: Option<
         ResMut<crate::systems::textures::FallbackRegistry>,
     >,
+    ball_config_res: Res<crate::physics_config::BallPhysicsConfig>,
+    paddle_config_res: Res<crate::physics_config::PaddlePhysicsConfig>,
 ) {
     if respawn_schedule.pending.is_none() {
         return;
@@ -716,33 +721,46 @@ fn respawn_executor(
     if respawn_paddle_entity.is_none() {
         let mut transform = paddle_spawn.to_transform();
         transform.scale = Vec3::splat(0.01);
+        // Use PaddlePhysicsConfig resource for physics parameters
+        let paddle_config = &*paddle_config_res;
+        if let Err(err) = paddle_config.validate() {
+            bevy::log::error!("Invalid PaddlePhysicsConfig during respawn: {}", err);
+        }
+
         let new_entity = commands
             .spawn((
                 Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
                 MeshMaterial3d(paddle_material.clone()),
                 transform,
                 Paddle,
-                PaddleGrowing {
-                    timer: Timer::from_seconds(PADDLE_GROWTH_DURATION, TimerMode::Once),
-                    target_scale: Vec3::ONE,
-                    start_scale: Vec3::splat(0.01),
-                },
-                InputLocked,
                 RigidBody::KinematicPositionBased,
                 GravityScale(0.0),
-                CollidingEntities::default(),
                 Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
                 LockedAxes::TRANSLATION_LOCKED_Y,
                 KinematicCharacterController::default(),
                 Ccd::enabled(),
-                RespawnHandle {
-                    spawn: paddle_spawn,
-                    kind: RespawnEntityKind::Paddle,
-                },
             ))
-            .insert(Friction {
-                coefficient: 2.0,
+            .insert(PaddleGrowing {
+                timer: Timer::from_seconds(PADDLE_GROWTH_DURATION, TimerMode::Once),
+                target_scale: Vec3::ONE,
+                start_scale: Vec3::splat(0.01),
+            })
+            .insert(InputLocked)
+            .insert(RespawnHandle {
+                spawn: paddle_spawn,
+                kind: RespawnEntityKind::Paddle,
+            })
+            .insert(Restitution {
+                coefficient: paddle_config.restitution,
                 combine_rule: CoefficientCombineRule::Max,
+            })
+            .insert(Friction {
+                coefficient: paddle_config.friction,
+                combine_rule: CoefficientCombineRule::Max,
+            })
+            .insert(Damping {
+                linear_damping: paddle_config.linear_damping,
+                angular_damping: paddle_config.angular_damping,
             })
             .id();
         respawn_paddle_entity = Some(new_entity);
@@ -753,6 +771,12 @@ fn respawn_executor(
     }
 
     let ball_transform = ball_spawn.to_transform();
+    // Use BallPhysicsConfig resource for physics parameters
+    let ball_config = &*ball_config_res;
+    if let Err(err) = ball_config.validate() {
+        bevy::log::error!("Invalid BallPhysicsConfig during respawn: {}", err);
+    }
+
     let respawned_ball = commands
         .spawn((
             Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
@@ -766,16 +790,16 @@ fn respawn_executor(
             ActiveEvents::COLLISION_EVENTS,
             Collider::ball(BALL_RADIUS),
             Restitution {
-                coefficient: 0.9,
+                coefficient: ball_config.restitution,
                 combine_rule: CoefficientCombineRule::Max,
             },
             Friction {
-                coefficient: 2.0,
+                coefficient: ball_config.friction,
                 combine_rule: CoefficientCombineRule::Max,
             },
             Damping {
-                linear_damping: 0.5,
-                angular_damping: 0.5,
+                linear_damping: ball_config.linear_damping,
+                angular_damping: ball_config.angular_damping,
             },
             RespawnHandle {
                 spawn: ball_spawn,
@@ -914,6 +938,9 @@ mod tests {
 
     pub(super) fn test_app() -> App {
         let mut app = App::new();
+        app.insert_resource(crate::physics_config::BallPhysicsConfig::default());
+        app.insert_resource(crate::physics_config::PaddlePhysicsConfig::default());
+        app.insert_resource(crate::physics_config::BrickPhysicsConfig::default());
         app.add_plugins(MinimalPlugins)
             .insert_resource(Assets::<Mesh>::default())
             .insert_resource(Assets::<StandardMaterial>::default())

@@ -1,0 +1,84 @@
+openapi: 3.0.0
+info:
+  title: Ball, Paddle, Brick Physics Config API
+  version: 1.0.0
+  description: |
+    Internal API contract for physics config usage in spawn systems. Not exposed externally, but formalized for testability and review.
+paths: {}
+components:
+  schemas:
+    BallPhysicsConfig:
+      type: object
+      description: |
+        Centralized physics config for balls. All fields validated for finiteness, non-negativity, and reasonable bounds.
+      properties:
+        restitution:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 2
+          description: Bounciness coefficient (0.0–2.0 recommended)
+        friction:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 2
+          description: Friction coefficient (0.0–2.0 recommended)
+        linear_damping:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Linear velocity damping (0.0–10.0 recommended)
+        angular_damping:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Angular velocity damping (0.0–10.0 recommended)
+    PaddlePhysicsConfig:
+      type: object
+      description: |
+        Centralized physics config for paddles. All fields validated for finiteness, non-negativity, and reasonable bounds.
+      properties:
+        restitution:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 2
+          description: Bounciness coefficient (0.0–2.0 recommended)
+        friction:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 2
+          description: Friction coefficient (0.0–2.0 recommended)
+        linear_damping:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Linear velocity damping (0.0–10.0 recommended)
+        angular_damping:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Angular velocity damping (0.0–10.0 recommended)
+    BrickPhysicsConfig:
+      type: object
+      description: |
+        Centralized physics config for bricks (static bodies). All fields validated for finiteness, non-negativity, and reasonable bounds.
+      properties:
+        restitution:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 2
+          description: Bounciness coefficient (0.0–2.0 recommended)
+        friction:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 2
+          description: Friction coefficient (0.0–2.0 recommended)

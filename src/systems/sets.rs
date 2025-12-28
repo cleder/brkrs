@@ -1,6 +1,6 @@
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct LevelFadeInStartSet;
+pub struct LevelFadeInStartSystems;
 use bevy::ecs::schedule::SystemSet;
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct SyncLevelPresentationSet;
+pub struct SyncLevelPresentationSystems;
