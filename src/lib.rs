@@ -13,7 +13,8 @@ pub use level_loader::extract_author_name;
 #[cfg(feature = "texture_manifest")]
 use crate::systems::TextureManifestPlugin;
 use crate::systems::{
-    AudioPlugin, InputLocked, LevelSwitchPlugin, PaddleSizePlugin, RespawnPlugin, RespawnSystems,
+    audio::on_ball_wall_hit_sound, AudioPlugin, InputLocked, LevelSwitchPlugin, PaddleSizePlugin,
+    RespawnPlugin, RespawnSystems,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -164,6 +165,8 @@ pub struct GameProgress {
 
 pub fn run() {
     let mut app = App::new();
+    // Register BallWallHit as an event so the observer is active from the start
+    // ...existing code...
 
     app.insert_resource(GravityConfig::default());
     app.insert_resource(GameProgress::default());
@@ -175,7 +178,6 @@ pub fn run() {
     app.init_resource::<systems::scoring::ScoreState>();
     app.add_message::<crate::signals::BrickDestroyed>();
     app.add_message::<systems::scoring::MilestoneReached>();
-    app.add_message::<crate::signals::BallWallHit>();
     app.insert_resource(level_loader::LevelAdvanceState::default());
     app.add_plugins((
         DefaultPlugins
@@ -200,7 +202,10 @@ pub fn run() {
     // app.add_plugins(RapierDebugRenderPlugin::default());
     app.add_plugins(RespawnPlugin);
     app.add_plugins(crate::pause::PausePlugin);
+    // Register BallWallHit as an event so the observer is active before AudioPlugin
+    app.add_message::<crate::signals::BallWallHit>();
     app.add_plugins(AudioPlugin);
+    app.add_observer(on_ball_wall_hit_sound);
     app.add_plugins(PaddleSizePlugin);
     // Cheat mode plugin (feature: toggle, indicator, gated level controls)
     app.add_plugins(systems::CheatModePlugin);
@@ -623,6 +628,10 @@ fn detect_ball_wall_collisions(
             if let Some((ball_entity, _velocity, other_entity)) = ball {
                 if borders.get(other_entity).is_ok() {
                     // Emit BallWallHit event for audio system (signals::BallWallHit)
+                    println!(
+                        "BallWallHit event emitted for ball {:?} and wall {:?}",
+                        ball_entity, other_entity
+                    );
                     commands.trigger(crate::signals::BallWallHit {
                         ball_entity,
                         wall_entity: other_entity,
@@ -742,7 +751,7 @@ fn read_character_controller_collisions(
         for ball in balls.iter() {
             if collision.entity == ball {
                 // println!("hit ball {:?}", ball);
-                println!("collision {:?}", collision);
+                // println!("collision {:?}", collision);
                 commands.trigger(BallHit {
                     impulse: Vec3::new(
                         accumulated_mouse_motion.delta.y,

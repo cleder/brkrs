@@ -241,7 +241,6 @@ impl Plugin for AudioPlugin {
             .add_systems(Update, save_audio_config_on_change)
             .add_systems(Update, cleanup_finished_sounds)
             .add_observer(on_multi_hit_brick_sound)
-            .add_observer(on_ball_wall_hit_sound)
             .add_observer(on_paddle_ball_hit_sound)
             .add_observer(on_paddle_wall_hit_sound)
             .add_observer(on_paddle_brick_hit_sound)
@@ -527,6 +526,7 @@ fn play_sound(
     sound_type: SoundType,
     config: &AudioConfig,
     assets: &AudioAssets,
+    audio_sources: Option<&Assets<AudioSource>>,
     active_sounds: &mut ActiveSounds,
     active_instances: &mut ActiveAudioInstances,
     commands: &mut Commands,
@@ -561,6 +561,19 @@ fn play_sound(
         active_sounds.decrement(sound_type);
         return;
     };
+
+    // Check if the asset is actually loaded
+    if let Some(audio_assets) = audio_sources {
+        if !audio_assets.contains(handle) {
+            debug!(
+                target: "audio",
+                ?sound_type,
+                "Audio asset not yet loaded, skipping playback"
+            );
+            active_sounds.decrement(sound_type);
+            return;
+        }
+    }
 
     // Spawn the audio player and record the spawned entity so we can
     // decrement the concurrent-count when playback finishes (entity despawn).
@@ -636,6 +649,7 @@ fn on_multi_hit_brick_sound(
         SoundType::MultiHitImpact,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -682,6 +696,7 @@ fn consume_brick_destroyed_messages(
             SoundType::BrickDestroy,
             &config,
             &assets,
+            None,
             &mut active_sounds,
             &mut active_instances,
             &mut commands,
@@ -690,10 +705,11 @@ fn consume_brick_destroyed_messages(
 }
 
 /// Observer for ball wall hit sound.
-fn on_ball_wall_hit_sound(
+pub(crate) fn on_ball_wall_hit_sound(
     trigger: On<BallWallHit>,
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
+    audio_sources: Option<Res<Assets<AudioSource>>>,
     mut active_sounds: ResMut<ActiveSounds>,
     mut active_instances: ResMut<ActiveAudioInstances>,
     mut commands: Commands,
@@ -709,6 +725,7 @@ fn on_ball_wall_hit_sound(
         SoundType::WallBounce,
         &config,
         &assets,
+        audio_sources.as_deref(),
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -735,6 +752,7 @@ fn on_paddle_ball_hit_sound(
         SoundType::PaddleHit,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -760,6 +778,7 @@ fn on_paddle_wall_hit_sound(
         SoundType::PaddleWallHit,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -785,6 +804,7 @@ fn on_paddle_brick_hit_sound(
         SoundType::PaddleBrickHit,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -810,6 +830,7 @@ fn on_level_started_sound(
         SoundType::LevelStart,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -835,6 +856,7 @@ fn on_level_complete_sound(
         SoundType::LevelComplete,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -867,6 +889,7 @@ fn consume_ui_beep_messages(
             SoundType::UiBeep,
             &config,
             &assets,
+            None,
             &mut active_sounds,
             &mut active_instances,
             &mut commands,
