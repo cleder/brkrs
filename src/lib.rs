@@ -297,14 +297,14 @@ fn limit_ball_velocity(mut balls: Query<(&Velocity, &mut Damping), With<Ball>>) 
             damping.linear_damping = 0.5 + (speed_ratio - 1.0) * 2.0;
         } else if speed_ratio < 0.5 {
             // Below half target: reduce damping to allow acceleration
-            damping.linear_damping = 0.001 + speed_ratio * 0.8;
+            damping.linear_damping = 0.000_1 + speed_ratio * 0.08;
         } else {
             // Near target: moderate damping
-            damping.linear_damping = 0.001;
+            damping.linear_damping = 0.000_1;
         }
 
         // Clamp damping to reasonable bounds
-        damping.linear_damping = damping.linear_damping.clamp(0.001, 10.0);
+        damping.linear_damping = damping.linear_damping.clamp(0.000_1, 10.0);
     }
 }
 

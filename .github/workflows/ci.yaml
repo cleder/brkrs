@@ -26,6 +26,8 @@ jobs:
     env:
       RUST_TEST_THREADS: 1
     steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
       - name: Checkout sources
         uses: actions/checkout@v4
       - name: Install stable toolchain

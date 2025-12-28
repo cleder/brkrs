@@ -60,7 +60,7 @@ impl Default for BallPhysicsConfig {
         Self {
             restitution: 0.9,
             friction: 2.0,
-            linear_damping: 0.5,
+            linear_damping: 0.005,
             angular_damping: 0.5,
         }
     }
