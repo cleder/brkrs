@@ -500,7 +500,9 @@ fn spawn_border(
         Mesh3d(meshes.add(Cuboid::new(5.0, 5.0, PLANE_W + 5.0).mesh())),
         MeshMaterial3d(border_material.clone()),
         Transform::from_xyz(-17.5, 0.0, 0.0),
+        RigidBody::Fixed,
         Collider::cuboid(2.5, 2.5, PLANE_W / 2.0),
+        ActiveEvents::COLLISION_EVENTS,
         Border,
     ));
     // side borders
@@ -508,14 +510,18 @@ fn spawn_border(
         Mesh3d(meshes.add(Cuboid::new(PLANE_H, 5.0, 5.0).mesh())),
         MeshMaterial3d(border_material.clone()),
         Transform::from_xyz(-0.0, 0.0, -22.5),
+        RigidBody::Fixed,
         Collider::cuboid(PLANE_H / 2.0, 2.5, 2.5),
+        ActiveEvents::COLLISION_EVENTS,
         Border,
     ));
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(PLANE_H, 5.0, 5.0).mesh())),
         MeshMaterial3d(border_material.clone()),
         Transform::from_xyz(-0.0, 0.0, 22.5),
+        RigidBody::Fixed,
         Collider::cuboid(PLANE_H / 2.0, 2.5, 2.5),
+        ActiveEvents::COLLISION_EVENTS,
         Border,
     ));
     //  lower border
@@ -528,7 +534,9 @@ fn spawn_border(
             ..default()
         })),
         Transform::from_xyz(15.5, 0.0, 0.0),
+        RigidBody::Fixed,
         Collider::cuboid(0.0, 2.5, PLANE_W / 2.0),
+        ActiveEvents::COLLISION_EVENTS,
         //Sensor::default(),
         Border,
     ));
