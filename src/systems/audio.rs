@@ -66,7 +66,7 @@
 //! }
 //! ```
 
-use crate::signals::{BrickDestroyed as BrickDestroyedMsg, UiBeep};
+use crate::signals::{BallWallHit, BrickDestroyed as BrickDestroyedMsg, UiBeep};
 use bevy::ecs::message::MessageReader;
 use bevy::prelude::*;
 use ron::de::from_str;
@@ -593,15 +593,7 @@ fn play_sound(
 
 // BrickDestroyed moved to `crate::signals` and is now a Message.
 
-/// Emitted when the ball bounces off a wall boundary.
-/// Used by audio system to play wall bounce sound.
-#[derive(Event, Debug, Clone)]
-pub struct BallWallHit {
-    /// The ball entity that hit the wall.
-    pub entity: Entity,
-    /// The collision impulse.
-    pub impulse: Vec3,
-}
+// BallWallHit event is now defined in signals.rs and imported above
 
 /// Emitted when a level has finished loading and is ready for play.
 /// Used by audio system to play level start sound.
@@ -709,8 +701,8 @@ fn on_ball_wall_hit_sound(
     let event = trigger.event();
     debug!(
         target: "audio",
-        entity = ?event.entity,
-        impulse = ?event.impulse,
+        ball_entity = ?event.ball_entity,
+        wall_entity = ?event.wall_entity,
         "Ball wall hit"
     );
     play_sound(
@@ -979,10 +971,11 @@ mod tests {
     #[test]
     fn ball_wall_hit_event_fields() {
         let event = BallWallHit {
-            entity: Entity::PLACEHOLDER,
-            impulse: Vec3::new(1.0, 0.0, 0.0),
+            ball_entity: Entity::PLACEHOLDER,
+            wall_entity: Entity::PLACEHOLDER,
         };
-        assert_eq!(event.impulse.x, 1.0);
+        assert_eq!(event.ball_entity, Entity::PLACEHOLDER);
+        assert_eq!(event.wall_entity, Entity::PLACEHOLDER);
     }
 
     #[test]

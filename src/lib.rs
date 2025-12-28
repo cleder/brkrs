@@ -175,6 +175,7 @@ pub fn run() {
     app.init_resource::<systems::scoring::ScoreState>();
     app.add_message::<crate::signals::BrickDestroyed>();
     app.add_message::<systems::scoring::MilestoneReached>();
+    app.add_message::<crate::signals::BallWallHit>();
     app.insert_resource(level_loader::LevelAdvanceState::default());
     app.add_plugins((
         DefaultPlugins
@@ -612,15 +613,21 @@ fn detect_ball_wall_collisions(
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
             // Check if one entity is a ball and the other is a border
-            let ball_data = balls.get(*e1).ok().or_else(|| balls.get(*e2).ok());
-            let is_border = borders.get(*e1).is_ok() || borders.get(*e2).is_ok();
-
-            if let (Some((ball_entity, velocity)), true) = (ball_data, is_border) {
-                // Emit BallWallHit event for audio system
-                commands.trigger(systems::BallWallHit {
-                    entity: ball_entity,
-                    impulse: velocity.linvel,
-                });
+            let ball = if let Ok((entity, velocity)) = balls.get(*e1) {
+                Some((entity, velocity, *e2))
+            } else if let Ok((entity, velocity)) = balls.get(*e2) {
+                Some((entity, velocity, *e1))
+            } else {
+                None
+            };
+            if let Some((ball_entity, _velocity, other_entity)) = ball {
+                if borders.get(other_entity).is_ok() {
+                    // Emit BallWallHit event for audio system (signals::BallWallHit)
+                    commands.trigger(crate::signals::BallWallHit {
+                        ball_entity,
+                        wall_entity: other_entity,
+                    });
+                }
             }
         }
     }
