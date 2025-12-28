@@ -257,27 +257,24 @@ fn on_brick_hit(trigger: On<MultiHitBrickHit>) {
 }
 ```
 
-### Messages vs events (Bevy 0.17)
-
 brkrs uses two distinct signalling patterns.
-They are not interchangeable:
+They are not interchangeable: brkrs uses two distinct signalling patterns, which are **not interchangeable**:
 
-- **Messages** (`#[derive(Message)]`) are buffered queues consumed via `MessageReader`
-  and produced via `MessageWriter`.
-- **Events** (`#[derive(Event)]`) are used exclusively with Bevy's observer pattern via
-  `commands.trigger(...)` and `app.add_observer(...)`.
+### Messages vs Observers (Bevy 0.17+)
 
-brkrs uses two distinct signalling patterns, which are **not interchangeable**:
+See the constitution's "Bevy 0.17 Event, Message, and Observer Clarification" for the full authoritative explanation.
 
 - **Messages** (`#[derive(Message)]`) are for double-buffered, frame-agnostic data streams (e.g., scoring, telemetry).
-  They are produced via `MessageWriter` and consumed via `MessageReader`. **Messages are not for immediate side-effects.**
-- **Events** (`#[derive(Event)]`) and `Trigger<T>` are for immediate, reactive logic (e.g., UI, sound, spawning).
-  They are emitted via `commands.trigger(...)` and observed via `On<T>`/ `Trigger<T>` and observer systems (`commands.observe()`).
+  Produced via `MessageWriter`, consumed via `MessageReader`.
+  Use for batchable or delayed work, not for immediate side-effects.
+- **Observers** (with `#[derive(Event)]`, `On<T>`, `Trigger<T>`, or observer systems) are for immediate or next-frame reactions (e.g., UI, sound, spawning).
+  Use for real-time, reactive logic that needs full system access and instant feedback.
 
-> **Guidance:**
->
-> - Use `Event`/`Trigger<T>` and observer systems for immediate side-effects.
-> - Use `MessageWriter`/`MessageReader` for buffered, non-immediate data.
+**Key rules:**
+
+- Use Messages for batchable, cross-frame work; Observers for instant, reactive logic.
+- Never create observer systems that listen to Messages; only Events/Triggers are valid for observers.
+- Always justify your choice in specs/plans (see constitution for rationale and examples).
 > - **Never** create observer systems that listen to Messages; only Events/Triggers are valid for observers.
 
 #### Events (immediate, observer pattern)
