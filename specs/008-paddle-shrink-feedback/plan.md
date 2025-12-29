@@ -137,8 +137,8 @@ Components defined in `lib.rs` per project conventions.
 
 2. **PaddleGrowing Component** (Existing - Extended Usage)
    - **Fields**:
-     - `timer: Timer` - Animation duration and progress tracking
-     - `target_scale: Vec3` - Final scale after animation (0.01 for shrink, 1.0 for growth)
+    - `timer: Timer` - Animation duration and progress tracking
+    - `target_scale: Vec3` - Final scale after animation (0.01 for shrink, 1.0 for growth)
    - **Validation**: `target_scale` must be either `Vec3::splat(0.01)` or `Vec3::ONE`
    - **Lifecycle**: Added on animation start, removed on completion
 

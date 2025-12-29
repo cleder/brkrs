@@ -354,10 +354,10 @@ cargo test
 4. **Test** level transition:
    - Clear all bricks in level 1
    - Observe transition sequence:
-     - [ ] Bricks appear immediately (during fade)
-     - [ ] Ball remains stationary (not falling)
-     - [ ] Paddle grows from tiny to full size
-     - [ ] Ball starts moving AFTER paddle growth
+    - [ ] Bricks appear immediately (during fade)
+    - [ ] Ball remains stationary (not falling)
+    - [ ] Paddle grows from tiny to full size
+    - [ ] Ball starts moving AFTER paddle growth
    - Verify no "ball moving on empty field" behavior
 
 5. **Test** both levels:
