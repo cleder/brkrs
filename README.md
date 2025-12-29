@@ -1,4 +1,4 @@
-# brkrs — a fun, playable brick-breaker game & learning playground
+# brkrs — a fun brick-breaker game & learning playground
 
 [![Crates.io](https://img.shields.io/crates/v/brkrs?color=blue\&logo=rust\&logoColor=white)](https://crates.io/crates/brkrs) [![Docs.rs](https://img.shields.io/docsrs/brkrs)](https://docs.rs/brkrs) [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE) [![Rust](https://img.shields.io/badge/rust-1.81+-orange?logo=rust\&logoColor=white)](https://www.rust-lang.org/) [![Documentation Status](https://readthedocs.org/projects/brkrs/badge/?version=latest)](https://brkrs.readthedocs.io/en/latest/?badge=latest)
 
