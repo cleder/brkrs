@@ -244,6 +244,7 @@ impl Plugin for AudioPlugin {
             .add_observer(on_paddle_ball_hit_sound)
             .add_observer(on_paddle_wall_hit_sound)
             .add_observer(on_paddle_brick_hit_sound)
+            .add_observer(on_ball_wall_hit_sound)
             .add_observer(on_level_started_sound)
             .add_observer(on_level_complete_sound)
             .add_systems(Update, consume_brick_destroyed_messages)

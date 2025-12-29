@@ -13,8 +13,7 @@ pub use level_loader::extract_author_name;
 #[cfg(feature = "texture_manifest")]
 use crate::systems::TextureManifestPlugin;
 use crate::systems::{
-    audio::on_ball_wall_hit_sound, AudioPlugin, InputLocked, LevelSwitchPlugin, PaddleSizePlugin,
-    RespawnPlugin, RespawnSystems,
+    AudioPlugin, InputLocked, LevelSwitchPlugin, PaddleSizePlugin, RespawnPlugin, RespawnSystems,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -205,7 +204,6 @@ pub fn run() {
     // Register BallWallHit as an event so the observer is active before AudioPlugin
     app.add_message::<crate::signals::BallWallHit>();
     app.add_plugins(AudioPlugin);
-    app.add_observer(on_ball_wall_hit_sound);
     app.add_plugins(PaddleSizePlugin);
     // Cheat mode plugin (feature: toggle, indicator, gated level controls)
     app.add_plugins(systems::CheatModePlugin);
