@@ -47,6 +47,33 @@ The following resources centralize physics configuration for balls, paddles, and
 All configs provide a `validate()` method to check for finite, non-negative, and reasonable values.
 Use these resources in spawn systems to ensure consistent physics parameters and prevent hardcoded values.
 
+**Usage Example:**
+
+```rust
+use bevy::prelude::*;
+use brkrs::physics_config::BallPhysicsConfig;
+
+fn spawn_ball(
+    mut commands: Commands,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<StandardMaterial>>,
+    ball_config: Res<BallPhysicsConfig>, // Inject config
+) {
+    commands.spawn((
+        Mesh3d(meshes.add(Sphere::new(0.3).mesh())),
+        MeshMaterial3d(materials.add(Color::srgb(1.0, 1.0, 1.0))),
+        RigidBody::Dynamic,
+        Collider::ball(0.3),
+        Restitution::coefficient(ball_config.restitution),
+        Friction::coefficient(ball_config.friction),
+        Damping {
+            linear_damping: ball_config.linear_damping,
+            angular_damping: ball_config.angular_damping,
+        },
+    ));
+}
+```
+
 See `src/physics_config.rs` for implementation and extension notes.
 
 The crate is organized into the following modules:

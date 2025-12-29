@@ -55,27 +55,44 @@ The project follows these architectural principles (from the project Constitutio
 
 ### Component Structure
 
+Entities use centralized physics configuration resources instead of hardcoded values:
+
 ```text
 Entity: Ball
 ├── Transform
 ├── RigidBody (Dynamic)
 ├── Collider (Sphere)
 ├── Velocity
+├── Restitution (from BallPhysicsConfig.restitution)
+├── Friction (from BallPhysicsConfig.friction)
+├── Damping (from BallPhysicsConfig.linear_damping/angular_damping)
 └── Ball (marker component)
 
 Entity: Paddle
 ├── Transform
 ├── RigidBody (Kinematic)
 ├── Collider (Box)
+├── Restitution (from PaddlePhysicsConfig.restitution)
+├── Friction (from PaddlePhysicsConfig.friction)
 └── Paddle (marker component)
 
 Entity: Brick
 ├── Transform
 ├── RigidBody (Fixed)
 ├── Collider (Box)
+├── Restitution (from BrickPhysicsConfig.restitution)
+├── Friction (from BrickPhysicsConfig.friction)
 ├── Brick (marker component)
 └── [Optional] Indestructible
 ```
+
+**Physics Configuration Resources:**
+
+- `BallPhysicsConfig` — Ball physics properties (restitution, friction, damping)
+- `PaddlePhysicsConfig` — Paddle physics properties
+- `BrickPhysicsConfig` — Brick physics properties
+
+All configs include validation methods to ensure physics values are reasonable and prevent runtime errors.
 
 ### State Machine
 
