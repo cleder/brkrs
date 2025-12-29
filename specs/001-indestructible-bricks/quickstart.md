@@ -39,8 +39,8 @@ cargo test --test migration_parity
 
    - Load a level with `20` tiles (simple bricks) and `90` tiles (indestructible). Confirm:
 
-     - Simple bricks break and decrement the level completion counter.
-     - Indestructible bricks remain and do not count toward completion.
+    - Simple bricks break and decrement the level completion counter.
+    - Indestructible bricks remain and do not count toward completion.
 
 1. Update docs and LevelDefinition samples in `assets/levels/` and commit them.
 
