@@ -13,7 +13,8 @@ pub mod sets;
 pub mod spawning;
 pub mod textures;
 
-pub use audio::{AudioConfig, AudioPlugin, BallWallHit, LevelCompleted, LevelStarted, SoundType};
+pub use crate::signals::BallWallHit;
+pub use audio::{AudioConfig, AudioPlugin, LevelCompleted, LevelStarted, SoundType};
 pub use cheat_mode::{CheatModePlugin, CheatModeState, CheatModeToggled};
 pub use level_switch::{
     LevelSwitchPlugin, LevelSwitchRequested, LevelSwitchSource, LevelSwitchState,

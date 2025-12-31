@@ -1,18 +1,17 @@
+
 <!--
 SYNC IMPACT REPORT
-- Version change: 1.3.1 → 1.3.2
-- Modified principles: VIII. Bevy 0.17 Mandates & Prohibitions (clarifications and additions: Message-Event Separation, Hierarchy Safety); added enforcement infrastructure (linters + CI test)
-- Added sections: None (clarifications and tools)
+- Version change: 1.3.2 → 1.4.0
+- Modified principles: VIII. Bevy 0.17 Mandates & Prohibitions (added detailed clarification: Messages (Buffered Events) vs Observers (Immediate/Push-Based), including purpose, mechanism, pros/cons, and usage guidance)
+- Added sections: Bevy 0.17 Event, Message, and Observer Clarification (new subsection)
 - Removed sections: None
 - Templates requiring updates:
-  - .specify/templates/plan-template.md: ✅ updated
-  - .specify/templates/spec-template.md: ✅ updated
-  - .specify/templates/tasks-template.md: ✅ updated
-  - .specify/templates/agent-file-template.md: ✅ updated
-  - specs/013-post-refactor-qa/checklists/qa-compliance.md: ✅ updated
+  - .specify/templates/plan-template.md: ⚠ review for new Message/Observer guidance
+  - .specify/templates/spec-template.md: ⚠ review for new Message/Observer guidance
+  - .specify/templates/tasks-template.md: ⚠ review for new Message/Observer guidance
 - Follow-up TODOs:
-  - Validate any open plans/specs for compliance with TDD + Bevy 0.17 mandates (spot-check in /specs/)
-  - Add static analysis check for Message vs Event misuse: ✅ implemented (Python: .github/lint/message_event_lint.py + tests; Rust: tools/message_event_lint + unit tests; CI integration in `.github/workflows/ci.yaml`)
+  - Validate all open plans/specs/tasks for explicit Message vs Observer usage rationale
+  - Ensure new features document which event system is used and why
 -->
 
 # Brkrs Constitution
@@ -189,6 +188,43 @@ It provides objective verification (tests) for requirement fulfillment and disco
 
 ### VIII. Bevy 0.17 Mandates & Prohibitions
 
+#### Bevy 0.17 Event, Message, and Observer Clarification
+
+**Messages (Buffered Events)**
+
+- **Purpose:** Communication between systems, typically across frames for predictable scheduling and batching.
+- **Mechanism:** Buffered in a queue (resource), read by `MessageReader` in later schedule steps, using a cursor to track progress.
+- **Pros:** Efficient for high-volume events, allows parallel reading, decouples sender/receiver timing.
+- **Cons:** Inherent delay (read in next/later frame), less direct reactivity than Observers for immediate actions.
+
+**Observers**
+
+- **Purpose:** Immediate (or next-frame) reactive behavior to component changes (add, remove, insert) or custom events.
+- **Mechanism:** Special systems triggered by `World::trigger` or `Commands::trigger`, running immediately or at command flush, can call Commands and World APIs, can self-trigger.
+- **Pros:** Real-time reaction (less delay), full system access (queries, commands), recursive potential, powerful bookkeeping.
+- **Cons:** Triggered via commands (not direct system calls), can have arbitrary order for same-event observers unless systems are ordered.
+
+**Key Differences & When to Use Which**
+
+- **Timing:** Use Messages for work that can wait until the next schedule step (e.g., updating a UI based on score changes).
+  Use Observers for instant reactions (e.g., spawning a particle effect when a component is added).
+- **Complexity:** Use Messages for simple data transfer where you need batching/parallelization.
+  Use Observers when you need to run complex logic, queries, or commands in response to lifecycle changes.
+- **Relationship:** Observers complement Events/Messages; they are a more direct, push-style reactive tool for lifecycle events, addressing shortcomings of older systems, not a replacement.
+
+**Mandate:**
+
+- Use `MessageWriter<T>` and `MessageReader<T>` strictly for buffered, frame-agnostic data streams (telemetry, logs, physics collisions, etc.).
+- Use observer systems and `Trigger<T>` for immediate, reactive logic (UI, sound, lifecycle hooks, etc.).
+- Use `#[derive(Message)]` for buffered queues, and `#[derive(Event)]` for observer patterns.
+  NEVER conflate these patterns or use the wrong derive for the wrong system.
+
+**Rationale:**
+
+This distinction ensures correct, predictable, and performant event handling in Bevy ECS.
+Buffered messages are ideal for high-volume, order-agnostic, or batchable work.
+Observers provide fine-grained, immediate reactivity and are essential for modern ECS workflows that require instant feedback or complex system orchestration.
+
 #### Bevy 0.17 ECS Architecture Mandates
 
 - **Fallible Systems:** Systems MUST return `()` (Bevy requirement).
@@ -338,4 +374,4 @@ All contributions MUST comply with these principles.
 - Performance targets may be adjusted based on platform evolution
 - Development workflow may be optimized as team/tools evolve
 
-**Version**: 1.3.2 | **Ratified**: 2025-10-30 | **Last Amended**: 2025-12-25
+**Version**: 1.4.0 | **Ratified**: 2025-10-30 | **Last Amended**: 2025-12-28

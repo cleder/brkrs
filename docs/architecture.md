@@ -55,27 +55,44 @@ The project follows these architectural principles (from the project Constitutio
 
 ### Component Structure
 
+Entities use centralized physics configuration resources instead of hardcoded values:
+
 ```text
 Entity: Ball
 ├── Transform
 ├── RigidBody (Dynamic)
 ├── Collider (Sphere)
 ├── Velocity
+├── Restitution (from BallPhysicsConfig.restitution)
+├── Friction (from BallPhysicsConfig.friction)
+├── Damping (from BallPhysicsConfig.linear_damping/angular_damping)
 └── Ball (marker component)
 
 Entity: Paddle
 ├── Transform
 ├── RigidBody (Kinematic)
 ├── Collider (Box)
+├── Restitution (from PaddlePhysicsConfig.restitution)
+├── Friction (from PaddlePhysicsConfig.friction)
 └── Paddle (marker component)
 
 Entity: Brick
 ├── Transform
 ├── RigidBody (Fixed)
 ├── Collider (Box)
+├── Restitution (from BrickPhysicsConfig.restitution)
+├── Friction (from BrickPhysicsConfig.friction)
 ├── Brick (marker component)
 └── [Optional] Indestructible
 ```
+
+**Physics Configuration Resources:**
+
+- `BallPhysicsConfig` — Ball physics properties (restitution, friction, damping)
+- `PaddlePhysicsConfig` — Paddle physics properties
+- `BrickPhysicsConfig` — Brick physics properties
+
+All configs include validation methods to ensure physics values are reasonable and prevent runtime errors.
 
 ### State Machine
 
@@ -201,18 +218,22 @@ LivesState.lives_remaining += 1
 
 **Persistence**: Score accumulates across level transitions, resets on game restart
 
-**Messages vs Events (Bevy 0.17)**:
+**Messages vs Observers (Bevy 0.17+)**
 
-- `BrickDestroyed` and `MilestoneReached` in the scoring flow are **messages** (`#[derive(Message)]`) consumed via `MessageReader` and produced via `MessageWriter`.
-  Messages are for double-buffered, frame-agnostic data streams (e.g., scoring, telemetry) and are **not** for immediate side-effects.
-- Observer-driven signals (like audio triggers, UI, or spawning) are **events** (`#[derive(Event)]`) observed via `On<T>`/ `Trigger<T>` and emitted via `commands.trigger(...)`.
-  Events are for immediate, reactive logic and should use Bevy's observer pattern.
+See the constitution's "Bevy 0.17 Event, Message, and Observer Clarification" for authoritative guidance.
 
-> **Guidance:**
-> 
-> - If you need an immediate side-effect (e.g., sound, UI, spawning), use an `Event`/`Trigger<T>` and an observer system (`commands.observe()`).
-> - If you need buffered, frame-agnostic data, use a `Message` and process it in a separate system with no immediate side-effects.
-> - **Never** create observer systems that listen to Messages; only Events/Triggers are valid for observers.
+- **Messages** (`#[derive(Message)]`) are for double-buffered, frame-agnostic data streams (e.g., scoring, telemetry).
+  Produced via `MessageWriter`, consumed via `MessageReader`.
+  Use for work that can be batched or delayed to the next schedule step.
+  Not for immediate side-effects.
+- **Observers** (with `#[derive(Event)]`, `On<T>`, `Trigger<T>`, or observer systems) are for immediate or next-frame reactions (e.g., UI, sound, spawning).
+  Use for real-time, reactive logic that needs full system access and instant feedback.
+
+**Key rules:**
+
+- Use Messages for batchable, cross-frame work; Observers for instant, reactive logic.
+- Never create observer systems that listen to Messages; only Events/Triggers are valid for observers.
+- Always justify your choice in specs/plans (see constitution for rationale and examples).
 
 ## UI System
 

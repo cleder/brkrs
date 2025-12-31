@@ -11,6 +11,8 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- **Documentation**: Comprehensive physics configuration system documentation added to developer guide, including usage examples, collision event explanation, and debugging guidance. Updated architecture docs to reflect centralized config approach instead of hardcoded values.
+
 - **Cheat mode safeguards** (`001-cheat-mode-safeguards`): Toggle cheat mode with the `G` key to enable test/dev-only behavior — score resets to 0 on toggle, and a persistent image indicator (`assets/textures/default/cheat-mode-128.png`) appears on screen (lower-right, ~48×48 px). Level-control keys (R = respawn, N = next level, P = previous level) are gated to cheat mode and emit a soft UI beep when blocked; if cheat mode is toggled while a Game Over overlay is visible, the player's lives are reset to 3 and the Game Over overlay is removed so the player may resume (note: toggling cheat mode does **not** reload or reset the current level). Includes unit and integration tests and docs (`docs/cheat-mode.md`, UI docs updated).
 - **Scoring system** (`009-add-scoring`): Players accumulate points by destroying bricks, with values ranging from 25-300 points based on brick type (documented in `docs/bricks.md`). The score persists across level transitions within a game session and displays in real-time in the top-right corner. Every 5000 points, players earn a bonus life. Special mechanics include random scoring for Question bricks (25-300 points) and zero points for effect-only bricks (Extra Ball, Magnet). Implemented with ECS resources (`ScoreState`), message-based events (`BrickDestroyed`, `MilestoneReached`), and change-detection optimized UI updates.
 - Paddle shrink visual feedback (`008-paddle-shrink-feedback`): When a player loses their last ball, the paddle immediately shrinks from full size to nearly invisible (scale 0.01) over 1 second, providing instant visual feedback while running concurrently with the respawn delay. Smooth animation uses cubic easing interpolation and integrates seamlessly with the existing respawn system and fadeout overlay.
@@ -42,4 +44,3 @@ All notable changes to this project are documented here.
 - Sphinx documentation with Read the Docs integration
 - GitHub Actions CI/CD with caching and WASM deployment
 - GitHub Codespaces prebuild configuration
-

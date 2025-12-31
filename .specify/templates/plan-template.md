@@ -39,6 +39,10 @@ This check MUST verify compliance with the constitution, including **Test-Driven
 
 This check MUST also verify compliance with **Bevy 0.17 mandates & prohibitions** (if the feature touches ECS, rendering, assets, or scheduling):
 
+- **Bevy Event System Guidance:**
+  - For any feature using events, messages, or observers, the plan MUST explicitly state which system is used (Messages vs Observers) and why, referencing the constitution's "Bevy 0.17 Event, Message, and Observer Clarification" section.
+  - Justify the choice (e.g., "Messages for batchable, cross-frame work; Observers for immediate, reactive logic").
+
 - Systems are fallible (`Result`) and do not panic on query outcomes (`?`, no `.unwrap()` on queries).
 - Queries use `With<T>`/`Without<T>` filters and `Changed<T>` where appropriate (especially UI).
 - **Message-Event Separation**: Verify correct use of `MessageWriter/Reader` for buffered, frame-agnostic streams and observers/`Trigger<T>` for immediate, reactive logic (e.g., UI/sound triggers).

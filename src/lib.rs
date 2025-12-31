@@ -164,6 +164,8 @@ pub struct GameProgress {
 
 pub fn run() {
     let mut app = App::new();
+    // Register BallWallHit as an event so the observer is active from the start
+    // ...existing code...
 
     app.insert_resource(GravityConfig::default());
     app.insert_resource(GameProgress::default());
@@ -199,6 +201,8 @@ pub fn run() {
     // app.add_plugins(RapierDebugRenderPlugin::default());
     app.add_plugins(RespawnPlugin);
     app.add_plugins(crate::pause::PausePlugin);
+    // Register BallWallHit as an event so the observer is active before AudioPlugin
+    app.add_message::<crate::signals::BallWallHit>();
     app.add_plugins(AudioPlugin);
     app.add_plugins(PaddleSizePlugin);
     // Cheat mode plugin (feature: toggle, indicator, gated level controls)
@@ -494,7 +498,9 @@ fn spawn_border(
         Mesh3d(meshes.add(Cuboid::new(5.0, 5.0, PLANE_W + 5.0).mesh())),
         MeshMaterial3d(border_material.clone()),
         Transform::from_xyz(-17.5, 0.0, 0.0),
+        RigidBody::Fixed,
         Collider::cuboid(2.5, 2.5, PLANE_W / 2.0),
+        ActiveEvents::COLLISION_EVENTS,
         Border,
     ));
     // side borders
@@ -502,14 +508,18 @@ fn spawn_border(
         Mesh3d(meshes.add(Cuboid::new(PLANE_H, 5.0, 5.0).mesh())),
         MeshMaterial3d(border_material.clone()),
         Transform::from_xyz(-0.0, 0.0, -22.5),
+        RigidBody::Fixed,
         Collider::cuboid(PLANE_H / 2.0, 2.5, 2.5),
+        ActiveEvents::COLLISION_EVENTS,
         Border,
     ));
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(PLANE_H, 5.0, 5.0).mesh())),
         MeshMaterial3d(border_material.clone()),
         Transform::from_xyz(-0.0, 0.0, 22.5),
+        RigidBody::Fixed,
         Collider::cuboid(PLANE_H / 2.0, 2.5, 2.5),
+        ActiveEvents::COLLISION_EVENTS,
         Border,
     ));
     //  lower border
@@ -522,9 +532,11 @@ fn spawn_border(
             ..default()
         })),
         Transform::from_xyz(15.5, 0.0, 0.0),
+        RigidBody::Fixed,
         Collider::cuboid(0.0, 2.5, PLANE_W / 2.0),
+        ActiveEvents::COLLISION_EVENTS,
         //Sensor::default(),
-        Border,
+        LowerGoal,
     ));
 }
 
@@ -612,15 +624,25 @@ fn detect_ball_wall_collisions(
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
             // Check if one entity is a ball and the other is a border
-            let ball_data = balls.get(*e1).ok().or_else(|| balls.get(*e2).ok());
-            let is_border = borders.get(*e1).is_ok() || borders.get(*e2).is_ok();
-
-            if let (Some((ball_entity, velocity)), true) = (ball_data, is_border) {
-                // Emit BallWallHit event for audio system
-                commands.trigger(systems::BallWallHit {
-                    entity: ball_entity,
-                    impulse: velocity.linvel,
-                });
+            let ball = if let Ok((entity, velocity)) = balls.get(*e1) {
+                Some((entity, velocity, *e2))
+            } else if let Ok((entity, velocity)) = balls.get(*e2) {
+                Some((entity, velocity, *e1))
+            } else {
+                None
+            };
+            if let Some((ball_entity, _velocity, other_entity)) = ball {
+                if borders.get(other_entity).is_ok() {
+                    // Emit BallWallHit event for audio system (signals::BallWallHit)
+                    println!(
+                        "BallWallHit event emitted for ball {:?} and wall {:?}",
+                        ball_entity, other_entity
+                    );
+                    commands.trigger(crate::signals::BallWallHit {
+                        ball_entity,
+                        wall_entity: other_entity,
+                    });
+                }
             }
         }
     }
@@ -735,7 +757,7 @@ fn read_character_controller_collisions(
         for ball in balls.iter() {
             if collision.entity == ball {
                 // println!("hit ball {:?}", ball);
-                println!("collision {:?}", collision);
+                // println!("collision {:?}", collision);
                 commands.trigger(BallHit {
                     impulse: Vec3::new(
                         accumulated_mouse_motion.delta.y,

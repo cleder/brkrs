@@ -129,6 +129,46 @@ All implementation work follows strict Test-Driven Development (TDD):
 3. Confirm tests fail (red).
 4. Only then implement until tests pass (green).
 
+### Testing physics features
+
+When testing physics-related code, consider these patterns:
+
+**Physics config validation:**
+
+```rust
+#[test]
+fn ball_physics_config_validates_correctly() {
+    let config = BallPhysicsConfig {
+        restitution: 0.9,
+        friction: 0.1,
+        linear_damping: 0.5,
+        angular_damping: 0.5,
+    };
+    assert!(config.validate().is_ok());
+}
+```
+
+**Collision event testing:**
+
+```rust
+#[test]
+fn ball_wall_collision_emits_event() {
+    let mut app = App::new();
+    // Set up physics world with ball and wall entities
+    // Trigger collision
+    // Assert BallWallHit event is emitted
+}
+```
+
+**Integration testing:**
+
+Use `tests/integration/` for full physics simulation tests.
+These require:
+
+- Proper Bevy app setup with physics plugins
+- Entity spawning with correct components
+- Frame stepping to process physics
+
 ## Code quality checks
 
 Before submitting a PR, run all quality checks:
@@ -238,6 +278,64 @@ Key systems:
 | Multi-Hit | Brick damage states, material transitions |
 | Textures | Asset loading and material management |
 
+### Physics Configuration System
+
+brkrs uses a centralized physics configuration system to ensure consistent physics behavior across all entities.
+Instead of hardcoding physics values in spawn functions, all physics properties are defined in dedicated resource structs.
+
+**Core Resources:**
+
+- `BallPhysicsConfig` — Controls ball bounciness, friction, and damping
+- `PaddlePhysicsConfig` — Controls paddle physics properties
+- `BrickPhysicsConfig` — Controls brick collision properties
+
+**Usage in Spawn Systems:**
+
+```rust
+fn spawn_ball(
+    mut commands: Commands,
+    ball_config: Res<BallPhysicsConfig>, // Inject the config
+) {
+    commands.spawn((
+        RigidBody::Dynamic,
+        Collider::ball(BALL_RADIUS),
+        Restitution::coefficient(ball_config.restitution), // Use config values
+        Friction::coefficient(ball_config.friction),
+        Damping {
+            linear_damping: ball_config.linear_damping,
+            angular_damping: ball_config.angular_damping,
+        },
+    ));
+}
+```
+
+**Validation:** All config structs provide a `validate()` method that checks for reasonable physics values and prevents runtime errors.
+
+**Tuning:** Modify the config resources in `src/physics_config.rs` to adjust gameplay feel.
+Changes apply to all newly spawned entities.
+
+### Collision Events
+
+Collision detection in brkrs uses Rapier3D's event system.
+For collision events to be generated, **both colliding entities must have `ActiveEvents::COLLISION_EVENTS`**.
+
+```rust
+// Both entities need this for collision events
+ActiveEvents::COLLISION_EVENTS
+```
+
+**Collision Event Flow:**
+
+1. Entities with `ActiveEvents::COLLISION_EVENTS` generate `CollisionEvent`s when they collide
+2. Systems read `CollisionEvent`s via `MessageReader<CollisionEvent>`
+3. Events trigger game logic (audio, scoring, destruction)
+
+**Common Issues:**
+
+- **No collision events?** Check that both entities have `ActiveEvents::COLLISION_EVENTS`
+- **Missing RigidBody?** Only entities with physics bodies can generate collision events
+- **Timing issues?** Collision events are processed in the physics update loop
+
 ### Multi-Hit Bricks
 
 Multi-hit bricks (indices 10-13) require multiple ball collisions to destroy.
@@ -257,27 +355,24 @@ fn on_brick_hit(trigger: On<MultiHitBrickHit>) {
 }
 ```
 
-### Messages vs events (Bevy 0.17)
-
 brkrs uses two distinct signalling patterns.
-They are not interchangeable:
+They are not interchangeable: brkrs uses two distinct signalling patterns, which are **not interchangeable**:
 
-- **Messages** (`#[derive(Message)]`) are buffered queues consumed via `MessageReader`
-  and produced via `MessageWriter`.
-- **Events** (`#[derive(Event)]`) are used exclusively with Bevy's observer pattern via
-  `commands.trigger(...)` and `app.add_observer(...)`.
+### Messages vs Observers (Bevy 0.17+)
 
-brkrs uses two distinct signalling patterns, which are **not interchangeable**:
+See the constitution's "Bevy 0.17 Event, Message, and Observer Clarification" for the full authoritative explanation.
 
 - **Messages** (`#[derive(Message)]`) are for double-buffered, frame-agnostic data streams (e.g., scoring, telemetry).
-  They are produced via `MessageWriter` and consumed via `MessageReader`. **Messages are not for immediate side-effects.**
-- **Events** (`#[derive(Event)]`) and `Trigger<T>` are for immediate, reactive logic (e.g., UI, sound, spawning).
-  They are emitted via `commands.trigger(...)` and observed via `On<T>`/ `Trigger<T>` and observer systems (`commands.observe()`).
+  Produced via `MessageWriter`, consumed via `MessageReader`.
+  Use for batchable or delayed work, not for immediate side-effects.
+- **Observers** (with `#[derive(Event)]`, `On<T>`, `Trigger<T>`, or observer systems) are for immediate or next-frame reactions (e.g., UI, sound, spawning).
+  Use for real-time, reactive logic that needs full system access and instant feedback.
 
-> **Guidance:**
->
-> - Use `Event`/`Trigger<T>` and observer systems for immediate side-effects.
-> - Use `MessageWriter`/`MessageReader` for buffered, non-immediate data.
+**Key rules:**
+
+- Use Messages for batchable, cross-frame work; Observers for instant, reactive logic.
+- Never create observer systems that listen to Messages; only Events/Triggers are valid for observers.
+- Always justify your choice in specs/plans (see constitution for rationale and examples).
 > - **Never** create observer systems that listen to Messages; only Events/Triggers are valid for observers.
 
 #### Events (immediate, observer pattern)

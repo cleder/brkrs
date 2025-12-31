@@ -66,7 +66,7 @@
 //! }
 //! ```
 
-use crate::signals::{BrickDestroyed as BrickDestroyedMsg, UiBeep};
+use crate::signals::{BallWallHit, BrickDestroyed as BrickDestroyedMsg, UiBeep};
 use bevy::ecs::message::MessageReader;
 use bevy::prelude::*;
 use ron::de::from_str;
@@ -241,10 +241,10 @@ impl Plugin for AudioPlugin {
             .add_systems(Update, save_audio_config_on_change)
             .add_systems(Update, cleanup_finished_sounds)
             .add_observer(on_multi_hit_brick_sound)
-            .add_observer(on_ball_wall_hit_sound)
             .add_observer(on_paddle_ball_hit_sound)
             .add_observer(on_paddle_wall_hit_sound)
             .add_observer(on_paddle_brick_hit_sound)
+            .add_observer(on_ball_wall_hit_sound)
             .add_observer(on_level_started_sound)
             .add_observer(on_level_complete_sound)
             .add_systems(Update, consume_brick_destroyed_messages)
@@ -527,6 +527,7 @@ fn play_sound(
     sound_type: SoundType,
     config: &AudioConfig,
     assets: &AudioAssets,
+    audio_sources: Option<&Assets<AudioSource>>,
     active_sounds: &mut ActiveSounds,
     active_instances: &mut ActiveAudioInstances,
     commands: &mut Commands,
@@ -562,6 +563,19 @@ fn play_sound(
         return;
     };
 
+    // Check if the asset is actually loaded
+    if let Some(audio_assets) = audio_sources {
+        if !audio_assets.contains(handle) {
+            debug!(
+                target: "audio",
+                ?sound_type,
+                "Audio asset not yet loaded, skipping playback"
+            );
+            active_sounds.decrement(sound_type);
+            return;
+        }
+    }
+
     // Spawn the audio player and record the spawned entity so we can
     // decrement the concurrent-count when playback finishes (entity despawn).
     let entity = commands
@@ -593,15 +607,7 @@ fn play_sound(
 
 // BrickDestroyed moved to `crate::signals` and is now a Message.
 
-/// Emitted when the ball bounces off a wall boundary.
-/// Used by audio system to play wall bounce sound.
-#[derive(Event, Debug, Clone)]
-pub struct BallWallHit {
-    /// The ball entity that hit the wall.
-    pub entity: Entity,
-    /// The collision impulse.
-    pub impulse: Vec3,
-}
+// BallWallHit event is now defined in signals.rs and imported above
 
 /// Emitted when a level has finished loading and is ready for play.
 /// Used by audio system to play level start sound.
@@ -644,6 +650,7 @@ fn on_multi_hit_brick_sound(
         SoundType::MultiHitImpact,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -690,6 +697,7 @@ fn consume_brick_destroyed_messages(
             SoundType::BrickDestroy,
             &config,
             &assets,
+            None,
             &mut active_sounds,
             &mut active_instances,
             &mut commands,
@@ -698,10 +706,11 @@ fn consume_brick_destroyed_messages(
 }
 
 /// Observer for ball wall hit sound.
-fn on_ball_wall_hit_sound(
+pub(crate) fn on_ball_wall_hit_sound(
     trigger: On<BallWallHit>,
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
+    audio_sources: Option<Res<Assets<AudioSource>>>,
     mut active_sounds: ResMut<ActiveSounds>,
     mut active_instances: ResMut<ActiveAudioInstances>,
     mut commands: Commands,
@@ -709,14 +718,15 @@ fn on_ball_wall_hit_sound(
     let event = trigger.event();
     debug!(
         target: "audio",
-        entity = ?event.entity,
-        impulse = ?event.impulse,
+        ball_entity = ?event.ball_entity,
+        wall_entity = ?event.wall_entity,
         "Ball wall hit"
     );
     play_sound(
         SoundType::WallBounce,
         &config,
         &assets,
+        audio_sources.as_deref(),
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -743,6 +753,7 @@ fn on_paddle_ball_hit_sound(
         SoundType::PaddleHit,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -768,6 +779,7 @@ fn on_paddle_wall_hit_sound(
         SoundType::PaddleWallHit,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -793,6 +805,7 @@ fn on_paddle_brick_hit_sound(
         SoundType::PaddleBrickHit,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -818,6 +831,7 @@ fn on_level_started_sound(
         SoundType::LevelStart,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -843,6 +857,7 @@ fn on_level_complete_sound(
         SoundType::LevelComplete,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -875,6 +890,7 @@ fn consume_ui_beep_messages(
             SoundType::UiBeep,
             &config,
             &assets,
+            None,
             &mut active_sounds,
             &mut active_instances,
             &mut commands,
@@ -979,10 +995,11 @@ mod tests {
     #[test]
     fn ball_wall_hit_event_fields() {
         let event = BallWallHit {
-            entity: Entity::PLACEHOLDER,
-            impulse: Vec3::new(1.0, 0.0, 0.0),
+            ball_entity: Entity::PLACEHOLDER,
+            wall_entity: Entity::PLACEHOLDER,
         };
-        assert_eq!(event.impulse.x, 1.0);
+        assert_eq!(event.ball_entity, Entity::PLACEHOLDER);
+        assert_eq!(event.wall_entity, Entity::PLACEHOLDER);
     }
 
     #[test]

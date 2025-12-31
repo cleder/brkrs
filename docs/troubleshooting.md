@@ -83,6 +83,35 @@ aplay -l
 
 **All platforms**: Audio is optional — the game runs without sound.
 
+### Physics issues (ball doesn't bounce, no collisions)
+
+**Enable physics debug rendering:**
+
+```rust
+// In src/lib.rs, temporarily uncomment this line in the app setup:
+app.add_plugins(RapierDebugRenderPlugin::default());
+```
+
+This shows collision shapes, velocities, and contact points.
+
+**Check physics configuration:**
+
+- Verify `BallPhysicsConfig`, `PaddlePhysicsConfig`, and `BrickPhysicsConfig` have valid values
+- Run `cargo run` and check for validation error messages at startup
+- Common issues: `restitution > 2.0`, negative friction, or infinite damping values
+
+**Collision event debugging:**
+
+- Ensure both colliding entities have `ActiveEvents::COLLISION_EVENTS`
+- Check that entities have appropriate `RigidBody` components (`Dynamic`, `Fixed`, etc.)
+- Use logging in collision systems to verify events are being generated
+
+**Ball physics problems:**
+
+- Ball needs `Velocity::zero()` component at spawn (not just `RigidBody::Dynamic`)
+- Check that `LockedAxes::TRANSLATION_LOCKED_Y` allows XZ movement
+- Verify gravity settings in level files or `RapierConfiguration`
+
 ## WASM/Web Issues
 
 ### Web version doesn't load

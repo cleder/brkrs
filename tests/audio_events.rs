@@ -20,10 +20,11 @@ fn brick_destroyed_message_has_correct_fields() {
 #[test]
 fn ball_wall_hit_event_has_correct_fields() {
     let event = BallWallHit {
-        entity: Entity::PLACEHOLDER,
-        impulse: Vec3::new(1.0, 0.0, 0.0),
+        ball_entity: Entity::PLACEHOLDER,
+        wall_entity: Entity::PLACEHOLDER,
     };
-    assert_eq!(event.impulse, Vec3::new(1.0, 0.0, 0.0));
+    assert_eq!(event.ball_entity, Entity::PLACEHOLDER);
+    assert_eq!(event.wall_entity, Entity::PLACEHOLDER);
 }
 
 #[test]
@@ -88,11 +89,11 @@ fn audio_events_are_cloneable() {
     assert_eq!(cloned.brick_type, 20);
 
     let ball_wall_hit = BallWallHit {
-        entity: Entity::PLACEHOLDER,
-        impulse: Vec3::new(1.0, 2.0, 3.0),
+        ball_entity: Entity::PLACEHOLDER,
+        wall_entity: Entity::PLACEHOLDER,
     };
     let cloned = ball_wall_hit.clone();
-    assert_eq!(cloned.impulse, Vec3::new(1.0, 2.0, 3.0));
+    assert_eq!(cloned.ball_entity, Entity::PLACEHOLDER);
 
     let level_started = LevelStarted { level_index: 3 };
     let cloned = level_started.clone();

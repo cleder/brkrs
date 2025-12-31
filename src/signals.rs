@@ -42,6 +42,7 @@
 
 use bevy::ecs::message::Message;
 use bevy::prelude::Entity;
+use bevy::prelude::Event;
 
 /// Short UI feedback cue (beep) — buffered message consumed by audio systems.
 ///
@@ -50,6 +51,19 @@ use bevy::prelude::Entity;
 /// **Contract**: One beep per user interaction (no duplicates within same frame)
 #[derive(Message, Debug, Clone, Copy)]
 pub struct UiBeep;
+
+/// Ball-wall collision event for immediate wall hit audio feedback.
+///
+/// **Producers**: Ball-wall collision system (emits via `commands.trigger`)
+/// **Consumers**: Audio system (observer: `On<BallWallHit>`, plays wall hit sound immediately)
+/// **Contract**: Fired once per ball-wall collision, includes ball and wall entities
+#[derive(Event, Message, Debug, Clone, Copy)]
+pub struct BallWallHit {
+    /// Entity of the ball that hit the wall
+    pub ball_entity: Entity,
+    /// Entity of the wall that was hit
+    pub wall_entity: Entity,
+}
 
 /// Brick destruction signal unified for scoring and audio.
 ///
