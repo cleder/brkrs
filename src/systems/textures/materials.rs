@@ -447,6 +447,13 @@ fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> St
         metallic_roughness_texture: orm_texture.clone(),
         occlusion_texture: orm_texture,
         emissive_texture,
+        // Emissive color must be set when using emissive texture (acts as multiplier/tint)
+        // Default to white (1.0, 1.0, 1.0) when emissive texture is present
+        emissive: if profile.emissive_path.is_some() {
+            Color::WHITE.into()
+        } else {
+            Color::BLACK.into()
+        },
         metallic: profile.metallic,
         perceptual_roughness: profile.roughness,
         uv_transform,
