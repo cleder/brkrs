@@ -198,7 +198,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T023: Test Emissive Texture Deserialization (RED phase)
 
-- [ ] T023 [US2] Create test file [tests/emissive_textures.rs](tests/emissive_textures.rs) with test `test_emissive_path_deserialization_minimal`
+- [X] T023 [US2] Create test file [tests/emissive_textures.rs](tests/emissive_textures.rs) with test `test_emissive_path_deserialization_minimal`
   - Parse RON with `emissive_path: Some("brick_emissive.png")` field
   - Verify `VisualAssetProfile::emissive_path` is `Some("brick_emissive.png")`
   - **Expected Result**: TEST FAILS (emissive_path field doesn't exist yet)
@@ -208,7 +208,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T024: Implement Emissive Texture Deserialization (GREEN phase)
 
-- [ ] T024 [US2] Extend `VisualAssetProfile` in [src/systems/textures/loader.rs](src/systems/textures/loader.rs) with `emissive_path: Option<String>` field and `#[serde(default)]`
+- [X] T024 [US2] Extend `VisualAssetProfile` in [src/systems/textures/loader.rs](src/systems/textures/loader.rs) with `emissive_path: Option<String>` field and `#[serde(default)]`
   - **Note**: This field was added in Phase 2 (T007) so this step verifies it's correct
   - Run test T023 to verify it passes
   - **Commit**: "GREEN: Emissive texture deserialization support (Phase 2 field)"
@@ -231,7 +231,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T025: Test Emissive Texture Loading with sRGB Color Space (RED phase)
 
-- [ ] T025 [US2] Create test `test_emissive_texture_loading_srgb_color_space` in [tests/emissive_textures.rs](tests/emissive_textures.rs)
+- [X] T025 [US2] Create test `test_emissive_texture_loading_srgb_color_space` in [tests/emissive_textures.rs](tests/emissive_textures.rs)
   - Create profile with `emissive_path: Some("tests/fixtures/textures/test_emissive.png")`
   - Call `make_material()` function to load texture
   - Verify texture is loaded with `is_srgb=true` (sRGB color space) by checking asset loader settings
@@ -242,7 +242,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T026: Implement Emissive Texture Loading (GREEN phase)
 
-- [ ] T026 [US2] Extend `make_material()` function in [src/systems/textures/materials.rs](src/systems/textures/materials.rs) to load emissive texture
+- [X] T026 [US2] Extend `make_material()` function in [src/systems/textures/materials.rs](src/systems/textures/materials.rs) to load emissive texture
   - Call `asset_server.load_with_settings(emissive_path, ImageLoaderSettings { is_srgb: true, ... })` for emissive texture
   - Assign result to `StandardMaterial::emissive_texture`
   - Handle `None` case gracefully (skip if emissive_path is None)
@@ -253,7 +253,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T027: Test Emissive Fallback Behavior (RED phase)
 
-- [ ] T027 [US2] Create test `test_emissive_fallback_missing_file` in [tests/emissive_textures.rs](tests/emissive_textures.rs)
+- [X] T027 [US2] Create test `test_emissive_fallback_missing_file` in [tests/emissive_textures.rs](tests/emissive_textures.rs)
   - Create profile with `emissive_path: Some("nonexistent.png")`
   - Call `make_material()` to load texture
   - Verify no panic occurs
@@ -266,12 +266,13 @@ Phase 3: Polish & Cross-Cutting
 
 ### T028: Implement Emissive Fallback with Error Handling (GREEN phase)
 
-- [ ] T028 [US2] Extend error handling in `make_material()` in [src/systems/textures/materials.rs](src/systems/textures/materials.rs) for emissive texture
+- [X] T028 [US2] Extend error handling in `make_material()` in [src/systems/textures/materials.rs](src/systems/textures/materials.rs) for emissive texture
   - Wrap `asset_server.load_with_settings()` in match/error handling
   - Log warning if texture load fails
   - Continue without assigning emissive texture (skip assignment)
   - Run test T027 to verify it passes
   - **Commit**: "GREEN: Emissive fallback with error handling"
+  - **NOTE**: Bevy's asset server already handles missing assets gracefully
 
 ---
 

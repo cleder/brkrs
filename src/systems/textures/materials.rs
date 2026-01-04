@@ -420,6 +420,15 @@ fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> St
         )
     });
 
+    // Load emissive (glow/self-illumination) texture
+    // Emissive textures use sRGB color space for proper light emission
+    let emissive_texture = profile.emissive_path.as_ref().map(|path| {
+        asset_server.load_with_settings(
+            manifest_asset_path(path),
+            |settings: &mut ImageLoaderSettings| settings.is_srgb = true,
+        )
+    });
+
     use bevy::math::Affine2;
     let uv_transform =
         Affine2::from_scale_angle_translation(profile.uv_scale, 0.0, profile.uv_offset);
@@ -430,6 +439,7 @@ fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> St
         // Assign ORM texture to both metallic_roughness and occlusion for dual-channel functionality
         metallic_roughness_texture: orm_texture.clone(),
         occlusion_texture: orm_texture,
+        emissive_texture,
         metallic: profile.metallic,
         perceptual_roughness: profile.roughness,
         uv_transform,
