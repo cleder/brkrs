@@ -429,6 +429,13 @@ fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> St
         )
     });
 
+    // Load depth/parallax texture for surface detail
+    // Depth textures use linear color space (grayscale displacement)
+    // Note: Bevy's standard shader doesn't use depth maps directly;
+    // parallax mapping requires a custom shader. The depth_path and depth_scale
+    // parameters are here for future implementation when parallax mapping is added.
+    // For now, we reserve the space for these parameters but don't load the texture.
+
     use bevy::math::Affine2;
     let uv_transform =
         Affine2::from_scale_angle_translation(profile.uv_scale, 0.0, profile.uv_offset);
