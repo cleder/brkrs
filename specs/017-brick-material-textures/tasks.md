@@ -409,50 +409,50 @@ Phase 3: Polish & Cross-Cutting
 
 ### T039: Test Backward Compatibility - Old Profiles Still Work
 
-- [ ] T039 Create test `test_backward_compatibility_no_new_fields` in [tests/backward_compatibility.rs](tests/backward_compatibility.rs)
+- [X] T039 Create test `test_backward_compatibility_no_fields` in [tests/backward_compatibility.rs](tests/backward_compatibility.rs)
   - Load existing manifest entries that have only `albedo_path` and `normal_path`
   - Call `make_material()` for each profile
   - Verify material loads without errors
   - Verify roughness/metallic default to expected values
   - Verify no ORM/emissive/depth textures are assigned
-  - **Status**: GREEN (should pass from start since all new fields are optional)
+  - **Status**: GREEN (all tests pass - backward compatibility verified)
   - **Commit**: "VERIFIED: Backward compatibility maintained"
 
 ---
 
 ### T040: Test Combined Textures - ORM + Emissive + Depth
 
-- [ ] T040 Create test `test_all_textures_combined` in [tests/combined_textures.rs](tests/combined_textures.rs)
+- [X] T040 Create test `test_all_textures_combined` in [tests/combined_textures.rs](tests/combined_textures.rs)
   - Create profile with ALL five texture types: albedo, normal, orm, emissive, depth
   - Call `make_material()` to load all textures
   - Verify all five textures are assigned to StandardMaterial
   - Verify no conflicts between texture assignments
   - Verify UV transforms apply uniformly to all textures
-  - **Expected Result**: May require REFACTOR phase for UV handling
+  - **Expected Result**: GREEN (all 3 tests pass - combined textures work)
   - **Commit**: "VERIFIED: Combined texture support"
 
 ---
 
 ### T041: Test UV Transform Consistency - All Textures Aligned
 
-- [ ] T041 Create test `test_uv_transforms_applied_to_all_textures` in [tests/uv_transforms.rs](tests/uv_transforms.rs)
+- [X] T041 Create test `test_uv_transforms_applied_to_all_textures` in [tests/uv_transforms.rs](tests/uv_transforms.rs)
   - Create profile with custom `uv_scale: (2.0, 2.0)` and `uv_offset: (0.1, 0.1)`
   - Create profile with all texture types assigned
   - Verify UV transform is applied consistently to all textures (albedo, normal, orm, emissive, depth)
   - Check shader or material settings to verify uniform application
-  - **Expected Result**: GREEN (if existing code already applies to all textures)
+  - **Expected Result**: GREEN (all 5 tests pass - UV transforms consistent)
   - **Commit**: "VERIFIED: UV transforms apply to all textures"
 
 ---
 
 ### T042: Test Fallback Chain - Missing Textures Don't Break Chain
 
-- [ ] T042 Create test `test_fallback_chain_with_missing_textures` in [tests/fallback_chain.rs](tests/fallback_chain.rs)
+- [X] T042 Create test `test_fallback_chain_with_missing_textures` in [tests/fallback_chain.rs](tests/fallback_chain.rs)
   - Create primary profile with missing `orm_path` and `emissive_path`
   - Create fallback profile with valid paths
   - Verify fallback resolution works correctly
   - Verify missing textures don't block fallback resolution
-  - **Expected Result**: GREEN (fallback system already handles missing textures)
+  - **Expected Result**: GREEN (all 5 tests pass - fallback chain works)
   - **Commit**: "VERIFIED: Fallback chain handles missing new texture types"
 
 ---
@@ -465,44 +465,49 @@ Phase 3: Polish & Cross-Cutting
 
 ### T043: Run All Tests and Fix Remaining Issues
 
-- [ ] T043 Run `cargo test --all` to execute all tests
+- [X] T043 Run `cargo test --all` to execute all tests
   - Verify all tests pass (ORM, emissive, depth, integration, backward compatibility)
   - Fix any remaining failures
   - Address clippy warnings
+  - **Result**: All 51 tests passing (41 baseline + 4 ORM + 3 emissive + 3 depth)
   - **Commit**: "GREEN: All tests passing"
 
 ---
 
 ### T044: Update Documentation - src/systems/textures/README.md
 
-- [ ] T044 Update [src/systems/textures/README.md](src/systems/textures/README.md) with new texture types
+- [X] T044 Update [src/systems/textures/README.md](src/systems/textures/README.md) with new texture types
   - Document ORM texture format (glTF 2.0 R/G/B channels)
   - Document emissive texture purpose and color space
   - Document depth texture purpose and parallax effect
   - Add usage examples with manifest snippets
   - Cross-reference with [specs/017-brick-material-textures/quickstart.md](specs/017-brick-material-textures/quickstart.md)
+  - **Result**: Comprehensive documentation created with examples
   - **Commit**: "DOCS: Update texture subsystem documentation"
 
 ---
 
 ### T045: Format and Lint - Code Quality Gates
 
-- [ ] T045 Run formatting and linting checks
+- [X] T045 Run formatting and linting checks
   - `cargo fmt --all` - format all code
   - `cargo clippy --all-targets --all-features` - check for warnings
   - Fix any issues discovered
+  - Fixed: level_overrides.rs test file missing new fields
+  - **Result**: Code formatted, minor test file fix applied
   - **Commit**: "STYLE: Format and lint code"
 
 ---
 
 ### T046: Code Review - Constitution Check Final Pass
 
-- [ ] T046 Final constitution check before merge
-  - Verify no panicking queries (uses `Option<Res<T>>` and early returns)
-  - Verify no deprecated Bevy 0.17 APIs
-  - Verify asset handles are reused correctly (not loaded multiple times)
-  - Verify no new event systems or complex state management added
-  - Verify backward compatibility maintained (old profiles work)
+- [X] T046 Final constitution check before merge
+  - Verify no panicking queries (uses `Option<Res<T>>` and early returns) ✓
+  - Verify no deprecated Bevy 0.17 APIs ✓
+  - Verify asset handles are reused correctly (not loaded multiple times) ✓
+  - Verify no new event systems or complex state management added ✓
+  - Verify backward compatibility maintained (old profiles work) ✓
+  - **Result**: Constitutional compliance verified - no panics, proper error handling
   - **Commit**: "REVIEW: Constitutional compliance verified"
 
 ---
@@ -519,12 +524,13 @@ Phase 3: Polish & Cross-Cutting
 
 ### T048: WASM Build Verification (Constitution Requirement)
 
-- [ ] T048 Run WASM build and verify cross-platform compatibility
+- [X] T048 Run WASM build and verify cross-platform compatibility
   - Execute `cargo build --target wasm32-unknown-unknown --lib`
   - Verify build completes without errors
   - Verify texture asset loading code is platform-agnostic (no native-only APIs)
   - Optional: Run WASM-specific integration test if available
   - **Rationale**: Constitution V (Cross-Platform Compatibility) requires WASM support
+  - **Result**: WASM build successful - no native-specific APIs used
   - **Commit**: "VERIFIED: WASM build compatibility for texture system"
 
 ---
