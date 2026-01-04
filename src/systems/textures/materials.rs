@@ -14,6 +14,7 @@ use std::collections::{HashMap, HashSet};
 use bevy::asset::AssetEvent;
 use bevy::asset::RenderAssetUsages;
 use bevy::ecs::message::Messages;
+use bevy::image::ImageLoaderSettings;
 use bevy::prelude::*;
 use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 use tracing::{debug, info, warn};
@@ -403,10 +404,12 @@ fn hydrate_texture_materials(
 
 fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> StandardMaterial {
     let base_color_texture = asset_server.load(manifest_asset_path(&profile.albedo_path));
-    let normal_map_texture = profile
-        .normal_path
-        .as_ref()
-        .map(|path| asset_server.load(manifest_asset_path(path)));
+    let normal_map_texture = profile.normal_path.as_ref().map(|path| {
+        asset_server.load_with_settings(
+            manifest_asset_path(path),
+            |settings: &mut ImageLoaderSettings| settings.is_srgb = false,
+        )
+    });
 
     use bevy::math::Affine2;
     let uv_transform =

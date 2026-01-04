@@ -554,8 +554,15 @@ fn spawn_level_entities_impl(
                     if let Err(err) = brick_config.validate() {
                         bevy::log::error!("Invalid BrickPhysicsConfig during brick spawn: {}", err);
                     }
+                    let mut mesh =
+                        Mesh::from(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9));
+                    // this computes normals AND tangents so normal maps work
+                    mesh.compute_area_weighted_normals(); // normals
+                    mesh.generate_tangents().unwrap(); // tangents
+
+                    let mesh_handle = meshes.add(mesh);
                     let mut entity = commands.spawn((
-                        Mesh3d(meshes.add(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9))),
+                        Mesh3d(mesh_handle),
                         MeshMaterial3d(brick_mat),
                         Transform::from_xyz(x, 2.0, z),
                         Brick,
@@ -709,8 +716,14 @@ fn spawn_bricks_only(
             #[cfg(not(feature = "texture_manifest"))]
             let brick_mat = brick_material.clone();
 
+            let mut mesh = Mesh::from(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9));
+            // this computes normals AND tangents so normal maps work
+            mesh.compute_area_weighted_normals(); // normals
+            mesh.generate_tangents().unwrap(); // tangents
+
+            let mesh_handle = meshes.add(mesh);
             let mut entity = commands.spawn((
-                Mesh3d(meshes.add(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9))),
+                Mesh3d(mesh_handle),
                 MeshMaterial3d(brick_mat),
                 Transform::from_xyz(x, 2.0, z),
                 Brick,

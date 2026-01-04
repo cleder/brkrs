@@ -33,8 +33,8 @@
         ),
         (
             id: "brick/default",
-            albedo_path: "fallback/brick_base.png",
-            normal_path: None,
+            albedo_path: "debug/four_squares_64.png",
+            normal_path: Some("debug/cube_normal.png"),
             roughness: 0.7,
             metallic: 0.0,
             uv_scale: (1.0, 1.0),
