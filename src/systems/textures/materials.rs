@@ -411,6 +411,15 @@ fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> St
         )
     });
 
+    // Load ORM (Occlusion-Roughness-Metallic) packed texture
+    // ORM textures use linear color space (not sRGB) following glTF 2.0 standard
+    let orm_texture = profile.orm_path.as_ref().map(|path| {
+        asset_server.load_with_settings(
+            manifest_asset_path(path),
+            |settings: &mut ImageLoaderSettings| settings.is_srgb = false,
+        )
+    });
+
     use bevy::math::Affine2;
     let uv_transform =
         Affine2::from_scale_angle_translation(profile.uv_scale, 0.0, profile.uv_offset);
@@ -418,6 +427,9 @@ fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> St
     StandardMaterial {
         base_color_texture: Some(base_color_texture),
         normal_map_texture,
+        // Assign ORM texture to both metallic_roughness and occlusion for dual-channel functionality
+        metallic_roughness_texture: orm_texture.clone(),
+        occlusion_texture: orm_texture,
         metallic: profile.metallic,
         perceptual_roughness: profile.roughness,
         uv_transform,

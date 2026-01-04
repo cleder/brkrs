@@ -79,7 +79,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T014: Test ORM Texture Deserialization (RED phase)
 
-- [ ] T014 [US1] Create test file [tests/orm_textures.rs](tests/orm_textures.rs) with test `test_orm_path_deserialization_minimal`
+- [X] T014 [US1] Create test file [tests/orm_textures.rs](tests/orm_textures.rs) with test `test_orm_path_deserialization_minimal`
   - Parse RON with `orm_path: Some("brick_orm.png")` field
   - Verify `VisualAssetProfile::orm_path` is `Some("brick_orm.png")`
   - **Expected Result**: TEST FAILS (orm_path field doesn't exist yet)
@@ -89,7 +89,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T015: Implement ORM Texture Deserialization (GREEN phase)
 
-- [ ] T015 [US1] Extend `VisualAssetProfile` in [src/systems/textures/loader.rs](src/systems/textures/loader.rs) with `orm_path: Option<String>` field and `#[serde(default)]`
+- [X] T015 [US1] Extend `VisualAssetProfile` in [src/systems/textures/loader.rs](src/systems/textures/loader.rs) with `orm_path: Option<String>` field and `#[serde(default)]`
   - Run test T014 to verify it passes
   - **Commit**: "GREEN: ORM texture deserialization support"
 
@@ -97,7 +97,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T016: Test ORM Texture Loading with Correct Color Space (RED phase)
 
-- [ ] T016 [US1] Create test `test_orm_texture_loading_linear_color_space` in [tests/orm_textures.rs](tests/orm_textures.rs)
+- [X] T016 [US1] Create test `test_orm_texture_loading_linear_color_space` in [tests/orm_textures.rs](tests/orm_textures.rs)
   - Create profile with `orm_path: Some("tests/fixtures/textures/test_orm.png")`
   - Call `make_material()` function to load texture
   - Verify texture is loaded with `is_srgb=false` (linear color space) by checking asset loader settings
@@ -108,7 +108,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T017: Implement ORM Texture Loading (GREEN phase)
 
-- [ ] T017 [US1] Extend `make_material()` function in [src/systems/textures/materials.rs](src/systems/textures/materials.rs) to load ORM texture
+- [X] T017 [US1] Extend `make_material()` function in [src/systems/textures/materials.rs](src/systems/textures/materials.rs) to load ORM texture
   - Call `asset_server.load_with_settings(orm_path, ImageLoaderSettings { is_srgb: false, ... })` for ORM texture
   - Assign result to `StandardMaterial::metallic_roughness_texture`
   - Assign same handle to `StandardMaterial::occlusion_texture`
@@ -120,7 +120,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T018: Test ORM Scalar Multiplier Behavior (RED phase)
 
-- [ ] T018 [US1] Create test `test_orm_scalar_multiplier` in [tests/orm_textures.rs](tests/orm_textures.rs)
+- [X] T018 [US1] Create test `test_orm_scalar_multiplier` in [tests/orm_textures.rs](tests/orm_textures.rs)
   - Create profile with `orm_path: Some("test_orm.png")`, `roughness: 0.5`, `metallic: 0.7`
   - Call `make_material()` to create StandardMaterial
   - Verify `metallic` field is set to 0.7 and will multiply texture's blue channel
@@ -132,7 +132,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T019: Implement ORM Scalar Multiplier (GREEN phase)
 
-- [ ] T019 [US1] Extend `make_material()` in [src/systems/textures/materials.rs](src/systems/textures/materials.rs) to set `metallic` and `roughness` scalars
+- [X] T019 [US1] Extend `make_material()` in [src/systems/textures/materials.rs](src/systems/textures/materials.rs) to set `metallic` and `roughness` scalars
   - Set `StandardMaterial::metallic` to profile's `metallic` value
   - Set `StandardMaterial::perceptual_roughness` to profile's `roughness` value (or `roughness_factor` depending on Bevy version)
   - Verify these scalars multiply the texture channels in PBR shader
@@ -143,7 +143,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T020: Test ORM Fallback Behavior (RED phase)
 
-- [ ] T020 [US1] Create test `test_orm_fallback_missing_file` in [tests/orm_textures.rs](tests/orm_textures.rs)
+- [X] T020 [US1] Create test `test_orm_fallback_missing_file` in [tests/orm_textures.rs](tests/orm_textures.rs)
   - Create profile with `orm_path: Some("nonexistent.png")`
   - Call `make_material()` to load texture
   - Verify no panic occurs (graceful fallback)
@@ -156,12 +156,15 @@ Phase 3: Polish & Cross-Cutting
 
 ### T021: Implement ORM Fallback with Error Handling (GREEN phase)
 
-- [ ] T021 [US1] Extend error handling in `make_material()` in [src/systems/textures/materials.rs](src/systems/textures/materials.rs)
+- [X] T021 [US1] Extend error handling in `make_material()` in [src/systems/textures/materials.rs](src/systems/textures/materials.rs)
   - Wrap `asset_server.load_with_settings()` in match/error handling
   - Log warning if texture load fails
   - Continue with scalar roughness/metallic values (skip texture assignment)
   - Run test T020 to verify it passes
   - **Commit**: "GREEN: ORM fallback with error handling"
+  - **NOTE**: Bevy's asset server handles missing assets gracefully - returns a handle to missing asset without panic.
+    Material still gets scalar values.
+    No explicit error handling needed in make_material().
 
 ---
 
