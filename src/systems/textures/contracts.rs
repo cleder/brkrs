@@ -69,10 +69,27 @@ pub struct VisualAssetProfileContract {
     pub albedo_path: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub normal_path: Option<String>,
+
+    // NEW: Packed ORM texture
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub orm_path: Option<String>,
+
+    // NEW: Emissive glow map
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub emissive_path: Option<String>,
+
+    // NEW: Depth/parallax map
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub depth_path: Option<String>,
+
     pub roughness: f32,
     pub metallic: f32,
     pub uv_scale: [f32; 2],
     pub uv_offset: [f32; 2],
+
+    // NEW: Parallax depth scale
+    pub depth_scale: f32,
+
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub fallback_chain: Vec<String>,
 }
@@ -83,10 +100,14 @@ impl From<&VisualAssetProfile> for VisualAssetProfileContract {
             id: profile.id.clone(),
             albedo_path: profile.albedo_path.clone(),
             normal_path: profile.normal_path.clone(),
+            orm_path: profile.orm_path.clone(),
+            emissive_path: profile.emissive_path.clone(),
+            depth_path: profile.depth_path.clone(),
             roughness: profile.roughness,
             metallic: profile.metallic,
             uv_scale: vec2_to_array(profile.uv_scale),
             uv_offset: vec2_to_array(profile.uv_offset),
+            depth_scale: profile.depth_scale,
             fallback_chain: profile.fallback_chain.clone(),
         }
     }
@@ -236,6 +257,12 @@ pub struct PreviewProfileInput {
     pub albedo_path: String,
     #[serde(default)]
     pub normal_path: Option<String>,
+    #[serde(default)]
+    pub orm_path: Option<String>,
+    #[serde(default)]
+    pub emissive_path: Option<String>,
+    #[serde(default)]
+    pub depth_path: Option<String>,
     #[serde(default = "default_roughness")]
     pub roughness: f32,
     #[serde(default)]
@@ -244,6 +271,8 @@ pub struct PreviewProfileInput {
     pub uv_scale: [f32; 2],
     #[serde(default)]
     pub uv_offset: [f32; 2],
+    #[serde(default = "default_depth_scale")]
+    pub depth_scale: f32,
     #[serde(default)]
     pub fallback_chain: Vec<String>,
 }
@@ -256,16 +285,24 @@ fn default_uv_scale() -> [f32; 2] {
     [1.0, 1.0]
 }
 
+fn default_depth_scale() -> f32 {
+    0.1
+}
+
 impl From<PreviewProfileInput> for VisualAssetProfileContract {
     fn from(input: PreviewProfileInput) -> Self {
         Self {
             id: input.id,
             albedo_path: input.albedo_path,
             normal_path: input.normal_path,
+            orm_path: input.orm_path,
+            emissive_path: input.emissive_path,
+            depth_path: input.depth_path,
             roughness: input.roughness,
             metallic: input.metallic,
             uv_scale: input.uv_scale,
             uv_offset: input.uv_offset,
+            depth_scale: input.depth_scale,
             fallback_chain: input.fallback_chain,
         }
     }
@@ -277,10 +314,14 @@ impl From<PreviewProfileInput> for VisualAssetProfile {
             id: input.id,
             albedo_path: input.albedo_path,
             normal_path: input.normal_path,
+            orm_path: input.orm_path,
+            emissive_path: input.emissive_path,
+            depth_path: input.depth_path,
             roughness: input.roughness,
             metallic: input.metallic,
             uv_scale: Vec2::from_array(input.uv_scale),
             uv_offset: Vec2::from_array(input.uv_offset),
+            depth_scale: input.depth_scale,
             fallback_chain: input.fallback_chain,
         }
     }

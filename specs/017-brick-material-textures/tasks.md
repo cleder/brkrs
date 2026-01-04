@@ -50,13 +50,13 @@ Phase 3: Polish & Cross-Cutting
 
 **Goal**: Establish data structure extensions and texture loading patterns.
 
-- [ ] T007 [P] Extend `VisualAssetProfile` struct in [src/systems/textures/loader.rs](src/systems/textures/loader.rs) with three optional fields: `orm_path: Option<String>`, `emissive_path: Option<String>`, `depth_path: Option<String>` with `#[serde(default)]`
-- [ ] T008 [P] Extend `VisualAssetProfileContract` struct in [src/systems/textures/contracts.rs](src/systems/textures/contracts.rs) with same three optional fields
-- [ ] T009 [P] Add `From<VisualAssetProfileContract>` and `From<VisualAssetProfile>` implementations in [src/systems/textures/loader.rs](src/systems/textures/loader.rs) to handle conversion with new fields
-- [ ] T010 Update [assets/textures/manifest.ron](assets/textures/manifest.ron) with test profile containing all three new texture paths
-- [ ] T011 [P] Add `depth_scale: f32` parameter to `VisualAssetProfile` with default value of 0.1
-- [ ] T012 Verify backward compatibility: Run existing brick profile loads without errors (existing manifest entries work unchanged)
-- [ ] T013 Run `cargo fmt --all` to ensure code style compliance
+- [X] T007 [P] Extend `VisualAssetProfile` struct in [src/systems/textures/loader.rs](src/systems/textures/loader.rs) with three optional fields: `orm_path: Option<String>`, `emissive_path: Option<String>`, `depth_path: Option<String>` with `#[serde(default)]`
+- [X] T008 [P] Extend `VisualAssetProfileContract` struct in [src/systems/textures/contracts.rs](src/systems/textures/contracts.rs) with same three optional fields
+- [X] T009 [P] Add `From<VisualAssetProfileContract>` and `From<VisualAssetProfile>` implementations in [src/systems/textures/loader.rs](src/systems/textures/loader.rs) to handle conversion with new fields
+- [X] T010 Update [assets/textures/manifest.ron](assets/textures/manifest.ron) with test profile containing all three new texture paths
+- [X] T011 [P] Add `depth_scale: f32` parameter to `VisualAssetProfile` with default value of 0.1
+- [X] T012 Verify backward compatibility: Run existing brick profile loads without errors (existing manifest entries work unchanged)
+- [X] T013 Run `cargo fmt --all` to ensure code style compliance
 
 ---
 
