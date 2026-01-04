@@ -440,6 +440,17 @@ fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> St
     let uv_transform =
         Affine2::from_scale_angle_translation(profile.uv_scale, 0.0, profile.uv_offset);
 
+    // When ORM texture is present, scalar values act as multipliers for the texture channels
+    // Default to 1.0 to let the texture values show through; otherwise use profile values
+    let (metallic, roughness) = if profile.orm_path.is_some() {
+        // ORM texture present: use 1.0 multipliers to show full texture effect
+        // (blue channel for metallic, green channel for roughness)
+        (1.0, 1.0)
+    } else {
+        // No ORM texture: use profile scalar values directly
+        (profile.metallic, profile.roughness)
+    };
+
     StandardMaterial {
         base_color_texture: Some(base_color_texture),
         normal_map_texture,
@@ -454,8 +465,8 @@ fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> St
         } else {
             Color::BLACK.into()
         },
-        metallic: profile.metallic,
-        perceptual_roughness: profile.roughness,
+        metallic,
+        perceptual_roughness: roughness,
         uv_transform,
         ..default()
     }
