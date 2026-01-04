@@ -2,6 +2,16 @@
 
 **Feature**: 017-brick-material-textures **Date**: 2026-01-04 **Implementation Strategy**: Test-Driven Development (TDD) - Write tests first, verify failures (red phase), then implement minimum code to pass tests (green phase)
 
+**Total Tasks**: 49 **Task Breakdown by Phase**:
+
+- Phase 1 (Setup): 6 tasks
+- Phase 2 (Foundational): 7 tasks
+- Phase 3 (US1 - ORM): 9 tasks (T014-T022)
+- Phase 4 (US2 - Emissive): 8 tasks (T023-T029, includes T024b for FR-008)
+- Phase 5 (US3 - Depth): 9 tasks (T030-T038)
+- Phase 6 (Integration): 4 tasks (T039-T042)
+- Phase 7 (Polish): 6 tasks (T043-T048, includes WASM verification)
+
 ---
 
 ## Dependency Graph
@@ -202,6 +212,20 @@ Phase 3: Polish & Cross-Cutting
 
 ---
 
+### T024b: Test Emissive Color × Texture Combination (RED phase)
+
+- [ ] T024b [US2] Create test `test_emissive_color_texture_combination` in [tests/emissive_textures.rs](tests/emissive_textures.rs)
+  - Create TypeVariantDefinition with `emissive_color: Some(Color::rgb(1.0, 0.5, 0.0))` (orange tint)
+  - Create VisualAssetProfile with `emissive_path: Some("test_emissive.png")`
+  - Call `make_material()` to create StandardMaterial
+  - Verify both `emissive_texture` and `emissive` color are set on StandardMaterial
+  - Verify emissive color acts as tint/multiplier (multiplicative combination)
+  - **Expected Result**: TEST FAILS (emissive color handling not implemented yet)
+  - **Commit**: "RED: Failing test for emissive color × texture combination (FR-008)"
+  - **Note**: emissive_color is on TypeVariantDefinition, not VisualAssetProfile; it acts as a tint overlay
+
+---
+
 ### T025: Test Emissive Texture Loading with sRGB Color Space (RED phase)
 
 - [ ] T025 [US2] Create test `test_emissive_texture_loading_srgb_color_space` in [tests/emissive_textures.rs](tests/emissive_textures.rs)
@@ -317,6 +341,7 @@ Phase 3: Polish & Cross-Cutting
   - Handle `None` case gracefully (skip if depth_path is None)
   - Run test T032 to verify it passes
   - **Commit**: "GREEN: Depth texture loading with linear color space"
+  - **Note**: Verify Bevy 0.17.3 StandardMaterial API - field may be named `depth_map` or similar; check docs before implementation
 
 ---
 
@@ -491,6 +516,18 @@ Phase 3: Polish & Cross-Cutting
   - Update [specs/017-brick-material-textures/spec.md](specs/017-brick-material-textures/spec.md) with implementation status
   - Create summary of changes for PR description
   - Push branch and create pull request
+
+---
+
+### T048: WASM Build Verification (Constitution Requirement)
+
+- [ ] T048 Run WASM build and verify cross-platform compatibility
+  - Execute `cargo build --target wasm32-unknown-unknown --lib`
+  - Verify build completes without errors
+  - Verify texture asset loading code is platform-agnostic (no native-only APIs)
+  - Optional: Run WASM-specific integration test if available
+  - **Rationale**: Constitution V (Cross-Platform Compatibility) requires WASM support
+  - **Commit**: "VERIFIED: WASM build compatibility for texture system"
 
 ---
 
