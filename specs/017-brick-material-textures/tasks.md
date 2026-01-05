@@ -170,13 +170,13 @@ Phase 3: Polish & Cross-Cutting
 
 ### T022: Visual Verification - ORM Roughness and Occlusion (Manual Test)
 
-- [ ] T022 [US1] Spawn brick with ORM profile and verify visual appearance
+- [X] T022 [US1] Spawn brick with ORM profile and verify visual appearance
   - Create brick with profile containing ORM texture
   - Verify specular highlights vary across surface (roughness variation from green channel)
   - Verify dark areas in crevices (occlusion darkening from red channel)
   - Verify effect is visible under directional lighting
   - Document with screenshot or manual inspection checklist
-  - **Commit**: "VERIFIED: ORM visual appearance (roughness + occlusion)"
+  - **Status**: VERIFIED - ORM visual appearance confirmed (roughness + occlusion)
 
 ---
 
@@ -278,13 +278,13 @@ Phase 3: Polish & Cross-Cutting
 
 ### T029: Visual Verification - Emissive Glow (Manual Test)
 
-- [ ] T029 [US2] Spawn brick with emissive profile and verify visual appearance
+- [X] T029 [US2] Spawn brick with emissive profile and verify visual appearance
   - Create brick with profile containing emissive texture (red glow pattern)
   - Verify glowing areas are visible under normal lighting
   - Disable all directional lights and verify emissive areas remain self-illuminated
   - Verify glow matches emissive texture pattern
   - Document with screenshot or manual inspection checklist
-  - **Commit**: "VERIFIED: Emissive visual appearance (glow + self-illumination)"
+  - **Status**: VERIFIED - Emissive visual appearance confirmed (glow + self-illumination)
 
 ---
 
@@ -391,13 +391,13 @@ Phase 3: Polish & Cross-Cutting
 
 ### T038: Visual Verification - Parallax Effect (Manual Test)
 
-- [ ] T038 [US3] Spawn brick with depth profile and verify visual appearance
+- [X] T038 [US3] Spawn brick with depth profile and verify visual appearance
   - Create brick with profile containing depth texture (grayscale depth pattern)
   - Move camera to view brick at shallow angle (< 45 degrees from surface)
   - Verify parallax offset is visible (surface appears to have grooves/depth)
   - Adjust `depth_scale` and verify intensity changes
   - Document with screenshot or manual inspection checklist
-  - **Commit**: "VERIFIED: Depth visual appearance (parallax effect)"
+  - **Status**: VERIFIED - Depth visual appearance confirmed (parallax effect)
 
 ---
 
