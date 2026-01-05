@@ -17,7 +17,8 @@
 
 - **Decision**:
   - `BALL_RADIUS`, `PADDLE_RADIUS`, `PADDLE_HEIGHT`: Keep `pub` but consider `pub(crate)` if only used in crate.
-    However, they are used in `level_loader.rs` and `systems/respawn.rs`, which are modules. `lib.rs` defines them.
+    However, they are used in `level_loader.rs` and `systems/respawn.rs`, which are modules.
+    `lib.rs` defines them.
   - `PLANE_H`, `PLANE_W`: Used in `systems/spawning.rs`, `systems/grid_debug.rs`, `ui/palette.rs`, `level_loader.rs`.
   - **Refinement**: We will change `pub` to `pub(crate)` for all of them in `lib.rs` to restrict them to the crate, preventing external API leakage while allowing internal usage.
 - **Rationale**: They are widely used across the crate but don't need to be part of the public library API.

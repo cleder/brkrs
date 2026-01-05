@@ -17,7 +17,8 @@ Bring `src/ui` into compliance with the Brkrs Constitution by:
 
 ## Constitution Check
 
-*GATE: Must pass before implementation tasks begin. Re-check after each story.*
+*GATE: Must pass before implementation tasks begin.*
+*Re-check after each story.*
 
 **TDD gates (Constitution VII)**
 

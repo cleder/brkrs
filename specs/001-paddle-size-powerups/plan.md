@@ -25,7 +25,8 @@ Integrates with existing ECS architecture using component-based state management
 
 ## Constitution Check
 
-*GATE: All constitutional principles must be satisfied. Re-check after Phase 1 design.*
+*GATE: All constitutional principles must be satisfied.*
+*Re-check after Phase 1 design.*
 
 | Principle | Status | Notes |
 |-----------|--------|-------|

@@ -99,7 +99,8 @@ As a player, I want smooth gameplay at target frame rates so interactions feel r
 
 - **FR-001 (Fallible Systems)**: All systems in `src/systems/**` MUST be fallible and propagate errors using `anyhow::Result<()>` and early-return patterns; no panicking unwraps in system logic.
   Tests verify graceful no-op on expected missing resources. (Constitution VIII: Fallible Systems; Prohibitions: NO Panicking Queries)
-- **FR-002 (Message/Event Separation)**: Each cross-feature signal MUST choose a single mechanism and be defined in a shared `crate::signals` module. `UiBeep` and `BrickDestroyed` MUST be Messages (buffered) and NOT derive or be consumed as Events.
+- **FR-002 (Message/Event Separation)**: Each cross-feature signal MUST choose a single mechanism and be defined in a shared `crate::signals` module.
+  `UiBeep` and `BrickDestroyed` MUST be Messages (buffered) and NOT derive or be consumed as Events.
   Tests verify only one mechanism is registered/consumed and that no duplicate definitions exist across modules. (Constitution VIII: Message vs Event Distinction)
 - **FR-003 (System Set Organization)**: Systems MUST be organized into enums with `*Systems` suffix and ordered only via `.configure_sets()` and `.after()`/ `.before()` between sets; tuple `.chain()` inside a system list is not permitted.
   Tests assert expected ordering via observable state (not tuple chaining). (Constitution VIII: System Organization; Prohibitions: NO Over-Chaining Systems)

@@ -55,7 +55,8 @@ As a player, I want a clear "Game over" message when I run out of lives so I imm
 
 3. **Given** the "Game over" message is displayed, **When** the player attempts to pause or perform gameplay input, **Then** pause/input is disabled and the modal "Game over" message remains above overlays [covers FR-008, FR-009].
 
-4. **Given** the "Game over" message is displayed, **When** the player toggles cheat mode (presses 'g'), **Then** the system sets remaining lives to 3, removes the "Game over" overlay, and gameplay may resume. **Note:** The current level is not reloaded or reset by this action; the player resumes within the same level state.
+4. **Given** the "Game over" message is displayed, **When** the player toggles cheat mode (presses 'g'), **Then** the system sets remaining lives to 3, removes the "Game over" overlay, and gameplay may resume.
+   **Note:** The current level is not reloaded or reset by this action; the player resumes within the same level state.
 
 5. **Given** the remaining lives count transitions from 1 to 0 due to a LifeLostEvent, **When** the same frame is processed, **Then** the HUD shows 0 and the "Game over" message appears within that frame [covers FR-005, FR-006].
 
@@ -110,7 +111,9 @@ As a player, I want the remaining lives count to be consistent and never become 
   When the remaining lives transitions from 1 to 0 due to a LifeLostEvent, the decrement to 0, the HUD update, and the appearance of the "Game over" message MUST occur within the same frame.
 **FR-006**: When a LifeLostEvent occurs while the remaining lives count is 1 (resulting in 0), the system MUST display the exact message "Game over" (lowercase, centered on-screen). "No lives left" is explicitly defined as `remaining lives count == 0` (game state), not a world-state query for physical ball entities.
 
-The lives display remains visible during gameplay and while the game-over message is active. **FR-007**: Once the "Game over" message is displayed, it MUST remain displayed while the remaining lives count is 0. **FR-008**: When the "Game over" message is active, pause input MUST be disabled; the game-over message is modal and appears above any pause overlay.
+The lives display remains visible during gameplay and while the game-over message is active.
+**FR-007**: Once the "Game over" message is displayed, it MUST remain displayed while the remaining lives count is 0.
+**FR-008**: When the "Game over" message is active, pause input MUST be disabled; the game-over message is modal and appears above any pause overlay.
 
 - **FR-009**: Once the "Game over" message is displayed, gameplay is considered ended; no respawn shall occur, and player input (movement, actions) MUST be disabled until the player explicitly restarts or returns to the main menu.
 

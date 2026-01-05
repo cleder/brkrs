@@ -1,6 +1,7 @@
 # Refactoring Safety Requirements Checklist
 
-**Purpose**: Validate that requirements adequately define safety and regression prevention for the refactor. **Focus**: Refactoring Safety (Sanity Check) **Target Audience**: Author **Feature**: [012-refactor-entity-spawning](../spec.md)
+**Purpose**: Validate that requirements adequately define safety and regression prevention for the refactor.
+**Focus**: Refactoring Safety (Sanity Check) **Target Audience**: Author **Feature**: [012-refactor-entity-spawning](../spec.md)
 
 ## Regression Prevention Requirements
 

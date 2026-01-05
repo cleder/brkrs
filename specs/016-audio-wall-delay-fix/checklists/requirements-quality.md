@@ -1,6 +1,7 @@
 # Requirements Quality Checklist: Audio Wall Delay Fix
 
-**Purpose:** Validate the clarity, completeness, and testability of requirements for the Audio Wall Delay Fix feature. **Created:** 2025-12-28
+**Purpose:** Validate the clarity, completeness, and testability of requirements for the Audio Wall Delay Fix feature.
+**Created:** 2025-12-28
 
 ## Requirement Completeness
 

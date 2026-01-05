@@ -18,7 +18,8 @@ The technical approach uses Bevy's existing asset loading infrastructure and the
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+*GATE: Must pass before Phase 0 research.*
+*Re-check after Phase 1 design.*
 
 ### TDD Compliance
 
@@ -105,7 +106,8 @@ Test files will be added to the `tests/` directory following the existing patter
 
 **Constitution Violations**: 0 (no event system, observer, or query issues) **Bevy 0.17 Compliance**: PASS (uses StandardMaterial fields correctly, no deprecated APIs) **Files Modified**: 3 (loader.rs, contracts.rs, materials.rs) **Lines Added**: ~150 (50 per file on average for struct fields + loading logic) **Tests Required**: 9 scenarios (3 per user story: P1 ORM, P2 emissive, P3 depth)
 
-**No violations identified.** This feature follows all constitutional principles:
+**No violations identified.**
+This feature follows all constitutional principles:
 
 - Extends existing asset loading infrastructure using established patterns
 - Maintains backward compatibility through optional fields

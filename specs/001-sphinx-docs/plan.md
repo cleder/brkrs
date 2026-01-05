@@ -28,7 +28,8 @@ The Brkrs constitution contains general engineering quality and performance rule
 This documentation feature does not violate constitutional principles: we are not modifying runtime game systems, it's purely documentation-focused, and includes performance goals for CI builds (not game frame rate).
 Gates passed.
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+*GATE: Must pass before Phase 0 research.*
+*Re-check after Phase 1 design.*
 
 Gates: No constitutional violations detected for documentation-only feature.
 

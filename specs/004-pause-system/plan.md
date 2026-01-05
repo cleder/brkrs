@@ -17,7 +17,8 @@ The system must preserve all game state during pause and handle window mode tran
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+*GATE: Must pass before Phase 0 research.*
+*Re-check after Phase 1 design.*
 
 ### I. Entity-Component-System Architecture (ECS-First)
 

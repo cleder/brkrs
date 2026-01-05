@@ -27,32 +27,33 @@ Both fields are documentation-only (not displayed during gameplay) and maintain 
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+*GATE: Must pass before Phase 0 research.*
+*Re-check after Phase 1 design.*
 
-✅ **I.
-ECS-First Architecture**: This feature adds data fields to the `LevelDefinition` struct (deserialized from RON) which is consumed by existing ECS systems.
+✅ **I.**
+**ECS-First Architecture**: This feature adds data fields to the `LevelDefinition` struct (deserialized from RON) which is consumed by existing ECS systems.
 No new systems required - existing level loader systems will handle the new optional fields transparently.
 
-✅ **II.
-Physics-Driven Gameplay**: Not applicable - this feature adds metadata fields only, does not affect physics or gameplay mechanics.
+✅ **II.**
+**Physics-Driven Gameplay**: Not applicable - this feature adds metadata fields only, does not affect physics or gameplay mechanics.
 
-✅ **III.
-Modular Feature Design**: This feature extends the existing level loading module without introducing new dependencies.
+✅ **III.**
+**Modular Feature Design**: This feature extends the existing level loading module without introducing new dependencies.
 Changes are isolated to the `LevelDefinition` struct and documentation.
 Backward compatibility ensures existing levels load unchanged.
 
-✅ **IV.
-Performance-First Implementation**: Parsing two optional string fields during level load (one-time cost per level) has negligible performance impact.
+✅ **IV.**
+**Performance-First Implementation**: Parsing two optional string fields during level load (one-time cost per level) has negligible performance impact.
 No hot loop changes.
 No new allocations during gameplay.
 
-✅ **V.
-Cross-Platform Compatibility**: RON deserialization with serde works identically on native and WASM.
+✅ **V.**
+**Cross-Platform Compatibility**: RON deserialization with serde works identically on native and WASM.
 No platform-specific code required.
 Markdown parsing (if implemented) uses standard string operations available on all platforms.
 
-✅ **VI.
-Comprehensive Rustdoc**: Will document new fields on `LevelDefinition` struct explaining their purpose and format.
+✅ **VI.**
+**Comprehensive Rustdoc**: Will document new fields on `LevelDefinition` struct explaining their purpose and format.
 Update module-level docs in `level_loader.rs` to describe metadata fields.
 
 **Result**: All constitution principles satisfied.

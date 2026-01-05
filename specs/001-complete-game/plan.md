@@ -50,7 +50,8 @@ Technical approach leverages ECS-first architecture with physics-driven gameplay
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+*GATE: Must pass before Phase 0 research.*
+*Re-check after Phase 1 design.*
 
 | Principle | Status | Evidence/Notes |
 |-----------|--------|----------------|
