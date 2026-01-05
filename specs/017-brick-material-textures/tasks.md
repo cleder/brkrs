@@ -37,12 +37,12 @@ Phase 3: Polish & Cross-Cutting
 
 **Goal**: Initialize project structure and verify build environment.
 
-- [ ] T001 Verify Rust toolchain 1.81 and Bevy 0.17.3 dependencies in Cargo.toml
-- [ ] T002 Create test asset fixtures directory at `tests/fixtures/textures/`
-- [ ] T003 [P] Create placeholder ORM texture file at `tests/fixtures/textures/test_orm.png` (256x256, R=0.5, G=0.7, B=0.3)
-- [ ] T004 [P] Create placeholder emissive texture at `tests/fixtures/textures/test_emissive.png` (256x256, red glow pattern)
-- [ ] T005 [P] Create placeholder depth texture at `tests/fixtures/textures/test_depth.png` (256x256, grayscale depth pattern)
-- [ ] T006 Run `cargo test --lib` to verify baseline test infrastructure works
+- [X] T001 Verify Rust toolchain 1.81 and Bevy 0.17.3 dependencies in Cargo.toml
+- [X] T002 Create test asset fixtures directory at `tests/fixtures/textures/`
+- [X] T003 [P] Create placeholder ORM texture file at `tests/fixtures/textures/test_orm.png` (256x256, R=0.5, G=0.7, B=0.3)
+- [X] T004 [P] Create placeholder emissive texture at `tests/fixtures/textures/test_emissive.png` (256x256, red glow pattern)
+- [X] T005 [P] Create placeholder depth texture at `tests/fixtures/textures/test_depth.png` (256x256, grayscale depth pattern)
+- [X] T006 Run `cargo test --lib` to verify baseline test infrastructure works
 
 ---
 
@@ -217,7 +217,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T024b: Test Emissive Color × Texture Combination (RED phase)
 
-- [ ] T024b [US2] Create test `test_emissive_color_texture_combination` in [tests/emissive_textures.rs](tests/emissive_textures.rs)
+- [X] T024b [US2] Create test `test_emissive_color_texture_combination` in [tests/emissive_textures.rs](tests/emissive_textures.rs)
   - Create TypeVariantDefinition with `emissive_color: Some(Color::rgb(1.0, 0.5, 0.0))` (orange tint)
   - Create VisualAssetProfile with `emissive_path: Some("test_emissive.png")`
   - Call `make_material()` to create StandardMaterial

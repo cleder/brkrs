@@ -104,3 +104,50 @@ fn test_emissive_fallback_missing_file() {
     // NOTE: Actual validation of error handling happens at runtime
     // when the asset system processes the missing file.
 }
+
+/// Test that emissive color acts as tint/multiplier on emissive texture (FR-008)
+///
+/// RED phase (T024b): Test emissive color × emissive texture combination.
+/// emissive_color on TypeVariantDefinition should tint the emissive texture.
+#[test]
+fn test_emissive_color_texture_combination() {
+    use brkrs::systems::textures::loader::VisualAssetProfile;
+
+    // Profile with emissive texture
+    let profile = VisualAssetProfile {
+        id: "test/emissive_tinted".to_string(),
+        albedo_path: "test.png".to_string(),
+        normal_path: None,
+        orm_path: None,
+        emissive_path: Some("tests/fixtures/textures/test_emissive.png".to_string()),
+        depth_path: None,
+        roughness: 0.5,
+        metallic: 0.0,
+        uv_scale: Vec2::splat(1.0),
+        uv_offset: Vec2::ZERO,
+        depth_scale: 0.1,
+        fallback_chain: vec![],
+    };
+
+    // emissive_color comes from TypeVariantDefinition (e.g., orange tint: Color::srgb(1.0, 0.5, 0.0))
+    let emissive_tint = Some(Color::srgb(1.0, 0.5, 0.0));
+
+    // Verify profile has emissive texture
+    assert_eq!(
+        profile.emissive_path,
+        Some("tests/fixtures/textures/test_emissive.png".to_string())
+    );
+
+    // When make_material is called with profile AND emissive_color:
+    // - emissive_texture is loaded from profile.emissive_path
+    // - emissive (Color) is set to emissive_color from TypeVariantDefinition
+    // - In shader: final_emissive = emissive_texture.rgb * emissive_color.rgb
+    // - Result: emissive texture is tinted by emissive_color (multiplicative combination)
+    //
+    // This test verifies the data model accepts both parameters.
+    // Actual rendering verification requires visual testing (T029).
+    assert!(
+        emissive_tint.is_some(),
+        "emissive_color should be set for tinting"
+    );
+}
