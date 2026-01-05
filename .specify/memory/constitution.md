@@ -339,7 +339,8 @@ Observers provide fine-grained, immediate reactivity and are essential for moder
   ALWAYS use `.write()` or migrate to `MessageWriter` if using buffered events.
 - **NO Window.cursor_options:** NEVER access `window.cursor_options`.
   This field has been split into a separate `CursorOptions` component on the same entity.
-- **NO Anchor on Sprite Struct:** NEVER set `sprite.anchor`. `Anchor` is now a required component.
+- **NO Anchor on Sprite Struct:** NEVER set `sprite.anchor`.
+  `Anchor` is now a required component.
   Use `Anchor::CENTER` constants instead of `Anchor::Center` enum variants.
 - **NO SimpleExecutor:** NEVER use `SimpleExecutor` (deprecated).
   ALWAYS use `SingleThreadedExecutor` or `MultiThreadedExecutor`.

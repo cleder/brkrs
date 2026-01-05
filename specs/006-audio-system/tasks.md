@@ -248,5 +248,6 @@ Then sequentially: US4 → US5 → US6 → Polish
 - WASM requires user interaction before audio plays - handled by existing restart-audio-context.js
 - Config persistence: RON file on native, localStorage on WASM
 
-- **T038 implemented**: WASM persistence now stores `AudioConfig` (RON) in browser `localStorage` under the key `brkrs_audio` (implemented via `web-sys` and gate-compiled for `wasm32`). `specs/006-audio-system/quickstart.md` documents how to reset the key.
+- **T038 implemented**: WASM persistence now stores `AudioConfig` (RON) in browser `localStorage` under the key `brkrs_audio` (implemented via `web-sys` and gate-compiled for `wasm32`).
+    `specs/006-audio-system/quickstart.md` documents how to reset the key.
     Native behavior (file `config/audio.ron`) remains unchanged.

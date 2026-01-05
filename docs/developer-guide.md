@@ -402,9 +402,12 @@ ActiveEvents::COLLISION_EVENTS
 
 **Common Issues:**
 
-- **No collision events?** Check that both entities have `ActiveEvents::COLLISION_EVENTS`
-- **Missing RigidBody?** Only entities with physics bodies can generate collision events
-- **Timing issues?** Collision events are processed in the physics update loop
+- **No collision events?**
+  Check that both entities have `ActiveEvents::COLLISION_EVENTS`
+- **Missing RigidBody?**
+  Only entities with physics bodies can generate collision events
+- **Timing issues?**
+  Collision events are processed in the physics update loop
 
 ### Multi-Hit Bricks
 
@@ -464,7 +467,8 @@ app.add_observer(my_observer);
 
 #### Messages (buffered, frame-agnostic)
 
-For buffered, frame-agnostic data, use `MessageReader`/`MessageWriter`. **Do not perform immediate side-effects in the same system that writes messages.**
+For buffered, frame-agnostic data, use `MessageReader`/ `MessageWriter`.
+**Do not perform immediate side-effects in the same system that writes messages.**
 
 ```rust
 use bevy::ecs::message::{Message, MessageReader, MessageWriter};

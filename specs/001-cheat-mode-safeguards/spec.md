@@ -35,7 +35,8 @@ Without this, the feature doesn't exist.
 1. **Given** player is in an active game level with a non-zero score, **When** player presses 'g' key, **Then** cheat mode activates, score resets to 0, and the image indicator (`assets/textures/default/cheat-mode-128.png`) appears in the corner of the screen.
 2. **Given** player has already activated cheat mode, **When** player presses 'g' again, **Then** cheat mode deactivates, score resets to 0, and indicator disappears from screen
 3. **Given** player activates cheat mode, **When** gameplay continues, **Then** cheat mode indicator remains visible throughout the session
-4. **Given** the player has no remaining lives and a "Game over" overlay is displayed, **When** the player presses 'g' to toggle cheat mode, **Then** cheat mode activates, the remaining lives are set to 3, any active game-over overlay is removed, and the player may resume gameplay. **Note:** toggling cheat mode does NOT reload or reset the current level; gameplay resumes in-place with the level state unchanged.
+4. **Given** the player has no remaining lives and a "Game over" overlay is displayed, **When** the player presses 'g' to toggle cheat mode, **Then** cheat mode activates, the remaining lives are set to 3, any active game-over overlay is removed, and the player may resume gameplay.
+   **Note:** toggling cheat mode does NOT reload or reset the current level; gameplay resumes in-place with the level state unchanged.
 
 ---
 

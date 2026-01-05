@@ -60,6 +60,9 @@ A: Play audio for each collision, subject to the concurrency limit (if reached, 
 
 ### Measurable Outcomes
 
-**SC-001**: Wall hit audio is played within 50ms of collision in 99% of cases (measured in test runs). **SC-002**: No perceptible delay in audio feedback reported by playtesters. **SC-003**: Audio feedback is played for every wall collision, even during rapid sequences. **SC-004**: No new audio artifacts or bugs are introduced as a result of this change.
+**SC-001**: Wall hit audio is played within 50ms of collision in 99% of cases (measured in test runs).
+**SC-002**: No perceptible delay in audio feedback reported by playtesters.
+**SC-003**: Audio feedback is played for every wall collision, even during rapid sequences.
+**SC-004**: No new audio artifacts or bugs are introduced as a result of this change.
 
 - **SC-001**: Wall hit audio is played within 50ms of collision in 99% of cases (measured in test runs).

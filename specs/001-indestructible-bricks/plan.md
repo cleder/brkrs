@@ -18,8 +18,8 @@ See `.specify/templates/commands/plan.md` for the execution workflow.
   the iteration process.
 -->
 
-**Language/Version**: Rust 1.81 **Primary Dependencies**: Bevy 0.17, bevy_rapier3d, serde (ron + serde), bevy_ecs **Storage**: Files (LevelDefinition assets stored in assets/levels/ *.ron) * *Testing* *: cargo test (unit + integration) and manual gameplay tests (native + WASM) * *Target Platform* *: Native desktop (Linux, macOS, Windows) and WASM for web builds * *Project Type* *: Single (game engine codebase) * *Performance Goals* *: Maintain 60 FPS on target platforms; low-latency collision handling for physics-driven gameplay * *Constraints* *: Must adhere to project's Constitution (ECS-first, physics-driven, cross-platform).
-Changes should not add large allocations in hot loops or break WASM compatibility * *Scale/Scope**: Small feature-level change within the existing codebase — touching level parsing & brick systems, unit tests, sample assets
+**Language/Version**: Rust 1.81 **Primary Dependencies**: Bevy 0.17, bevy_rapier3d, serde (ron + serde), bevy_ecs **Storage**: Files (LevelDefinition assets stored in assets/levels/ *.ron) * *Testing* *: cargo test (unit + integration) and manual gameplay tests (native + WASM) * *Target Platform* *: Native desktop (Linux, macOS, Windows) and WASM for web builds * *Project Type* *: Single (game engine codebase) * *Performance Goals* *: Maintain 60 FPS on target platforms; low-latency collision handling for physics-driven gameplay * *Constraints* *: Must adhere to project's Constitution (ECS-first, physics-driven, cross-platform).*
+*Changes should not add large allocations in hot loops or break WASM compatibility * *Scale/Scope**: Small feature-level change within the existing codebase — touching level parsing & brick systems, unit tests, sample assets
 
 ## Constitution Check
 

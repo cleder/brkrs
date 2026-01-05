@@ -1,6 +1,7 @@
 # Requirements Quality Checklist: Ball, Paddle, Brick Physics Config
 
-**Purpose**: Validate the quality, clarity, and completeness of requirements for the centralized physics config feature. **Created**: 2025-12-25 **Feature**: [specs/015-ball-physics-config/spec.md](../spec.md)
+**Purpose**: Validate the quality, clarity, and completeness of requirements for the centralized physics config feature.
+**Created**: 2025-12-25 **Feature**: [specs/015-ball-physics-config/spec.md](../spec.md)
 
 ## Requirement Completeness
 
@@ -44,4 +45,5 @@
 
 ---
 
-*Each item should be checked before implementation or review. If any are incomplete, update the spec or plan before proceeding.*
+*Each item should be checked before implementation or review.*
+*If any are incomplete, update the spec or plan before proceeding.*

@@ -188,7 +188,8 @@ Minor: Consider adding explicit WASM build verification to task list.
 | Backward compatibility | T012, T039 | ✅ FR-016 covered |
 | Combined texture usage | T040 | ✅ SC-007 covered |
 
-**Overall Coverage**: 15/16 FR explicitly mapped (93.75%). **FR-008 requires attention**.
+**Overall Coverage**: 15/16 FR explicitly mapped (93.75%).
+**FR-008 requires attention**.
 
 ---
 
@@ -196,7 +197,8 @@ Minor: Consider adding explicit WASM build verification to task list.
 
 ### CRITICAL: Zero Issues Found ✅
 
-**No constitution violations detected.** Feature is compliant with:
+**No constitution violations detected.**
+Feature is compliant with:
 
 - ✅ Principle I (ECS-First): No new ECS systems; extends data structures only
 - ✅ Principle II (Physics-Driven): Not applicable (texture system, no physics changes)

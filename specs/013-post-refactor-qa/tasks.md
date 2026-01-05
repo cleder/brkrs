@@ -12,7 +12,8 @@
 
 ## Phase 3: User Story 1 - Test Integrity Audit
 
-**Goal**: Remove "fake tests" that provide false confidence. **Independent Test**: `cargo test` passes after removal.
+**Goal**: Remove "fake tests" that provide false confidence.
+**Independent Test**: `cargo test` passes after removal.
 
 - [X] T003 [US1] Scan `tests/` for comment-only tests or no-op assertions (manual or grep)
 - [X] T004 [US1] Remove/Fix fake tests in `tests/change_detection.rs`
@@ -20,7 +21,8 @@
 
 ## Phase 4: User Story 2 - Constitution Compliance Sweep
 
-**Goal**: Ensure strict adherence to Bevy 0.17 mandates. **Independent Test**: Manual audit confirms compliance.
+**Goal**: Ensure strict adherence to Bevy 0.17 mandates.
+**Independent Test**: Manual audit confirms compliance.
 
 - [X] T006 [US2] Audit codebase for `#[require]` usage on components
 - [X] T007 [US2] Audit codebase for `Changed<T>` usage in reactive systems
@@ -31,7 +33,8 @@
 
 ## Phase 5: User Story 3 - Code Review Fixes
 
-**Goal**: Address specific code review feedback (visibility, ordering). **Independent Test**: Code compiles, startup is deterministic.
+**Goal**: Address specific code review feedback (visibility, ordering).
+**Independent Test**: Code compiles, startup is deterministic.
 
 - [X] T012 [P] [US3] Change `BALL_RADIUS` to `pub(crate)` in `src/lib.rs`
 - [X] T013 [P] [US3] Change `PADDLE_RADIUS` to `pub(crate)` in `src/lib.rs`

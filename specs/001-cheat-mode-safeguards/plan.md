@@ -17,7 +17,8 @@ Enable a gated cheat mode toggled via 'g' that resets score to 0 on enter/exit, 
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+*GATE: Must pass before Phase 0 research.*
+*Re-check after Phase 1 design.*
 
 - ECS-first: Plan uses Bevy systems, components, events; no global mutable state outside ECS — PASS
 - Physics-driven gameplay: No physics changes; ensure no manual transform hacks — PASS (not impacted)
