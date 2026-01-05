@@ -220,7 +220,7 @@ impl ProfileMaterialBank {
         for profile in manifest.profiles.values() {
             if let Some(existing_handle) = self.handles.get(&profile.id).cloned() {
                 if let Some(material) = materials.get_mut(&existing_handle) {
-                    *material = make_material(profile, asset_server);
+                    *material = make_material(profile, asset_server, None);
                     continue;
                 }
             }
@@ -402,7 +402,11 @@ fn hydrate_texture_materials(
     );
 }
 
-fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> StandardMaterial {
+fn make_material(
+    profile: &VisualAssetProfile,
+    asset_server: &AssetServer,
+    emissive_color: Option<Color>,
+) -> StandardMaterial {
     let base_color_texture = asset_server.load(manifest_asset_path(&profile.albedo_path));
     let normal_map_texture = profile.normal_path.as_ref().map(|path| {
         asset_server.load_with_settings(
@@ -431,25 +435,23 @@ fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> St
 
     // Load depth/parallax texture for surface detail
     // Depth textures use linear color space (grayscale displacement)
-    // Note: Bevy's standard shader doesn't use depth maps directly;
-    // parallax mapping requires a custom shader. The depth_path and depth_scale
-    // parameters are here for future implementation when parallax mapping is added.
-    // For now, we reserve the space for these parameters but don't load the texture.
+    // Bevy's StandardMaterial supports parallax mapping via depth_map and parallax_depth_scale
+    let depth_texture = profile.depth_path.as_ref().map(|path| {
+        asset_server.load_with_settings(
+            manifest_asset_path(path),
+            |settings: &mut ImageLoaderSettings| settings.is_srgb = false,
+        )
+    });
 
     use bevy::math::Affine2;
     let uv_transform =
         Affine2::from_scale_angle_translation(profile.uv_scale, 0.0, profile.uv_offset);
 
-    // When ORM texture is present, scalar values act as multipliers for the texture channels
-    // Default to 1.0 to let the texture values show through; otherwise use profile values
-    let (metallic, roughness) = if profile.orm_path.is_some() {
-        // ORM texture present: use 1.0 multipliers to show full texture effect
-        // (blue channel for metallic, green channel for roughness)
-        (1.0, 1.0)
-    } else {
-        // No ORM texture: use profile scalar values directly
-        (profile.metallic, profile.roughness)
-    };
+    // Scalar metallic and roughness values act as multipliers for ORM texture channels
+    // When ORM texture present: blue channel × metallic, green channel × roughness
+    // When no ORM texture: use profile scalar values directly for solid appearance
+    let metallic = profile.metallic;
+    let roughness = profile.roughness;
 
     StandardMaterial {
         base_color_texture: Some(base_color_texture),
@@ -458,15 +460,19 @@ fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> St
         metallic_roughness_texture: orm_texture.clone(),
         occlusion_texture: orm_texture,
         emissive_texture,
-        // Emissive color must be set when using emissive texture (acts as multiplier/tint)
-        // Default to white (1.0, 1.0, 1.0) when emissive texture is present
-        emissive: if profile.emissive_path.is_some() {
-            Color::WHITE.into()
-        } else {
-            Color::BLACK.into()
-        },
+        // Emissive color acts as a multiplier/tint when combined with emissive texture
+        // If variant-specific emissive_color is provided, use it; otherwise default to WHITE (1.0 multiplier)
+        emissive: emissive_color
+            .unwrap_or(if profile.emissive_path.is_some() {
+                Color::WHITE
+            } else {
+                Color::BLACK
+            })
+            .into(),
         metallic,
         perceptual_roughness: roughness,
+        depth_map: depth_texture,
+        parallax_depth_scale: profile.depth_scale,
         uv_transform,
         ..default()
     }
@@ -477,7 +483,7 @@ fn bake_material(
     asset_server: &AssetServer,
     materials: &mut Assets<StandardMaterial>,
 ) -> Handle<StandardMaterial> {
-    materials.add(make_material(profile, asset_server))
+    materials.add(make_material(profile, asset_server, None))
 }
 
 fn manifest_asset_path(relative: &str) -> String {
