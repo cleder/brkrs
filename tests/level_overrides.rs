@@ -32,10 +32,14 @@ fn create_test_profile(id: &str) -> VisualAssetProfile {
         id: id.to_string(),
         albedo_path: format!("test/{id}.png"),
         normal_path: None,
+        orm_path: None,
+        emissive_path: None,
+        depth_path: None,
         roughness: 0.5,
         metallic: 0.0,
         uv_scale: Vec2::splat(1.0),
         uv_offset: Vec2::ZERO,
+        depth_scale: 0.1,
         fallback_chain: vec![],
     }
 }

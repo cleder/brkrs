@@ -411,15 +411,62 @@ fn make_material(profile: &VisualAssetProfile, asset_server: &AssetServer) -> St
         )
     });
 
+    // Load ORM (Occlusion-Roughness-Metallic) packed texture
+    // ORM textures use linear color space (not sRGB) following glTF 2.0 standard
+    let orm_texture = profile.orm_path.as_ref().map(|path| {
+        asset_server.load_with_settings(
+            manifest_asset_path(path),
+            |settings: &mut ImageLoaderSettings| settings.is_srgb = false,
+        )
+    });
+
+    // Load emissive (glow/self-illumination) texture
+    // Emissive textures use sRGB color space for proper light emission
+    let emissive_texture = profile.emissive_path.as_ref().map(|path| {
+        asset_server.load_with_settings(
+            manifest_asset_path(path),
+            |settings: &mut ImageLoaderSettings| settings.is_srgb = true,
+        )
+    });
+
+    // Load depth/parallax texture for surface detail
+    // Depth textures use linear color space (grayscale displacement)
+    // Note: Bevy's standard shader doesn't use depth maps directly;
+    // parallax mapping requires a custom shader. The depth_path and depth_scale
+    // parameters are here for future implementation when parallax mapping is added.
+    // For now, we reserve the space for these parameters but don't load the texture.
+
     use bevy::math::Affine2;
     let uv_transform =
         Affine2::from_scale_angle_translation(profile.uv_scale, 0.0, profile.uv_offset);
 
+    // When ORM texture is present, scalar values act as multipliers for the texture channels
+    // Default to 1.0 to let the texture values show through; otherwise use profile values
+    let (metallic, roughness) = if profile.orm_path.is_some() {
+        // ORM texture present: use 1.0 multipliers to show full texture effect
+        // (blue channel for metallic, green channel for roughness)
+        (1.0, 1.0)
+    } else {
+        // No ORM texture: use profile scalar values directly
+        (profile.metallic, profile.roughness)
+    };
+
     StandardMaterial {
         base_color_texture: Some(base_color_texture),
         normal_map_texture,
-        metallic: profile.metallic,
-        perceptual_roughness: profile.roughness,
+        // Assign ORM texture to both metallic_roughness and occlusion for dual-channel functionality
+        metallic_roughness_texture: orm_texture.clone(),
+        occlusion_texture: orm_texture,
+        emissive_texture,
+        // Emissive color must be set when using emissive texture (acts as multiplier/tint)
+        // Default to white (1.0, 1.0, 1.0) when emissive texture is present
+        emissive: if profile.emissive_path.is_some() {
+            Color::WHITE.into()
+        } else {
+            Color::BLACK.into()
+        },
+        metallic,
+        perceptual_roughness: roughness,
         uv_transform,
         ..default()
     }
