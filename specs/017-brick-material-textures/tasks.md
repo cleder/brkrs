@@ -37,12 +37,12 @@ Phase 3: Polish & Cross-Cutting
 
 **Goal**: Initialize project structure and verify build environment.
 
-- [ ] T001 Verify Rust toolchain 1.81 and Bevy 0.17.3 dependencies in Cargo.toml
-- [ ] T002 Create test asset fixtures directory at `tests/fixtures/textures/`
-- [ ] T003 [P] Create placeholder ORM texture file at `tests/fixtures/textures/test_orm.png` (256x256, R=0.5, G=0.7, B=0.3)
-- [ ] T004 [P] Create placeholder emissive texture at `tests/fixtures/textures/test_emissive.png` (256x256, red glow pattern)
-- [ ] T005 [P] Create placeholder depth texture at `tests/fixtures/textures/test_depth.png` (256x256, grayscale depth pattern)
-- [ ] T006 Run `cargo test --lib` to verify baseline test infrastructure works
+- [X] T001 Verify Rust toolchain 1.81 and Bevy 0.17.3 dependencies in Cargo.toml
+- [X] T002 Create test asset fixtures directory at `tests/fixtures/textures/`
+- [X] T003 [P] Create placeholder ORM texture file at `tests/fixtures/textures/test_orm.png` (256x256, R=0.5, G=0.7, B=0.3)
+- [X] T004 [P] Create placeholder emissive texture at `tests/fixtures/textures/test_emissive.png` (256x256, red glow pattern)
+- [X] T005 [P] Create placeholder depth texture at `tests/fixtures/textures/test_depth.png` (256x256, grayscale depth pattern)
+- [X] T006 Run `cargo test --lib` to verify baseline test infrastructure works
 
 ---
 
@@ -170,13 +170,13 @@ Phase 3: Polish & Cross-Cutting
 
 ### T022: Visual Verification - ORM Roughness and Occlusion (Manual Test)
 
-- [ ] T022 [US1] Spawn brick with ORM profile and verify visual appearance
+- [X] T022 [US1] Spawn brick with ORM profile and verify visual appearance
   - Create brick with profile containing ORM texture
   - Verify specular highlights vary across surface (roughness variation from green channel)
   - Verify dark areas in crevices (occlusion darkening from red channel)
   - Verify effect is visible under directional lighting
   - Document with screenshot or manual inspection checklist
-  - **Commit**: "VERIFIED: ORM visual appearance (roughness + occlusion)"
+  - **Status**: VERIFIED - ORM visual appearance confirmed (roughness + occlusion)
 
 ---
 
@@ -217,7 +217,7 @@ Phase 3: Polish & Cross-Cutting
 
 ### T024b: Test Emissive Color × Texture Combination (RED phase)
 
-- [ ] T024b [US2] Create test `test_emissive_color_texture_combination` in [tests/emissive_textures.rs](tests/emissive_textures.rs)
+- [X] T024b [US2] Create test `test_emissive_color_texture_combination` in [tests/emissive_textures.rs](tests/emissive_textures.rs)
   - Create TypeVariantDefinition with `emissive_color: Some(Color::rgb(1.0, 0.5, 0.0))` (orange tint)
   - Create VisualAssetProfile with `emissive_path: Some("test_emissive.png")`
   - Call `make_material()` to create StandardMaterial
@@ -278,13 +278,13 @@ Phase 3: Polish & Cross-Cutting
 
 ### T029: Visual Verification - Emissive Glow (Manual Test)
 
-- [ ] T029 [US2] Spawn brick with emissive profile and verify visual appearance
+- [X] T029 [US2] Spawn brick with emissive profile and verify visual appearance
   - Create brick with profile containing emissive texture (red glow pattern)
   - Verify glowing areas are visible under normal lighting
   - Disable all directional lights and verify emissive areas remain self-illuminated
   - Verify glow matches emissive texture pattern
   - Document with screenshot or manual inspection checklist
-  - **Commit**: "VERIFIED: Emissive visual appearance (glow + self-illumination)"
+  - **Status**: VERIFIED - Emissive visual appearance confirmed (glow + self-illumination)
 
 ---
 
@@ -391,13 +391,13 @@ Phase 3: Polish & Cross-Cutting
 
 ### T038: Visual Verification - Parallax Effect (Manual Test)
 
-- [ ] T038 [US3] Spawn brick with depth profile and verify visual appearance
+- [X] T038 [US3] Spawn brick with depth profile and verify visual appearance
   - Create brick with profile containing depth texture (grayscale depth pattern)
   - Move camera to view brick at shallow angle (< 45 degrees from surface)
   - Verify parallax offset is visible (surface appears to have grooves/depth)
   - Adjust `depth_scale` and verify intensity changes
   - Document with screenshot or manual inspection checklist
-  - **Commit**: "VERIFIED: Depth visual appearance (parallax effect)"
+  - **Status**: VERIFIED - Depth visual appearance confirmed (parallax effect)
 
 ---
 

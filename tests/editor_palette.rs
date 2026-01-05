@@ -82,7 +82,7 @@ fn palette_test_app() -> App {
         world.resource_scope(|world, mut registry: Mut<TypeVariantRegistry>| {
             world.resource_scope(|world, bank: Mut<ProfileMaterialBank>| {
                 world.resource_scope(|_world, mut fallback: Mut<FallbackRegistry>| {
-                    registry.rebuild(&manifest, &bank, &mut fallback);
+                    registry.rebuild(&manifest, &bank, &mut fallback, None, None);
                 });
             });
         });

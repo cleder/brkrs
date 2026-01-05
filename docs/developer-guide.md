@@ -89,6 +89,76 @@ Use for testing gameplay feel.
 BK_LEVEL=997 cargo run --release
 ```
 
+## Plugin Architecture
+
+Brkrs uses a **plugin-based architecture** to organize systems and features, following Bevy's best practices for modularity and reusability.
+
+### What is a Plugin?
+
+A plugin is a self-contained struct that implements `Plugin` and registers related systems, resources, and schedules in the `build()` method.
+Plugins enable developers to:
+
+- Group related functionality together
+- Avoid tight coupling between features
+- Enable/disable features easily
+- Test features independently
+
+### Core Plugins
+
+The main application (`src/lib.rs::run()`) registers these plugins:
+
+| Plugin | Feature | Location |
+|--------|---------|----------|
+| `LevelSwitchPlugin` | Level transitions and progression | `src/systems/level_switch.rs` |
+| `LevelLoaderPlugin` | Level loading and entity spawning | `src/level_loader.rs` |
+| `RespawnPlugin` | Ball respawn mechanics | `src/systems/respawn.rs` |
+| `PausePlugin` | Pause state and overlay UI | `src/pause.rs` |
+| `AudioPlugin` | Sound effects and audio events | `src/systems/audio.rs` |
+| `PaddleSizePlugin` | Paddle resize powerup effects | `src/systems/paddle_size.rs` |
+| `CheatModePlugin` | Developer/testing cheat mode | `src/systems/cheat_mode.rs` |
+| `TextureManifestPlugin` | Texture loading and overrides (optional, feature-gated) | `src/systems/textures/` |
+| `FontsPlugin` | Font loading (desktop & WASM) | `src/ui/fonts.rs` |
+| `UiPlugin` | UI systems (score, lives, overlays, palette) | `src/ui/mod.rs` |
+
+### How to Create a New Plugin
+
+**Example: Simple feature plugin**
+
+```rust
+pub struct MyFeaturePlugin;
+
+impl Plugin for MyFeaturePlugin {
+    fn build(&self, app: &mut App) {
+        // Register resources
+        app.init_resource::<MyFeatureState>();
+
+        // Register systems
+        app.add_systems(
+            Update,
+            (
+                my_input_system,
+                my_logic_system.after(my_input_system),
+                my_render_system.after(my_logic_system),
+            )
+        );
+    }
+}
+```
+
+Then register in `src/lib.rs`:
+
+```rust
+app.add_plugins(MyFeaturePlugin);
+```
+
+### Plugin Best Practices
+
+- **Self-contained**: Each plugin should have minimal external dependencies
+- **Resource naming**: Use unique resource names to avoid collisions
+- **System ordering**: Use `after()` and `before()` to specify execution order
+- **Error handling**: Follow Bevy 0.17 fallible systems pattern (return `()`, log errors)
+- **Documentation**: Add module-level rustdoc explaining the plugin's purpose
+
 ## Running tests
 
 ### All tests
