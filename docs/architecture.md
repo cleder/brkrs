@@ -50,6 +50,11 @@ The project follows these architectural principles (from the project Constitutio
 | Respawn | Ball respawn after loss | `src/systems/respawn.rs` |
 | Level Switch | Transitions between levels | `src/systems/level_switch.rs` |
 | Scoring | Tracks points, awards milestone bonuses | `src/systems/scoring.rs` |
+| Audio System | Plays sound effects for collisions, level transitions, milestones | `src/systems/audio.rs` |
+| Cheat Mode | Developer/testing feature for quick level exploration | `src/systems/cheat_mode.rs` |
+| Paddle Size | Handles paddle size powerup effects (shrink/enlarge) | `src/systems/paddle_size.rs` |
+| Multi-Hit Bricks | Manages multi-hit brick durability and transitions | `src/systems/multi_hit.rs` |
+| Textures | Loads and manages textures, per-level material overrides | `src/systems/textures/` |
 | Grid Debug | Development visualization | `src/systems/grid_debug.rs` |
 | Spawning | Initial scene setup (camera, light, ground) | `src/systems/spawning.rs` |
 

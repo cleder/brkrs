@@ -253,18 +253,33 @@ impl TypeVariantRegistry {
         manifest: &TextureManifest,
         bank: &ProfileMaterialBank,
         fallback: &mut FallbackRegistry,
+        asset_server: Option<&AssetServer>,
+        mut materials: Option<&mut Assets<StandardMaterial>>,
     ) {
         self.map.clear();
         for variant in manifest.type_variants.iter() {
-            let profile = variant.profile_id.as_str();
-            let handle = bank.handle(profile).unwrap_or_else(|| {
-                fallback
-                    .handle(match variant.object_class {
-                        ObjectClass::Ball => FallbackMaterial::Ball,
-                        ObjectClass::Brick => FallbackMaterial::Brick,
-                    })
-                    .clone()
-            });
+            let profile_id = variant.profile_id.as_str();
+
+            // Look up the profile from the manifest to create a variant-specific material
+            // with emissive color tinting applied (FR-008: emissive color × texture combination)
+            let handle = if let (Some(profile), Some(asset_server), Some(materials)) = (
+                manifest.profiles.get(profile_id),
+                asset_server,
+                materials.as_deref_mut(),
+            ) {
+                // Create a variant-specific material with emissive color tinting applied
+                materials.add(make_material(profile, asset_server, variant.emissive_color))
+            } else {
+                // Fall back to canonical profile material or fallback if profile or resources not available
+                bank.handle(profile_id).unwrap_or_else(|| {
+                    fallback
+                        .handle(match variant.object_class {
+                            ObjectClass::Ball => FallbackMaterial::Ball,
+                            ObjectClass::Brick => FallbackMaterial::Brick,
+                        })
+                        .clone()
+                })
+            };
             self.map
                 .insert((variant.object_class, variant.type_id), handle);
         }
@@ -378,10 +393,18 @@ fn hydrate_texture_materials(
     }
     *hydrated = true;
 
-    bank.rebuild(&manifest, &asset_server, materials.into_inner());
+    let mut materials_mut = materials.into_inner();
+    bank.rebuild(&manifest, &asset_server, materials_mut);
     if let Some(mut registry) = type_variants {
-        // Need to call rebuild with mutable fallback which consumes &mut FallbackRegistry
-        registry.rebuild(&manifest, &bank, fallback.as_mut());
+        // Rebuild variant registry with variant-specific materials (emissive color tinting applied)
+        // Pass asset_server and materials so variants can have unique material instances with emissive colors
+        registry.rebuild(
+            &manifest,
+            &bank,
+            fallback.as_mut(),
+            Some(&asset_server),
+            Some(&mut materials_mut),
+        );
         info!(
             target: "textures::materials",
             type_variants = manifest.type_variants.len(),
@@ -402,46 +425,59 @@ fn hydrate_texture_materials(
     );
 }
 
+/// Helper function to load optional textures with specified color space settings.
+/// Reduces code duplication for normal map, ORM, emissive, and depth texture loading patterns.
+fn load_optional_texture(
+    asset_server: &AssetServer,
+    path: Option<&String>,
+    is_srgb: bool,
+) -> Option<Handle<Image>> {
+    path.map(move |p| {
+        asset_server.load_with_settings(
+            manifest_asset_path(p),
+            move |settings: &mut ImageLoaderSettings| settings.is_srgb = is_srgb,
+        )
+    })
+}
+
 fn make_material(
     profile: &VisualAssetProfile,
     asset_server: &AssetServer,
     emissive_color: Option<Color>,
 ) -> StandardMaterial {
     let base_color_texture = asset_server.load(manifest_asset_path(&profile.albedo_path));
-    let normal_map_texture = profile.normal_path.as_ref().map(|path| {
-        asset_server.load_with_settings(
-            manifest_asset_path(path),
-            |settings: &mut ImageLoaderSettings| settings.is_srgb = false,
-        )
-    });
+
+    // Load normal map texture (linear color space for proper surface normals)
+    let normal_map_texture = load_optional_texture(
+        asset_server,
+        profile.normal_path.as_ref(),
+        false, // is_srgb = false (linear for normals)
+    );
 
     // Load ORM (Occlusion-Roughness-Metallic) packed texture
     // ORM textures use linear color space (not sRGB) following glTF 2.0 standard
-    let orm_texture = profile.orm_path.as_ref().map(|path| {
-        asset_server.load_with_settings(
-            manifest_asset_path(path),
-            |settings: &mut ImageLoaderSettings| settings.is_srgb = false,
-        )
-    });
+    let orm_texture = load_optional_texture(
+        asset_server,
+        profile.orm_path.as_ref(),
+        false, // is_srgb = false (linear for data)
+    );
 
     // Load emissive (glow/self-illumination) texture
     // Emissive textures use sRGB color space for proper light emission
-    let emissive_texture = profile.emissive_path.as_ref().map(|path| {
-        asset_server.load_with_settings(
-            manifest_asset_path(path),
-            |settings: &mut ImageLoaderSettings| settings.is_srgb = true,
-        )
-    });
+    let emissive_texture = load_optional_texture(
+        asset_server,
+        profile.emissive_path.as_ref(),
+        true, // is_srgb = true (sRGB for color)
+    );
 
     // Load depth/parallax texture for surface detail
     // Depth textures use linear color space (grayscale displacement)
     // Bevy's StandardMaterial supports parallax mapping via depth_map and parallax_depth_scale
-    let depth_texture = profile.depth_path.as_ref().map(|path| {
-        asset_server.load_with_settings(
-            manifest_asset_path(path),
-            |settings: &mut ImageLoaderSettings| settings.is_srgb = false,
-        )
-    });
+    let depth_texture = load_optional_texture(
+        asset_server,
+        profile.depth_path.as_ref(),
+        false, // is_srgb = false (linear for depth data)
+    );
 
     use bevy::math::Affine2;
     let uv_transform =
@@ -452,6 +488,14 @@ fn make_material(
     // When no ORM texture: use profile scalar values directly for solid appearance
     let metallic = profile.metallic;
     let roughness = profile.roughness;
+
+    // Compute parallax depth scale: only apply parallax if depth texture is actually present
+    // Otherwise, set to 0.0 to avoid parallax effect on materials without depth maps
+    let parallax_depth_scale = if depth_texture.is_some() {
+        profile.depth_scale
+    } else {
+        0.0
+    };
 
     StandardMaterial {
         base_color_texture: Some(base_color_texture),
@@ -472,7 +516,7 @@ fn make_material(
         metallic,
         perceptual_roughness: roughness,
         depth_map: depth_texture,
-        parallax_depth_scale: profile.depth_scale,
+        parallax_depth_scale,
         uv_transform,
         ..default()
     }
