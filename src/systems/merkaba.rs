@@ -13,9 +13,7 @@ use bevy_rapier3d::prelude::{
 use crate::signals::{
     MerkabaBrickCollision, MerkabaPaddleCollision, MerkabaWallCollision, SpawnMerkabaMessage,
 };
-use crate::systems::respawn::{
-    LifeLossCause, LifeLostEvent, LivesState, RespawnHandle, SpawnPoints,
-};
+use crate::systems::respawn::LivesState;
 use crate::systems::textures::{ObjectClass, TypeVariantRegistry};
 use crate::{Ball, Border, Brick, LowerGoal, Paddle};
 
@@ -330,7 +328,7 @@ fn detect_merkaba_brick_collision(
 }
 /// T032: Detect merkaba-paddle collision and trigger penalty
 fn detect_merkaba_paddle_collision(
-    mut collision_events: EventReader<CollisionEvent>,
+    mut collision_events: MessageReader<CollisionEvent>,
     merkabas: Query<Entity, With<Merkaba>>,
     paddles: Query<Entity, With<Paddle>>,
     mut commands: Commands,
@@ -347,6 +345,10 @@ fn detect_merkaba_paddle_collision(
             };
 
             if let (Some(merkaba_entity), Some(paddle_entity)) = (merkaba, paddle) {
+                info!(
+                    "Merkaba-Paddle collision detected: {:?} <-> {:?}",
+                    merkaba_entity, paddle_entity
+                );
                 // Trigger observer for life loss and audio
                 commands.trigger(MerkabaPaddleCollision {
                     merkaba_entity,
@@ -389,30 +391,12 @@ fn despawn_balls_and_merkabas_on_life_loss(
     *local_state = Some(current_lives);
 }
 /// T032: Handle life loss on merkaba-paddle collision (Observer)
-/// Triggers standard life loss flow via LifeLostEvent to ensure visual feedback/respawn sequence runs.
 fn on_merkaba_paddle_collision_life_loss(
-    _trigger: Trigger<MerkabaPaddleCollision>,
-    mut life_lost_writer: MessageWriter<LifeLostEvent>,
-    balls: Query<Entity, With<Ball>>,
-    ball_handles: Query<&RespawnHandle, With<Ball>>,
-    spawn_points: Res<SpawnPoints>,
+    _trigger: On<MerkabaPaddleCollision>,
+    mut lives_state: ResMut<LivesState>,
 ) {
-    // Pick a ball to attribute the loss to (needed for LifeLostEvent contract).
-    // In multiball, any ball will do as they all get cleared on life loss.
-    // If no ball exists, we can't trigger the standard respawn flow easily,
-    // but that state shouldn't happen during active gameplay.
-    if let Some(ball_entity) = balls.iter().next() {
-        let ball_spawn = ball_handles
-            .get(ball_entity)
-            .map(|h| h.spawn)
-            .unwrap_or_else(|_| spawn_points.ball_spawn());
-
-        life_lost_writer.write(LifeLostEvent {
-            ball: ball_entity,
-            cause: LifeLossCause::MerkabaCollision,
-            ball_spawn,
-        });
-    } else {
-        warn!("Merkaba collision with paddle, but no balls found to trigger LifeLostEvent");
+    if lives_state.lives_remaining > 0 {
+        lives_state.lives_remaining -= 1;
+        lives_state.on_last_life = lives_state.lives_remaining == 1;
     }
 }

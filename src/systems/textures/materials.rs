@@ -300,6 +300,15 @@ impl TypeVariantRegistry {
     pub fn get(&self, class: ObjectClass, type_id: u8) -> Option<Handle<StandardMaterial>> {
         self.map.get(&(class, type_id)).cloned()
     }
+
+    pub fn insert_for_tests(
+        &mut self,
+        class: ObjectClass,
+        type_id: u8,
+        handle: Handle<StandardMaterial>,
+    ) {
+        self.map.insert((class, type_id), handle);
+    }
 }
 
 #[derive(Resource, Default)]

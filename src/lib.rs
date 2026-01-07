@@ -552,7 +552,7 @@ fn spawn_border(
 ///
 /// This allows the physics collision response to complete before removal.
 pub fn mark_brick_on_ball_collision(
-    mut collision_events: EventReader<CollisionEvent>,
+    mut collision_events: MessageReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
     // Use a ParamSet to avoid Bevy B0001 conflicting borrows across queries
     mut bricks: ParamSet<(
@@ -666,7 +666,7 @@ pub fn mark_brick_on_ball_collision(
 
 /// Detect ball-wall collisions and emit BallWallHit events for audio.
 fn detect_ball_wall_collisions(
-    mut collision_events: EventReader<CollisionEvent>,
+    mut collision_events: MessageReader<CollisionEvent>,
     balls: Query<(Entity, &Velocity), With<Ball>>,
     borders: Query<Entity, With<Border>>,
     mut commands: Commands,

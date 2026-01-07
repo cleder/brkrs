@@ -1035,7 +1035,7 @@ fn consume_merkaba_brick_collision_messages(
 
 /// Observer for merkaba-paddle collision sounds.
 fn on_merkaba_paddle_collision_sound(
-    trigger: Trigger<MerkabaPaddleCollision>,
+    trigger: On<MerkabaPaddleCollision>,
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
     mut active_sounds: ResMut<ActiveSounds>,

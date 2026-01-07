@@ -11,6 +11,7 @@ use bevy_rapier3d::rapier::prelude::CollisionEventFlags;
 
 use brkrs::systems::merkaba::Merkaba;
 use brkrs::systems::respawn::LivesState;
+use brkrs::systems::textures::{ObjectClass, TypeVariantRegistry};
 use brkrs::LowerGoal;
 
 fn test_app() -> App {
@@ -22,11 +23,18 @@ fn test_app() -> App {
             lives_remaining: 3,
             on_last_life: false,
         })
+        .init_resource::<TypeVariantRegistry>()
         .add_message::<CollisionEvent>()
         .add_message::<brkrs::signals::SpawnMerkabaMessage>()
         .add_message::<brkrs::signals::MerkabaWallCollision>()
         .add_message::<brkrs::signals::MerkabaBrickCollision>()
         .add_plugins(brkrs::systems::merkaba::MerkabaPlugin);
+
+    // Populate registry with dummies
+    let mut registry = app.world_mut().resource_mut::<TypeVariantRegistry>();
+    let mat = Handle::<StandardMaterial>::default();
+    registry.insert_for_tests(ObjectClass::Merkaba, 0, mat.clone());
+    registry.insert_for_tests(ObjectClass::Merkaba, 1, mat);
 
     app
 }

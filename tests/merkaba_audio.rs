@@ -11,6 +11,7 @@ use bevy::MinimalPlugins;
 use brkrs::signals::SpawnMerkabaMessage;
 use brkrs::systems::merkaba::Merkaba;
 use brkrs::systems::respawn::LivesState;
+use brkrs::systems::textures::{ObjectClass, TypeVariantRegistry};
 
 /// T030b: Helicopter blade loop starts/stops correctly; idempotent and no duplicates.
 ///
@@ -94,9 +95,17 @@ fn test_app() -> App {
             lives_remaining: 3,
             on_last_life: false,
         })
+        .init_resource::<TypeVariantRegistry>()
         .add_message::<SpawnMerkabaMessage>()
         .add_message::<bevy_rapier3d::prelude::CollisionEvent>()
         .add_plugins(brkrs::systems::merkaba::MerkabaPlugin);
+
+    // Populate registry with dummy overrides for tests
+    let mut registry = app.world_mut().resource_mut::<TypeVariantRegistry>();
+    let mat_handle = Handle::<StandardMaterial>::default(); // Panic safety: handle needs to be valid if system uses it? No, just existing.
+                                                            // Actually system unwraps, so we just need *entries*
+    registry.insert_for_tests(ObjectClass::Merkaba, 0, mat_handle.clone());
+    registry.insert_for_tests(ObjectClass::Merkaba, 1, mat_handle);
 
     app
 }
