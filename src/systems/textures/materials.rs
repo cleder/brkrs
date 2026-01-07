@@ -80,6 +80,7 @@ pub struct FallbackRegistry {
     pub sidewall: Handle<StandardMaterial>,
     pub ground: Handle<StandardMaterial>,
     pub background: Handle<StandardMaterial>,
+    pub merkaba: Handle<StandardMaterial>,
     warned: HashSet<String>,
 }
 
@@ -117,6 +118,11 @@ impl FallbackRegistry {
                 debug_texture.clone(),
                 Color::srgb(0.05, 0.08, 0.15),
             ),
+            merkaba: add_unlit_debug(
+                materials,
+                debug_texture.clone(),
+                Color::srgb(0.8, 0.8, 0.2), // Gold/yellow color for merkaba
+            ),
             warned: HashSet::new(),
         }
     }
@@ -130,6 +136,7 @@ impl FallbackRegistry {
             FallbackMaterial::Sidewall => &self.sidewall,
             FallbackMaterial::Ground => &self.ground,
             FallbackMaterial::Background => &self.background,
+            FallbackMaterial::Merkaba => &self.merkaba,
         }
     }
 
@@ -155,6 +162,7 @@ pub enum FallbackMaterial {
     Ball,
     Paddle,
     Brick,
+    Merkaba,
     Sidewall,
     Ground,
     Background,
@@ -169,6 +177,7 @@ impl From<BaselineMaterialKind> for FallbackMaterial {
             BaselineMaterialKind::Sidewall => FallbackMaterial::Sidewall,
             BaselineMaterialKind::Ground => FallbackMaterial::Ground,
             BaselineMaterialKind::Background => FallbackMaterial::Background,
+            BaselineMaterialKind::Merkaba => FallbackMaterial::Merkaba,
         }
     }
 }
@@ -181,6 +190,7 @@ pub enum BaselineMaterialKind {
     Sidewall,
     Ground,
     Background,
+    Merkaba,
 }
 
 impl BaselineMaterialKind {
@@ -199,6 +209,7 @@ const BASELINE_PROFILE_IDS: &[(BaselineMaterialKind, &str)] = &[
     (BaselineMaterialKind::Sidewall, "sidewall/default"),
     (BaselineMaterialKind::Ground, "ground/default"),
     (BaselineMaterialKind::Background, "background/default"),
+    (BaselineMaterialKind::Merkaba, "merkaba/default"),
 ];
 
 #[derive(Resource, Default)]
@@ -276,6 +287,7 @@ impl TypeVariantRegistry {
                         .handle(match variant.object_class {
                             ObjectClass::Ball => FallbackMaterial::Ball,
                             ObjectClass::Brick => FallbackMaterial::Brick,
+                            ObjectClass::Merkaba => FallbackMaterial::Merkaba,
                         })
                         .clone()
                 })

@@ -3,10 +3,24 @@
 //! Tests that merkaba z-position remains within tolerance bounds (0 ± 0.01 units)
 //! under collisions and rotation.
 
+use bevy::app::App;
 use bevy::prelude::*;
-use brkrs::*; // Adjust import based on actual crate structure
+use bevy::MinimalPlugins;
+use bevy_rapier3d::prelude::Velocity;
+
+use brkrs::systems::merkaba::Merkaba;
 
 const Z_PLANE_TOLERANCE: f32 = 0.01;
+
+fn test_app() -> App {
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins)
+        .add_message::<brkrs::signals::SpawnMerkabaMessage>()
+        .add_message::<brkrs::signals::MerkabaWallCollision>()
+        .add_message::<brkrs::signals::MerkabaBrickCollision>()
+        .add_plugins(brkrs::systems::merkaba::MerkabaPlugin);
+    app
+}
 
 /// T022c: Z-position remains within tolerance (0 ± 0.01 units) under collisions/rotation.
 ///
@@ -16,22 +30,28 @@ const Z_PLANE_TOLERANCE: f32 = 0.01;
 #[test]
 #[ignore = "RED: T022c - Implement z-plane constraint (T026)"]
 fn t022c_merkaba_z_plane_constrained_to_tolerance() {
-    panic!("T022c: Write test logic to verify z-position stays within 0 ± 0.01 units");
+    let mut app = test_app();
 
-    // Expected implementation outline:
-    // 1. Create test world with merkaba entity
-    // 2. Set merkaba position to z = 0 (initial)
-    // 3. Apply rotation and physics for N frames
-    // 4. After each frame, assert:
-    //    z_pos_abs = merkaba.transform.translation.z.abs()
-    //    assert!(z_pos_abs <= Z_PLANE_TOLERANCE, "Z drift exceeded: {}", z_pos_abs)
-    // 5. Deliberately introduce z-velocity (via collision or noise) and verify correction
-    // 6. Check that x and y movement are unaffected by z-constraint
-    //
-    // Example test structure:
-    //   for frame in 0..100 {
-    //       step_simulation(&mut world);
-    //       let z = merkaba.transform.translation.z.abs();
-    //       assert!(z <= 0.01, "Frame {}: z drift = {}", frame, z);
-    //   }
+    let merkaba = app
+        .world_mut()
+        .spawn((
+            Merkaba,
+            Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
+            Velocity::linear(Vec3::new(0.0, 3.0, 0.1)), // Small z-velocity drift
+        ))
+        .id();
+
+    // Run for multiple frames to test z-constraint enforcement
+    for frame in 0..10 {
+        app.update();
+
+        let transform = app.world().entity(merkaba).get::<Transform>().unwrap();
+        let z_abs = transform.translation.z.abs();
+        assert!(
+            z_abs <= Z_PLANE_TOLERANCE,
+            "Frame {}: Merkaba z-position exceeded tolerance: {}",
+            frame,
+            z_abs
+        );
+    }
 }

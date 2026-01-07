@@ -25,10 +25,10 @@ Tests MUST be approved before implementation.
 
 **Purpose**: Ensure baseline infrastructure and assets paths are ready.
 
-- [ ] T001 [P] Create rotor brick texture placeholder in `assets/textures/rotor_brick_placeholder.png`
-- [ ] T002 [P] Add placeholder audio assets: `assets/audio/merkaba_wall.ogg`, `assets/audio/merkaba_brick.ogg`, `assets/audio/merkaba_paddle.ogg`, `assets/audio/merkaba_loop_helicopter.ogg`
-- [ ] T003 [P] Register dev feature flags in `Cargo.toml` if needed for fast builds (align with constitution performance mandates)
-- [ ] T004 Configure test level `assets/levels/test_rotor_36.ron` with at least one brick index 36
+- [X] T001 [P] Create rotor brick texture placeholder in `assets/textures/rotor_brick_placeholder.png`
+- [X] T002 [P] Add placeholder audio assets: `assets/audio/merkaba_wall.ogg`, `assets/audio/merkaba_brick.ogg`, `assets/audio/merkaba_paddle.ogg`, `assets/audio/merkaba_loop_helicopter.ogg`
+- [X] T003 [P] Register dev feature flags in `Cargo.toml` if needed for fast builds (align with constitution performance mandates)
+- [X] T004 Configure test level `assets/levels/test_rotor_36.ron` with at least one brick index 36
 
 ---
 
@@ -36,10 +36,10 @@ Tests MUST be approved before implementation.
 
 **Purpose**: Core resources, messages, event registration.
 
-- [ ] T005 Define `SpawnMerkabaMessage` in `src/signals.rs` (buffered message; position, angle variance, delay)
-- [ ] T006 [P] Add `AudioLoopState` resource and audio handles in `src/audio.rs` (store handles once; loop state; respect global audio)
-- [ ] T007 [P] Add `Merkaba` marker and mesh builder utilities in `src/systems/merkaba.rs` (dual tetrahedron children; hierarchy-safe)
-- [ ] T008 Register plugins and system sets in `src/lib.rs` (Messages for spawn; Observers/Events for audio + life-loss)
+- [X] T005 Define `SpawnMerkabaMessage` in `src/signals.rs` (buffered message; position, angle variance, delay)
+- [X] T006 [P] Add `AudioLoopState` resource and audio handles in `src/audio.rs` (store handles once; loop state; respect global audio)
+- [X] T007 [P] Add `Merkaba` marker and mesh builder utilities in `src/systems/merkaba.rs` (dual tetrahedron children; hierarchy-safe)
+- [X] T008 Register plugins and system sets in `src/lib.rs` (Messages for spawn; Observers/Events for audio + life-loss)
 - [ ] T009 Add Bevy 0.17 compliance checks in comments and tests: filtered queries, no unwraps, asset handle reuse (applies to all phases)
 
 **Checkpoint**: Foundation ready — proceed to user stories.
@@ -54,10 +54,10 @@ Tests MUST be approved before implementation.
 
 ### Tests for US1 (REQUIRED)
 
-- [ ] T010 [P] [US1] Write failing integration test in `tests/merkaba_spawn.rs` to assert message emission on brick 36 hit (record failing commit hash)
-- [ ] T011 [P] [US1] Write failing integration test in `tests/merkaba_spawn.rs` to assert 0.5s delayed spawn at brick position with dual tetrahedron children (record failing commit hash)
-- [ ] T012 [P] [US1] Write failing unit test in `tests/unit/merkaba_direction.rs` for initial y-direction ±20° (record failing commit hash)
-- [ ] T012b [P] [US1] Write failing integration test in `tests/merkaba_spawn.rs` to assert rotor brick (index 36) is destroyed on collision while spawn message is emitted (FR-016; record failing commit hash)
+- [X] T010 [P] [US1] Write failing integration test in `tests/merkaba_spawn.rs` to assert message emission on brick 36 hit (record failing commit hash)
+- [X] T011 [P] [US1] Write failing integration test in `tests/merkaba_spawn.rs` to assert 0.5s delayed spawn at brick position with dual tetrahedron children (record failing commit hash)
+- [X] T012 [P] [US1] Write failing unit test in `tests/unit/merkaba_direction.rs` for initial y-direction ±20° (record failing commit hash)
+- [X] T012b [P] [US1] Write failing integration test in `tests/merkaba_spawn.rs` to assert rotor brick (index 36) is destroyed on collision while spawn message is emitted (FR-016; record failing commit hash)
 - [ ] T013 [US1] Add acceptance checks for Bevy mandates: message vs observer separation, hierarchy safety, no panicking queries (in tests)
 
 ### Implementation for US1
@@ -80,21 +80,21 @@ Tests MUST be approved before implementation.
 
 ### Tests for US2 (REQUIRED)
 
-- [ ] T019 [P] [US2] Write failing integration test `tests/merkaba_physics.rs` for wall bounce + distinct sound (record failing commit hash)
-- [ ] T020 [P] [US2] Write failing integration test `tests/merkaba_physics.rs` for brick bounce (no destruction) + distinct sound (record failing commit hash)
-- [ ] T021 [P] [US2] Write failing unit test `tests/unit/merkaba_min_speed.rs` for min y-speed clamp ≥ 3.0 u/s (record failing commit hash)
-- [ ] T022 [US2] Write failing integration test `tests/merkaba_goal.rs` for goal area despawn (record failing commit hash)
-- [ ] T022b [P] [US2] Write failing integration test `tests/merkaba_physics.rs` to assert multiple merkabas (≥2 from separate rotor hits) coexist without interference or performance degradation; validate 60 FPS baseline (FR-015; record failing commit hash)
-- [ ] T022c [P] [US2] Write failing unit test `tests/unit/merkaba_z_plane.rs` to assert z-position remains within tolerance (0 ± 0.01 units) under collisions and rotation (FR-008; record failing commit hash)
-- [ ] T023 [US2] Add Bevy compliance checks: filtered queries, `Changed<T>` where reactive, asset handle reuse
+- [X] T019 [P] [US2] Write failing integration test `tests/merkaba_physics.rs` for wall bounce + distinct sound (record failing commit hash)
+- [X] T020 [P] [US2] Write failing integration test `tests/merkaba_physics.rs` for brick bounce (no destruction) + distinct sound (record failing commit hash)
+- [X] T021 [P] [US2] Write failing unit test `tests/unit/merkaba_min_speed.rs` for min y-speed clamp ≥ 3.0 u/s (record failing commit hash)
+- [X] T022 [US2] Write failing integration test `tests/merkaba_goal.rs` for goal area despawn (record failing commit hash)
+- [X] T022b [P] [US2] Write failing integration test `tests/merkaba_physics.rs` to assert multiple merkabas (≥2 from separate rotor hits) coexist without interference or performance degradation; validate 60 FPS baseline (FR-015; record failing commit hash)
+- [X] T022c [P] [US2] Write failing unit test `tests/unit/merkaba_z_plane.rs` to assert z-position remains within tolerance (0 ± 0.01 units) under collisions and rotation (FR-008; record failing commit hash)
+- [X] T023 [US2] Add Bevy compliance checks: filtered queries, `Changed<T>` where reactive, asset handle reuse
 
 ### Implementation for US2
 
-- [ ] T024 [P] [US2] Implement physics interaction systems (wall/brick bounce) in `src/systems/merkaba.rs` using Rapier collisions
-- [ ] T025 [US2] Implement min y-speed enforcement in `src/systems/merkaba.rs`
-- [ ] T026 [US2] Constrain z-plane (fixed or narrow band) in `src/systems/merkaba.rs`
-- [ ] T027 [US2] Implement goal boundary detection + despawn in `src/systems/merkaba.rs`
-- [ ] T028 [US2] Implement audio observers for collisions (wall/brick) in `src/systems/audio_merkaba.rs` and loop management in `src/audio.rs`
+- [X] T024 [P] [US2] Implement physics interaction systems (wall/brick bounce) in `src/systems/merkaba.rs` using Rapier collisions
+- [X] T025 [US2] Implement min y-speed enforcement in `src/systems/merkaba.rs`
+- [X] T026 [US2] Constrain z-plane (fixed or narrow band) in `src/systems/merkaba.rs`
+- [X] T027 [US2] Implement goal boundary detection + despawn in `src/systems/merkaba.rs`
+- [X] T028 [US2] Implement audio observers for collisions (wall/brick) in `src/systems/audio_merkaba.rs` and loop management in `src/audio.rs`
 
 **Checkpoint**: US1 + US2 independently functional.
 
@@ -108,16 +108,16 @@ Tests MUST be approved before implementation.
 
 ### Tests for US3 (REQUIRED)
 
-- [ ] T020b [US3] Write failing integration test `tests/merkaba_audio.rs` to assert helicopter blade loop starts when first merkaba spawns and remains active with multiple merkabas; verify idempotency and no duplicate loops (FR-020 start condition; record failing commit hash)
-- [ ] T039 [P] [US3] Write failing integration test `tests/merkaba_paddle.rs` for paddle contact → life -1 + distinct sound (record failing commit hash)
-- [ ] T030 [P] [US3] Write failing integration test `tests/merkaba_paddle.rs` for ball despawn and merkaba despawn on life loss (record failing commit hash)
+- [X] T020b [US3] Write failing integration test `tests/merkaba_audio.rs` to assert helicopter blade loop starts when first merkaba spawns and remains active with multiple merkabas; verify idempotency and no duplicate loops (FR-020 start condition; record failing commit hash)
+- [X] T039 [P] [US3] Write failing integration test `tests/merkaba_paddle.rs` for paddle contact → life -1 + distinct sound (record failing commit hash)
+- [X] T030 [P] [US3] Write failing integration test `tests/merkaba_paddle.rs` for ball despawn and merkaba despawn on life loss (record failing commit hash)
 - [ ] T031 [US3] Add acceptance checks for loop stop when merkaba_count returns to 0
 
 ### Implementation for US3
 
-- [ ] T032 [US3] Implement paddle contact detection and life loss trigger in `src/systems/merkaba.rs` or `src/systems/paddle.rs`
-- [ ] T033 [US3] Implement ball despawn and all-merkaba despawn on life loss in `src/systems/merkaba.rs`
-- [ ] T034 [US3] Implement paddle collision audio observer in `src/systems/audio_merkaba.rs`
+- [X] T032 [US3] Implement paddle contact detection and life loss trigger in `src/systems/merkaba.rs` or `src/systems/paddle.rs`
+- [X] T033 [US3] Implement ball despawn and all-merkaba despawn on life loss in `src/systems/merkaba.rs`
+- [X] T034 [US3] Implement paddle collision audio observer in `src/systems/audio_merkaba.rs`
 
 **Checkpoint**: All stories independently functional.
 

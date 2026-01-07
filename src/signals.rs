@@ -41,8 +41,7 @@
 //! ```
 
 use bevy::ecs::message::Message;
-use bevy::prelude::Entity;
-use bevy::prelude::Event;
+use bevy::prelude::{Entity, Event, Vec3};
 
 /// Short UI feedback cue (beep) — buffered message consumed by audio systems.
 ///
@@ -78,4 +77,61 @@ pub struct BrickDestroyed {
     pub brick_type: u8,
     /// Entity that caused destruction (ball, paddle, etc.) or None for despawn
     pub destroyed_by: Option<Entity>,
+}
+
+/// Spawn a merkaba hazard after a rotor brick (index 36) is hit.
+///
+/// **Producers**: Rotor brick collision system (US1)
+/// **Consumers**: Merkaba spawn system (US1 delayed spawn)
+/// **Contract**: Message is buffered; spawns occur after `delay_seconds` at the
+/// destroyed brick position with randomized y-direction angle variance.
+#[derive(Message, Debug, Clone, Copy)]
+pub struct SpawnMerkabaMessage {
+    /// World position where the merkaba should spawn (destroyed brick position)
+    pub position: Vec3,
+    /// Delay before spawn occurs (seconds); expected 0.5s per spec
+    pub delay_seconds: f32,
+    /// Angle variance in degrees from pure horizontal (y-direction); expected ±20°
+    pub angle_variance_deg: f32,
+    /// Minimum y-speed (units/second) to enforce after spawn; expected ≥3.0
+    pub min_speed_y: f32,
+}
+
+/// Merkaba collision with a wall boundary.
+///
+/// **Producers**: Merkaba collision detection system (US2)
+/// **Consumers**: Audio system for wall collision sound
+/// **Contract**: Fired once per merkaba-wall collision, triggers distinct audio feedback
+#[derive(Message, Debug, Clone, Copy)]
+pub struct MerkabaWallCollision {
+    /// Entity of the merkaba that collided
+    pub merkaba_entity: Entity,
+    /// Entity of the wall that was hit
+    pub wall_entity: Entity,
+}
+
+/// Merkaba collision with a brick (non-destructive bounce).
+///
+/// **Producers**: Merkaba collision detection system (US2)
+/// **Consumers**: Audio system for brick collision sound
+/// **Contract**: Fired once per merkaba-brick collision; brick is NOT destroyed
+#[derive(Message, Debug, Clone, Copy)]
+pub struct MerkabaBrickCollision {
+    /// Entity of the merkaba that collided
+    pub merkaba_entity: Entity,
+    /// Entity of the brick that was hit
+    pub brick_entity: Entity,
+}
+
+/// Merkaba collision with paddle (penalty interaction).
+///
+/// **Producers**: Merkaba collision detection system (US3)
+/// **Consumers**: Audio system and paddle penalty system
+/// **Contract**: Fired once per merkaba-paddle collision; triggers paddle shrink or life loss
+#[derive(Event, Debug, Clone, Copy)]
+pub struct MerkabaPaddleCollision {
+    /// Entity of the merkaba that collided
+    pub merkaba_entity: Entity,
+    /// Entity of the paddle that was hit
+    pub paddle_entity: Entity,
 }

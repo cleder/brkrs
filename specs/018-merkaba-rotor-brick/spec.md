@@ -1,7 +1,8 @@
 # Feature Specification: Merkaba Rotor Brick
 
 **Feature Branch**: `018-merkaba-rotor-brick` **Created**: 2026-01-07 **Status**: Draft **Input**: User description: "add brick 36 Rotor. when the ball hits brick with index of 36 a message is emitted to spawn a merkaba.
-The delay in spawning is deliberate and not a violation of the constitution. experiments/merkaba/src/main.rs contains an example of how to create a merkaba.
+The delay in spawning is deliberate and not a violation of the constitution.
+`experiments/merkaba/src/main.rs` contains an example of how to create a merkaba.
 It stays in the gaming plane. it interacts with other entities (bounce off bricks and walls), despawns on contact with the goal.
 It initially rotates around the z - axis, the initial speed is horizontal (y) +- 20 degrees.
 It must maintain a minimum speed in y direction.

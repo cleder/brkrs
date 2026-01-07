@@ -171,6 +171,7 @@ pub struct LifeLostEvent {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LifeLossCause {
     LowerGoal,
+    MerkabaCollision,
 }
 
 #[allow(dead_code)]
@@ -297,7 +298,7 @@ impl Plugin for RespawnPlugin {
 }
 
 fn detect_ball_loss(
-    collision_events: Option<MessageReader<CollisionEvent>>,
+    mut collision_events: EventReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
     ball_handles: Query<&RespawnHandle, With<Ball>>,
     lower_goals: Query<Entity, With<LowerGoal>>,
@@ -305,10 +306,6 @@ fn detect_ball_loss(
     mut commands: Commands,
     mut life_lost_events: MessageWriter<LifeLostEvent>,
 ) {
-    let Some(mut collision_events) = collision_events else {
-        return;
-    };
-
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
             let e1_is_ball = balls.get(*e1).is_ok();
@@ -739,6 +736,7 @@ fn respawn_executor(
                 LockedAxes::TRANSLATION_LOCKED_Y,
                 KinematicCharacterController::default(),
                 Ccd::enabled(),
+                ActiveEvents::COLLISION_EVENTS, // T032: required for merkaba collision detection
             ))
             .insert(PaddleGrowing {
                 timer: Timer::from_seconds(PADDLE_GROWTH_DURATION, TimerMode::Once),

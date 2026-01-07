@@ -157,7 +157,8 @@ impl LevelPresentation {
             // Other kinds don't have per-level overrides
             BaselineMaterialKind::Ball
             | BaselineMaterialKind::Paddle
-            | BaselineMaterialKind::Brick => None,
+            | BaselineMaterialKind::Brick
+            | BaselineMaterialKind::Merkaba => None,
         }
     }
 

@@ -120,17 +120,13 @@ pub fn effect_to_glow(effect_type: SizeEffectType) -> LinearRgba {
 
 /// System to detect ball-brick collisions and apply paddle size effects
 pub fn detect_powerup_brick_collisions(
-    collision_events: Option<MessageReader<CollisionEvent>>,
+    mut collision_events: EventReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
     bricks: Query<&BrickTypeId, With<Brick>>,
     mut paddles: Query<(Entity, &mut Transform), With<Paddle>>,
     mut commands: Commands,
     mut effect_applied_events: MessageWriter<PaddleSizeEffectApplied>,
 ) {
-    let Some(mut collision_events) = collision_events else {
-        return;
-    };
-
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
             // Determine which entity is the ball and which is the brick

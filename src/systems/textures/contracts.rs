@@ -221,6 +221,7 @@ fn object_class_label(class: ObjectClass) -> String {
     match class {
         ObjectClass::Ball => "Ball",
         ObjectClass::Brick => "Brick",
+        ObjectClass::Merkaba => "Merkaba",
     }
     .to_string()
 }
