@@ -8,8 +8,8 @@ use bevy::ecs::message::MessageReader;
 use bevy::prelude::*;
 use bevy::render::render_resource::PrimitiveTopology;
 use bevy_rapier3d::prelude::{
-    ActiveEvents, Ccd, Collider, CollisionEvent, GravityScale, LockedAxes, Restitution, RigidBody,
-    Velocity,
+    ActiveEvents, Ccd, Collider, CollisionEvent, CollisionGroups, GravityScale, Group, LockedAxes,
+    Restitution, RigidBody, SolverGroups, Velocity,
 };
 
 use crate::signals::{
@@ -284,8 +284,10 @@ fn process_pending_merkaba_spawns(
                 Velocity::linear(velocity),
                 GravityScale(0.0), // No gravity - horizontal movement only
                 LockedAxes::TRANSLATION_LOCKED_Y, // Constrain to XZ plane
-                Ccd::enabled(),    // Continuous collision detection
-                Restitution::coefficient(0.8), // Bouncy
+                SolverGroups::new(Group::GROUP_2, Group::ALL ^ Group::GROUP_1), // Don't collide with Paddle (Group 1)
+                CollisionGroups::new(Group::GROUP_2, Group::ALL), // Define explicit membership for KCC filtering
+                Ccd::enabled(),                                   // Continuous collision detection
+                Restitution::coefficient(0.8),                    // Bouncy
                 ActiveEvents::COLLISION_EVENTS, // T032: required for collision detection
             ))
             .with_children(|parent| {

@@ -1,5 +1,6 @@
 use crate::level_format::{normalize_matrix_simple, INDESTRUCTIBLE_BRICK};
 use crate::systems::level_switch::{LevelSwitchRequested, LevelSwitchState};
+use crate::systems::merkaba::Merkaba;
 use crate::systems::respawn::{RespawnEntityKind, RespawnHandle, SpawnPoints, SpawnTransform};
 #[cfg(feature = "texture_manifest")]
 use crate::systems::textures::{
@@ -7,7 +8,6 @@ use crate::systems::textures::{
     CanonicalMaterialHandles, FallbackRegistry, LevelPresentation, TextureManifest,
     TypeVariantRegistry,
 };
-#[cfg(feature = "texture_manifest")]
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use ron::de::from_str;
@@ -19,6 +19,16 @@ use crate::{
     PLANE_W,
 };
 use bevy_rapier3d::prelude::*;
+
+#[derive(SystemParam)]
+pub(crate) struct LevelContext<'w> {
+    pub meshes: ResMut<'w, Assets<Mesh>>,
+    pub materials: ResMut<'w, Assets<StandardMaterial>>,
+    pub spawn_points: ResMut<'w, SpawnPoints>,
+    pub gravity_cfg: ResMut<'w, GravityConfig>,
+    pub game_progress: ResMut<'w, GameProgress>,
+    pub level_advance: ResMut<'w, LevelAdvanceState>,
+}
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LevelAdvanceSystems;
@@ -478,7 +488,14 @@ fn spawn_level_entities_impl(
                                 CollidingEntities::default(),
                                 Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
                                 LockedAxes::TRANSLATION_LOCKED_Y,
-                                KinematicCharacterController::default(),
+                                KinematicCharacterController {
+                                    filter_groups: Some(CollisionGroups::new(
+                                        Group::GROUP_1,
+                                        Group::ALL ^ Group::GROUP_2,
+                                    )),
+                                    ..default()
+                                },
+                                SolverGroups::new(Group::GROUP_1, Group::ALL),
                                 Ccd::enabled(),
                                 Friction {
                                     coefficient: 2.0,
@@ -606,7 +623,14 @@ fn spawn_level_entities_impl(
                 CollidingEntities::default(),
                 Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
                 LockedAxes::TRANSLATION_LOCKED_Y,
-                KinematicCharacterController::default(),
+                KinematicCharacterController {
+                    filter_groups: Some(CollisionGroups::new(
+                        Group::GROUP_1,
+                        Group::ALL ^ Group::GROUP_2,
+                    )),
+                    ..default()
+                },
+                SolverGroups::new(Group::GROUP_1, Group::ALL),
                 Ccd::enabled(),
                 Friction {
                     coefficient: 2.0,
@@ -916,16 +940,12 @@ fn process_restart_requests(
     mut requests: bevy::ecs::message::MessageReader<RestartRequested>,
     current_level: Option<Res<CurrentLevel>>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut spawn_points: ResMut<SpawnPoints>,
-    mut gravity_cfg: ResMut<GravityConfig>,
+    mut ctx: LevelContext,
     mut rapier_config: Query<&mut RapierConfiguration>,
     bricks: Query<Entity, With<Brick>>,
     paddle_q: Query<Entity, With<Paddle>>,
     ball_q: Query<Entity, With<Ball>>,
-    mut game_progress: ResMut<GameProgress>,
-    mut level_advance: ResMut<LevelAdvanceState>,
+    merkaba_q: Query<Entity, With<Merkaba>>,
     lives_state: Option<ResMut<crate::systems::respawn::LivesState>>,
     #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
     brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
@@ -956,16 +976,17 @@ fn process_restart_requests(
     match force_load_level_from_path(
         &path,
         &mut commands,
-        &mut meshes,
-        &mut materials,
-        &mut spawn_points,
-        &mut gravity_cfg,
+        &mut ctx.meshes,
+        &mut ctx.materials,
+        &mut ctx.spawn_points,
+        &mut ctx.gravity_cfg,
         &mut rapier_config,
         &bricks,
         &paddle_q,
         &ball_q,
-        &mut game_progress,
-        &mut level_advance,
+        &merkaba_q,
+        &mut ctx.game_progress,
+        &mut ctx.level_advance,
         #[cfg(feature = "texture_manifest")]
         tex_res.canonical.as_deref(),
         #[cfg(feature = "texture_manifest")]
@@ -1017,23 +1038,19 @@ pub(crate) fn process_level_switch_requests(
     mut switch_state: ResMut<LevelSwitchState>,
     current_level: Option<Res<CurrentLevel>>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut spawn_points: ResMut<SpawnPoints>,
-    mut gravity_cfg: ResMut<GravityConfig>,
+    mut ctx: LevelContext,
     mut rapier_config: Query<&mut RapierConfiguration>,
     bricks: Query<Entity, With<Brick>>,
     paddle_q: Query<Entity, With<Paddle>>,
     ball_q: Query<Entity, With<Ball>>,
-    mut game_progress: ResMut<GameProgress>,
-    mut level_advance: ResMut<LevelAdvanceState>,
+    merkaba_q: Query<Entity, With<Merkaba>>,
     #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
     brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
     if requests.is_empty() {
         return;
     }
-    if switch_state.is_transition_pending() || level_advance.active {
+    if switch_state.is_transition_pending() || ctx.level_advance.active {
         info!(
             target: "level_switch",
             "Level transition already active; ignoring switch request"
@@ -1069,16 +1086,17 @@ pub(crate) fn process_level_switch_requests(
     match force_load_level_from_path(
         &target_slot.path,
         &mut commands,
-        &mut meshes,
-        &mut materials,
-        &mut spawn_points,
-        &mut gravity_cfg,
+        &mut ctx.meshes,
+        &mut ctx.materials,
+        &mut ctx.spawn_points,
+        &mut ctx.gravity_cfg,
         &mut rapier_config,
         &bricks,
         &paddle_q,
         &ball_q,
-        &mut game_progress,
-        &mut level_advance,
+        &merkaba_q,
+        &mut ctx.game_progress,
+        &mut ctx.level_advance,
         #[cfg(feature = "texture_manifest")]
         tex_res.canonical.as_deref(),
         #[cfg(feature = "texture_manifest")]
@@ -1228,7 +1246,14 @@ fn handle_level_advance_delay(
                 CollidingEntities::default(),
                 Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
                 LockedAxes::TRANSLATION_LOCKED_Y,
-                KinematicCharacterController::default(),
+                KinematicCharacterController {
+                    filter_groups: Some(CollisionGroups::new(
+                        Group::GROUP_1,
+                        Group::ALL ^ Group::GROUP_2,
+                    )),
+                    ..default()
+                },
+                SolverGroups::new(Group::GROUP_1, Group::ALL),
                 Ccd::enabled(),
             ))
             .insert(Friction {
@@ -1402,6 +1427,7 @@ fn force_load_level_from_path(
     bricks: &Query<Entity, With<Brick>>,
     paddle_q: &Query<Entity, With<Paddle>>,
     ball_q: &Query<Entity, With<Ball>>,
+    merkaba_q: &Query<Entity, With<Merkaba>>,
     game_progress: &mut ResMut<GameProgress>,
     level_advance: &mut ResMut<LevelAdvanceState>,
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
@@ -1414,6 +1440,7 @@ fn force_load_level_from_path(
         bricks,
         paddle_q,
         ball_q,
+        merkaba_q,
         spawn_points,
         game_progress,
         level_advance,
@@ -1536,6 +1563,7 @@ fn reset_level_state(
     bricks: &Query<Entity, With<Brick>>,
     paddle_q: &Query<Entity, With<Paddle>>,
     ball_q: &Query<Entity, With<Ball>>,
+    merkaba_q: &Query<Entity, With<Merkaba>>,
     spawn_points: &mut ResMut<SpawnPoints>,
     game_progress: &mut ResMut<GameProgress>,
     level_advance: &mut ResMut<LevelAdvanceState>,
@@ -1547,6 +1575,9 @@ fn reset_level_state(
         commands.entity(entity).despawn();
     }
     for entity in ball_q.iter() {
+        commands.entity(entity).despawn();
+    }
+    for entity in merkaba_q.iter() {
         commands.entity(entity).despawn();
     }
     spawn_points.paddle = None;

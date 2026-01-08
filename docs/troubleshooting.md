@@ -98,6 +98,17 @@ This shows collision shapes, velocities, and contact points.
 
 - Verify `BallPhysicsConfig`, `PaddlePhysicsConfig`, and `BrickPhysicsConfig` have valid values
 - Run `cargo run` and check for validation error messages at startup
+
+### Paddle pushes "Ghost" objects or Hazards
+
+If the paddle (Kinematic Character Controller) pushes objects that should be triggers/sensors (like Hazards), even if `SolverGroups` are set correctly:
+
+1. **Check `CollisionGroups`**: The dynamic object must have a specific Group (e.g., `Group::GROUP_2`) assigned via `CollisionGroups`.
+2. **Check Controller Filters**: The `KinematicCharacterController` has its own `filter_groups` property.
+   It must be explicitly configured to ignore the dynamic object's group (e.g., `filter_groups: Some(CollisionGroups::new(Group::GROUP_1, Group::ALL ^ Group::GROUP_2))`).
+
+Without this, the character controller's internal shape cast will detect the object as a default obstacle and resolve collision by pushing it.
+
 - Common issues: `restitution > 2.0`, negative friction, or infinite damping values
 
 **Collision event debugging:**

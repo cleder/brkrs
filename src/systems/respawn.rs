@@ -734,7 +734,14 @@ fn respawn_executor(
                 GravityScale(0.0),
                 Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
                 LockedAxes::TRANSLATION_LOCKED_Y,
-                KinematicCharacterController::default(),
+                KinematicCharacterController {
+                    filter_groups: Some(CollisionGroups::new(
+                        Group::GROUP_1,
+                        Group::ALL ^ Group::GROUP_2,
+                    )),
+                    ..default()
+                },
+                SolverGroups::new(Group::GROUP_1, Group::ALL),
                 Ccd::enabled(),
                 ActiveEvents::COLLISION_EVENTS, // T032: required for merkaba collision detection
             ))

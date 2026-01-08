@@ -146,7 +146,7 @@ pub struct BallHit {
 
 /// Stores configurable gravity values (normal gameplay gravity, etc.)
 #[derive(Resource)]
-struct GravityConfig {
+pub(crate) struct GravityConfig {
     normal: Vec3,
 }
 

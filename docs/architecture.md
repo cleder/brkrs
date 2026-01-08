@@ -89,6 +89,15 @@ Entity: Brick
 ├── Friction (from BrickPhysicsConfig.friction)
 ├── Brick (marker component)
 └── [Optional] Indestructible
+
+Entity: Merkaba (Hazard)
+├── Transform
+├── RigidBody (Dynamic)
+├── Collider (Cylinder)
+├── CollisionGroups (Group 2, ALL)
+├── SolverGroups (Group 2, ALL ^ Group 1)
+├── Velocity
+└── Merkaba (marker component)
 ```
 
 **Physics Configuration Resources:**
