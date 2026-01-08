@@ -40,7 +40,7 @@ fn respawn_plugin_initializes_required_resources() {
     app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
     app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
-    app.add_event::<CollisionEvent>();
+    app.add_message::<CollisionEvent>();
     app.add_plugins(RespawnPlugin);
 
     // Plugin should initialize LivesState and other resources
@@ -58,7 +58,7 @@ fn paddle_size_plugin_initializes() {
 
     let mut app = App::new();
     app.add_plugins(MinimalPlugins);
-    app.add_event::<CollisionEvent>();
+    app.add_message::<CollisionEvent>();
     app.add_plugins(PaddleSizePlugin);
 
     // Plugin should initialize without panic
@@ -69,7 +69,7 @@ fn paddle_size_plugin_initializes() {
 fn physics_config_resources_are_inserted_by_production_plugins() {
     let mut app = App::new();
     app.add_plugins(MinimalPlugins);
-    app.add_event::<CollisionEvent>();
+    app.add_message::<CollisionEvent>();
     app.add_plugins(brkrs::systems::respawn::RespawnPlugin);
     app.update();
     assert!(

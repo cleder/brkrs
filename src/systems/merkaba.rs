@@ -220,7 +220,7 @@ fn process_pending_merkaba_spawns(
     mut commands: Commands,
     mut angle_state: ResMut<MerkabaAngleState>,
     merkaba_meshes: Res<MerkabaMeshes>,
-    type_registry: Res<TypeVariantRegistry>,
+    type_registry: Option<Res<TypeVariantRegistry>>,
 ) {
     let delta = time.delta();
     let mut to_spawn = Vec::new();
@@ -254,60 +254,58 @@ fn process_pending_merkaba_spawns(
 
         let pos = spawn.position;
 
-        // Get pre-generated meshes
-        let primary_mesh = merkaba_meshes
-            .primary
-            .clone()
-            .expect("Merkaba meshes not initialized");
-        let secondary_mesh = merkaba_meshes
-            .secondary
-            .clone()
-            .expect("Merkaba meshes not initialized");
+        // Get pre-generated meshes (optional; tests may not require visuals)
+        let primary_mesh = merkaba_meshes.primary.clone();
+        let secondary_mesh = merkaba_meshes.secondary.clone();
 
-        // Get materials from texture registry (type_id 0 = blue, 1 = gold)
-        let mat_blue_handle = type_registry
-            .get(ObjectClass::Merkaba, 0)
-            .expect("Merkaba blue material should be registered");
-        let mat_gold_handle = type_registry
-            .get(ObjectClass::Merkaba, 1)
-            .expect("Merkaba gold material should be registered");
+        // Get materials from texture registry (optional; fall back to physics-only spawn)
+        let (mat_blue_handle, mat_gold_handle) = if let Some(reg) = type_registry.as_ref() {
+            (
+                reg.get(ObjectClass::Merkaba, 0),
+                reg.get(ObjectClass::Merkaba, 1),
+            )
+        } else {
+            (None, None)
+        };
 
-        commands
-            .spawn((
-                Merkaba,
-                Transform::from_translation(pos),
-                GlobalTransform::from_translation(pos),
-                Visibility::Visible,
-                // Physics components for bouncing and collision
-                RigidBody::Dynamic,
-                Collider::cylinder(1.0, 0.4),
-                Velocity::linear(velocity),
-                GravityScale(0.0), // No gravity - horizontal movement only
-                LockedAxes::TRANSLATION_LOCKED_Y, // Constrain to XZ plane
-                SolverGroups::new(Group::GROUP_2, Group::ALL ^ Group::GROUP_1), // Don't collide with Paddle (Group 1)
-                CollisionGroups::new(Group::GROUP_2, Group::ALL), // Define explicit membership for KCC filtering
-                Ccd::enabled(),                                   // Continuous collision detection
-                Restitution::coefficient(0.8),                    // Bouncy
-                ActiveEvents::COLLISION_EVENTS, // T032: required for collision detection
-            ))
-            .with_children(|parent| {
+        let mut entity_commands = commands.spawn((
+            Merkaba,
+            Transform::from_translation(pos),
+            GlobalTransform::from_translation(pos),
+            Visibility::Visible,
+            // Physics components for bouncing and collision
+            RigidBody::Dynamic,
+            Collider::cylinder(1.0, 0.4),
+            Velocity::linear(velocity),
+            GravityScale(0.0), // No gravity - horizontal movement only
+            LockedAxes::TRANSLATION_LOCKED_Y, // Constrain to XZ plane
+            SolverGroups::new(Group::GROUP_2, Group::ALL ^ Group::GROUP_1), // Don't collide with Paddle (Group 1)
+            CollisionGroups::new(Group::GROUP_2, Group::ALL), // Explicit group membership for KCC filtering
+            Ccd::enabled(),                                   // Continuous collision detection
+            Restitution::coefficient(0.8),                    // Bouncy
+            ActiveEvents::COLLISION_EVENTS, // T032: required for collision detection
+        ));
+
+        if let (Some(pm), Some(sm), Some(mat_blue), Some(mat_gold)) = (
+            primary_mesh,
+            secondary_mesh,
+            mat_blue_handle,
+            mat_gold_handle,
+        ) {
+            entity_commands.with_children(|parent| {
                 let scale = 0.75;
-
-                // 1. UPRIGHT TETRAHEDRON (Blue)
                 parent.spawn((
-                    Mesh3d(primary_mesh),
-                    MeshMaterial3d(mat_blue_handle.clone()),
+                    Mesh3d(pm),
+                    MeshMaterial3d(mat_blue.clone()),
                     Transform::from_scale(Vec3::splat(scale)),
                 ));
-
-                // 2. INVERTED TETRAHEDRON (Gold)
-                // Use the secondary mesh which is geometrically inverted with corrected winding
                 parent.spawn((
-                    Mesh3d(secondary_mesh),
-                    MeshMaterial3d(mat_gold_handle.clone()),
+                    Mesh3d(sm),
+                    MeshMaterial3d(mat_gold.clone()),
                     Transform::from_scale(Vec3::splat(scale)),
                 ));
             });
+        }
     }
 }
 
@@ -320,18 +318,20 @@ fn rotate_merkabas(mut query: Query<&mut Transform, With<Merkaba>>, time: Res<Ti
 
 /// T025: Enforce minimum horizontal (z-axis) speed of 3.0 u/s to prevent stalling
 fn enforce_min_horizontal_speed(mut query: Query<&mut Velocity, With<Merkaba>>) {
-    const MIN_Z_SPEED: f32 = 3.0;
+    const MIN_X_SPEED: f32 = 3.0;
 
     for mut velocity in query.iter_mut() {
-        let z = velocity.linvel.z;
-        if z.abs() < MIN_Z_SPEED {
-            let sign = if z >= 0.0 { 1.0 } else { -1.0 };
-            velocity.linvel.z = sign as f32 * MIN_Z_SPEED;
+        let x = velocity.linvel.x;
+        if x.abs() < MIN_X_SPEED {
+            let sign = if x >= 0.0 { 1.0 } else { -1.0 };
+            // If perfectly zero, default to positive direction
+            let sign = if x == 0.0 { 1.0 } else { sign };
+            velocity.linvel.x = sign * MIN_X_SPEED;
         }
 
-        // Keep vertical drift in check so motion stays primarily horizontal.
-        if velocity.linvel.x.abs() > velocity.linvel.z.abs() {
-            velocity.linvel.x = velocity.linvel.x.signum() * velocity.linvel.z.abs() * 0.5;
+        // Keep lateral drift (z) in check so motion stays primarily along X.
+        if velocity.linvel.z.abs() > velocity.linvel.x.abs() {
+            velocity.linvel.z = velocity.linvel.z.signum() * velocity.linvel.x.abs() * 0.5;
         }
     }
 }
@@ -393,7 +393,7 @@ fn detect_merkaba_wall_collision(
     }
 }
 
-/// T028: Detect and emit merkaba brick collision sounds
+/// T029: Detect and emit merkaba brick collision sounds (no destruction)
 fn detect_merkaba_brick_collision(
     collision_events: Option<MessageReader<CollisionEvent>>,
     merkabas: Query<Entity, With<Merkaba>>,
