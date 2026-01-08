@@ -82,7 +82,8 @@ All 16 functional requirements have:
 | VII. TDD-First | ✅ PASS | Tasks explicitly structured with RED/GREEN phases. T001-T048 include 9 acceptance scenarios per user story with explicit "Expected Result: TEST FAILS" commitments. |
 | VIII. Bevy 0.17 | ✅ PASS | Feature uses only sanctioned StandardMaterial fields (`metallic_roughness_texture`, `occlusion_texture`, `emissive_texture`, `depth_map`). No deprecated APIs or prohibited patterns (no panicking queries, no archetype thrashing, no Message/Event confusion). |
 
-**No violations identified.** Constitution re-check in plan.md (gates section) confirms PASS.
+**No violations identified.**
+Constitution re-check in plan.md (gates section) confirms PASS.
 
 ---
 

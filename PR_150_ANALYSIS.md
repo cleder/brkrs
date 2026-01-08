@@ -130,7 +130,8 @@ Test: Verify no parallax applied when depth_map is None
 | **VII. TDD-First** | ✅ PASS | T010-T013 verification tasks validate test coverage before merge |
 | **VIII. Bevy 0.17** | ✅ PASS | All fixes use sanctioned StandardMaterial fields; no deprecated APIs |
 
-**No violations identified.** All tasks follow constitutional principles.
+**No violations identified.**
+All tasks follow constitutional principles.
 
 ---
 
