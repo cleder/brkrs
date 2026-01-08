@@ -16,6 +16,7 @@ use brkrs::register_brick_collision_systems;
 use brkrs::signals::SpawnMerkabaMessage;
 use brkrs::systems::merkaba::Merkaba;
 use brkrs::systems::respawn::LivesState;
+use brkrs::systems::textures::{ObjectClass, TypeVariantRegistry};
 use brkrs::{Ball, Brick, BrickTypeId, CountsTowardsCompletion};
 
 const ROTOR_BRICK_INDEX: u8 = 36;
@@ -23,8 +24,23 @@ const ROTOR_BRICK_INDEX: u8 = 36;
 fn test_app() -> App {
     let mut app = App::new();
     app.add_plugins(MinimalPlugins)
-        .insert_resource(Assets::<Mesh>::default())
-        .insert_resource(Assets::<StandardMaterial>::default())
+        .init_resource::<Assets<Mesh>>()
+        .init_resource::<Assets<StandardMaterial>>();
+
+    // Config registry
+    let mut registry = TypeVariantRegistry::default();
+    let h0 = app
+        .world_mut()
+        .resource_mut::<Assets<StandardMaterial>>()
+        .add(StandardMaterial::default());
+    let h1 = app
+        .world_mut()
+        .resource_mut::<Assets<StandardMaterial>>()
+        .add(StandardMaterial::default());
+    registry.insert_for_tests(ObjectClass::Merkaba, 0, h0);
+    registry.insert_for_tests(ObjectClass::Merkaba, 1, h1);
+
+    app.insert_resource(registry)
         .insert_resource(LivesState {
             lives_remaining: 3,
             on_last_life: false,

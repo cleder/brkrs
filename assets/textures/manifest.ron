@@ -983,7 +983,7 @@
         ),
         (
             id: "merkaba/blue",
-            albedo_path: "merkaba/merkaba_blue.png",
+            albedo_path: "merkaba/default_bronze_block.png",
             normal_path: None,
             roughness: 0.1,
             metallic: 0.8,
@@ -993,7 +993,7 @@
         ),
         (
             id: "merkaba/gold",
-            albedo_path: "merkaba/merkaba_gold.png",
+            albedo_path: "merkaba/default_gold_block.png",
             normal_path: None,
             roughness: 0.1,
             metallic: 0.8,

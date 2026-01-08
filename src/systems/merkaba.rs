@@ -3,8 +3,10 @@
 //! Provides marker components and mesh builder stubs for the merkaba hazard.
 //! Full behavior (spawn, physics, audio) is implemented in later phases.
 
+use bevy::asset::RenderAssetUsages;
 use bevy::ecs::message::MessageReader;
 use bevy::prelude::*;
+use bevy::render::render_resource::PrimitiveTopology;
 use bevy_rapier3d::prelude::{
     ActiveEvents, Ccd, Collider, CollisionEvent, GravityScale, LockedAxes, Restitution, RigidBody,
     Velocity,
@@ -13,7 +15,9 @@ use bevy_rapier3d::prelude::{
 use crate::signals::{
     MerkabaBrickCollision, MerkabaPaddleCollision, MerkabaWallCollision, SpawnMerkabaMessage,
 };
-use crate::systems::respawn::LivesState;
+use crate::systems::respawn::{
+    LifeLossCause, LifeLostEvent, LivesState, RespawnHandle, SpawnPoints,
+};
 use crate::systems::textures::{ObjectClass, TypeVariantRegistry};
 use crate::{Ball, Border, Brick, LowerGoal, Paddle};
 
@@ -61,6 +65,96 @@ struct MerkabaAngleState {
     flip: bool,
 }
 
+fn setup_merkaba_meshes(
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut merkaba_meshes: ResMut<MerkabaMeshes>,
+) {
+    if merkaba_meshes.primary.is_some() {
+        return;
+    }
+
+    // Standard Tetrahedron (Point Up)
+    // Vertices for a regular tetrahedron centered at origin, but offset so visual center is nice.
+    // We use a regular tetrahedron inscribed in the unit sphere for size.
+    // V0 (Top): (0, 1, 0)
+    // Base vertices at y = -1/3
+    let v0 = Vec3::new(0.0, 1.0, 0.0);
+    let v1 = Vec3::new(0.0, -0.33333334, 0.94280905);
+    let v2 = Vec3::new(-0.8164966, -0.33333334, -0.47140452);
+    let v3 = Vec3::new(0.8164966, -0.33333334, -0.47140452);
+
+    // Faces (CCW winding for outward normals):
+    // 1: 0-1-3 (Front Right)
+    // 2: 0-3-2 (Back)
+    // 3: 0-2-1 (Front Left)
+    // 4: 1-2-3 (Base, looking from bottom)
+
+    // Split vertices for flat shading (unique normals per face)
+    let positions = vec![
+        // Face 1
+        v0, v1, v3, // Face 2
+        v0, v3, v2, // Face 3
+        v0, v2, v1, // Face 4
+        v1, v2, v3,
+    ];
+
+    // Generic UV mapping for each triangular face
+    let uv_top = Vec2::new(0.5, 1.0);
+    let uv_left = Vec2::new(0.0, 0.0);
+    let uv_right = Vec2::new(1.0, 0.0);
+
+    let uvs = vec![
+        // Face 1
+        uv_top, uv_left, uv_right, // Face 2
+        uv_top, uv_left, uv_right, // Face 3
+        uv_top, uv_left, uv_right, // Face 4
+        uv_top, uv_left, uv_right,
+    ];
+
+    let mut mesh1 = Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    );
+    mesh1.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions.clone());
+    mesh1.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs.clone());
+    // Indices not used to allow compute_flat_normals to work
+    mesh1.compute_flat_normals();
+
+    merkaba_meshes.primary = Some(meshes.add(mesh1));
+
+    // Secondary Mesh (Inverted)
+    // 1. Invert positions
+    let inverted_positions: Vec<Vec3> = positions.iter().map(|p| -*p).collect();
+
+    // 2. Reorder for CCW winding (swap 2nd and 3rd of each triangle)
+    // This ensures outward normals for the inverted shape
+    let mut positions2 = Vec::new();
+    let mut uvs2 = Vec::new();
+
+    for (pos_chunk, uv_chunk) in inverted_positions.chunks(3).zip(uvs.chunks(3)) {
+        if pos_chunk.len() == 3 {
+            positions2.push(pos_chunk[0]);
+            positions2.push(pos_chunk[2]); // Swap
+            positions2.push(pos_chunk[1]); // Swap
+
+            // Also swap UVs to match vertex reordering
+            uvs2.push(uv_chunk[0]);
+            uvs2.push(uv_chunk[2]);
+            uvs2.push(uv_chunk[1]);
+        }
+    }
+
+    let mut mesh2 = Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    );
+    mesh2.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions2);
+    mesh2.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs2);
+    mesh2.compute_flat_normals();
+
+    merkaba_meshes.secondary = Some(meshes.add(mesh2));
+}
+
 /// Placeholder mesh builder for dual tetrahedron children.
 /// This stub intentionally does nothing yet; it will be filled in during US1 implementation.
 pub fn build_dual_tetrahedron_children(
@@ -84,6 +178,7 @@ impl Plugin for MerkabaPlugin {
                 Update,
                 (MerkabaSpawnFlow::Queue, MerkabaSpawnFlow::Process).chain(),
             )
+            .add_systems(Startup, setup_merkaba_meshes)
             .add_systems(Update, queue_merkaba_spawns.in_set(MerkabaSpawnFlow::Queue))
             .add_systems(
                 Update,
@@ -124,7 +219,7 @@ fn process_pending_merkaba_spawns(
     mut pending: ResMut<PendingMerkabaSpawns>,
     mut commands: Commands,
     mut angle_state: ResMut<MerkabaAngleState>,
-    mut meshes: ResMut<Assets<Mesh>>,
+    merkaba_meshes: Res<MerkabaMeshes>,
     type_registry: Res<TypeVariantRegistry>,
 ) {
     let delta = time.delta();
@@ -151,16 +246,23 @@ fn process_pending_merkaba_spawns(
         let angle_deg = angle_max * 0.5 * sign;
         let angle_rad = angle_deg.to_radians();
 
-        // Prioritize horizontal (x-axis) motion with a small z variance.
+        // Prioritize horizontal (Z-axis, screen horizontal) motion with a small X (screen vertical) variance.
         let base_speed = spawn.min_speed_y.max(0.1);
-        let vx = base_speed;
-        let vz = angle_rad.tan() * base_speed;
+        let vz = base_speed;
+        let vx = angle_rad.tan() * base_speed;
         let velocity = Vec3::new(vx, 0.0, vz);
 
         let pos = spawn.position;
 
-        // Create merkaba mesh: two tetrahedrons (upright and inverted)
-        let tetra_mesh = meshes.add(Tetrahedron::default());
+        // Get pre-generated meshes
+        let primary_mesh = merkaba_meshes
+            .primary
+            .clone()
+            .expect("Merkaba meshes not initialized");
+        let secondary_mesh = merkaba_meshes
+            .secondary
+            .clone()
+            .expect("Merkaba meshes not initialized");
 
         // Get materials from texture registry (type_id 0 = blue, 1 = gold)
         let mat_blue_handle = type_registry
@@ -170,7 +272,7 @@ fn process_pending_merkaba_spawns(
             .get(ObjectClass::Merkaba, 1)
             .expect("Merkaba gold material should be registered");
 
-        let merkaba_entity = commands
+        commands
             .spawn((
                 Merkaba,
                 Transform::from_translation(pos),
@@ -178,7 +280,7 @@ fn process_pending_merkaba_spawns(
                 Visibility::Visible,
                 // Physics components for bouncing and collision
                 RigidBody::Dynamic,
-                Collider::ball(0.8),
+                Collider::cylinder(1.0, 0.4),
                 Velocity::linear(velocity),
                 GravityScale(0.0), // No gravity - horizontal movement only
                 LockedAxes::TRANSLATION_LOCKED_Y, // Constrain to XZ plane
@@ -187,54 +289,47 @@ fn process_pending_merkaba_spawns(
                 ActiveEvents::COLLISION_EVENTS, // T032: required for collision detection
             ))
             .with_children(|parent| {
-                let scale = 1.5;
+                let scale = 0.75;
 
                 // 1. UPRIGHT TETRAHEDRON (Blue)
                 parent.spawn((
-                    Mesh3d(tetra_mesh.clone()),
+                    Mesh3d(primary_mesh),
                     MeshMaterial3d(mat_blue_handle.clone()),
                     Transform::from_scale(Vec3::splat(scale)),
                 ));
 
                 // 2. INVERTED TETRAHEDRON (Gold)
-                // We use NEGATIVE scale. This performs a "Point Inversion",
-                // creating the exact dual shape needed for the star.
+                // Use the secondary mesh which is geometrically inverted with corrected winding
                 parent.spawn((
-                    Mesh3d(tetra_mesh),
+                    Mesh3d(secondary_mesh),
                     MeshMaterial3d(mat_gold_handle.clone()),
-                    Transform::from_scale(Vec3::splat(-scale)), // Negative Scale!
+                    Transform::from_scale(Vec3::splat(scale)),
                 ));
-            })
-            .id();
-
-        commands.entity(merkaba_entity).with_children(|parent| {
-            parent.spawn((Transform::default(), GlobalTransform::default()));
-            parent.spawn((Transform::default(), GlobalTransform::default()));
-        });
+            });
     }
 }
 
 fn rotate_merkabas(mut query: Query<&mut Transform, With<Merkaba>>, time: Res<Time>) {
     let angle = time.delta_secs() * 2.5;
     for mut transform in query.iter_mut() {
-        transform.rotate_local_z(angle);
+        transform.rotate_local_y(angle);
     }
 }
 
-/// T025: Enforce minimum horizontal (x-axis) speed of 3.0 u/s to prevent stalling
+/// T025: Enforce minimum horizontal (z-axis) speed of 3.0 u/s to prevent stalling
 fn enforce_min_horizontal_speed(mut query: Query<&mut Velocity, With<Merkaba>>) {
-    const MIN_X_SPEED: f32 = 3.0;
+    const MIN_Z_SPEED: f32 = 3.0;
 
     for mut velocity in query.iter_mut() {
-        let x = velocity.linvel.x;
-        if x.abs() < MIN_X_SPEED {
-            let sign = if x >= 0.0 { 1.0 } else { -1.0 };
-            velocity.linvel.x = sign as f32 * MIN_X_SPEED;
+        let z = velocity.linvel.z;
+        if z.abs() < MIN_Z_SPEED {
+            let sign = if z >= 0.0 { 1.0 } else { -1.0 };
+            velocity.linvel.z = sign as f32 * MIN_Z_SPEED;
         }
 
         // Keep vertical drift in check so motion stays primarily horizontal.
-        if velocity.linvel.z.abs() > velocity.linvel.x.abs() {
-            velocity.linvel.z = velocity.linvel.z.signum() * velocity.linvel.x.abs() * 0.5;
+        if velocity.linvel.x.abs() > velocity.linvel.z.abs() {
+            velocity.linvel.x = velocity.linvel.x.signum() * velocity.linvel.z.abs() * 0.5;
         }
     }
 }
@@ -391,12 +486,30 @@ fn despawn_balls_and_merkabas_on_life_loss(
     *local_state = Some(current_lives);
 }
 /// T032: Handle life loss on merkaba-paddle collision (Observer)
+/// Triggers standard life loss flow via LifeLostEvent to ensure visual feedback/respawn sequence runs.
 fn on_merkaba_paddle_collision_life_loss(
     _trigger: On<MerkabaPaddleCollision>,
-    mut lives_state: ResMut<LivesState>,
+    mut life_lost_writer: MessageWriter<LifeLostEvent>,
+    balls: Query<Entity, With<Ball>>,
+    ball_handles: Query<&RespawnHandle, With<Ball>>,
+    spawn_points: Res<SpawnPoints>,
 ) {
-    if lives_state.lives_remaining > 0 {
-        lives_state.lives_remaining -= 1;
-        lives_state.on_last_life = lives_state.lives_remaining == 1;
+    // Pick a ball to attribute the loss to (needed for LifeLostEvent contract).
+    // In multiball, any ball will do as they all get cleared on life loss.
+    // If no ball exists, we can't trigger the standard respawn flow easily,
+    // but that state shouldn't happen during active gameplay.
+    if let Some(ball_entity) = balls.iter().next() {
+        let ball_spawn = ball_handles
+            .get(ball_entity)
+            .map(|h| h.spawn)
+            .unwrap_or_else(|_| spawn_points.ball_spawn());
+
+        life_lost_writer.write(LifeLostEvent {
+            ball: ball_entity,
+            cause: LifeLossCause::MerkabaCollision,
+            ball_spawn,
+        });
+    } else {
+        warn!("Merkaba collision with paddle, but no balls found to trigger LifeLostEvent");
     }
 }
