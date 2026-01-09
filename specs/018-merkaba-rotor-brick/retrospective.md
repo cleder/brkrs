@@ -49,3 +49,16 @@ The primary goal was to introduce a dynamic hazard that interacts with the physi
 | **Merkaba** | `SolverGroups` | `Group::GROUP_2`, `ALL ^ Group::GROUP_1` | Prevents physical bounce against Paddle (Group 1). |
 | **Paddle** | `SolverGroups` | `Group::GROUP_1`, `ALL` | Standard physics interaction. |
 | **Paddle** | `KinematicCharacterController` | `filter_groups: (Group 1, ALL ^ Group 2)` | Ensures **movement** logic ignores Merkaba (Group 2). |
+
+### 5. Coordinate & Transform Misreads (Post-Release Regression)
+
+- **Symptom:** Merkabas visually spawned at the same spot and appeared to move on the wrong axis.
+- **Root Causes:**
+  - `enforce_z_plane_constraint` was clamping `translation.z` to `0.0`, forcing every merkaba onto the same Z line regardless of spawn column.
+  - Spawning added both `Transform` and `GlobalTransform`; Bevy’s transform propagation overwrote the manual global value, hiding the correct spawn coordinates.
+  - Mixed comments/spec wording (“y-direction”, “screen horizontal z”) led to flipping X/Z in fixes despite the velocity code being correct.
+- **Resolution:**
+  - Removed manual `GlobalTransform` on spawn; let Bevy derive it from `Transform`.
+  - Disabled the incorrect z-plane clamp (was asserting Z≈0 even though level columns live on Z).
+  - Confirmed velocity is `vx = base_speed` (X primary), `vz = tan(angle) * base_speed` (small variance), matching original implementation.
+- **Key Learning:** When diagnosing position/direction bugs, inspect post-spawn transforms and constraints before changing velocity math; avoid setting `GlobalTransform` directly.

@@ -89,6 +89,18 @@ Use for testing gameplay feel.
 BK_LEVEL=997 cargo run --release
 ```
 
+### Level matrix → world/screen coordinates
+
+- Grid size: `GRID_HEIGHT = 20`, `GRID_WIDTH = 20`; plane: `PLANE_H = 30.0` (X span), `PLANE_W = 40.0` (Z span); cell sizes: `CELL_HEIGHT = 1.5` (X), `CELL_WIDTH = 2.0` (Z).
+- Mapping from RON matrix indices `(row, col)` to world space:
+  - `x = -PLANE_H / 2.0 + (row + 0.5) * CELL_HEIGHT`
+  - `z =  PLANE_W / 2.0 - (col + 0.5) * CELL_WIDTH`
+  - `y = 2.0` (brick/merkaba height plane)
+- Camera is top-down at `(0, 37, 0)` looking at the origin: **X = left/right on screen**, **Z = up/down on screen**.
+  Keep this in mind when interpreting “horizontal” directions in specs/tests.
+- Do not set `GlobalTransform` manually on spawn; set `Transform` only and let Bevy propagate.
+  Avoid clamping Z for grid entities—columns legitimately vary along Z.
+
 ## Plugin Architecture
 
 Brkrs uses a **plugin-based architecture** to organize systems and features, following Bevy's best practices for modularity and reusability.

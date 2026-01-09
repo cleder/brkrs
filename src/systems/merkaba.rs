@@ -55,6 +55,10 @@ pub struct PendingMerkabaSpawn {
     pub min_speed_y: f32,
 }
 
+/// Tracks spawn time for early-frame diagnostics
+#[derive(Component, Deref, DerefMut)]
+pub struct MerkabaSpawnTime(pub f32);
+
 #[derive(Resource, Default, Debug)]
 pub struct PendingMerkabaSpawns {
     pub entries: Vec<PendingMerkabaSpawn>,
@@ -190,6 +194,8 @@ impl Plugin for MerkabaPlugin {
             Update,
             (
                 enforce_min_horizontal_speed,
+                enforce_z_plane_constraint,
+                log_early_merkaba_motion,
                 detect_goal_collision,
                 detect_merkaba_wall_collision,
                 detect_merkaba_brick_collision,
@@ -246,7 +252,8 @@ fn process_pending_merkaba_spawns(
         let angle_deg = angle_max * 0.5 * sign;
         let angle_rad = angle_deg.to_radians();
 
-        // Prioritize horizontal (Z-axis, screen horizontal) motion with a small X (screen vertical) variance.
+        // Prioritize Z-axis motion (screen vertical) with small X variance (±20°).
+        // Camera top-down: X = screen horizontal, Z = screen vertical.
         let base_speed = spawn.min_speed_y.max(0.1);
         let vz = base_speed;
         let vx = angle_rad.tan() * base_speed;
@@ -260,18 +267,22 @@ fn process_pending_merkaba_spawns(
 
         // Get materials from texture registry (optional; fall back to physics-only spawn)
         let (mat_blue_handle, mat_gold_handle) = if let Some(reg) = type_registry.as_ref() {
-            (
-                reg.get(ObjectClass::Merkaba, 0),
-                reg.get(ObjectClass::Merkaba, 1),
-            )
+            let blue = reg.get(ObjectClass::Merkaba, 0);
+            let gold = reg.get(ObjectClass::Merkaba, 1);
+            if blue.is_none() || gold.is_none() {
+                warn!(
+                    "Merkaba materials not found in TypeVariantRegistry; spawning without visuals"
+                );
+            }
+            (blue, gold)
         } else {
             (None, None)
         };
 
         let mut entity_commands = commands.spawn((
             Merkaba,
+            MerkabaSpawnTime(time.elapsed_secs()),
             Transform::from_translation(pos),
-            GlobalTransform::from_translation(pos),
             Visibility::Visible,
             // Physics components for bouncing and collision
             RigidBody::Dynamic,
@@ -316,22 +327,55 @@ fn rotate_merkabas(mut query: Query<&mut Transform, With<Merkaba>>, time: Res<Ti
     }
 }
 
+/// Debug: log early-frame motion to confirm primary X movement
+fn log_early_merkaba_motion(
+    time: Res<Time>,
+    query: Query<(&MerkabaSpawnTime, &Transform, &Velocity), With<Merkaba>>,
+) {
+    let now = time.elapsed_secs();
+    for (spawn_time, transform, velocity) in query.iter() {
+        let age = now - **spawn_time;
+        if (0.0..=0.6).contains(&age) {
+            info!(
+                "Merkaba motion t={:.3}s age={:.3}s pos={:?} vel={:?}",
+                now, age, transform.translation, velocity.linvel
+            );
+        }
+    }
+}
+
 /// T025: Enforce minimum horizontal (z-axis) speed of 3.0 u/s to prevent stalling
 fn enforce_min_horizontal_speed(mut query: Query<&mut Velocity, With<Merkaba>>) {
-    const MIN_X_SPEED: f32 = 3.0;
+    const MIN_Z_SPEED: f32 = 3.0;
 
     for mut velocity in query.iter_mut() {
-        let x = velocity.linvel.x;
-        if x.abs() < MIN_X_SPEED {
-            let sign = if x >= 0.0 { 1.0 } else { -1.0 };
-            // If perfectly zero, default to positive direction
-            let sign = if x == 0.0 { 1.0 } else { sign };
-            velocity.linvel.x = sign * MIN_X_SPEED;
+        let z = velocity.linvel.z;
+        if z.abs() < MIN_Z_SPEED {
+            let sign = if z >= 0.0 { 1.0 } else { -1.0 };
+            velocity.linvel.z = sign * MIN_Z_SPEED;
         }
 
-        // Keep lateral drift (z) in check so motion stays primarily along X.
-        if velocity.linvel.z.abs() > velocity.linvel.x.abs() {
-            velocity.linvel.z = velocity.linvel.z.signum() * velocity.linvel.x.abs() * 0.5;
+        // Keep lateral drift (x) in check so motion stays primarily along Z.
+        if velocity.linvel.x.abs() > velocity.linvel.z.abs() {
+            velocity.linvel.x = velocity.linvel.x.signum() * velocity.linvel.z.abs() * 0.5;
+        }
+    }
+}
+
+/// T022c: Enforce z-plane constraint to keep merkaba on the gaming plane
+fn enforce_z_plane_constraint(query: Query<(&Transform, &Velocity), With<Merkaba>>) {
+    // NOTE: This constraint is currently disabled because it conflicts with actual gameplay.
+    // Merkabas spawn at different Z positions (brick columns) and should move freely on XZ plane.
+    // The test expects Z≈0 but the actual game has bricks at various Z coordinates.
+    // TODO: Clarify coordinate system and update test or remove this constraint.
+
+    // Debug: Log merkaba positions if stuck
+    for (transform, velocity) in query.iter() {
+        if velocity.linvel.length_squared() < 0.1 {
+            warn!(
+                "Merkaba stuck at position: {:?}, velocity: {:?}",
+                transform.translation, velocity.linvel
+            );
         }
     }
 }

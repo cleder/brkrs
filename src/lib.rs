@@ -654,7 +654,7 @@ pub fn mark_brick_on_ball_collision(
                                 destroyed_by: None,
                             });
                         }
-                        commands.entity(entity).despawn();
+                        commands.entity(entity).try_despawn();
                     } else {
                         commands.entity(entity).insert(MarkedForDespawn);
                     }

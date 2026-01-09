@@ -35,7 +35,7 @@
 
 ## Validation Rules
 
-- Min y-speed: After collisions and at intervals, enforce `abs(velocity.y) >= 3.0`.
+- Min x-speed: After collisions and at intervals, enforce `abs(velocity.x) >= 3.0`.
 - Plane constraint: `transform.translation.z` remains within a narrow band (e.g., `≈ 0`).
 - Spawn location: Merkaba spawns at precise position of destroyed rotor brick.
 - Loop lifecycle: Helicopter loop starts when first merkaba spawns; stops when last despawns.

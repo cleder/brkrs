@@ -87,7 +87,7 @@ fn t012_initial_velocity_angle_variance_within_20_degrees() {
 
     let mut saw_nonzero_variance = false;
     for (velocity, _transform) in merkabas.iter() {
-        let angle_rad = velocity.linvel.y.atan2(velocity.linvel.x);
+        let angle_rad = velocity.linvel.z.atan2(velocity.linvel.x);
         let angle_deg = angle_rad.to_degrees();
         let variance = angle_deg.abs();
         if variance > 0.0 {

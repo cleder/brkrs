@@ -4,16 +4,16 @@
 The delay in spawning is deliberate and not a violation of the constitution.
 `experiments/merkaba/src/main.rs` contains an example of how to create a merkaba.
 It stays in the gaming plane. it interacts with other entities (bounce off bricks and walls), despawns on contact with the goal.
-It initially rotates around the z - axis, the initial speed is horizontal (y) +- 20 degrees.
-It must maintain a minimum speed in y direction.
-When it comes into contact with the player paddle, the live is lost, all balls are despawned."
+It initially rotates around the y-axis, the initial speed is horizontal (along the x-axis on the XZ plane) ±20 degrees.
+It must maintain a minimum speed in the x direction.
+When it comes into contact with the player paddle, the life is lost, all balls are despawned."
 
 ## Clarifications
 
 ### Session 2026-01-07
 
 - Q: What specific spawn delay should be used for merkaba spawning after rotor brick is hit? → A: 0.5 seconds
-- Q: What minimum horizontal (y-direction) speed should the merkaba maintain? → A: 3.0 units/second
+- Q: What minimum horizontal (x-direction) speed should the merkaba maintain? → A: 3.0 units/second
 - Q: Where should the merkaba spawn? → A: At the brick's position when destroyed
 - Q: How should the rotor brick be visually distinguished? → A: Unique texture pattern
 - Q: How should the required audio assets be sourced? → A: Use placeholder/synthesized sounds
@@ -42,7 +42,7 @@ Without this, the feature has no value.
 1. **Given** a level contains a brick with index 36, **When** the ball collides with this brick, **Then** a message is emitted to spawn a merkaba
 2. **Given** a spawn merkaba message is emitted, **When** the spawn delay completes, **Then** a merkaba entity is created at the brick's position with dual tetrahedron visual mesh
 3. **Given** a merkaba has spawned, **When** time passes, **Then** the merkaba rotates continuously around the z-axis
-4. **Given** a merkaba has spawned, **When** it initializes, **Then** its initial velocity is horizontal (in the y direction) with a random angle variation of ±20 degrees
+4. **Given** a merkaba has spawned, **When** it initializes, **Then** its initial velocity is horizontal (in the x direction on the XZ plane) with a random angle variation of ±20 degrees
 
 **Event System Choice**: This feature uses asynchronous message-based communication for brick-hit-to-merkaba-spawn flow because the spawn has a deliberate delay (not immediate cause-and-effect).
 The delayed spawning behavior requires timer-based handling between event emission and entity creation.
@@ -64,7 +64,7 @@ This is secondary to basic spawning but essential for gameplay value.
 1. **Given** a merkaba is moving, **When** it collides with a wall, **Then** it bounces off with appropriate physics response and a distinct collision sound is emitted
 2. **Given** a merkaba is moving, **When** it collides with a brick, **Then** it bounces off the brick (brick is not destroyed) and a distinct collision sound is emitted
 3. **Given** a merkaba is moving, **When** it reaches the goal area boundary, **Then** the merkaba entity despawns
-4. **Given** a merkaba is moving in the y direction, **When** its speed would fall below minimum threshold, **Then** a minimum speed is maintained to prevent stalling
+4. **Given** a merkaba is moving in the x direction, **When** its speed would fall below minimum threshold, **Then** a minimum speed is maintained to prevent stalling
 5. **Given** a merkaba exists, **When** rendering, **Then** it remains constrained to the gaming plane (z-axis position fixed or minimal variation)
 6. **Given** at least one merkaba exists in the game, **When** gameplay continues, **Then** a helicopter blade-like looping background sound plays continuously
 7. **Given** the helicopter blade sound is playing and all merkabas despawn, **When** the last merkaba is removed, **Then** the helicopter blade sound stops
@@ -99,7 +99,7 @@ While important for game balance, the feature is still valuable without this if 
 - What happens if a merkaba spawns at a brick location already occupied by another entity? (Should spawn at the brick's last position with collision resolution handled by physics)
 - What happens when a merkaba bounces off a multi-hit brick? (Brick should not take damage from merkaba collision)
 - What happens if the goal area is blocked when a merkaba tries to despawn there? (Despawn should occur regardless of physical obstacles)
-- How does minimum y-speed maintenance work when bouncing off angled surfaces? (Speed boost should be applied in the y-direction component specifically)
+- How does minimum x-speed maintenance work when bouncing off angled surfaces? (Speed boost should be applied in the x-direction component specifically)
 - What happens to queued merkaba spawn timers when the level changes? (All pending spawns should be cancelled)
 - What happens to the helicopter blade sound when the game is paused? (Sound should pause with game state)
 - What happens if multiple merkabas collide with surfaces simultaneously? (Each collision produces its own sound, potentially overlapping)
@@ -113,9 +113,9 @@ While important for game balance, the feature is still valuable without this if 
 - **FR-002**: System MUST emit a spawn merkaba message when a ball collides with a brick with index 36
 - **FR-003**: System MUST implement a 0.5 second delay between message emission and actual merkaba spawning
 - **FR-004**: System MUST spawn a merkaba entity with dual tetrahedron visual geometry (one upright, one inverted)
-- **FR-005**: System MUST apply continuous rotation to merkaba around the z-axis at a measurable rate of 180 degrees per second (±10% tolerance)
-- **FR-006**: System MUST initialize merkaba velocity in the horizontal (y) direction with random angle variation of ±20 degrees from pure horizontal
-- **FR-007**: System MUST maintain a minimum speed threshold of 3.0 units/second for merkaba movement in the y direction
+- **FR-005**: System MUST apply continuous rotation to merkaba around the y-axis at a measurable rate of 180 degrees per second (±10% tolerance)
+- **FR-006**: System MUST initialize merkaba velocity in the horizontal (x) direction on the XZ plane with random angle variation of ±20 degrees from pure horizontal
+- **FR-007**: System MUST maintain a minimum speed threshold of 3.0 units/second for merkaba movement in the x direction
 - **FR-008**: System MUST constrain merkaba movement to the gaming plane (z = 0 ± 0.01 units tolerance; enforce via collision or clamping if drift exceeds tolerance)
 - **FR-009**: System MUST make merkaba bounce off walls with appropriate physics response
 - **FR-010**: System MUST make merkaba bounce off bricks without destroying them

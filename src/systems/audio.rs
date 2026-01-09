@@ -541,8 +541,10 @@ fn load_audio_assets(
     // Ensure merkaba audio handles exist even if the manifest is missing entries.
     // This reuses the placeholder assets added in Phase 1.
     let insert_placeholder = |assets: &mut AudioAssets, ty: SoundType, path: &'static str| {
-        let handle: Handle<AudioSource> = asset_server.load(path);
-        assets.sounds.insert(ty, handle);
+        assets.sounds.entry(ty).or_insert_with(|| {
+            let handle: Handle<AudioSource> = asset_server.load(path);
+            handle
+        });
     };
 
     insert_placeholder(
