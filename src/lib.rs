@@ -727,7 +727,7 @@ pub fn register_brick_collision_systems(app: &mut App) {
         Update,
         (mark_brick_on_ball_collision, despawn_marked_entities)
             .chain()
-            .before(crate::systems::merkaba::MerkabaSpawnFlow::Queue),
+            .before(crate::systems::merkaba::MerkabaSpawnFlowSystems::Queue),
     );
 }
 

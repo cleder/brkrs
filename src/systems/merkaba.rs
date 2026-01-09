@@ -34,7 +34,7 @@ pub enum MerkabaSystems {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemSet)]
-pub enum MerkabaSpawnFlow {
+pub enum MerkabaSpawnFlowSystems {
     Queue,
     Process,
 }
@@ -180,13 +180,20 @@ impl Plugin for MerkabaPlugin {
             .init_resource::<MerkabaAngleState>()
             .configure_sets(
                 Update,
-                (MerkabaSpawnFlow::Queue, MerkabaSpawnFlow::Process).chain(),
+                (
+                    MerkabaSpawnFlowSystems::Queue,
+                    MerkabaSpawnFlowSystems::Process,
+                )
+                    .chain(),
             )
             .add_systems(Startup, setup_merkaba_meshes)
-            .add_systems(Update, queue_merkaba_spawns.in_set(MerkabaSpawnFlow::Queue))
             .add_systems(
                 Update,
-                process_pending_merkaba_spawns.in_set(MerkabaSpawnFlow::Process),
+                queue_merkaba_spawns.in_set(MerkabaSpawnFlowSystems::Queue),
+            )
+            .add_systems(
+                Update,
+                process_pending_merkaba_spawns.in_set(MerkabaSpawnFlowSystems::Process),
             );
         app.add_observer(on_merkaba_paddle_collision_life_loss);
         app.add_systems(PostUpdate, rotate_merkabas);
