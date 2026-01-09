@@ -160,42 +160,43 @@ fn t022b_multiple_merkabas_coexist_60fps_baseline() {
     );
 }
 
-/// T021: Min horizontal (x) speed clamp ≥ 3.0 u/s enforced.
+/// T021: Min forward (z) speed clamp ≥ 3.0 u/s enforced.
 ///
-/// Merkaba MUST maintain a minimum horizontal speed threshold of 3.0 units/second
-/// for movement in the x direction. If x-velocity drops below this threshold,
+/// Merkaba MUST maintain a minimum forward speed threshold of 3.0 units/second
+/// for movement in the z direction. If z-velocity drops below this threshold,
 /// it MUST be clamped to ±3.0 u/s to prevent the merkaba from appearing stuck.
+/// Additionally, lateral drift (x-direction) is capped to half the forward speed.
 #[test]
-fn t021_minimum_x_speed_clamped_to_3_0() {
+fn t021_minimum_z_speed_clamped_to_3_0() {
     let mut app = test_app();
 
-    // Test case 1: Positive x-velocity below threshold
+    // Test case 1: Positive z-velocity below threshold
     let merkaba1 = app
         .world_mut()
         .spawn((
             Merkaba,
             Transform::default(),
-            Velocity::linear(Vec3::new(1.5, 0.5, 0.0)), // X below 3.0
+            Velocity::linear(Vec3::new(0.5, 0.0, 1.5)), // Z below 3.0
         ))
         .id();
 
-    // Test case 2: Negative x-velocity above threshold (magnitude-wise)
+    // Test case 2: Negative z-velocity below threshold (magnitude-wise)
     let merkaba2 = app
         .world_mut()
         .spawn((
             Merkaba,
             Transform::default(),
-            Velocity::linear(Vec3::new(-1.0, -0.5, 0.0)), // X magnitude < 3.0
+            Velocity::linear(Vec3::new(-0.5, 0.0, -1.0)), // Z magnitude < 3.0
         ))
         .id();
 
-    // Test case 3: X-velocity already at or above threshold
+    // Test case 3: Z-velocity already at or above threshold
     let merkaba3 = app
         .world_mut()
         .spawn((
             Merkaba,
             Transform::default(),
-            Velocity::linear(Vec3::new(5.0, 0.2, 0.0)), // Already >= 3.0
+            Velocity::linear(Vec3::new(0.2, 0.0, 5.0)), // Z already >= 3.0
         ))
         .id();
 
@@ -204,30 +205,30 @@ fn t021_minimum_x_speed_clamped_to_3_0() {
     // Verify all cases after min-speed enforcement
     let vel1 = app.world().entity(merkaba1).get::<Velocity>().unwrap();
     assert!(
-        vel1.linvel.x.abs() >= 3.0,
-        "Merkaba 1 x-speed should be clamped to >=3.0, got {}",
-        vel1.linvel.x
+        vel1.linvel.z.abs() >= 3.0,
+        "Merkaba 1 z-speed should be clamped to >=3.0, got {}",
+        vel1.linvel.z
     );
     assert_eq!(
-        vel1.linvel.x, 3.0,
-        "Positive x-velocity below 3.0 should be clamped to 3.0"
+        vel1.linvel.z, 3.0,
+        "Positive z-velocity below 3.0 should be clamped to 3.0"
     );
 
     let vel2 = app.world().entity(merkaba2).get::<Velocity>().unwrap();
     assert!(
-        vel2.linvel.x.abs() >= 3.0,
-        "Merkaba 2 x-speed magnitude should be >=3.0, got {}",
-        vel2.linvel.x
+        vel2.linvel.z.abs() >= 3.0,
+        "Merkaba 2 z-speed magnitude should be >=3.0, got {}",
+        vel2.linvel.z
     );
     assert_eq!(
-        vel2.linvel.x, -3.0,
-        "Negative x-velocity above -3.0 should be clamped to -3.0"
+        vel2.linvel.z, -3.0,
+        "Negative z-velocity below -3.0 should be clamped to -3.0"
     );
 
     let vel3 = app.world().entity(merkaba3).get::<Velocity>().unwrap();
     assert_eq!(
-        vel3.linvel.x, 5.0,
-        "X-velocity already >=3.0 should remain unchanged"
+        vel3.linvel.z, 5.0,
+        "Z-velocity already >=3.0 should remain unchanged"
     );
 }
 

@@ -8,7 +8,7 @@
 ## Summary
 
 Add Rotor brick (index 36) that, when hit by a ball, emits a buffered message leading to a delayed (0.5s) spawn of a spinning merkaba hazard at the brick’s position.
-Merkaba rotates around the z-axis, travels primarily horizontally (y) with ±20° initial angle, maintains at least 3.0 u/s y-speed, bounces off walls and bricks, despawns at goal, and causes life loss on paddle contact (despawns all balls and all merkabas).
+Merkaba rotates around the Y-axis (vertical), travels primarily forward on the XZ plane (Z-axis) with ±20° lateral (X-axis) variance, maintains at least 3.0 u/s Z-axis speed, bounces off walls and bricks, despawns at goal, and causes life loss on paddle contact (despawns all balls and all merkabas).
 Distinct collision sounds (wall/brick/paddle) and a helicopter blade loop play while any merkaba exists (placeholder/synthesized audio).
 
 ## Technical Context
@@ -63,7 +63,7 @@ ECS mandates:
 
 TDD gates:
 
-- Write failing tests first for: rotor brick → message emission; delayed spawn; min y-speed maintenance; bounce behaviors; paddle contact → life loss + despawns; audio triggers and loop start/stop.
+- Write failing tests first for: rotor brick → message emission; delayed spawn; min z-speed maintenance (forward motion); bounce behaviors; paddle contact → life loss + despawns; audio triggers and loop start/stop.
 - Obtain approval on tests before implementation.
 
 Gate Status: PASS (plan complies with constitution; tests-first workflow specified; event system rationale documented).

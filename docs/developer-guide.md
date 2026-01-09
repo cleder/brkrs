@@ -89,17 +89,33 @@ Use for testing gameplay feel.
 BK_LEVEL=997 cargo run --release
 ```
 
-### Level matrix → world/screen coordinates
+### Coordinate System & Level Grid
 
-- Grid size: `GRID_HEIGHT = 20`, `GRID_WIDTH = 20`; plane: `PLANE_H = 30.0` (X span), `PLANE_W = 40.0` (Z span); cell sizes: `CELL_HEIGHT = 1.5` (X), `CELL_WIDTH = 2.0` (Z).
-- Mapping from RON matrix indices `(row, col)` to world space:
-  - `x = -PLANE_H / 2.0 + (row + 0.5) * CELL_HEIGHT`
-  - `z =  PLANE_W / 2.0 - (col + 0.5) * CELL_WIDTH`
-  - `y = 2.0` (brick/merkaba height plane)
-- Camera is top-down at `(0, 37, 0)` looking at the origin: **X = left/right on screen**, **Z = up/down on screen**.
-  Keep this in mind when interpreting “horizontal” directions in specs/tests.
+```{seealso}
+See {doc}`architecture` (Physics Architecture → Coordinate System) for the complete coordinate system reference, including Bevy's conventions vs. gameplay directions.
+```
+
+**Grid size**: `GRID_HEIGHT = 20`, `GRID_WIDTH = 20`; plane: `PLANE_H = 30.0` (X span), `PLANE_W = 40.0` (Z span); cell sizes: `CELL_HEIGHT = 1.5` (X), `CELL_WIDTH = 2.0` (Z).
+
+**Mapping from RON matrix indices `(row, col)` to world space:**
+
+- `x = -PLANE_H / 2.0 + (row + 0.5) * CELL_HEIGHT`
+- `z =  PLANE_W / 2.0 - (col + 0.5) * CELL_WIDTH`
+- `y = 2.0` (brick/merkaba height plane)
+
+**Camera and axes**: Camera is top-down at `(0, 37, 0)` looking at the origin:
+
+- **X axis** = left/right on screen (lateral movement)
+- **Z axis** = up/down on screen (forward/backward from gameplay perspective)
+- **Y axis** = height (locked for gameplay entities via `LockedAxes::TRANSLATION_LOCKED_Y`)
+
+**Important**: Gameplay "forward" (+Z toward goal) differs from Bevy's `Transform::forward()` (-Z into screen).
+Physics code uses direct axis manipulation (`velocity.linvel.z`), not Transform API semantics.
+
+**Transform best practices**:
+
 - Do not set `GlobalTransform` manually on spawn; set `Transform` only and let Bevy propagate.
-  Avoid clamping Z for grid entities—columns legitimately vary along Z.
+- Avoid clamping Z for grid entities—columns legitimately vary along Z.
 
 ## Plugin Architecture
 

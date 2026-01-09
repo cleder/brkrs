@@ -123,7 +123,7 @@
 |------|-----------|-----------|--------|
 | **T019** | `tests/merkaba_physics.rs` | Wall collision → bounce + distinct sound (wall asset/envelope) | ✅ |
 | **T020** | `tests/merkaba_physics.rs` | Brick collision → bounce (no brick destruction) + distinct sound (brick asset) | ✅ |
-| **T021** | `tests/merkaba_physics.rs` | Min y-speed clamp ≥ 3.0 u/s enforced (speed never drops below threshold) | ✅ |
+| **T021** | `tests/merkaba_physics.rs` | Min z-speed clamp ≥ 3.0 u/s enforced on Z-axis (forward motion; speed never drops below threshold) | ✅ |
 | **T022** | `tests/merkaba_goal.rs` | Goal area contact → merkaba despawns (100% success rate) | ✅ |
 | **T022b** | `tests/merkaba_physics.rs` | Multiple merkabas (≥2 from separate rotor hits) coexist without interference; 60 FPS baseline maintained | ✅ |
 | **T022c** | `tests/merkaba_physics.rs` | Z-position remains in tolerance (0 ± 0.01 units) under collisions/rotation (FR-008) | ✅ |
@@ -140,7 +140,7 @@
 | Task | Component | Acceptance | Status |
 |------|-----------|-----------|--------|
 | **T024** | `src/systems/merkaba.rs` | Physics interactions: wall/brick bounce using Rapier collision responses | ✅ |
-| **T025** | `src/systems/merkaba.rs` | Min y-speed enforcement: clamp y-velocity to ±3.0 u/s minimum | ✅ |
+| **T025** | `src/systems/merkaba.rs` | Min z-speed enforcement: clamp z-velocity to ±3.0 u/s minimum (forward motion), cap x-velocity to 0.5× z-velocity (lateral drift control) | ✅ |
 | **T026** | `src/systems/merkaba.rs` | Z-plane constraint: z = 0 ± 0.01 units (enforce via collision or clamping) | ✅ |
 | **T027** | `src/systems/merkaba.rs` | Goal boundary detection + merkaba despawn | ✅ |
 | **T028** | `src/systems/audio_merkaba.rs` + `src/audio.rs` | Audio observers for collisions (wall/brick/paddle); loop management (start/stop) | ⬜ |

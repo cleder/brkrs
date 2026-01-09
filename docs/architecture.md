@@ -131,12 +131,27 @@ All configs include validation methods to ensure physics values are reasonable a
 
 ## Physics Architecture
 
+### Coordinate System
+
+**Bevy Convention**: Right-handed Y-up coordinate system
+
+- **Y-axis**: Vertical (up/down), locked for gameplay entities
+- **X-axis**: Lateral movement (left/right)
+- **Z-axis**: Forward/backward movement (+Z toward camera, -Z into screen)
+
+**Game Implementation**: Top-down view with movement on XZ plane
+
+- Camera positioned at Y=37 looking down at origin
+- Entities use `LockedAxes::TRANSLATION_LOCKED_Y` to constrain movement to XZ plane
+- From player perspective: +Z = forward (toward goal/bricks), -Z = backward (toward paddle)
+- Gameplay "forward" refers to +Z direction, not Bevy's `Transform::forward()` API (-Z)
+
 ### Plane Constraint
 
-All gameplay occurs on a 2D plane at Y=2.0:
+All gameplay occurs on the XZ horizontal plane at Y=2.0:
 
 - Entities use `LockedAxes::TRANSLATION_LOCKED_Y`
-- Camera positioned above, looking down
+- Camera positioned above at Y=37, looking down
 - 3D rendering provides depth and shadows
 
 ### Collision Handling

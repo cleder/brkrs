@@ -120,8 +120,9 @@ Without this, the character controller's internal shape cast will detect the obj
 **Ball physics problems:**
 
 - Ball needs `Velocity::zero()` component at spawn (not just `RigidBody::Dynamic`)
-- Check that `LockedAxes::TRANSLATION_LOCKED_Y` allows XZ movement
+- Check that `LockedAxes::TRANSLATION_LOCKED_Y` allows XZ movement (Y-axis locked, entities move on XZ horizontal plane)
 - Verify gravity settings in level files or `RapierConfiguration`
+- Remember: gameplay uses XZ plane with Y-axis locked; see {doc}`architecture` for coordinate system details
 
 ## WASM/Web Issues
 

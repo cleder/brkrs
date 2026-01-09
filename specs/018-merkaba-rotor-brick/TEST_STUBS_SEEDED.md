@@ -16,7 +16,7 @@ Each test is marked with `#[ignore]` and includes detailed comments guiding impl
 | [tests/merkaba_spawn.rs](merkaba_spawn.rs) | T010, T011, T012b | Spawn message, delayed spawn, brick destruction |
 | [tests/unit/merkaba_direction.rs](merkaba_direction.rs) | T012 | Initial velocity angle variance (±20°) |
 | [tests/merkaba_physics.rs](merkaba_physics.rs) | T019, T020, T022b | Wall bounce, brick bounce, multi-merkaba 60 FPS |
-| [tests/unit/merkaba_min_speed.rs](merkaba_min_speed.rs) | T021 | Min y-speed clamping (≥3.0 u/s) |
+| [tests/unit/merkaba_min_speed.rs](merkaba_min_speed.rs) | T021 | Min z-speed clamping (≥3.0 u/s forward motion on Z-axis) |
 | [tests/merkaba_goal.rs](merkaba_goal.rs) | T022 | Goal area despawn |
 | [tests/unit/merkaba_z_plane.rs](merkaba_z_plane.rs) | T022c | Z-plane constraint tolerance (0 ± 0.01) |
 | [tests/merkaba_paddle.rs](merkaba_paddle.rs) | T029, T030 | Paddle contact, life loss, despawns |

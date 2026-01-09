@@ -74,7 +74,7 @@ Tests MUST be approved before implementation.
 
 ## Phase 4: User Story 2 — Merkaba Physics Interactions (Priority: P2)
 
-**Goal**: Bounce off walls/bricks, stay in plane, maintain min y-speed (≥3.0 u/s), despawn on goal.
+**Goal**: Bounce off walls/bricks, stay in XZ plane (Y-locked), maintain min z-speed (≥3.0 u/s forward motion), despawn on goal.
 
 **Independent Test**: Manually spawn merkaba; verify bounce responses, min-speed enforcement, goal despawn.
 
@@ -82,7 +82,7 @@ Tests MUST be approved before implementation.
 
 - [X] T019 [P] [US2] Write failing integration test `tests/merkaba_physics.rs` for wall bounce + distinct sound (record failing commit hash)
 - [X] T020 [P] [US2] Write failing integration test `tests/merkaba_physics.rs` for brick bounce (no destruction) + distinct sound (record failing commit hash)
-- [X] T021 [P] [US2] Write failing unit test `tests/unit/merkaba_min_speed.rs` for min y-speed clamp ≥ 3.0 u/s (record failing commit hash)
+- [X] T021 [P] [US2] Write failing unit test `tests/unit/merkaba_min_speed.rs` for min z-speed clamp ≥ 3.0 u/s (record failing commit hash)
 - [X] T022 [US2] Write failing integration test `tests/merkaba_goal.rs` for goal area despawn (record failing commit hash)
 - [X] T022b [P] [US2] Write failing integration test `tests/merkaba_physics.rs` to assert multiple merkabas (≥2 from separate rotor hits) coexist without interference or performance degradation; validate 60 FPS baseline (FR-015; record failing commit hash)
 - [X] T022c [P] [US2] Write failing unit test `tests/unit/merkaba_z_plane.rs` to assert z-position remains within tolerance (0 ± 0.01 units) under collisions and rotation (FR-008; record failing commit hash)
@@ -91,7 +91,7 @@ Tests MUST be approved before implementation.
 ### Implementation for US2
 
 - [X] T024 [P] [US2] Implement physics interaction systems (wall/brick bounce) in `src/systems/merkaba.rs` using Rapier collisions
-- [X] T025 [US2] Implement min y-speed enforcement in `src/systems/merkaba.rs`
+- [X] T025 [US2] Implement min z-speed enforcement (forward motion) in `src/systems/merkaba.rs`
 - [X] T026 [US2] Constrain z-plane (fixed or narrow band) in `src/systems/merkaba.rs`
 - [X] T027 [US2] Implement goal boundary detection + despawn in `src/systems/merkaba.rs`
 - [X] T028 [US2] Implement audio observers for collisions (wall/brick) in `src/systems/audio_merkaba.rs` and loop management in `src/audio.rs`
@@ -129,7 +129,7 @@ Tests MUST be approved before implementation.
 - [ ] T036 Performance tuning and profiling; verify 60 FPS target; optimize systems
 - [ ] T037 [P] Add additional unit tests in `tests/unit/` to increase coverage
 - [ ] T038 CI updates to enforce TDD gates and Bevy lint
-- [ ] T039 [P] Update `assets/levels/` examples and add README notes
+- [ ] T040 [P] Update `assets/levels/` examples and add README notes
 
 ---
 
@@ -142,7 +142,7 @@ Tests MUST be approved before implementation.
 
 - [ ] [US1] Run T010–T012 tests in parallel; implement T014–T017 in parallel (different files)
 - [ ] [US2] Run T019–T022 tests in parallel; implement T024–T028 in parallel
-- [ ] [US3] Run T029–T031 tests in parallel; implement T032–T034 in parallel
+- [ ] [US3] Run T020b, T039, T030–T031 tests in parallel; implement T032–T034 in parallel
 
 ## Implementation Strategy
 

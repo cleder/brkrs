@@ -18,7 +18,7 @@
 ## Behavior Overview
 
 - Hitting rotor brick (36) emits a buffered spawn message; merkaba spawns at the brick position after 0.5s.
-- Merkaba rotates around z-axis; initial direction is horizontal (y) ±20°; maintains ≥ 3.0 u/s y-speed.
+- Merkaba rotates around Y-axis (vertical); initial velocity is forward (Z-axis) with ±20° lateral (X-axis) variance; maintains ≥ 3.0 u/s Z-axis speed (forward motion).
 - Collides and bounces off walls/bricks; despawns at goal.
 - Paddle contact: lose 1 life; despawn all balls and all merkabas.
 - Audio: distinct collision sounds for wall/brick/paddle; helicopter blade loop plays while at least one merkaba exists.
@@ -26,7 +26,7 @@
 ## Testing (TDD)
 
 - Write failing tests first for each acceptance scenario.
-- Verify message emission, delayed spawn, min y-speed enforcement, bounce behaviors, paddle contact consequences, and audio lifecycle.
+- Verify message emission, delayed spawn, min z-speed enforcement (forward motion), bounce behaviors, paddle contact consequences, and audio lifecycle.
 
 ## Notes
 

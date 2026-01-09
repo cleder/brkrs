@@ -6,7 +6,7 @@
   - Rationale: Quick, perceivable delay that heightens urgency without feeling unfair.
   - Alternatives considered: 1.0s (balanced but slower), 1.5s (too long), 2.0s (predictable but sluggish).
 
-- Decision: Minimum Y-Speed = 3.0 u/s
+- Decision: Minimum Z-Speed = 3.0 u/s (forward motion on XZ plane)
   - Rationale: Ensures consistent horizontal traversal; prevents stalling after vertical bounces.
   - Alternatives considered: 2.0 (too slow), 5.0 (more challenging), 8.0 (too fast).
 
@@ -33,13 +33,13 @@
 ## Physics & Movement
 
 - Initial angle: horizontal ±20° variance.
-- Maintain min y-speed: clamp/boost y-component to ≥ 3.0 u/s.
+- Maintain min z-speed: clamp/boost z-component to ≥ 3.0 u/s (forward motion, with lateral X drift limited to half of Z speed).
 - Constrain to gaming plane: z fixed (or tightly limited); rotation around z-axis.
 - Bounces: Restitution tuned to feel consistent with balls; bricks not damaged by merkaba.
 
 ## Testing Strategy (TDD)
 
-- Failing tests first for message emission, delayed spawn timing, min y-speed, bounce responses, goal despawn, paddle contact consequences, audio triggers and loop lifecycle.
+- Failing tests first for message emission, delayed spawn timing, min z-speed (forward motion), bounce responses, goal despawn, paddle contact consequences, audio triggers and loop lifecycle.
 - Integration tests in `tests/` exercising ECS flows and resources.
 
 ## Assets & Resources
