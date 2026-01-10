@@ -234,7 +234,16 @@ fn process_pending_merkaba_spawns(
     mut angle_state: ResMut<MerkabaAngleState>,
     merkaba_meshes: Res<MerkabaMeshes>,
     type_registry: Option<Res<TypeVariantRegistry>>,
+    level_advance: Option<Res<crate::level_loader::LevelAdvanceState>>,
 ) {
+    // If level is transitioning, don't spawn new merkabas
+    if let Some(adv) = level_advance {
+        if adv.active {
+            pending.entries.clear();
+            return;
+        }
+    }
+
     let delta = time.delta();
     let mut to_spawn = Vec::new();
 
