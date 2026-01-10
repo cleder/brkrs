@@ -254,8 +254,13 @@ pub fn run() {
             grab_mouse,
             read_character_controller_collisions,
             detect_ball_wall_collisions,
-            mark_brick_on_ball_collision,
-            despawn_marked_entities, // Runs after marking, allowing physics to resolve
+            // Chain brick-hit handling, despawn, and life award application to guarantee ordering
+            (
+                mark_brick_on_ball_collision,
+                despawn_marked_entities,
+                crate::systems::respawn::apply_life_awards,
+            )
+                .chain(),
         ),
     );
 

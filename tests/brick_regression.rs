@@ -5,6 +5,10 @@
 
 use bevy::{app::App, prelude::*, MinimalPlugins};
 use brkrs::{BrickTypeId, CountsTowardsCompletion};
+use std::sync::Mutex;
+
+// Protects BK_LEVEL/BK_LEVEL_PATH mutations in this module so concurrent tests don't race on env vars.
+static ENV_LOCK: Mutex<()> = Mutex::new(());
 
 fn test_app() -> App {
     let mut app = App::new();
@@ -29,6 +33,7 @@ fn test_app() -> App {
 
 #[test]
 fn simple_stone_brick_20_still_spawns() {
+    let _env_guard = ENV_LOCK.lock().unwrap();
     let mut app = test_app();
     std::env::set_var("BK_LEVEL", "1"); // Level 1 has simple stone (20)
     app.update();
@@ -50,6 +55,7 @@ fn simple_stone_brick_20_still_spawns() {
 
 #[test]
 fn indestructible_brick_90_still_spawns() {
+    let _env_guard = ENV_LOCK.lock().unwrap();
     let mut app = test_app();
     std::env::set_var("BK_LEVEL", "997"); // Level 997 has indestructible (90)
     app.update();
@@ -71,6 +77,7 @@ fn indestructible_brick_90_still_spawns() {
 
 #[test]
 fn multi_hit_bricks_10_to_13_still_spawn() {
+    let _env_guard = ENV_LOCK.lock().unwrap();
     let mut app = test_app();
     std::env::set_var("BK_LEVEL", "998"); // Level 998 has multi-hit bricks
     app.update();

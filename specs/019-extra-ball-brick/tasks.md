@@ -79,9 +79,9 @@ No story work until complete.
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 
-- [ ] T019 [P] Update documentation (specs/019-extra-ball-brick/quickstart.md and any user-facing docs) to include brick 41 behavior, sound, and testing steps.
-- [ ] T020 Code cleanup and perf pass: ensure no per-frame work added; confirm asset handles reused; re-run `cargo fmt`, `cargo clippy --all-targets --all-features`, `bevy lint`, `cargo test`.
-- [ ] T021 [P] WASM sanity check: build/run wasm target to ensure audio/life handling works and no platform-specific panics.
+- [X] T019 [P] Update documentation (specs/019-extra-ball-brick/quickstart.md and any user-facing docs) to include brick 41 behavior, sound, and testing steps.
+- [x] T020 Code cleanup and perf pass: ensure no per-frame work added; confirm asset handles reused; re-run `cargo fmt`, `cargo clippy --all-targets --all-features`, `bevy lint`, `cargo test`.
+- [x] T021 [P] WASM sanity check: build/run wasm target to ensure audio/life handling works and no platform-specific panics.
 
 ---
 
