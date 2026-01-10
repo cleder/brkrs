@@ -23,6 +23,16 @@ The gravity configuration uses Bevy's standard coordinates:
 **MESSAGE SYSTEM REQUIREMENT**: Gravity mechanics use the Messages event system via `GravityChanged` message to trigger gravity updates in the physics system.
 This ensures proper separation of concerns and deterministic gravity application across the physics pipeline.
 
+## Clarifications
+
+### Session 2026-01-10
+
+- Q: What is the documented fallback if a level doesn't specify default gravity? → A: Use zero gravity (0.0, 0.0, 0.0) as a neutral fallback
+- Q: Which RNG system should be used for Queer Gravity randomization? → A: Use the `rand` crate already in project dependencies
+- Q: What is the frame timing precision for gravity reset on ball loss? → A: Reset timing is not critical; any delay during the ball respawn sequence is acceptable
+- Q: Should gravity apply to ball, paddle, and enemies or only the ball? → A: Apply gravity ONLY to the ball; paddle and enemies maintain standard physics
+- Q: How should existing levels without gravity metadata be handled? → A: All existing levels automatically receive zero gravity (0.0, 0.0, 0.0) as default (no migration needed)
+
 ### User Story 1 - Player Experiences Gravity Change When Destroying Gravity Brick (Priority: P1)
 
 When the player destroys a gravity brick (indices 21-25), the game world's gravity immediately transitions to the gravity value associated with that brick.
@@ -133,7 +143,7 @@ Lower priority because single gravity brick destruction works first.
 
 - **FR-004**: System MUST apply gravity based on brick type immediately when brick index 24 (20G) is destroyed, setting gravity to (0.0, 20.0, 0.0) representing high gravity
 
-- **FR-005**: System MUST apply gravity based on brick type immediately when brick index 25 (Queer Gravity) is destroyed, applying random gravity with X ∈ [-2.0, +15.0], Y = 0.0, Z ∈ [-5.0, +5.0]
+- **FR-005**: System MUST apply gravity based on brick type immediately when brick index 25 (Queer Gravity) is destroyed, applying random gravity with X ∈ [-2.0, +15.0], Y = 0.0, Z ∈ [-5.0, +5.0] using the `rand` crate for random number generation
 
 - **FR-006**: System MUST use the `GravityChanged` message event to communicate gravity updates from the brick destruction system to the physics system
 
@@ -149,11 +159,11 @@ Lower priority because single gravity brick destruction works first.
 
 - **FR-012**: System MUST award 250 points when gravity brick 25 (Queer Gravity) is destroyed
 
-- **FR-013**: System MUST store the level's default gravity configuration in level metadata (RON format) and restore it when a life is lost
+- **FR-013**: System MUST store the level's default gravity configuration in level metadata (RON format) and restore it when a life is lost; if a level does not specify default gravity, the system MUST use zero gravity (0.0, 0.0, 0.0) as the fallback
 
-- **FR-014**: System MUST ensure gravity changes apply to all physics bodies (ball, paddle, enemies) consistently
+- **FR-014**: System MUST apply gravity changes to the ball's physics body only; paddle and enemies maintain their standard physics behavior independent of gravity brick activation
 
-- **FR-015**: System MUST apply gravity changes without causing physics state corruption or unexpected entity behavior
+- **FR-015**: System MUST apply gravity changes to the ball without causing physics state corruption or unexpected entity behavior in other game systems
 
 ### Key Entities
 
@@ -173,7 +183,7 @@ Lower priority because single gravity brick destruction works first.
 
 - **SC-001**: All 5 gravity brick types (21-25) correctly apply their configured gravity values immediately upon destruction, verified by physics test assertions
 
-- **SC-002**: Gravity resets to level default within 1 frame after a ball is lost, with no gravity state persisting into the next ball spawn
+- **SC-002**: Gravity resets to level default before the next ball spawns after a life is lost, with no gravity state persisting into the next ball spawn (timing delay during respawn sequence is acceptable)
 
 - **SC-003**: Score updates correctly for all gravity brick types (75, 125, 150, 250 points), verified by gameplay and unit tests
 
@@ -181,7 +191,7 @@ Lower priority because single gravity brick destruction works first.
 
 - **SC-005**: All gravity bricks can be destroyed in sequence without state corruption, physics conflicts, or unexpected behavior
 
-- **SC-006**: Gravity changes work consistently with existing game systems (paddle collision, enemy physics, ball trajectory calculations)
+- **SC-006**: Gravity changes to the ball work consistently without interfering with paddle collision, enemy physics, or ball trajectory calculations in other systems
 
 - **SC-007**: Zero gravity brick (21) allows ball to float horizontally without downward acceleration, maintaining constant vertical velocity
 
@@ -189,10 +199,10 @@ Lower priority because single gravity brick destruction works first.
 
 ### Assumptions
 
-- Level default gravity is explicitly configured in each level's RON metadata file
+- Level default gravity is explicitly configured in each level's RON metadata file; if not specified, defaults to zero gravity (0.0, 0.0, 0.0); existing levels without gravity metadata require no migration and automatically use the zero gravity fallback
 - Gravity uses standard Bevy Y-axis convention (positive = up, negative = down)
-- RNG for Queer Gravity uses the game's existing random number generation system
+- RNG for Queer Gravity uses the `rand` crate for deterministic, reproducible randomization
 - Physics system uses standard gravity application via Rapier 3D integration in Bevy
 - Brick indices 21-25 are reserved exclusively for gravity bricks (no other brick type uses these indices)
 - Life loss is detected via existing ball/paddle collision or score system events
-- Gravity changes apply uniformly to all physics-enabled entities in the world
+- Gravity changes apply only to the ball's physics body; paddle and enemies maintain standard physics
