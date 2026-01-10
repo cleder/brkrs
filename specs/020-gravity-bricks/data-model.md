@@ -123,7 +123,37 @@ pub struct GravityChanged {
 
 ---
 
-### 4. LevelDefinition (Modification)
+### 4. GravityChanged RNG Implementation Strategy (Queer Gravity)
+
+**Purpose**: Document RNG approach for Queer Gravity brick 25 randomization.
+
+**RNG Choice**: Use `rand::thread_rng()` for non-deterministic randomization.
+
+**Seeding Strategy**:
+
+- Each gravity brick 25 destruction calls `thread_rng().gen_range()` independently
+- No explicit seeding; uses OS entropy pool (non-deterministic across runs)
+- Each call to `gen_range()` pulls from the thread-local RNG state
+- Satisfies "independent seeded RNG" requirement from FR-005
+
+**Platform-Specific Considerations**:
+
+- **Native (Linux/Windows/macOS)**: `rand` + `getrandom` = standard OS entropy (works out of box)
+- **WASM**: Requires explicit `getrandom` backend configuration:
+
+  ```bash
+  RUSTFLAGS='--cfg getrandom_backend="wasm_js"' cargo build --target wasm32-unknown-unknown
+  ```
+
+  This enables JavaScript `crypto.getRandomValues()` as entropy source.
+
+- **Testing**: Use `#[cfg(test)]` mocks if deterministic test gravity is needed (seeded Rng for reproducibility)
+
+**Implementation Location**: `brick_destruction_gravity_handler` system in `src/systems/gravity/mod.rs` detects brick index 25, calls `rand::thread_rng().gen_range(-2.0..=15.0)` for X, always Y=0.0, and `gen_range(-5.0..=5.0)` for Z.
+
+---
+
+### 5. LevelDefinition (Modification)
 
 **Purpose**: Extend existing level metadata to include optional default gravity configuration.
 
@@ -136,9 +166,18 @@ pub struct LevelDefinition {
     /// Optional default gravity for this level
     /// If None or missing from RON, defaults to Vec3::ZERO (zero gravity)
     /// Format: [x, y, z] in Bevy coordinates
+    /// BACKWARD COMPATIBLE: Existing level files without this field will automatically
+    /// deserialize with None (fallback to zero gravity) due to #[serde(default)] attribute
+    #[serde(default)]
     pub default_gravity: Option<Vec3>,
 }
 ```
+
+**Deserialization Behavior**:
+
+- Old RON files (no `default_gravity` field): serde assigns `None` → loads zero gravity fallback
+- New RON files (with `default_gravity` field): serde parses value → loads specified gravity
+- **No migration needed**: Existing levels automatically work with zero gravity fallback
 
 **RON Format**:
 
@@ -170,6 +209,32 @@ Or with fallback:
 
 ---
 
+## Brick Destruction Detection Mechanism
+
+**Pattern**: Query for `RemovedComponents<GravityBrick>` to detect destroyed gravity bricks.
+
+**Implementation Strategy**:
+
+```rust
+fn brick_destruction_gravity_handler(
+    mut removed: RemovedComponents<GravityBrick>,
+    gravity_bricks: Query<&GravityBrick>,
+    mut gravity_writer: MessageWriter<GravityChanged>,
+) {
+    for entity in removed.read() {
+        // Entity is being removed; if it had GravityBrick component, it was a gravity brick
+        // Read GravityBrick data before despawn OR store it in despawn event payload
+        // Write GravityChanged message with the brick's output gravity
+    }
+}
+```
+
+**Timing**: `RemovedComponents<T>` detects component removal in the same frame, enabling immediate gravity message on destruction.
+
+**Alternative**: If brick destruction is signaled via event (e.g., `BrickDestroyedEvent`), extend that event to include `GravityBrick` data and handle in the event reader.
+
+---
+
 ## Data Relationships Diagram
 
 ```text
@@ -177,11 +242,11 @@ Level Start
     ↓
 [LevelDefinition loaded from RON]
     ↓
-[default_gravity field parsed]
+[default_gravity field parsed with #[serde(default)]]
     ↓
 [GravityConfiguration resource created]
-├─ current: Level's default_gravity (or zero gravity)
-└─ level_default: Level's default_gravity (or zero gravity)
+├─ current: Level's default_gravity (or zero gravity fallback)
+└─ level_default: Level's default_gravity (or zero gravity fallback)
     ↓
 [Brick entities spawned with GravityBrick component if index 21-25]
     ↓
@@ -189,13 +254,15 @@ Level Start
     ↓
 Ball destroys gravity brick (21-25)
     ↓
-[brick_destruction_system detects]
+[brick_destruction_system detects via RemovedComponents<GravityBrick>]
     ↓
-[Computes gravity output from GravityBrick component]
+[Reads GravityBrick data (or retrieves from despawn event)]
+    ↓
+[Computes gravity output (for brick 25, generates random X/Z with Y=0.0)]
     ↓
 [Writes GravityChanged message]
     ↓
-[gravity_application_system reads message]
+[gravity_application_system reads message via MessageReader<GravityChanged>]
     ↓
 [Updates GravityConfiguration::current]
     ↓

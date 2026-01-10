@@ -68,6 +68,8 @@
 
 **Checkpoint**: User Story 1 complete - gravity bricks (21-25) apply gravity changes immediately on destruction; physics responds correctly.
 
+- [ ] T023a [US1] Write test for ball-only gravity scope in `tests/gravity_bricks.rs::test_gravity_does_not_affect_paddle_physics()` - apply gravity change, verify paddle entity physics unchanged, verify enemies unaffected (proves FR-014: gravity applies to ball ONLY)
+
 ---
 
 ## Phase 4: User Story 2 - Gravity Reset on Ball Loss (Priority: P1)
@@ -144,7 +146,7 @@
 
 ### Tests for Queer Gravity (REQUIRED) ⚠️
 
-- [ ] T042 [P] Queer Gravity test in `tests/gravity_bricks.rs::test_gravity_brick_25_queer_gravity_random()` - destroy brick 25 multiple times, verify each generates gravity within specified ranges
+- [ ] T042 [P] Queer Gravity test in `tests/gravity_bricks.rs::test_gravity_brick_25_queer_gravity_random()` - destroy brick 25 multiple times, verify each generates gravity with X ∈ [-2.0, +15.0], **Y = 0.0 ALWAYS (no randomization on Y-axis)**, Z ∈ [-5.0, +5.0]
 - [ ] T043 [P] Queer Gravity X range test in `tests/gravity_bricks.rs::test_queer_gravity_x_range()` - assert all generated X values in [-2.0, +15.0]
 - [ ] T044 [P] Queer Gravity Y range test in `tests/gravity_bricks.rs::test_queer_gravity_y_zero()` - assert all generated Y values are exactly 0.0
 - [ ] T045 [P] Queer Gravity Z range test in `tests/gravity_bricks.rs::test_queer_gravity_z_range()` - assert all generated Z values in [-5.0, +5.0]
