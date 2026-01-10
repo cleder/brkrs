@@ -10,12 +10,11 @@ use bevy::prelude::*;
 use bevy::MinimalPlugins;
 use bevy_rapier3d::prelude::{CollisionEvent, RapierConfiguration};
 
+use brkrs::level_format::EXTRA_LIFE_BRICK;
 use brkrs::signals::{BrickDestroyed, LifeAwardMessage};
 use brkrs::systems::respawn::LivesState;
 use brkrs::systems::scoring::ScoreState;
 use brkrs::{Ball, Brick, BrickTypeId, CountsTowardsCompletion, MarkedForDespawn};
-
-const EXTRA_LIFE_BRICK: u8 = 41;
 
 fn test_app() -> App {
     let mut app = App::new();
@@ -189,11 +188,12 @@ fn t008_brick_41_multi_ball_only_one_life_award() {
     // Run systems
     app.update();
 
-    // Check only ONE LifeAwardMessage written (brick despawns after first hit)
+    // Check only ONE LifeAwardMessage { delta: 1 } written (brick despawns after first hit)
     let life_messages = app.world().resource::<Messages<LifeAwardMessage>>();
-    assert!(
-        !life_messages.is_empty(),
-        "Expected LifeAwardMessage even with multi-ball hit"
+    let life_award_count = life_messages.len();
+    assert_eq!(
+        1, life_award_count,
+        "Expected exactly one LifeAwardMessage with delta == 1 for multi-ball hit"
     );
 
     // Check lives incremented by +1 only (not +2)

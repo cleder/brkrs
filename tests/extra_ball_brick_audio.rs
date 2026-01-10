@@ -10,11 +10,10 @@ use bevy::prelude::*;
 use bevy::MinimalPlugins;
 use bevy_rapier3d::prelude::{CollisionEvent, RapierConfiguration};
 
+use brkrs::level_format::EXTRA_LIFE_BRICK;
 use brkrs::signals::BrickDestroyed;
 use brkrs::systems::audio::{AudioAssets, AudioConfig};
 use brkrs::{Ball, Brick, BrickTypeId, CountsTowardsCompletion};
-
-const EXTRA_LIFE_BRICK: u8 = 41;
 
 fn test_app() -> App {
     let mut app = App::new();

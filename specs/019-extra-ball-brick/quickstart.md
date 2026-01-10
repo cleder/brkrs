@@ -15,7 +15,7 @@ Brick 41 (Extra Ball) is now fully implemented with the following behavior:
 1. **Brick Type Constant**: `EXTRA_LIFE_BRICK = 41` defined in `src/level_format/mod.rs`
 2. **Life Award Flow**:
    - `mark_brick_on_ball_collision` writes `LifeAwardMessage { delta: 1 }` on brick 41 hit
-   - Per-frame `HashSet<Entity>` prevents double-awards from multi-ball
+   - Cached `Local<HashSet<Entity>>` prevents double-awards from multi-ball without per-frame allocation
    - `apply_life_awards` consumes messages and clamps to [0, MAX_LIVES]
 3. **Audio Flow**:
    - `consume_brick_destroyed_messages` detects brick type 41

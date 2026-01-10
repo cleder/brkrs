@@ -724,6 +724,7 @@ fn consume_brick_destroyed_messages(
     assets: Option<Res<AudioAssets>>,
     active_sounds: Option<ResMut<ActiveSounds>>,
     active_instances: Option<ResMut<ActiveAudioInstances>>,
+    mut brick41_available: Local<Option<bool>>,
     mut commands: Commands,
 ) {
     let Some(mut reader) = reader else {
@@ -754,18 +755,24 @@ fn consume_brick_destroyed_messages(
             "Brick destroyed"
         );
 
-        // Brick 41 (Extra Life) has unique sound, fallback to generic if missing
-        let sound_type = if event.brick_type == crate::level_format::EXTRA_LIFE_BRICK {
-            // Try unique sound first, fallback to generic on missing handle
-            if assets.get(SoundType::Brick41ExtraLife).is_some() {
-                SoundType::Brick41ExtraLife
-            } else {
+        // Brick 41 (Extra Life) has unique sound; cache availability to avoid repeated lookups/logs
+        if brick41_available.is_none() {
+            let available = assets.get(SoundType::Brick41ExtraLife).is_some();
+            if !available {
                 warn!(
                     target: "audio",
                     "Brick 41 unique sound handle missing; falling back to generic BrickDestroy"
                 );
-                SoundType::BrickDestroy
             }
+            *brick41_available = Some(available);
+        }
+
+        let brick41_sound_available = brick41_available.unwrap_or(false);
+
+        let sound_type = if event.brick_type == crate::level_format::EXTRA_LIFE_BRICK
+            && brick41_sound_available
+        {
+            SoundType::Brick41ExtraLife
         } else {
             SoundType::BrickDestroy
         };
@@ -861,6 +868,91 @@ fn on_paddle_wall_hit_sound(
         &mut active_instances,
         &mut commands,
     );
+}
+
+#[cfg(test)]
+mod brick41_audio_tests {
+    use super::*;
+    use bevy::{audio::AudioSource, MinimalPlugins};
+
+    fn make_handle() -> Handle<AudioSource> {
+        Handle::default()
+    }
+
+    fn setup_app(include_brick41: bool) -> App {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_message::<BrickDestroyedMsg>();
+        app.insert_resource(AudioConfig::default());
+
+        let mut audio_assets = AudioAssets::default();
+        audio_assets
+            .sounds
+            .insert(SoundType::BrickDestroy, make_handle());
+        if include_brick41 {
+            audio_assets
+                .sounds
+                .insert(SoundType::Brick41ExtraLife, make_handle());
+        }
+        app.insert_resource(audio_assets);
+        app.insert_resource(ActiveSounds::default());
+        app.insert_resource(ActiveAudioInstances::default());
+
+        app.add_systems(Update, consume_brick_destroyed_messages);
+        app
+    }
+
+    #[test]
+    fn brick_41_uses_unique_sound_when_available() {
+        let mut app = setup_app(true);
+
+        let brick = app.world_mut().spawn_empty().id();
+        app.world_mut().write_message(BrickDestroyedMsg {
+            brick_entity: brick,
+            brick_type: crate::level_format::EXTRA_LIFE_BRICK,
+            destroyed_by: None,
+        });
+
+        app.update();
+
+        let counts = app.world().resource::<ActiveSounds>();
+        assert_eq!(
+            1,
+            counts.count(SoundType::Brick41ExtraLife),
+            "Brick 41 should play its unique sound when available"
+        );
+        assert_eq!(
+            0,
+            counts.count(SoundType::BrickDestroy),
+            "Brick 41 should not fall back when unique sound exists"
+        );
+    }
+
+    #[test]
+    fn brick_41_falls_back_when_unique_sound_missing() {
+        let mut app = setup_app(false);
+
+        let brick = app.world_mut().spawn_empty().id();
+        app.world_mut().write_message(BrickDestroyedMsg {
+            brick_entity: brick,
+            brick_type: crate::level_format::EXTRA_LIFE_BRICK,
+            destroyed_by: None,
+        });
+
+        app.update();
+
+        let counts = app.world().resource::<ActiveSounds>();
+        assert_eq!(
+            0,
+            counts.count(SoundType::Brick41ExtraLife),
+            "Brick 41 should not attempt unique sound when handle is missing"
+        );
+        assert_eq!(
+            1,
+            counts.count(SoundType::BrickDestroy),
+            "Brick 41 should fall back to generic destroy sound when unique handle missing"
+        );
+    }
 }
 
 /// Observer for paddle-brick hit sound.

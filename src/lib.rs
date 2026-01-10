@@ -579,15 +579,14 @@ pub fn mark_brick_on_ball_collision(
     )>,
     transforms: Query<&Transform>,
     mut commands: Commands,
+    mut processed_bricks: Local<std::collections::HashSet<Entity>>,
     mut spawn_msgs: Option<MessageWriter<crate::signals::SpawnMerkabaMessage>>,
     mut brick_destroyed_msgs: Option<MessageWriter<crate::signals::BrickDestroyed>>,
     mut life_award_msgs: Option<MessageWriter<crate::signals::LifeAwardMessage>>,
 ) {
     use crate::level_format::{is_multi_hit_brick, MULTI_HIT_BRICK_1, SIMPLE_BRICK};
-    use std::collections::HashSet;
-
     // Track bricks already processed this frame to avoid double-awards on multi-ball collisions
-    let mut processed_bricks: HashSet<Entity> = HashSet::new();
+    processed_bricks.clear();
 
     for event in collision_events.read() {
         // collision event processed
