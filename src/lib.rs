@@ -576,8 +576,13 @@ pub fn mark_brick_on_ball_collision(
     mut commands: Commands,
     mut spawn_msgs: Option<MessageWriter<crate::signals::SpawnMerkabaMessage>>,
     mut brick_destroyed_msgs: Option<MessageWriter<crate::signals::BrickDestroyed>>,
+    mut life_award_msgs: Option<MessageWriter<crate::signals::LifeAwardMessage>>,
 ) {
     use crate::level_format::{is_multi_hit_brick, MULTI_HIT_BRICK_1, SIMPLE_BRICK};
+    use std::collections::HashSet;
+
+    // Track bricks already processed this frame to avoid double-awards on multi-ball collisions
+    let mut processed_bricks: HashSet<Entity> = HashSet::new();
 
     for event in collision_events.read() {
         // collision event processed
@@ -596,6 +601,9 @@ pub fn mark_brick_on_ball_collision(
             };
 
             if let Some((entity, brick_type_ro, gt_opt, t_opt)) = brick_info {
+                if processed_bricks.contains(&entity) {
+                    continue;
+                }
                 let current_type = brick_type_ro.0;
                 // Prefer Transform over GlobalTransform over direct query
                 let brick_pos = if let Some(t) = t_opt {
@@ -637,6 +645,13 @@ pub fn mark_brick_on_ball_collision(
                     );
                 } else {
                     // Regular brick: mark for despawn
+                    // Brick 41 (Extra Life): award +1 life via Message before despawn
+                    if current_type == crate::level_format::EXTRA_LIFE_BRICK {
+                        if let Some(writer) = life_award_msgs.as_mut() {
+                            writer.write(crate::signals::LifeAwardMessage { delta: 1 });
+                        }
+                    }
+                    processed_bricks.insert(entity);
                     if current_type == 36 {
                         if let Some(writer) = spawn_msgs.as_mut() {
                             writer.write(crate::signals::SpawnMerkabaMessage {
@@ -726,7 +741,11 @@ fn despawn_marked_entities(
 pub fn register_brick_collision_systems(app: &mut App) {
     app.add_systems(
         Update,
-        (mark_brick_on_ball_collision, despawn_marked_entities)
+        (
+            mark_brick_on_ball_collision,
+            despawn_marked_entities,
+            crate::systems::respawn::apply_life_awards,
+        )
             .chain()
             .before(crate::systems::merkaba::MerkabaSpawnFlowSystems::Queue),
     );

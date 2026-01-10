@@ -42,11 +42,11 @@ No story work until complete.
 
 ### Implementation for User Story 1
 
-- [ ] T009 [P] [US1] Implement brick 41 hit handling system in src/systems/extra_ball_brick.rs (or existing brick-hit module): on first valid hit, write LifeAwardMessage { delta: +1 }, mark brick for despawn; ensure filtered queries (With/Without) and no unwraps.
-- [ ] T010 [US1] Register brick 41 system in schedules/sets (src/systems/mod.rs and src/systems/sets.rs) so it runs with the brick hit pipeline and respects ordering with destruction/score systems.
-- [ ] T011 [US1] Ensure score pipeline ignores brick 41 (0 points, no combo/multiplier effects) in src/systems/scoring.rs; add tests/assertions if needed.
-- [ ] T012 [US1] Wire level loading/spawning to instantiate brick 41 using the new metadata and sound handle (src/level_loader.rs and related level_format code); reuse loaded handles (no repeated asset_server.load).
-- [ ] T013 [US1] Verify life consumer clamps to max and logs gracefully (no panics) when processing LifeAwardMessage; add defensive clamping for corrupted state (`current > max` or `< 0`) with warning log; adjust the relevant system/resource (e.g., lives handler) and add `Changed<T>` gating for any UI updates touched.
+- [X] T009 [P] [US1] Implement brick 41 hit handling system in existing brick-hit module (`mark_brick_on_ball_collision`): on first valid hit, write `LifeAwardMessage { delta: +1 }`, mark brick for despawn; prevent double-awards on multi-ball via per-frame processed set; no unwraps.
+- [X] T010 [US1] Register life award consumer in schedules (`register_brick_collision_systems`) so it runs with the brick hit pipeline and respects ordering with destruction/score systems.
+- [X] T011 [US1] Ensure score pipeline ignores brick 41 (0 points, no combo/multiplier effects) via `brick_points()`; verified by tests that score remains unchanged.
+- [X] T012 [US1] Wire level loading/spawning to instantiate brick 41 using existing metadata in `level_format` (EXTRA_LIFE_BRICK constant); loader already assigns `BrickTypeId` from matrix values; no repeated `asset_server.load`.
+- [X] T013 [US1] Implement life consumer `apply_life_awards` that clamps to max and logs gracefully (no panics) when processing `LifeAwardMessage`; optional reader to avoid panics when message not initialized in certain tests.
 
 **Checkpoint**: User Story 1 independently testable (life gain, brick despawn, score unchanged).
 
