@@ -164,37 +164,6 @@ LevelDefinition(
 )
 ```
 
-## Texture Assets
-
-Textures are stored in `assets/textures/` with a manifest file.
-
-### Texture Manifest
-
-The `manifest.ron` file maps texture identifiers to file paths:
-
-```rust
-// assets/textures/manifest.ron
-TextureManifest(
-  textures: {
-    "brick_base": "fallback/brick_base.png",
-    "paddle_base": "fallback/paddle_base.png",
-    "ball_base": "fallback/ball_base.png",
-    // ...
-  }
-)
-```
-
-### Fallback Textures
-
-The `fallback/` directory contains default textures used when custom textures are not available:
-
-- `brick_base.png` — Default brick texture
-- `paddle_base.png` — Default paddle texture
-- `ball_base.png` — Default ball texture
-- `ground_base.png` — Floor texture
-- `sidewall_base.png` — Wall textures
-- `background_base.png` — Background texture
-
 ## Validation
 
 ### Level Validation Rules
@@ -212,3 +181,10 @@ The `fallback/` directory contains default textures used when custom textures ar
 Check for typos.
 
 **"Missing paddle/ball"**: The level will still load but will use fallback spawn positions.
+
+```{include} ../assets/textures/README.md
+:start-after: <!-- INCLUSION-MARKER-DO-NOT-REMOVE -->
+:end-before: <!-- INCLUSION-MARKER-END-DO-NOT-REMOVE -->
+:heading-offset: 1
+:relative-images: docs/
+```
