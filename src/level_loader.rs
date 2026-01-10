@@ -823,7 +823,7 @@ fn advance_level_when_cleared(
     mut game_progress: ResMut<GameProgress>,
     mut level_advance: ResMut<LevelAdvanceState>,
     ui_fonts: Option<Res<crate::ui::fonts::UiFonts>>,
-    mut pending_merkaba_spawns: ResMut<crate::systems::merkaba::PendingMerkabaSpawns>,
+    pending_merkaba_spawns: Option<ResMut<crate::systems::merkaba::PendingMerkabaSpawns>>,
 ) {
     let Some(curr) = current_level else {
         return;
@@ -870,7 +870,9 @@ fn advance_level_when_cleared(
                 commands.entity(m).despawn();
             }
             // Clear pending merkaba spawns to prevent spawning after game completion
-            pending_merkaba_spawns.entries.clear();
+            if let Some(mut spawns) = pending_merkaba_spawns {
+                spawns.entries.clear();
+            }
             // Spawn completion text (desktop only UI style similar to wireframe text)
             #[cfg(not(target_arch = "wasm32"))]
             if let Some(ui_fonts) = ui_fonts {
@@ -915,7 +917,9 @@ fn advance_level_when_cleared(
                     commands.entity(m).despawn();
                 }
                 // Clear pending merkaba spawns to prevent spawning during level transition
-                pending_merkaba_spawns.entries.clear();
+                if let Some(mut spawns) = pending_merkaba_spawns {
+                    spawns.entries.clear();
+                }
             }
             Err(e) => warn!("Failed to parse next level '{}': {e}", path),
         },
@@ -967,7 +971,7 @@ fn process_restart_requests(
     ball_q: Query<Entity, With<Ball>>,
     merkaba_q: Query<Entity, With<Merkaba>>,
     lives_state: Option<ResMut<crate::systems::respawn::LivesState>>,
-    mut pending_merkaba_spawns: ResMut<crate::systems::merkaba::PendingMerkabaSpawns>,
+    mut pending_merkaba_spawns: Option<ResMut<crate::systems::merkaba::PendingMerkabaSpawns>>,
     #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
     brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
@@ -1008,7 +1012,7 @@ fn process_restart_requests(
         &merkaba_q,
         &mut ctx.game_progress,
         &mut ctx.level_advance,
-        &mut pending_merkaba_spawns,
+        pending_merkaba_spawns.as_mut(),
         #[cfg(feature = "texture_manifest")]
         tex_res.canonical.as_deref(),
         #[cfg(feature = "texture_manifest")]
@@ -1066,7 +1070,7 @@ pub(crate) fn process_level_switch_requests(
     paddle_q: Query<Entity, With<Paddle>>,
     ball_q: Query<Entity, With<Ball>>,
     merkaba_q: Query<Entity, With<Merkaba>>,
-    mut pending_merkaba_spawns: ResMut<crate::systems::merkaba::PendingMerkabaSpawns>,
+    mut pending_merkaba_spawns: Option<ResMut<crate::systems::merkaba::PendingMerkabaSpawns>>,
     #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
     brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
@@ -1120,7 +1124,7 @@ pub(crate) fn process_level_switch_requests(
         &merkaba_q,
         &mut ctx.game_progress,
         &mut ctx.level_advance,
-        &mut pending_merkaba_spawns,
+        pending_merkaba_spawns.as_mut(),
         #[cfg(feature = "texture_manifest")]
         tex_res.canonical.as_deref(),
         #[cfg(feature = "texture_manifest")]
@@ -1454,7 +1458,7 @@ fn force_load_level_from_path(
     merkaba_q: &Query<Entity, With<Merkaba>>,
     game_progress: &mut ResMut<GameProgress>,
     level_advance: &mut ResMut<LevelAdvanceState>,
-    pending_merkaba_spawns: &mut ResMut<crate::systems::merkaba::PendingMerkabaSpawns>,
+    pending_merkaba_spawns: Option<&mut ResMut<crate::systems::merkaba::PendingMerkabaSpawns>>,
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
     #[cfg(feature = "texture_manifest")] fallback: Option<&mut FallbackRegistry>,
     #[cfg(feature = "texture_manifest")] type_registry: Option<&TypeVariantRegistry>,
@@ -1593,7 +1597,7 @@ fn reset_level_state(
     spawn_points: &mut ResMut<SpawnPoints>,
     game_progress: &mut ResMut<GameProgress>,
     level_advance: &mut ResMut<LevelAdvanceState>,
-    pending_merkaba_spawns: &mut ResMut<crate::systems::merkaba::PendingMerkabaSpawns>,
+    pending_merkaba_spawns: Option<&mut ResMut<crate::systems::merkaba::PendingMerkabaSpawns>>,
 ) {
     for entity in bricks.iter() {
         commands.entity(entity).despawn();
@@ -1608,7 +1612,9 @@ fn reset_level_state(
         commands.entity(entity).despawn();
     }
     // Clear pending merkaba spawns to prevent spawning after level change
-    pending_merkaba_spawns.entries.clear();
+    if let Some(spawns) = pending_merkaba_spawns {
+        spawns.entries.clear();
+    }
     spawn_points.paddle = None;
     spawn_points.ball = None;
     game_progress.finished = false;
