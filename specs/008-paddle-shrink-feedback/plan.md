@@ -18,7 +18,7 @@ The shrink animation runs concurrently with the existing respawn delay and fadeo
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research.*
-        *Re-check after Phase 1 design.*
+         *Re-check after Phase 1 design.*
 
 ### I. Entity-Component-System Architecture (ECS-First)
 
