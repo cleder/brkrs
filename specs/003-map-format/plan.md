@@ -19,7 +19,7 @@ Technical approach involves modifying constants (GRID_WIDTH/GRID_HEIGHT), updati
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research.*
-    *Re-check after Phase 1 design.*
+     *Re-check after Phase 1 design.*
 
 ### I. ECS-First Architecture
 
