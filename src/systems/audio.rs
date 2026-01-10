@@ -120,6 +120,8 @@ pub enum SoundType {
     MerkabaPaddle,
     /// Merkaba helicopter blade loop (background).
     MerkabaLoop,
+    /// Brick 41 (Extra Life) unique destruction sound.
+    Brick41ExtraLife,
 }
 
 /// User-adjustable audio settings, persisted across sessions.
@@ -751,8 +753,25 @@ fn consume_brick_destroyed_messages(
             brick_type = event.brick_type,
             "Brick destroyed"
         );
+
+        // Brick 41 (Extra Life) has unique sound, fallback to generic if missing
+        let sound_type = if event.brick_type == crate::level_format::EXTRA_LIFE_BRICK {
+            // Try unique sound first, fallback to generic on missing handle
+            if assets.get(SoundType::Brick41ExtraLife).is_some() {
+                SoundType::Brick41ExtraLife
+            } else {
+                warn!(
+                    target: "audio",
+                    "Brick 41 unique sound handle missing; falling back to generic BrickDestroy"
+                );
+                SoundType::BrickDestroy
+            }
+        } else {
+            SoundType::BrickDestroy
+        };
+
         play_sound(
-            SoundType::BrickDestroy,
+            sound_type,
             &config,
             &assets,
             None,
