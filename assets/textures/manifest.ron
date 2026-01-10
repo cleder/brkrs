@@ -134,7 +134,7 @@
             albedo_path: "bricks/default_obsidian_block.png",
             normal_path: None,
             orm_path: None,
-            emissive_path: None,
+            emissive_path: Some("default/extra-emmisive.png"),
             depth_path: None,
             roughness: 0.4,
             metallic: 0.0,
