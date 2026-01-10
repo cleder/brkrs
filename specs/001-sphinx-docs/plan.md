@@ -29,7 +29,7 @@ This documentation feature does not violate constitutional principles: we are no
 Gates passed.
 
 *GATE: Must pass before Phase 0 research.*
-         *Re-check after Phase 1 design.*
+           *Re-check after Phase 1 design.*
 
 Gates: No constitutional violations detected for documentation-only feature.
 

@@ -9,6 +9,46 @@ use crate::{
     BALL_RADIUS, PADDLE_GROWTH_DURATION, PADDLE_HEIGHT, PADDLE_RADIUS,
 };
 
+/// Applies life awards from `LifeAwardMessage` to `LivesState`, with clamping.
+///
+/// - Clamps lives to `[0, MAX_LIVES]`
+/// - Ignores zero-delta awards
+/// - Logs a warning if a corrupted state is detected (shouldn't happen with `u8`)
+pub fn apply_life_awards(
+    awards: Option<MessageReader<crate::signals::LifeAwardMessage>>,
+    lives_state: Option<ResMut<LivesState>>,
+) {
+    const MAX_LIVES: i32 = 5; // TODO: load from config when available
+
+    let Some(mut awards) = awards else {
+        return;
+    };
+    let Some(mut lives_state) = lives_state else {
+        return;
+    };
+    for award in awards.read() {
+        if award.delta == 0 {
+            continue;
+        }
+
+        let current = lives_state.lives_remaining as i32;
+        let mut next = current + award.delta;
+
+        if !(0..=MAX_LIVES).contains(&current) {
+            warn!(
+                target = "respawn",
+                current, MAX_LIVES, "LivesState corrupted prior to award; clamping to valid range"
+            );
+        }
+
+        next = next.clamp(0, MAX_LIVES);
+
+        if next != current {
+            lives_state.lives_remaining = next as u8;
+        }
+    }
+}
+
 /// Shared lives resource maintained by the lives system.
 #[derive(Resource, Debug, Clone, Copy)]
 pub struct LivesState {

@@ -3,6 +3,7 @@
 AudioManifest(
     sounds: {
         BrickDestroy: "brick_destroy.ogg",
+        Brick41ExtraLife: "zapThreeToneDown.ogg",
         MultiHitImpact: "multi_hit_impact.ogg",
         WallBounce: "wall_bounce.ogg",
         PaddleHit: "paddle_hit.ogg",
