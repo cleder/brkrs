@@ -28,7 +28,7 @@ Both fields are documentation-only (not displayed during gameplay) and maintain 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research.*
-      *Re-check after Phase 1 design.*
+       *Re-check after Phase 1 design.*
 
 ✅ **I.**
 **ECS-First Architecture**: This feature adds data fields to the `LevelDefinition` struct (deserialized from RON) which is consumed by existing ECS systems.
