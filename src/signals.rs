@@ -15,6 +15,7 @@
 //!
 //! - [`UiBeep`]: Short audio feedback cue from UI interactions
 //! - [`BrickDestroyed`]: Brick destruction event for scoring and audio
+//! - [`LifeAwardMessage`]: Life increment signal (+1 or other delta) clamped to max
 //!
 //! # Usage Example
 //!
@@ -77,6 +78,18 @@ pub struct BrickDestroyed {
     pub brick_type: u8,
     /// Entity that caused destruction (ball, paddle, etc.) or None for despawn
     pub destroyed_by: Option<Entity>,
+}
+
+/// Life award signal for granting extra lives to the player.
+///
+/// **Producers**: Brick collision systems (e.g., brick 41 extra life brick)
+/// **Consumers**: Lives system (clamps to configured max, updates UI via Changed<T>)
+/// **Contract**: Buffered message; consumer clamps `current + delta` to `[0, max]` defensively
+/// to handle corrupted state and logs warnings for out-of-bounds values.
+#[derive(Message, Debug, Clone, Copy)]
+pub struct LifeAwardMessage {
+    /// Life delta to apply (use +1 for brick 41; negative values allowed for penalties)
+    pub delta: i32,
 }
 
 /// Spawn a merkaba hazard after a rotor brick (index 36) is hit.

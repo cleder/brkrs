@@ -178,6 +178,7 @@ pub fn run() {
     app.init_resource::<systems::scoring::ScoreState>();
     app.add_message::<crate::signals::BrickDestroyed>();
     app.add_message::<crate::signals::SpawnMerkabaMessage>();
+    app.add_message::<crate::signals::LifeAwardMessage>();
     app.add_message::<systems::scoring::MilestoneReached>();
     app.add_message::<bevy_rapier3d::prelude::CollisionEvent>();
     app.insert_resource(level_loader::LevelAdvanceState::default());

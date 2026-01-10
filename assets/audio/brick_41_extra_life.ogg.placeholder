@@ -1,0 +1,7 @@
+# Placeholder for Brick 41 Extra Life Sound
+
+This file will be replaced with the actual audio asset for brick 41 destruction sound.
+
+Brick 41 grants +1 life when destroyed and should have a distinct, rewarding sound.
+
+Temporary: Uses generic brick_destroy.ogg as fallback until unique asset is created.

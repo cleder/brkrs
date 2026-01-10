@@ -29,6 +29,10 @@ pub const MULTI_HIT_BRICK_3: u8 = 12;
 /// Multi-hit brick index 13: needs 4 more hits to be destroyed (maximum durability).
 pub const MULTI_HIT_BRICK_4: u8 = 13;
 
+/// Extra Life brick index 41: awards +1 player life when destroyed, no points.
+/// This brick is destructible (durability 1) and plays a unique destruction sound.
+pub const EXTRA_LIFE_BRICK: u8 = 41;
+
 /// Returns `true` if the given type ID represents a multi-hit brick (indices 10-13).
 ///
 /// Multi-hit bricks require multiple ball collisions to destroy. Each hit decrements
