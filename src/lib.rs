@@ -162,6 +162,48 @@ impl Default for GravityConfig {
 pub struct GameProgress {
     finished: bool,
 }
+///
+/// When a brick with this component is destroyed, the gravity immediately
+/// changes to the value specified in the component. The `GravityChanged` message
+/// is sent to communicate the change to the physics system.
+///
+/// **Brick Indices**:
+/// - 21: Zero Gravity (0.0, 0.0, 0.0)
+/// - 22: Moon Gravity (0.0, 2.0, 0.0)
+/// - 23: Earth Gravity (0.0, 10.0, 0.0)
+/// - 24: High Gravity (0.0, 20.0, 0.0)
+/// - 25: Queer Gravity (random X, Y=0.0, random Z)
+#[derive(Component, Clone, Copy, Debug, PartialEq)]
+pub struct GravityBrick {
+    /// Brick index (21-25)
+    pub index: u32,
+    /// Gravity vector to apply when this brick is destroyed
+    pub gravity: Vec3,
+}
+
+/// Tracks the current and default gravity for the level.
+///
+/// This resource is updated when gravity bricks are destroyed and reset
+/// when the player loses a ball. The physics system reads `current` to
+/// apply gravity to the ball's rigid body.
+///
+/// **Coordinate System**: Bevy standard (Y = up, X = right, Z = back)
+#[derive(Resource, Clone, Copy, Debug)]
+pub struct GravityConfiguration {
+    /// Current gravity being applied to the ball
+    pub current: Vec3,
+    /// Level's starting gravity (used to reset on ball loss)
+    pub level_default: Vec3,
+}
+
+impl Default for GravityConfiguration {
+    fn default() -> Self {
+        Self {
+            current: Vec3::ZERO,
+            level_default: Vec3::ZERO,
+        }
+    }
+}
 
 pub fn run() {
     let mut app = App::new();
