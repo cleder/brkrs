@@ -265,6 +265,10 @@ fn process_pending_merkaba_spawns(
         let angle_max = spawn.angle_variance_deg.abs().clamp(5.0, 20.0);
         let sign = if angle_state.flip { -1.0 } else { 1.0 };
         angle_state.flip = !angle_state.flip;
+
+        // GAMEPLAY CONSTANT: Halve lateral variance to keep merkaba trajectories predictable.
+        // Full variance (±20° max) was too chaotic; ±10° maintains lateral variation
+        // without compromising player tracking ability.
         let angle_deg = angle_max * 0.5 * sign;
         let angle_rad = angle_deg.to_radians();
 

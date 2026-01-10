@@ -57,7 +57,7 @@ fn t019_wall_bounce_with_distinct_sound() {
         .spawn((
             Merkaba,
             Transform::default(),
-            Velocity::linear(Vec3::new(0.0, 5.0, 0.0)),
+            Velocity::linear(Vec3::new(0.0, 0.0, 5.0)),
         ))
         .id();
     let wall = app.world_mut().spawn(Border).id();
@@ -121,7 +121,7 @@ fn t022b_multiple_merkabas_coexist_60fps_baseline() {
         .spawn((
             Merkaba,
             Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
-            Velocity::linear(Vec3::new(0.0, 3.0, 0.0)),
+            Velocity::linear(Vec3::new(0.0, 0.0, 3.0)),
         ))
         .id();
     let merkaba2 = app
@@ -129,7 +129,7 @@ fn t022b_multiple_merkabas_coexist_60fps_baseline() {
         .spawn((
             Merkaba,
             Transform::from_translation(Vec3::new(5.0, 0.0, 0.0)),
-            Velocity::linear(Vec3::new(0.0, -3.0, 0.0)),
+            Velocity::linear(Vec3::new(0.0, 0.0, -3.0)),
         ))
         .id();
 
@@ -149,14 +149,14 @@ fn t022b_multiple_merkabas_coexist_60fps_baseline() {
     let vel1 = app.world().entity(merkaba1).get::<Velocity>().unwrap();
     let vel2 = app.world().entity(merkaba2).get::<Velocity>().unwrap();
     assert_eq!(
-        vel1.linvel.y.signum(),
+        vel1.linvel.z.signum(),
         1.0,
-        "First merkaba should maintain positive y velocity"
+        "First merkaba should maintain positive z velocity"
     );
     assert_eq!(
-        vel2.linvel.y.signum(),
+        vel2.linvel.z.signum(),
         -1.0,
-        "Second merkaba should maintain negative y velocity"
+        "Second merkaba should maintain negative z velocity"
     );
 }
 
@@ -232,38 +232,38 @@ fn t021_minimum_z_speed_clamped_to_3_0() {
     );
 }
 
-/// T022c: Z-position remains within tolerance (0 ± 0.01 units) under collisions/rotation.
+/// T022c: Y-position remains within tolerance (0 ± 0.01 units) under collisions/rotation.
 ///
-/// Merkaba MUST stay constrained to the gaming plane (z ≈ 0). If z-position
+/// Merkaba MUST stay constrained to the gaming plane (y ≈ 0). If y-position
 /// drifts beyond ±0.01 units due to physics or rotation, the system MUST
 /// enforce correction via collision constraint or clamping.
 #[test]
-fn t022c_merkaba_z_plane_constrained_to_tolerance() {
+fn t022c_merkaba_y_plane_constrained_to_tolerance() {
     let mut app = test_app();
 
-    const Z_PLANE_TOLERANCE: f32 = 0.01;
+    const Y_PLANE_TOLERANCE: f32 = 0.01;
 
     let merkaba = app
         .world_mut()
         .spawn((
             Merkaba,
             Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
-            Velocity::linear(Vec3::new(0.0, 3.0, 0.1)), // Small z-velocity drift
+            Velocity::linear(Vec3::new(0.0, 0.0, 3.0)), // Forward z-velocity
         ))
         .id();
 
-    // Run for multiple frames to test z-constraint enforcement
+    // Run for multiple frames to test y-constraint enforcement
     for frame in 0..10 {
         app.update();
 
         let transform = app.world().entity(merkaba).get::<Transform>().unwrap();
-        let z_abs = transform.translation.z.abs();
+        let y_abs = transform.translation.y.abs();
         assert!(
-            z_abs <= Z_PLANE_TOLERANCE,
-            "Frame {}: Z-plane drift exceeded tolerance; z = {}, tolerance = {}",
+            y_abs <= Y_PLANE_TOLERANCE,
+            "Frame {}: Y-plane drift exceeded tolerance; y = {}, tolerance = {}",
             frame,
-            z_abs,
-            Z_PLANE_TOLERANCE
+            y_abs,
+            Y_PLANE_TOLERANCE
         );
     }
 }
