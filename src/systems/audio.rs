@@ -66,7 +66,10 @@
 //! }
 //! ```
 
-use crate::signals::{BallWallHit, BrickDestroyed as BrickDestroyedMsg, UiBeep};
+use crate::signals::{
+    BallWallHit, BrickDestroyed as BrickDestroyedMsg, MerkabaBrickCollision,
+    MerkabaPaddleCollision, MerkabaWallCollision, UiBeep,
+};
 use bevy::ecs::message::MessageReader;
 use bevy::prelude::*;
 use ron::de::from_str;
@@ -109,6 +112,14 @@ pub enum SoundType {
     LevelComplete,
     /// UI feedback (short soft beep)
     UiBeep,
+    /// Merkaba collision with wall.
+    MerkabaWall,
+    /// Merkaba collision with brick.
+    MerkabaBrick,
+    /// Merkaba collision with paddle.
+    MerkabaPaddle,
+    /// Merkaba helicopter blade loop (background).
+    MerkabaLoop,
 }
 
 /// User-adjustable audio settings, persisted across sessions.
@@ -235,7 +246,10 @@ impl Plugin for AudioPlugin {
         app.init_resource::<AudioAssets>()
             .init_resource::<ActiveSounds>()
             .init_resource::<ActiveAudioInstances>()
+            .init_resource::<AudioLoopState>()
             .add_message::<UiBeep>()
+            .add_message::<MerkabaWallCollision>()
+            .add_message::<MerkabaBrickCollision>()
             .add_systems(Startup, load_audio_config)
             .add_systems(Startup, load_audio_assets)
             .add_systems(Update, save_audio_config_on_change)
@@ -247,8 +261,11 @@ impl Plugin for AudioPlugin {
             .add_observer(on_ball_wall_hit_sound)
             .add_observer(on_level_started_sound)
             .add_observer(on_level_complete_sound)
+            .add_observer(on_merkaba_paddle_collision_sound)
             .add_systems(Update, consume_brick_destroyed_messages)
-            .add_systems(Update, consume_ui_beep_messages);
+            .add_systems(Update, consume_ui_beep_messages)
+            .add_systems(Update, consume_merkaba_wall_collision_messages)
+            .add_systems(Update, consume_merkaba_brick_collision_messages);
     }
 }
 
@@ -520,6 +537,47 @@ fn load_audio_assets(
             );
         }
     }
+
+    // Ensure merkaba audio handles exist even if the manifest is missing entries.
+    // This reuses the placeholder assets added in Phase 1.
+    let insert_placeholder = |assets: &mut AudioAssets, ty: SoundType, path: &'static str| {
+        assets.sounds.entry(ty).or_insert_with(|| {
+            let handle: Handle<AudioSource> = asset_server.load(path);
+            handle
+        });
+    };
+
+    insert_placeholder(
+        &mut audio_assets,
+        SoundType::MerkabaWall,
+        "audio/merkaba_wall.ogg",
+    );
+    insert_placeholder(
+        &mut audio_assets,
+        SoundType::MerkabaBrick,
+        "audio/merkaba_brick.ogg",
+    );
+    insert_placeholder(
+        &mut audio_assets,
+        SoundType::MerkabaPaddle,
+        "audio/merkaba_paddle.ogg",
+    );
+    insert_placeholder(
+        &mut audio_assets,
+        SoundType::MerkabaLoop,
+        "audio/merkaba_loop_helicopter.ogg",
+    );
+}
+
+/// Tracks the helicopter loop state for merkaba hazards.
+#[derive(Resource, Default, Debug)]
+pub struct AudioLoopState {
+    /// Handle to the loop audio asset (merkaba blades)
+    pub loop_handle: Option<Handle<AudioSource>>,
+    /// Active loop audio entity (if playing)
+    pub active_entity: Option<Entity>,
+    /// Whether the loop is currently playing
+    pub is_playing: bool,
 }
 
 /// Play a sound of the given type, respecting volume, mute, and concurrent limits.
@@ -899,6 +957,108 @@ fn consume_ui_beep_messages(
     if count > 0 {
         debug!(target: "audio", messages = count, "UI beep messages consumed");
     }
+}
+
+/// Message consumer for merkaba-wall collision sounds.
+fn consume_merkaba_wall_collision_messages(
+    reader: Option<MessageReader<MerkabaWallCollision>>,
+    config: Option<Res<AudioConfig>>,
+    assets: Option<Res<AudioAssets>>,
+    active_sounds: Option<ResMut<ActiveSounds>>,
+    active_instances: Option<ResMut<ActiveAudioInstances>>,
+    mut commands: Commands,
+) {
+    let Some(mut reader) = reader else { return };
+    let Some(config) = config else { return };
+    let Some(assets) = assets else { return };
+    let Some(mut active_sounds) = active_sounds else {
+        return;
+    };
+    let Some(mut active_instances) = active_instances else {
+        return;
+    };
+
+    for event in reader.read() {
+        debug!(
+            target: "audio",
+            merkaba_entity = ?event.merkaba_entity,
+            wall_entity = ?event.wall_entity,
+            "Merkaba wall collision"
+        );
+        play_sound(
+            SoundType::MerkabaWall,
+            &config,
+            &assets,
+            None,
+            &mut active_sounds,
+            &mut active_instances,
+            &mut commands,
+        );
+    }
+}
+
+/// Message consumer for merkaba-brick collision sounds.
+fn consume_merkaba_brick_collision_messages(
+    reader: Option<MessageReader<MerkabaBrickCollision>>,
+    config: Option<Res<AudioConfig>>,
+    assets: Option<Res<AudioAssets>>,
+    active_sounds: Option<ResMut<ActiveSounds>>,
+    active_instances: Option<ResMut<ActiveAudioInstances>>,
+    mut commands: Commands,
+) {
+    let Some(mut reader) = reader else { return };
+    let Some(config) = config else { return };
+    let Some(assets) = assets else { return };
+    let Some(mut active_sounds) = active_sounds else {
+        return;
+    };
+    let Some(mut active_instances) = active_instances else {
+        return;
+    };
+
+    for event in reader.read() {
+        debug!(
+            target: "audio",
+            merkaba_entity = ?event.merkaba_entity,
+            brick_entity = ?event.brick_entity,
+            "Merkaba brick collision"
+        );
+        play_sound(
+            SoundType::MerkabaBrick,
+            &config,
+            &assets,
+            None,
+            &mut active_sounds,
+            &mut active_instances,
+            &mut commands,
+        );
+    }
+}
+
+/// Observer for merkaba-paddle collision sounds.
+fn on_merkaba_paddle_collision_sound(
+    trigger: On<MerkabaPaddleCollision>,
+    config: Res<AudioConfig>,
+    assets: Res<AudioAssets>,
+    mut active_sounds: ResMut<ActiveSounds>,
+    mut active_instances: ResMut<ActiveAudioInstances>,
+    mut commands: Commands,
+) {
+    debug!(
+        target: "audio",
+        merkaba_entity = ?trigger.event().merkaba_entity,
+        paddle_entity = ?trigger.event().paddle_entity,
+        "Merkaba paddle collision"
+    );
+    play_sound(
+        SoundType::MerkabaPaddle,
+        &config,
+        &assets,
+        None,
+        &mut active_sounds,
+        &mut active_instances,
+        &mut commands,
+    );
 }
 
 #[cfg(test)]

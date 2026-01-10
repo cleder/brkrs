@@ -6,11 +6,16 @@ All notable changes to this project are documented here.
 
 ### Changed
 
+- **Physics Update**: Fixed longstanding issue where the Paddle could physically push "Sensor" style hazards (Merkaba). Now uses a 3-layer filtering system (CollisionGroups, SolverGroups, and explicit KCC Movement Filtering) to ensure hazards are deadly on contact but physically intangible to the paddle's movement.
 - Add compatibility alias `LevelAdvanceSet = LevelAdvanceSystems` (deprecated) to avoid breaking external callers after renaming the system set.
 - Made core event types (`WallHit`, `BrickHit`, `BallHit`) public to allow external systems (e.g., the audio plugin) to observe them; review for API compatibility.
 
 ### Added
 
+- **Merkaba Hazard** (`018-merkaba-rotor-brick`): Added a rotating, floating "Star Tetrahedron" hazard that bounces around the map (XZ plane) and kills the player on contact. Features:
+  - Custom dual-tetrahedron geometry with inverted winding for proper backface culling.
+  - Advanced physics configuration (Dynamic rigid body, sensor-like collision logic) that triggers events without physical displacement.
+  - Proper integration with level loader and restart logic to Ensure entities are cleaned up on 'R' key (Level Restart).
 - **Documentation**: Comprehensive physics configuration system documentation added to developer guide, including usage examples, collision event explanation, and debugging guidance. Updated architecture docs to reflect centralized config approach instead of hardcoded values.
 
 - **Cheat mode safeguards** (`001-cheat-mode-safeguards`): Toggle cheat mode with the `G` key to enable test/dev-only behavior — score resets to 0 on toggle, and a persistent image indicator (`assets/textures/default/cheat-mode-128.png`) appears on screen (lower-right, ~48×48 px). Level-control keys (R = respawn, N = next level, P = previous level) are gated to cheat mode and emit a soft UI beep when blocked; if cheat mode is toggled while a Game Over overlay is visible, the player's lives are reset to 3 and the Game Over overlay is removed so the player may resume (note: toggling cheat mode does **not** reload or reset the current level). Includes unit and integration tests and docs (`docs/cheat-mode.md`, UI docs updated).

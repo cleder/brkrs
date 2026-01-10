@@ -1,17 +1,16 @@
 
 <!--
 SYNC IMPACT REPORT
-- Version change: 1.3.2 → 1.4.0
-- Modified principles: VIII. Bevy 0.17 Mandates & Prohibitions (added detailed clarification: Messages (Buffered Events) vs Observers (Immediate/Push-Based), including purpose, mechanism, pros/cons, and usage guidance)
-- Added sections: Bevy 0.17 Event, Message, and Observer Clarification (new subsection)
+- Version change: 1.4.0 → 1.5.0
+- Modified principles: None
+- Added sections: VIII. Coordinate System Conventions (new principle for axis orientation clarity)
 - Removed sections: None
 - Templates requiring updates:
-  - .specify/templates/plan-template.md: ⚠ review for new Message/Observer guidance
-  - .specify/templates/spec-template.md: ⚠ review for new Message/Observer guidance
-  - .specify/templates/tasks-template.md: ⚠ review for new Message/Observer guidance
+  - .specify/templates/spec-template.md: ✅ added COORDINATE SYSTEM REQUIREMENT section
+  - .specify/templates/plan-template.md: ✅ added Coordinate System Guidance to Constitution Check
 - Follow-up TODOs:
-  - Validate all open plans/specs/tasks for explicit Message vs Observer usage rationale
-  - Ensure new features document which event system is used and why
+  - Review existing specs for coordinate system documentation where movement/physics is involved
+  - Consider adding coordinate system diagrams to main documentation (docs/)
 -->
 
 # Brkrs Constitution
@@ -186,7 +185,32 @@ All code implementations MUST follow strict Test-Driven Development (TDD):
 **Rationale**: Enforcing TDD ensures that behavior is specified explicitly before implementation, reduces regressions, and improves design quality.
 It provides objective verification (tests) for requirement fulfillment and discourages untestable or speculative changes.
 
-### VIII. Bevy 0.17 Mandates & Prohibitions
+### VIII. Coordinate System Conventions
+
+All spatial code MUST follow consistent coordinate system conventions and document gameplay-relative directions:
+
+- **World Coordinate System**: Bevy's right-handed Y-up coordinate system applies globally:
+  - **Y-axis**: Points up (vertical, gravity opposite direction)
+  - **X-axis**: Points right (lateral/horizontal)
+  - **Z-axis**: +Z points toward camera (out of screen), -Z points into screen
+- **Gaming Plane**: This game uses the **XZ horizontal plane** for gameplay (Y-axis locked via `LockedAxes::TRANSLATION_LOCKED_Y`):
+  - Entities move on XZ plane with top-down camera view (camera at positive Y looking down)
+  - Y coordinates represent height/layering but are typically locked for gameplay entities
+- **Transform API vs Gameplay Directions**: Bevy's `Transform::forward()` returns **-Z** (into screen, OpenGL/Godot convention), but in top-down gameplay:
+  - **Gameplay "forward"** = **+Z direction** (toward goal/bricks, away from paddle)
+  - **Gameplay "backward"** = **-Z direction** (toward paddle)
+  - **Lateral** = **±X direction** (left/right)
+- **Physics Velocity**: Code directly manipulating physics velocity (`Velocity::linvel`) MUST use explicit axis references (e.g., `linvel.z` for Z-axis movement) rather than semantic terms like "forward" to avoid Transform API confusion
+- **Documentation Requirement**: Features involving spatial movement or directions MUST include a coordinate system note clarifying whether directional terms (forward/backward/left/right) refer to:
+  - Bevy's Transform API convention (-Z forward)
+  - Gameplay-relative directions from player perspective
+  - Direct axis manipulation (±X, ±Y, ±Z)
+
+**Rationale**: The discrepancy between Bevy's Transform API convention (forward = -Z) and top-down gameplay convention (forward = +Z) creates potential confusion.
+Explicit documentation of which convention is used prevents axis-related bugs and miscommunication.
+Physics-based games manipulating velocity directly need clear axis references, not semantic direction terms that vary by API context.
+
+### IX. Bevy 0.17 Mandates & Prohibitions
 
 #### Bevy 0.17 Event, Message, and Observer Clarification
 
@@ -375,4 +399,4 @@ All contributions MUST comply with these principles.
 - Performance targets may be adjusted based on platform evolution
 - Development workflow may be optimized as team/tools evolve
 
-**Version**: 1.4.0 | **Ratified**: 2025-10-30 | **Last Amended**: 2025-12-28
+**Version**: 1.5.0 | **Ratified**: 2025-10-30 | **Last Amended**: 2026-01-09

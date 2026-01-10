@@ -33,9 +33,9 @@ Rust 1.81 (edition 2021): Follow standard conventions
 - Include unit tests, integration/acceptance tests for user scenarios, and WASM-targeted tests when behavior differs on the web.
 - CI pipelines MUST enforce tests and reject merges that do not comply with the tests-first proof.
 ## Recent Changes
+- 018-merkaba-rotor-brick: Added Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1
 - 017-brick-material-textures: Added Rust 1.81 (edition 2021) + Bevy 0.17.3 (rendering, assets, ECS), serde 1.0, ron 0.8
 - 016-audio-wall-delay-fix: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-- 015-ball-physics-config: Added Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1
 
 
 <!-- MANUAL ADDITIONS START -->

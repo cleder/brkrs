@@ -13,6 +13,10 @@ fn setup_app_with_ball_config(config: BallPhysicsConfig) -> App {
     app.insert_resource(brkrs::systems::respawn::SpawnPoints::default());
     app.insert_resource(bevy::asset::Assets::<bevy::prelude::Mesh>::default());
     app.insert_resource(bevy::asset::Assets::<bevy::prelude::StandardMaterial>::default());
+
+    // CollisionEvent is required by detect_ball_loss system in RespawnPlugin
+    app.add_message::<bevy_rapier3d::prelude::CollisionEvent>();
+
     app.add_plugins(brkrs::systems::respawn::RespawnPlugin);
     app
 }
@@ -76,6 +80,10 @@ fn setup_app_with_paddle_config(config: PaddlePhysicsConfig) -> App {
     app.insert_resource(brkrs::systems::respawn::SpawnPoints::default());
     app.insert_resource(bevy::asset::Assets::<bevy::prelude::Mesh>::default());
     app.insert_resource(bevy::asset::Assets::<bevy::prelude::StandardMaterial>::default());
+
+    // CollisionEvent is required by detect_ball_loss system in RespawnPlugin
+    app.add_message::<bevy_rapier3d::prelude::CollisionEvent>();
+
     app.add_plugins(brkrs::systems::respawn::RespawnPlugin);
     app
 }

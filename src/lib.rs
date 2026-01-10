@@ -13,7 +13,8 @@ pub use level_loader::extract_author_name;
 #[cfg(feature = "texture_manifest")]
 use crate::systems::TextureManifestPlugin;
 use crate::systems::{
-    AudioPlugin, InputLocked, LevelSwitchPlugin, PaddleSizePlugin, RespawnPlugin, RespawnSystems,
+    AudioPlugin, InputLocked, LevelSwitchPlugin, MerkabaPlugin, PaddleSizePlugin, RespawnPlugin,
+    RespawnSystems,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -22,7 +23,7 @@ use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 use bevy::window::MonitorSelection;
 use bevy::{
     color::palettes::css::RED,
-    ecs::message::{MessageReader, MessageWriter},
+    ecs::message::MessageWriter,
     input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow, Window, WindowMode, WindowPlugin},
@@ -95,7 +96,7 @@ pub struct Brick;
 pub struct BrickTypeId(pub u8);
 
 #[derive(Component)]
-struct MarkedForDespawn;
+pub struct MarkedForDespawn;
 #[derive(Component)]
 /// Marker component attached to bricks that should count toward level completion
 /// (i.e. destructible bricks). Indestructible bricks MUST NOT have this component.
@@ -145,7 +146,7 @@ pub struct BallHit {
 
 /// Stores configurable gravity values (normal gameplay gravity, etc.)
 #[derive(Resource)]
-struct GravityConfig {
+pub(crate) struct GravityConfig {
     normal: Vec3,
 }
 
@@ -176,7 +177,9 @@ pub fn run() {
     // Scoring system state
     app.init_resource::<systems::scoring::ScoreState>();
     app.add_message::<crate::signals::BrickDestroyed>();
+    app.add_message::<crate::signals::SpawnMerkabaMessage>();
     app.add_message::<systems::scoring::MilestoneReached>();
+    app.add_message::<bevy_rapier3d::prelude::CollisionEvent>();
     app.insert_resource(level_loader::LevelAdvanceState::default());
     app.add_plugins((
         DefaultPlugins
@@ -204,6 +207,7 @@ pub fn run() {
     // Register BallWallHit as an event so the observer is active before AudioPlugin
     app.add_message::<crate::signals::BallWallHit>();
     app.add_plugins(AudioPlugin);
+    app.add_plugins(MerkabaPlugin);
     app.add_plugins(PaddleSizePlugin);
     // Cheat mode plugin (feature: toggle, indicator, gated level controls)
     app.add_plugins(systems::CheatModePlugin);
@@ -547,19 +551,30 @@ fn spawn_border(
 /// transitions to index 20 (simple stone), which can then be destroyed on the next hit.
 ///
 /// This allows the physics collision response to complete before removal.
-fn mark_brick_on_ball_collision(
+pub fn mark_brick_on_ball_collision(
     mut collision_events: MessageReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
-    // Query bricks with their type ID for multi-hit handling
-    mut bricks: Query<
-        (Entity, &mut BrickTypeId),
-        (
-            With<Brick>,
-            With<CountsTowardsCompletion>,
-            Without<MarkedForDespawn>,
-        ),
-    >,
+    // Use a ParamSet to avoid Bevy B0001 conflicting borrows across queries
+    mut bricks: ParamSet<(
+        Query<
+            (
+                Entity,
+                &BrickTypeId,
+                Option<&GlobalTransform>,
+                Option<&Transform>,
+            ),
+            (
+                With<Brick>,
+                With<CountsTowardsCompletion>,
+                Without<MarkedForDespawn>,
+            ),
+        >,
+        Query<(Entity, &mut BrickTypeId), With<Brick>>,
+    )>,
+    transforms: Query<&Transform>,
     mut commands: Commands,
+    mut spawn_msgs: Option<MessageWriter<crate::signals::SpawnMerkabaMessage>>,
+    mut brick_destroyed_msgs: Option<MessageWriter<crate::signals::BrickDestroyed>>,
 ) {
     use crate::level_format::{is_multi_hit_brick, MULTI_HIT_BRICK_1, SIMPLE_BRICK};
 
@@ -570,19 +585,31 @@ fn mark_brick_on_ball_collision(
             let e2_is_ball = balls.get(*e2).is_ok();
 
             // Determine which entity is the brick (if any)
-            let brick_entity = if e1_is_ball {
-                bricks.get_mut(*e2).ok()
+            let bricks_info = bricks.p0();
+            let brick_info = if e1_is_ball {
+                bricks_info.get(*e2).ok()
             } else if e2_is_ball {
-                bricks.get_mut(*e1).ok()
+                bricks_info.get(*e1).ok()
             } else {
                 None
             };
 
-            if let Some((entity, mut brick_type)) = brick_entity {
-                let current_type = brick_type.0;
+            if let Some((entity, brick_type_ro, gt_opt, t_opt)) = brick_info {
+                let current_type = brick_type_ro.0;
+                // Prefer Transform over GlobalTransform over direct query
+                let brick_pos = if let Some(t) = t_opt {
+                    t.translation
+                } else if let Some(gt) = gt_opt {
+                    gt.translation()
+                } else {
+                    transforms
+                        .get(entity)
+                        .map(|t| t.translation)
+                        .unwrap_or(Vec3::ZERO)
+                };
 
                 if is_multi_hit_brick(current_type) {
-                    // Multi-hit brick: transition to next state
+                    // Multi-hit brick: transition to next state (requires mutable borrow)
                     let new_type = if current_type == MULTI_HIT_BRICK_1 {
                         // Index 10 transitions to index 20 (simple stone)
                         SIMPLE_BRICK
@@ -599,7 +626,9 @@ fn mark_brick_on_ball_collision(
                     });
 
                     // Update the brick type (this triggers watch_brick_type_changes for visual update)
-                    brick_type.0 = new_type;
+                    if let Ok((_, mut brick_type)) = bricks.p1().get_mut(entity) {
+                        brick_type.0 = new_type;
+                    }
 
                     debug!(
                         "Multi-hit brick {:?} transitioned: {} -> {}",
@@ -607,7 +636,28 @@ fn mark_brick_on_ball_collision(
                     );
                 } else {
                     // Regular brick: mark for despawn
-                    commands.entity(entity).insert(MarkedForDespawn);
+                    if current_type == 36 {
+                        if let Some(writer) = spawn_msgs.as_mut() {
+                            writer.write(crate::signals::SpawnMerkabaMessage {
+                                position: brick_pos,
+                                delay_seconds: 0.5,
+                                angle_variance_deg: 20.0,
+                                min_speed_y: 3.0,
+                            });
+                        }
+                        // Record last rotor spawn position as fallback for spawn processing
+                        // Emit BrickDestroyed for consistency and despawn immediately to satisfy tests
+                        if let Some(writer) = brick_destroyed_msgs.as_mut() {
+                            writer.write(crate::signals::BrickDestroyed {
+                                brick_entity: entity,
+                                brick_type: current_type,
+                                destroyed_by: None,
+                            });
+                        }
+                        commands.entity(entity).try_despawn();
+                    } else {
+                        commands.entity(entity).insert(MarkedForDespawn);
+                    }
                 }
             }
         }
@@ -675,7 +725,9 @@ fn despawn_marked_entities(
 pub fn register_brick_collision_systems(app: &mut App) {
     app.add_systems(
         Update,
-        (mark_brick_on_ball_collision, despawn_marked_entities),
+        (mark_brick_on_ball_collision, despawn_marked_entities)
+            .chain()
+            .before(crate::systems::merkaba::MerkabaSpawnFlowSystems::Queue),
     );
 }
 

@@ -146,6 +146,7 @@ fn default_depth_scale() -> f32 {
 pub enum ObjectClass {
     Ball,
     Brick,
+    Merkaba,
 }
 
 #[derive(Debug, Clone, Deserialize)]
