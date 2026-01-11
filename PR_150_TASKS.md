@@ -12,6 +12,7 @@
   - **Issue**: `parallax_depth_scale` set unconditionally even when `depth_map` is None
   - **Current**: `parallax_depth_scale: profile.depth_scale,`
   - **Fix**: Conditionally set to 0.0 when depth texture missing:
+
     ```rust
     parallax_depth_scale: if depth_texture.is_some() {
         profile.depth_scale
@@ -19,6 +20,7 @@
         0.0
     },
     ```
+
   - **Test**: Verify no parallax applied when depth_map is None
   - **Reference**: Line 474-476, qodo-code-review P1 issue
 
@@ -32,13 +34,17 @@
 - [ ] T003 [P1] Fix emissive texture color space in [src/systems/textures/materials.rs](src/systems/textures/materials.rs#L430)
   - **Issue**: Emissive texture loaded with `is_srgb=true` (should be `false` for linear color space consistency)
   - **Current**:
+
     ```rust
     settings.is_srgb = true,  // Line 430
     ```
+
   - **Fix**: Change to `is_srgb = false` (like ORM and normal maps):
+
     ```rust
     settings.is_srgb = false,
     ```
+
   - **Reason**: Color space consistency with other texture types (ORM, normal maps)
   - **Reference**: coderabbit pre-merge check warning
 
