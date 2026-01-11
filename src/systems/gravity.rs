@@ -114,6 +114,11 @@ pub fn gravity_configuration_loader_system(
 /// detects the removal and sends a `GravityChanged` message with the gravity
 /// value from the brick's component.
 ///
+/// For brick index 25 (Queer Gravity), generates random gravity within specified ranges:
+/// - X ∈ [-2.0, +15.0]
+/// - Y = 0.0 (always, no randomization)
+/// - Z ∈ [-5.0, +5.0]
+///
 /// **Approach**: Tracks GravityBrick components in a resource before they're
 /// despawned, allowing us to send the correct gravity message when destruction occurs.
 pub fn brick_destruction_gravity_handler(
@@ -123,11 +128,25 @@ pub fn brick_destruction_gravity_handler(
     marked_for_despawn: Query<Entity, With<crate::MarkedForDespawn>>,
     mut gravity_writer: MessageWriter<GravityChanged>,
 ) {
+    use rand::Rng;
+
     // Check if any gravity bricks are marked for despawn
     for (entity, gravity_brick) in gravity_bricks.iter() {
         if marked_for_despawn.contains(entity) {
-            // This gravity brick is about to be destroyed
-            let msg = GravityChanged::new(gravity_brick.gravity);
+            // Determine gravity based on brick index
+            let gravity = if gravity_brick.index == 25 {
+                // Queer Gravity: Generate random gravity
+                let mut rng = rand::rng();
+                let x = rng.random_range(-2.0..=15.0);
+                let y = 0.0; // Y is always 0.0 for Queer Gravity
+                let z = rng.random_range(-5.0..=5.0);
+                Vec3::new(x, y, z)
+            } else {
+                // Static gravity bricks: Use predefined value
+                gravity_brick.gravity
+            };
+
+            let msg = GravityChanged::new(gravity);
 
             // Validate before sending (defensive programming)
             match msg.validate() {
@@ -135,7 +154,7 @@ pub fn brick_destruction_gravity_handler(
                     gravity_writer.write(msg);
                     debug!(
                         "Gravity brick detected for destruction (entity: {:?}, index: {}, gravity: {:?})",
-                        entity, gravity_brick.index, gravity_brick.gravity
+                        entity, gravity_brick.index, gravity
                     );
                 }
                 Err(e) => {
