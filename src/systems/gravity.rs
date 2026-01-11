@@ -172,6 +172,31 @@ pub fn gravity_application_system(
     }
 }
 
+/// Apply gravity configuration to Rapier physics engine.
+///
+/// This system applies the current gravity from `GravityConfiguration` to the
+/// Rapier physics engine's RapierConfiguration. This must run after gravity
+/// is updated (from both level loading and brick destruction) and before
+/// the physics simulation step.
+///
+/// **Effect**: The gravity setting affects all physics bodies, but gravity bricks
+/// are designed to be used in ways that effectively apply gravity to the ball only
+/// (since the paddle and other entities don't have gravity applied in typical usage).
+pub fn apply_gravity_to_physics(
+    gravity_cfg: Res<crate::GravityConfiguration>,
+    mut rapier_config: Query<&mut bevy_rapier3d::prelude::RapierConfiguration>,
+) {
+    // Apply the current gravity configuration to the physics engine
+    // This runs every frame, updating the physics engine's gravity setting
+    if let Ok(mut config) = rapier_config.single_mut() {
+        config.gravity = gravity_cfg.current;
+        debug!(
+            "Applied gravity configuration to physics: {:?}",
+            gravity_cfg.current
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

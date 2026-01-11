@@ -344,6 +344,12 @@ pub fn run() {
         systems::gravity::gravity_application_system
             .after(systems::gravity::brick_destruction_gravity_handler),
     );
+    // Physics gravity application: applies GravityConfiguration to Rapier
+    app.add_systems(
+        Update,
+        systems::gravity::apply_gravity_to_physics
+            .after(systems::gravity::gravity_application_system),
+    );
     // Note: Multi-hit brick sound observer is now registered by AudioPlugin
     app.run();
 }
