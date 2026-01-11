@@ -123,4 +123,4 @@ f1dc84d RED/Documentation: Add US2 test files (T009–T011)
 ---
 
 **Ready to begin intensive implementation phase?**
-                                                                                                                 **Proceed with T013–T021.**
+                                                                                                                                                                                                                     **Proceed with T013–T021.**
