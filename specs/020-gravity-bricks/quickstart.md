@@ -30,7 +30,7 @@ To define a level's default gravity:
     bricks: [
         // ... your brick map ...
     ],
-    default_gravity: Some((0.0, 10.0, 0.0)),  // ← Optional: Earth gravity
+    gravity: Some((0.0, 10.0, 0.0)),  // ← Optional: Earth gravity
     // ... other fields ...
 )
 ```
@@ -218,7 +218,7 @@ fn test_gravity_resets_on_ball_loss() {
 
 #[test]
 fn test_default_gravity_zero_when_undefined() {
-    // Setup: Load level without default_gravity field
+    // Setup: Load level without gravity field
     // Assert: GravityConfiguration::level_default == Vec3::ZERO
 }
 ```

@@ -12,7 +12,7 @@
 LEVEL START
     │
     ├─ Load LevelDefinition from RON
-    │   └─ Extract default_gravity field (or use Vec3::ZERO fallback)
+    │   └─ Extract gravity field (or use Vec3::ZERO fallback)
     │
     ├─ Create GravityConfiguration resource
     │   ├─ current = level_default
@@ -205,7 +205,7 @@ Schedule: PostUpdate (or when life loss detected)
 ```text
 ┌─────────────────────┐
 │  LevelDefinition    │  ← Loaded from RON
-│  default_gravity    │
+│  gravity            │
 └──────────┬──────────┘
            │
            ↓
@@ -313,9 +313,9 @@ Schedule: PostUpdate (or when life loss detected)
 5. All Z values in [-5.0, +5.0]
 6. No correlation between consecutive RNG values
 
-### Scenario 5: Level Without Default Gravity
+### Scenario 5: Level Without Gravity Field
 
-**Input**: Level RON file without `default_gravity` field **Expected**:
+**Input**: Level RON file without `gravity` field **Expected**:
 
 1. `GravityConfiguration::level_default` set to `Vec3::ZERO`
 2. Ball spawns and floats (zero gravity)

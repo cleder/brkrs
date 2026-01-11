@@ -29,10 +29,10 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [X] T006 Implement `gravity_configuration_loader_system` in `src/systems/gravity/mod.rs` that loads `default_gravity` from `LevelDefinition` and initializes `GravityConfiguration` resource
+- [X] T006 Implement `gravity_configuration_loader_system` in `src/systems/gravity/mod.rs` that loads `gravity` from `LevelDefinition` and initializes `GravityConfiguration` resource
 - [X] T007 Register gravity systems in main app schedule: add `gravity_configuration_loader_system` to `Update`, `gravity_application_system` to `PhysicsUpdate`, `gravity_reset_on_life_loss_system` to `PostUpdate`
-- [X] T008 Extend `LevelDefinition` struct in `src/level_format/mod.rs` to include optional `default_gravity: Option<Vec3>` field; add RON deserialization support with `None` fallback to `Vec3::ZERO`
-- [X] T009 Verify level loading gracefully handles missing `default_gravity` field (backwards compatibility); test with existing levels that lack gravity config
+- [X] T008 Extend `LevelDefinition` struct in `src/level_format/mod.rs` to include optional `gravity: Option<(f32, f32, f32)>` field; add RON deserialization support with `None` fallback to `Vec3::ZERO`
+- [X] T009 Verify level loading gracefully handles missing `gravity` field (backwards compatibility); test with existing levels that lack gravity config
 
 **Checkpoint**: Foundation ready - gravity systems registered, level loading updated, tests can run independently.
 
@@ -81,7 +81,7 @@
 ### Tests for US2 (REQUIRED) ⚠️
 
 - [X] T024 [P] [US2] Write unit test for ball loss detection in `tests/gravity_bricks.rs::test_gravity_reset_on_ball_loss()` - setup level with default gravity 10G, change to zero gravity, lose ball, assert `GravityConfiguration::current` reset to `(0.0, 10.0, 0.0)` before next ball spawn
-- [X] T025 [P] [US2] Write test for zero gravity fallback in `tests/gravity_bricks.rs::test_gravity_reset_to_zero_gravity_fallback()` - load level without `default_gravity` field, change gravity, lose ball, assert reset to `(0.0, 0.0, 0.0)`
+- [X] T025 [P] [US2] Write test for zero gravity fallback in `tests/gravity_bricks.rs::test_gravity_reset_to_zero_gravity_fallback()` - load level without `gravity` field, change gravity, lose ball, assert reset to `(0.0, 0.0, 0.0)`
 - [X] T026 [US2] Write integration test for full gravity lifecycle in `tests/gravity_bricks.rs::test_gravity_lifecycle_multiple_balls()` - destroy gravity bricks, lose balls, spawn new balls, verify gravity resets correctly each time
 
 ### Implementation for US2
@@ -171,7 +171,7 @@
 - [ ] T052 [P] Update docs: Create `docs/gravity-system.md` explaining gravity mechanics, message flow, and level design guidelines
 - [ ] T053 Profile gravity systems for performance (benchmark gravity system and message processing) - verify 60 FPS target maintained
 - [ ] T054 Test WASM build compatibility - compile with `cargo build --target wasm32-unknown-unknown`, verify gravity systems work in WASM
-- [ ] T055 Update level RON files with optional `default_gravity` field where appropriate - add gravity config to existing test levels
+- [ ] T055 Update level RON files with optional `gravity` field where appropriate - add gravity config to existing test levels
 - [ ] T056 Manual gameplay testing - play through levels with gravity bricks, verify feel, difficulty, score awards
 
 ---

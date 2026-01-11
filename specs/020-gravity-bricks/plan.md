@@ -143,8 +143,8 @@ Changes are localized to:
 
 ```text
 assets/levels/
-├── level_1.ron              # MODIFY: Add default_gravity field (optional)
-├── level_2.ron              # MODIFY: Add default_gravity field (optional)
+├── level_1.ron              # MODIFY: Add gravity field (optional)
+├── level_2.ron              # MODIFY: Add gravity field (optional)
 ├── [existing level files]   # Unchanged (auto-fallback to zero gravity)
 ```
 
@@ -157,12 +157,12 @@ assets/levels/
     bricks: [
         // ... brick definitions ...
     ],
-    default_gravity: Some((0.0, 10.0, 0.0)),  // NEW: Optional gravity config
+    gravity: Some((0.0, 10.0, 0.0)),  // Optional level gravity
     // ... other fields ...
 )
 ```
 
-Fallback: If `default_gravity` is `None` or missing, system defaults to `(0.0, 0.0, 0.0)` (zero gravity).
+Fallback: If `gravity` is `None` or missing, system defaults to `(0.0, 0.0, 0.0)` (zero gravity).
 
 ## Complexity Tracking
 
@@ -220,7 +220,7 @@ Deliverables:
    #[derive(Resource, Clone, Copy, Debug)]
    pub struct GravityConfiguration {
        pub current: Vec3,
-       pub level_default: Vec3,
+       pub level_default: Vec3,  // Loaded from LevelDefinition.gravity
    }
    ```
 
@@ -255,7 +255,7 @@ Deliverables:
        ↓
    PostUpdate Schedule
        ↓
-   [gravity_reset_on_life_loss_system resets to level_default on ball loss]
+   [gravity_reset_on_life_loss_system resets to level_default (from level gravity) on ball loss]
        ↓
    [Ball respawn occurs with reset gravity]
    ```
@@ -274,7 +274,7 @@ Expected tasks:
 5. Implement `GravityConfiguration` resource loading from level metadata
 6. Add `GravityBrick` component marker and brick index handling
 7. Write comprehensive tests (TDD - before implementation)
-8. Update level RON files with optional `default_gravity` field
+8. Update level RON files with optional `gravity` field
 9. Integration testing with existing brick destruction and ball physics
 10. Performance profiling and WASM compatibility verification
 

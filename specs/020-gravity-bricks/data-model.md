@@ -155,28 +155,28 @@ pub struct GravityChanged {
 
 ### 5. LevelDefinition (Modification)
 
-**Purpose**: Extend existing level metadata to include optional default gravity configuration.
+**Purpose**: Extend existing level metadata to include optional gravity configuration.
 
-**New Field**:
+**Existing Field Used**:
 
 ```rust
 pub struct LevelDefinition {
     // ... existing fields ...
 
-    /// Optional default gravity for this level
+    /// Optional gravity for this level (used as base/reset value)
     /// If None or missing from RON, defaults to Vec3::ZERO (zero gravity)
-    /// Format: [x, y, z] in Bevy coordinates
+    /// Format: (x, y, z) tuple in Bevy coordinates
     /// BACKWARD COMPATIBLE: Existing level files without this field will automatically
     /// deserialize with None (fallback to zero gravity) due to #[serde(default)] attribute
     #[serde(default)]
-    pub default_gravity: Option<Vec3>,
+    pub gravity: Option<(f32, f32, f32)>,
 }
 ```
 
 **Deserialization Behavior**:
 
-- Old RON files (no `default_gravity` field): serde assigns `None` → loads zero gravity fallback
-- New RON files (with `default_gravity` field): serde parses value → loads specified gravity
+- Old RON files (no `gravity` field): serde assigns `None` → loads zero gravity fallback
+- RON files (with `gravity` field): serde parses value → loads specified gravity
 - **No migration needed**: Existing levels automatically work with zero gravity fallback
 
 **RON Format**:
@@ -185,7 +185,7 @@ pub struct LevelDefinition {
 (
     name: "Level 1: Easy",
     bricks: [/* ... */],
-    default_gravity: Some((0.0, 10.0, 0.0)),  // Earth gravity
+    gravity: Some((0.0, 10.0, 0.0)),  // Earth gravity
     // ... other fields ...
 )
 ```
@@ -196,7 +196,7 @@ Or with fallback:
 (
     name: "Level 0: Classic",
     bricks: [/* ... */],
-    // no default_gravity field → defaults to zero gravity
+    // no gravity field → defaults to zero gravity
     // ... other fields ...
 )
 ```
@@ -205,7 +205,7 @@ Or with fallback:
 
 - Loaded by `gravity_configuration_loader_system` at level start
 - If field missing or `None`: defaults to `Vec3::ZERO`
-- Stored in `GravityConfiguration::level_default`
+- Converted from tuple `(x, y, z)` to `Vec3` and stored in `GravityConfiguration::level_default`
 
 ---
 
@@ -242,11 +242,11 @@ Level Start
     ↓
 [LevelDefinition loaded from RON]
     ↓
-[default_gravity field parsed with #[serde(default)]]
+[gravity field parsed with #[serde(default)]]
     ↓
 [GravityConfiguration resource created]
-├─ current: Level's default_gravity (or zero gravity fallback)
-└─ level_default: Level's default_gravity (or zero gravity fallback)
+├─ current: Level's gravity (or zero gravity fallback)
+└─ level_default: Level's gravity (or zero gravity fallback)
     ↓
 [Brick entities spawned with GravityBrick component if index 21-25]
     ↓
@@ -334,9 +334,9 @@ Event: Next ball spawned
 - `level_default` must always be finite
 - Both should be within reasonable physics range (typically [-30, +30] per axis)
 
-### LevelDefinition::default_gravity
+### LevelDefinition::gravity
 
-- If `Some(Vec3)`: must have finite components
+- If `Some((x, y, z))`: tuple components must be finite
 - If `None`: treated as zero gravity `Vec3::ZERO`
 
 ---
@@ -380,13 +380,13 @@ Event: Next ball spawned
 **Existing Levels**:
 
 - All existing level RON files are backwards compatible
-- Levels without `default_gravity` field automatically use zero gravity fallback
+- Levels without `gravity` field automatically use zero gravity fallback
 - No migration script required
-- Optional: developers can add `default_gravity` field to levels to set custom defaults
+- Optional: developers can add `gravity` field to levels to set custom gravity
 
 **Existing Components**:
 
-- `LevelDefinition` struct extended with optional `default_gravity` field
+- `LevelDefinition` uses existing optional `gravity` field (already present)
 - Deserialization handles missing field gracefully (defaults to `None`)
 - No breaking changes to existing level format
 
