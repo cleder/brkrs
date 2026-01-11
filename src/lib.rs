@@ -454,7 +454,7 @@ fn update_paddle_growth(
     time: Res<Time>,
     mut paddles: Query<(Entity, &mut Transform, &mut PaddleGrowing)>,
     mut rapier_config: Query<&mut RapierConfiguration>,
-    gravity_cfg: Res<GravityConfig>,
+    gravity_cfg: Res<GravityConfiguration>,
     mut commands: Commands,
 ) {
     for (entity, mut transform, mut growing) in paddles.iter_mut() {
@@ -464,7 +464,7 @@ fn update_paddle_growth(
             // Growth complete: set final scale, enable gravity, remove component
             transform.scale = growing.target_scale;
             if let Ok(mut config) = rapier_config.single_mut() {
-                config.gravity = gravity_cfg.normal;
+                config.gravity = gravity_cfg.current;
             } else {
                 warn!(
                     "Failed to restore gravity after paddle growth: RapierConfiguration not found"
@@ -473,7 +473,7 @@ fn update_paddle_growth(
             commands.entity(entity).remove::<PaddleGrowing>();
             info!(
                 "Paddle growth completed, gravity restored to {:?}",
-                gravity_cfg.normal
+                gravity_cfg.current
             );
         } else {
             // Interpolate scale from start to target
@@ -492,13 +492,13 @@ fn update_paddle_growth(
 fn restore_gravity_post_growth(
     paddles: Query<&PaddleGrowing>,
     mut rapier_config: Query<&mut RapierConfiguration>,
-    gravity_cfg: Res<GravityConfig>,
+    gravity_cfg: Res<GravityConfiguration>,
 ) {
     // Only restore if no paddle is growing and gravity is currently zero.
     if paddles.is_empty() {
         if let Ok(mut config) = rapier_config.single_mut() {
             if config.gravity == Vec3::ZERO {
-                config.gravity = gravity_cfg.normal;
+                config.gravity = gravity_cfg.current;
             }
         }
     }

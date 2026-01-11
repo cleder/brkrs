@@ -26,7 +26,6 @@ fn test_level(number: u32) -> LevelDefinition {
         presentation: None,
         description: None,
         author: None,
-        default_gravity: None,
     }
 }
 

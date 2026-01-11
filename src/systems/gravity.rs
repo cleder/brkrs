@@ -50,7 +50,7 @@ impl GravityChanged {
     /// # Examples
     ///
     /// ```ignore
-    /// let msg = GravityChanged::new(Vec3::new(0.0, 10.0, 0.0));  // Earth gravity
+    /// let msg = GravityChanged::new(Vec3::new(10.0, 0.0, 0.0));  // Earth gravity
     /// ```
     pub fn new(gravity: Vec3) -> Self {
         Self { gravity }
