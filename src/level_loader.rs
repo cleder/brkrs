@@ -29,6 +29,37 @@ pub(crate) struct LevelContext<'w> {
     pub game_progress: ResMut<'w, GameProgress>,
     pub level_advance: ResMut<'w, LevelAdvanceState>,
 }
+/// Helper function to create GravityBrick component for gravity brick types (21-25).
+///
+/// For brick type 25 (Queer Gravity), the gravity value is just a placeholder;
+/// the actual random gravity will be computed at destruction time by the
+/// brick_destruction_gravity_handler system.
+fn create_gravity_brick_component(brick_type_id: u8) -> Option<crate::GravityBrick> {
+    match brick_type_id {
+        21 => Some(crate::GravityBrick {
+            index: 21,
+            gravity: Vec3::ZERO, // Zero gravity
+        }),
+        22 => Some(crate::GravityBrick {
+            index: 22,
+            gravity: Vec3::new(0.0, -1.625, 0.0), // Lunar gravity
+        }),
+        23 => Some(crate::GravityBrick {
+            index: 23,
+            gravity: Vec3::new(0.0, -9.8, 0.0), // Earth gravity
+        }),
+        24 => Some(crate::GravityBrick {
+            index: 24,
+            gravity: Vec3::new(0.0, -8.87, 0.0), // Venus gravity
+        }),
+        25 => Some(crate::GravityBrick {
+            index: 25,
+            gravity: Vec3::ZERO, // Placeholder; actual gravity computed at destruction
+        }),
+        _ => None,
+    }
+}
+
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LevelAdvanceSystems;
@@ -613,6 +644,11 @@ fn spawn_level_entities_impl(
                     ));
                     if brick_type_id != INDESTRUCTIBLE_BRICK {
                         entity.insert(CountsTowardsCompletion);
+                    }
+                    
+                    // Attach GravityBrick component for gravity bricks (21-25)
+                    if let Some(gravity_brick) = create_gravity_brick_component(brick_type_id) {
+                        entity.insert(gravity_brick);
                     }
                 }
             }
