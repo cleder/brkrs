@@ -336,10 +336,7 @@ pub fn run() {
     );
     // Gravity brick destruction handler: detects destroyed gravity bricks and sends messages
     // Reads BrickDestroyed messages sent by mark_brick_on_ball_collision
-    app.add_systems(
-        Update,
-        systems::gravity::brick_destruction_gravity_handler,
-    );
+    app.add_systems(Update, systems::gravity::brick_destruction_gravity_handler);
     // Gravity application system: reads messages and updates GravityConfiguration
     app.add_systems(
         Update,
@@ -361,13 +358,20 @@ pub fn run() {
     app.run();
 }
 
-fn setup(mut rapier_config: Query<&mut RapierConfiguration>, gravity_cfg: Res<GravityConfig>) {
-    // Set gravity for normal gameplay (respawn will temporarily disable it)
-    if let Ok(mut config) = rapier_config.single_mut() {
-        config.gravity = gravity_cfg.normal;
-    } else {
-        warn!("RapierConfiguration not found; gravity not set");
-    }
+fn setup(_rapier_config: Query<&mut RapierConfiguration>, _gravity_cfg: Res<GravityConfig>) {
+    // DEPRECATED: Gravity is now managed by GravityConfiguration resource and
+    // gravity systems (gravity_configuration_loader_system, apply_gravity_to_physics).
+    // This setup function no longer sets gravity to avoid conflicts with gravity bricks feature.
+    //
+    // The gravity_configuration_loader_system loads the level's default_gravity,
+    // and apply_gravity_to_physics applies it to the Rapier physics engine.
+
+    // Kept for reference - original code:
+    // if let Ok(mut config) = rapier_config.single_mut() {
+    //     config.gravity = gravity_cfg.normal;
+    // } else {
+    //     warn!("RapierConfiguration not found; gravity not set");
+    // }
 }
 
 /// Apply speed-dependent damping to control ball velocity

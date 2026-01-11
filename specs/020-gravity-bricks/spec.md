@@ -137,11 +137,11 @@ Lower priority because single gravity brick destruction works first.
 
 - **FR-001**: System MUST apply gravity based on brick type immediately when brick index 21 (Zero Gravity) is destroyed, setting gravity to (0.0, 0.0, 0.0)
 
-- **FR-002**: System MUST apply gravity based on brick type immediately when brick index 22 (2G) is destroyed, setting gravity to (0.0, 2.0, 0.0) representing Moon-like gravity
+- **FR-002**: System MUST apply gravity based on brick type immediately when brick index 22 (2G) is destroyed, setting gravity to (2.0, 0.0, 0.0) representing Moon-like gravity
 
-- **FR-003**: System MUST apply gravity based on brick type immediately when brick index 23 (10G) is destroyed, setting gravity to (0.0, 10.0, 0.0) representing Earth gravity
+- **FR-003**: System MUST apply gravity based on brick type immediately when brick index 23 (10G) is destroyed, setting gravity to (10.0, 0.0, 0.0) representing Earth gravity
 
-- **FR-004**: System MUST apply gravity based on brick type immediately when brick index 24 (20G) is destroyed, setting gravity to (0.0, 20.0, 0.0) representing high gravity
+- **FR-004**: System MUST apply gravity based on brick type immediately when brick index 24 (20G) is destroyed, setting gravity to (20.0, 0.0, 0.0) representing high gravity
 
 - **FR-005**: System MUST apply gravity based on brick type immediately when brick index 25 (Queer Gravity) is destroyed, applying random gravity with X ∈ [-2.0, +15.0], Y = 0.0, Z ∈ [-5.0, +5.0] using the `rand` crate for random number generation
 

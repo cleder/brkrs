@@ -42,15 +42,15 @@ fn create_gravity_brick_component(brick_type_id: u8) -> Option<crate::GravityBri
         }),
         22 => Some(crate::GravityBrick {
             index: 22,
-            gravity: Vec3::new(0.0, -1.625, 0.0), // Lunar gravity
+            gravity: Vec3::new(2.0, 0.0, 0.0), // Spec: 2 on X
         }),
         23 => Some(crate::GravityBrick {
             index: 23,
-            gravity: Vec3::new(0.0, -9.8, 0.0), // Earth gravity
+            gravity: Vec3::new(10.0, 0.0, 0.0), // Spec: 10 on X
         }),
         24 => Some(crate::GravityBrick {
             index: 24,
-            gravity: Vec3::new(0.0, -8.87, 0.0), // Venus gravity
+            gravity: Vec3::new(20.0, 0.0, 0.0), // Spec: 20 on X
         }),
         25 => Some(crate::GravityBrick {
             index: 25,
@@ -59,7 +59,6 @@ fn create_gravity_brick_component(brick_type_id: u8) -> Option<crate::GravityBri
         _ => None,
     }
 }
-
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LevelAdvanceSystems;
@@ -100,12 +99,6 @@ pub struct LevelDefinition {
     /// When using markdown format, only the display name is extracted.
     #[serde(default)]
     pub author: Option<String>,
-    /// Optional default gravity for this level, applied when gravity bricks are destroyed.
-    /// This field is separate from the `gravity` field which is the initial gravity at level start.
-    /// If omitted, defaults to zero gravity (0.0, 0.0, 0.0) when gravity bricks are activated.
-    /// Format: (x, y, z) vector components as floats. Must be finite values in range [-30, +30].
-    #[serde(default)]
-    pub default_gravity: Option<Vec3>,
 }
 
 #[derive(Resource, Debug)]
@@ -645,7 +638,7 @@ fn spawn_level_entities_impl(
                     if brick_type_id != INDESTRUCTIBLE_BRICK {
                         entity.insert(CountsTowardsCompletion);
                     }
-                    
+
                     // Attach GravityBrick component for gravity bricks (21-25)
                     if let Some(gravity_brick) = create_gravity_brick_component(brick_type_id) {
                         entity.insert(gravity_brick);

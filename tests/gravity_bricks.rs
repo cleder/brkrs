@@ -190,7 +190,6 @@ mod tests {
         let level: brkrs::level_loader::LevelDefinition =
             ron::de::from_str(ron).expect("Should deserialize old format without default_gravity");
         assert_eq!(level.number, 1);
-        assert_eq!(level.default_gravity, None);
         // Verify gravity field still works for backward compatibility
         assert_eq!(level.gravity, Some((2.0, 0.0, 0.0)));
     }
@@ -209,7 +208,7 @@ mod tests {
         let level: brkrs::level_loader::LevelDefinition =
             ron::de::from_str(ron).expect("Should deserialize with default_gravity");
         assert_eq!(level.number, 2);
-        assert_eq!(level.default_gravity, Some(Vec3::new(0.0, 10.0, 0.0)));
+        // Extra field `default_gravity` is ignored; gravity still parsed
         assert_eq!(level.gravity, Some((2.0, 0.0, 0.0)));
     }
 
@@ -226,7 +225,6 @@ mod tests {
             ron::de::from_str(ron).expect("Should deserialize minimal format");
         assert_eq!(level.number, 5);
         assert_eq!(level.gravity, None);
-        assert_eq!(level.default_gravity, None);
     }
 
     #[test]
@@ -556,7 +554,8 @@ mod tests {
     #[test]
     fn test_last_gravity_wins_sequential_destruction() {
         // T038: Test that last destroyed brick's gravity applies when multiple destroyed in sequence
-        let mut config = create_test_gravity_config(Vec3::new(0.0, 10.0, 0.0), Vec3::new(0.0, 10.0, 0.0));
+        let mut config =
+            create_test_gravity_config(Vec3::new(0.0, 10.0, 0.0), Vec3::new(0.0, 10.0, 0.0));
 
         // Simulate sequential brick destruction (21 → 24 → 22)
         // Brick 21: Zero gravity
@@ -587,9 +586,7 @@ mod tests {
 
         // Simulate rapid destruction of 5 gravity bricks in one frame
         {
-            let mut msgs = app
-                .world_mut()
-                .resource_mut::<Messages<GravityChanged>>();
+            let mut msgs = app.world_mut().resource_mut::<Messages<GravityChanged>>();
             msgs.write(GravityChanged::new(Vec3::ZERO)); // Brick 21
             msgs.write(GravityChanged::new(Vec3::new(0.0, 2.0, 0.0))); // Brick 22
             msgs.write(GravityChanged::new(Vec3::new(0.0, 10.0, 0.0))); // Brick 23
@@ -598,9 +595,7 @@ mod tests {
         }
 
         // Messages should be buffered and processable
-        let msgs = app
-            .world()
-            .resource::<Messages<GravityChanged>>();
+        let msgs = app.world().resource::<Messages<GravityChanged>>();
         assert!(!msgs.is_empty(), "Messages should be buffered");
     }
 
@@ -621,11 +616,19 @@ mod tests {
             let gravity = Vec3::new(x, y, z);
 
             // Verify X range
-            assert!(gravity.x >= -2.0 && gravity.x <= 15.0, "X out of range: {}", gravity.x);
+            assert!(
+                gravity.x >= -2.0 && gravity.x <= 15.0,
+                "X out of range: {}",
+                gravity.x
+            );
             // Verify Y is always zero
             assert_eq!(gravity.y, 0.0, "Y must always be 0.0");
             // Verify Z range
-            assert!(gravity.z >= -5.0 && gravity.z <= 5.0, "Z out of range: {}", gravity.z);
+            assert!(
+                gravity.z >= -5.0 && gravity.z <= 5.0,
+                "Z out of range: {}",
+                gravity.z
+            );
         }
     }
 

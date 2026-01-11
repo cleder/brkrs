@@ -92,7 +92,7 @@ impl GravityChanged {
 /// Load gravity configuration from the current level definition.
 ///
 /// Initializes `GravityConfiguration.level_default` and `GravityConfiguration.current` from
-/// `LevelDefinition.default_gravity` if present; otherwise falls back to `Vec3::ZERO`.
+/// `LevelDefinition.gravity` if present; otherwise falls back to `Vec3::ZERO`.
 /// Safe to run multiple times; it simply re-syncs the resource with the level metadata.
 pub fn gravity_configuration_loader_system(
     current_level: Option<Res<crate::level_loader::CurrentLevel>>,
@@ -102,10 +102,14 @@ pub fn gravity_configuration_loader_system(
         return;
     };
 
-    let default = level.0.default_gravity.unwrap_or(Vec3::ZERO);
+    let base = level
+        .0
+        .gravity
+        .map(|(x, y, z)| Vec3::new(x, y, z))
+        .unwrap_or(Vec3::ZERO);
 
-    gravity_cfg.level_default = default;
-    gravity_cfg.current = default;
+    gravity_cfg.level_default = base;
+    gravity_cfg.current = base;
 }
 
 /// Detect gravity brick destruction by listening to BrickDestroyed messages.
@@ -118,51 +122,53 @@ pub fn gravity_configuration_loader_system(
 /// - Y = 0.0 (always, no randomization)
 /// - Z ∈ [-5.0, +5.0]
 ///
-/// **Approach**: Listens to BrickDestroyed messages (sent by mark_brick_on_ball_collision)
-/// and queries the entity to retrieve its GravityBrick component. This avoids command
-/// buffering issues that occur when trying to query MarkedForDespawn components.
+/// **Approach**: Uses the `brick_type` field from the `BrickDestroyed` message (sent by
+/// `mark_brick_on_ball_collision`) to determine gravity. This avoids querying the brick entity,
+/// which may already be despawned when the message is processed.
 pub fn brick_destruction_gravity_handler(
     // Read BrickDestroyed messages to detect when gravity bricks are destroyed
     mut destroyed_bricks: MessageReader<crate::signals::BrickDestroyed>,
-    // Query for gravity bricks to look up their gravity values
-    gravity_bricks: Query<&crate::GravityBrick>,
     mut gravity_writer: MessageWriter<GravityChanged>,
 ) {
     use rand::Rng;
 
     for destroyed in destroyed_bricks.read() {
-        // Check if this destroyed brick is a gravity brick (indices 21-25)
-        if let Ok(gravity_brick) = gravity_bricks.get(destroyed.brick_entity) {
-            // Determine gravity based on brick index
-            let gravity = if gravity_brick.index == 25 {
+        // Map brick type to gravity; we avoid querying the entity because it may already be despawned
+        let gravity = match destroyed.brick_type {
+            21 => Some(Vec3::ZERO),
+            22 => Some(Vec3::new(2.0, 0.0, 0.0)),
+            23 => Some(Vec3::new(10.0, 0.0, 0.0)),
+            24 => Some(Vec3::new(20.0, 0.0, 0.0)),
+            25 => {
                 // Queer Gravity: Generate random gravity
                 let mut rng = rand::rng();
                 let x = rng.random_range(-2.0..=15.0);
-                let y = 0.0; // Y is always 0.0 for Queer Gravity
                 let z = rng.random_range(-5.0..=5.0);
-                Vec3::new(x, y, z)
-            } else {
-                // Static gravity bricks: Use predefined value
-                gravity_brick.gravity
-            };
+                Some(Vec3::new(x, 0.0, z))
+            }
+            _ => None,
+        };
 
-            let msg = GravityChanged::new(gravity);
+        let Some(gravity) = gravity else {
+            continue;
+        };
 
-            // Validate before sending (defensive programming)
-            match msg.validate() {
-                Ok(()) => {
-                    gravity_writer.write(msg);
-                    debug!(
-                        "Gravity brick detected for destruction (entity: {:?}, index: {}, gravity: {:?})",
-                        destroyed.brick_entity, gravity_brick.index, gravity
-                    );
-                }
-                Err(e) => {
-                    warn!(
-                        "Invalid gravity in brick {:?} (index {}): {}",
-                        destroyed.brick_entity, gravity_brick.index, e
-                    );
-                }
+        let msg = GravityChanged::new(gravity);
+
+        // Validate before sending (defensive programming)
+        match msg.validate() {
+            Ok(()) => {
+                gravity_writer.write(msg);
+                debug!(
+                    "Gravity brick destroyed (entity: {:?}, brick_type: {}, gravity: {:?})",
+                    destroyed.brick_entity, destroyed.brick_type, gravity
+                );
+            }
+            Err(e) => {
+                warn!(
+                    "Invalid gravity for brick {:?} (brick_type {}): {}",
+                    destroyed.brick_entity, destroyed.brick_type, e
+                );
             }
         }
     }
@@ -183,8 +189,12 @@ pub fn gravity_application_system(
     for msg in gravity_reader.read() {
         // Validate gravity before applying (defensive programming)
         if msg.validate().is_ok() {
+            let old_gravity = gravity_cfg.current;
             gravity_cfg.current = msg.gravity;
-            debug!("Gravity updated to: {:?}", msg.gravity);
+            info!(
+                "Gravity configuration updated: {:?} -> {:?}",
+                old_gravity, msg.gravity
+            );
         } else {
             warn!("Invalid gravity message received: {:?}", msg);
         }
@@ -208,11 +218,16 @@ pub fn apply_gravity_to_physics(
     // Apply the current gravity configuration to the physics engine
     // This runs every frame, updating the physics engine's gravity setting
     if let Ok(mut config) = rapier_config.single_mut() {
-        config.gravity = gravity_cfg.current;
-        debug!(
-            "Applied gravity configuration to physics: {:?}",
-            gravity_cfg.current
-        );
+        // Only update if gravity has changed to avoid unnecessary writes
+        if config.gravity != gravity_cfg.current {
+            info!(
+                "Applying gravity change: {:?} -> {:?}",
+                config.gravity, gravity_cfg.current
+            );
+            config.gravity = gravity_cfg.current;
+        }
+    } else {
+        warn!("Failed to query RapierConfiguration - gravity not applied!");
     }
 }
 
