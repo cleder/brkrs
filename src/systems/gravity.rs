@@ -197,6 +197,40 @@ pub fn apply_gravity_to_physics(
     }
 }
 
+/// System that resets gravity to level default when a ball is lost.
+///
+/// **Execution**: Update (RespawnSystems::Detect)
+/// **Dependencies**: Listens to `LifeLostEvent` from respawn system
+/// **Behavior**: On ball loss, resets `GravityConfiguration::current` to `level_default`
+///
+/// This ensures each new ball spawns with the level's original gravity,
+/// providing a consistent gameplay reset mechanic.
+///
+/// # Bevy 0.17 Compliance
+/// - Uses `MessageReader` for ball loss events (not Observers)
+/// - No panicking queries or unwraps
+pub fn gravity_reset_on_life_loss_system(
+    mut gravity_cfg: ResMut<crate::GravityConfiguration>,
+    life_lost_events: Option<MessageReader<crate::systems::respawn::LifeLostEvent>>,
+) {
+    let Some(mut events) = life_lost_events else {
+        // Message system not available (startup/shutdown)
+        return;
+    };
+
+    for event in events.read() {
+        // Reset gravity to level default
+        gravity_cfg.current = gravity_cfg.level_default;
+
+        info!(
+            ball = ?event.ball,
+            cause = ?event.cause,
+            reset_gravity = ?gravity_cfg.level_default,
+            "Gravity reset to level default after ball loss"
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

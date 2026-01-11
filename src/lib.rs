@@ -350,6 +350,11 @@ pub fn run() {
         systems::gravity::apply_gravity_to_physics
             .after(systems::gravity::gravity_application_system),
     );
+    // Gravity reset on ball loss: resets to level default when ball is lost
+    app.add_systems(
+        Update,
+        systems::gravity::gravity_reset_on_life_loss_system.in_set(RespawnSystems::Detect),
+    );
     // Note: Multi-hit brick sound observer is now registered by AudioPlugin
     app.run();
 }

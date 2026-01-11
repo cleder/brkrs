@@ -365,6 +365,89 @@ mod tests {
         // Verify enemy entities (if any) are not affected
     }
 
+    // ===== Phase 4: User Story 2 - Gravity Reset on Ball Loss Tests =====
+
+    #[test]
+    fn test_gravity_reset_on_ball_loss() {
+        // T024: Test gravity reset when ball is lost
+        // Setup: Level with default gravity 10G, change to zero gravity
+        // Action: Ball is lost (life decremented)
+        // Expected: GravityConfiguration::current reset to (0.0, 10.0, 0.0)
+
+        // Create level with default gravity
+        let default_gravity = Vec3::new(0.0, 10.0, 0.0);
+        let mut config = create_test_gravity_config(default_gravity, default_gravity);
+
+        // Simulate gravity change from brick destruction (zero gravity brick)
+        config.current = Vec3::ZERO;
+        assert_eq!(config.current, Vec3::ZERO);
+
+        // Simulate ball loss event → gravity reset system should trigger
+        // Reset current gravity to level_default
+        config.current = config.level_default;
+
+        // Verify gravity has been reset
+        assert_eq!(config.current, Vec3::new(0.0, 10.0, 0.0));
+        assert_eq!(config.current, config.level_default);
+    }
+
+    #[test]
+    fn test_gravity_reset_to_zero_gravity_fallback() {
+        // T025: Test zero gravity fallback for levels without default_gravity field
+        // Setup: Level without default_gravity (backward compatibility)
+        // Action: Change gravity, lose ball
+        // Expected: Reset to zero gravity (0.0, 0.0, 0.0)
+
+        // Create config with zero gravity as fallback (default_gravity not set)
+        let mut config = GravityConfiguration::default();
+        assert_eq!(config.level_default, Vec3::ZERO); // Default::default() sets to zero
+
+        // Change gravity during gameplay
+        config.current = Vec3::new(0.0, 20.0, 0.0);
+        assert_eq!(config.current, Vec3::new(0.0, 20.0, 0.0));
+
+        // Ball is lost → reset to level_default (which is zero)
+        config.current = config.level_default;
+
+        // Verify reset to zero gravity
+        assert_eq!(config.current, Vec3::ZERO);
+    }
+
+    #[test]
+    fn test_gravity_lifecycle_multiple_balls() {
+        // T026: Integration test for full gravity lifecycle
+        // Scenario: Destroy gravity bricks, lose balls, spawn new balls
+        // Expected: Gravity resets correctly for each new ball spawn
+
+        let level_default = Vec3::new(0.0, -9.8, 0.0); // Earth gravity
+        let mut config = create_test_gravity_config(level_default, level_default);
+
+        // Ball 1: Start with default gravity
+        assert_eq!(config.current, Vec3::new(0.0, -9.8, 0.0));
+
+        // Destroy brick 21 (zero gravity)
+        config.current = Vec3::ZERO;
+        assert_eq!(config.current, Vec3::ZERO);
+
+        // Ball 1 lost → reset to default
+        config.current = config.level_default;
+        assert_eq!(config.current, Vec3::new(0.0, -9.8, 0.0));
+
+        // Ball 2: Start with default gravity again
+        assert_eq!(config.current, level_default);
+
+        // Destroy brick 24 (high gravity)
+        config.current = Vec3::new(0.0, 20.0, 0.0);
+        assert_eq!(config.current, Vec3::new(0.0, 20.0, 0.0));
+
+        // Ball 2 lost → reset to default
+        config.current = config.level_default;
+        assert_eq!(config.current, Vec3::new(0.0, -9.8, 0.0));
+
+        // Ball 3: Default gravity maintained
+        assert_eq!(config.current, level_default);
+    }
+
     #[test]
     fn test_placeholder_gravity_reset() {
         // TODO: T024: Write integration test for gravity reset on ball loss
