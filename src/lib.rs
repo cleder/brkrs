@@ -333,6 +333,17 @@ pub fn run() {
         Update,
         systems::gravity::gravity_configuration_loader_system,
     );
+    // Gravity brick destruction handler: detects destroyed gravity bricks and sends messages
+    app.add_systems(
+        Update,
+        systems::gravity::brick_destruction_gravity_handler.after(despawn_marked_entities),
+    );
+    // Gravity application system: reads messages and updates GravityConfiguration
+    app.add_systems(
+        Update,
+        systems::gravity::gravity_application_system
+            .after(systems::gravity::brick_destruction_gravity_handler),
+    );
     // Note: Multi-hit brick sound observer is now registered by AudioPlugin
     app.run();
 }

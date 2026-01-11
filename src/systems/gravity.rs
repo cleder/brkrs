@@ -108,6 +108,70 @@ pub fn gravity_configuration_loader_system(
     gravity_cfg.current = default;
 }
 
+/// Detect gravity brick destruction and send GravityChanged messages.
+///
+/// When a brick with the `GravityBrick` component is despawned, this system
+/// detects the removal and sends a `GravityChanged` message with the gravity
+/// value from the brick's component.
+///
+/// **Approach**: Tracks GravityBrick components in a resource before they're
+/// despawned, allowing us to send the correct gravity message when destruction occurs.
+pub fn brick_destruction_gravity_handler(
+    // Query for bricks with GravityBrick component
+    gravity_bricks: Query<(Entity, &crate::GravityBrick), With<crate::Brick>>,
+    // Query for bricks marked for despawn
+    marked_for_despawn: Query<Entity, With<crate::MarkedForDespawn>>,
+    mut gravity_writer: MessageWriter<GravityChanged>,
+) {
+    // Check if any gravity bricks are marked for despawn
+    for (entity, gravity_brick) in gravity_bricks.iter() {
+        if marked_for_despawn.contains(entity) {
+            // This gravity brick is about to be destroyed
+            let msg = GravityChanged::new(gravity_brick.gravity);
+
+            // Validate before sending (defensive programming)
+            match msg.validate() {
+                Ok(()) => {
+                    gravity_writer.write(msg);
+                    debug!(
+                        "Gravity brick detected for destruction (entity: {:?}, index: {}, gravity: {:?})",
+                        entity, gravity_brick.index, gravity_brick.gravity
+                    );
+                }
+                Err(e) => {
+                    warn!(
+                        "Invalid gravity in brick {:?} (index {}): {}",
+                        entity, gravity_brick.index, e
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// Apply gravity changes from messages to the GravityConfiguration resource.
+///
+/// This system reads `GravityChanged` messages and updates the current gravity
+/// in the `GravityConfiguration` resource. Multiple messages in the same frame
+/// will be processed in order, with the last message taking effect.
+///
+/// **Scheduling**: Should run in `PhysicsUpdate` schedule after messages are
+/// sent but before physics step applies gravity to entities.
+pub fn gravity_application_system(
+    mut gravity_reader: MessageReader<GravityChanged>,
+    mut gravity_cfg: ResMut<crate::GravityConfiguration>,
+) {
+    for msg in gravity_reader.read() {
+        // Validate gravity before applying (defensive programming)
+        if msg.validate().is_ok() {
+            gravity_cfg.current = msg.gravity;
+            debug!("Gravity updated to: {:?}", msg.gravity);
+        } else {
+            warn!("Invalid gravity message received: {:?}", msg);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
