@@ -35,17 +35,24 @@ pub struct GameOverOverlay;
 /// Displays "Game over" centered on screen with large white text.
 pub fn spawn_game_over_overlay(
     mut commands: Commands,
-    mut events: MessageReader<GameOverRequested>,
+    events: Option<MessageReader<GameOverRequested>>,
     existing: Query<Entity, With<GameOverOverlay>>,
-    lives_state: Res<LivesState>,
+    lives_state: Option<Res<LivesState>>,
     ui_fonts: Option<Res<UiFonts>>,
 ) {
     // Only spawn if we receive a GameOverRequested event
+    let Some(mut events) = events else {
+        return;
+    };
     if events.read().next().is_none() {
         return;
     }
 
     // Only spawn if overlay doesn't exist and lives are actually 0
+    let Some(lives_state) = lives_state else {
+        warn!("LivesState resource missing; skipping game over overlay spawn");
+        return;
+    };
     if !existing.is_empty() || lives_state.lives_remaining != 0 {
         return;
     }

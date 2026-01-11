@@ -186,7 +186,7 @@ impl Plugin for UiPlugin {
 fn setup_ui_assets(
     mut commands: Commands,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
+    asset_server: Option<Res<AssetServer>>,
 ) {
     use bevy::prelude::*;
 
@@ -199,6 +199,11 @@ fn setup_ui_assets(
     commands.insert_resource(palette::GhostPreviewMaterial {
         handle: ghost_material,
     });
+
+    // Only initialize asset-based resources if AssetServer is available
+    let Some(asset_server) = asset_server else {
+        return;
+    };
 
     // Initialize cheat indicator texture (cached for cheat mode system)
     let cheat_texture = asset_server.load("textures/default/cheat-mode-128.png");

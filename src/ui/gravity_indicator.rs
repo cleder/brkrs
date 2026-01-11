@@ -52,17 +52,25 @@ fn within_tol_round(val: f32, tol: f32) -> Option<i32> {
 
 /// Map current gravity vector to a discrete level using ±0.5 tolerance on X and Z axes only.
 /// Per spec: Y axis is always 0 and ignored.
+/// Returns Unknown for non-finite values (NaN, Infinity) when ALL axes fail to match.
 pub fn map_gravity_to_level(g: Vec3) -> GravityLevel {
     let tol = 0.5;
     let mut best = 0;
+    let mut matched = false;
 
     for c in [g.x, g.z] {
         if let Some(r) = within_tol_round(c, tol) {
+            matched = true;
             let v = r.abs();
             if v > best {
                 best = v;
             }
         }
+    }
+
+    // If no axis produced a valid rounded value (e.g., all NaN/Inf), return Unknown
+    if !matched {
+        return GravityLevel::Unknown;
     }
 
     match best {
@@ -134,8 +142,8 @@ pub fn update_gravity_indicator(
     let new_handle = select_texture(level, &textures).clone();
 
     for mut image_node in query.iter_mut() {
-        // Replace the image; ImageNode is a simple wrapper that can be reassigned
-        *image_node = bevy::prelude::ImageNode::new(new_handle.clone());
+        // Update only the image handle, preserving other ImageNode properties
+        image_node.image = new_handle.clone();
     }
 }
 
