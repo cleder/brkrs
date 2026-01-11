@@ -210,6 +210,7 @@ pub fn run() {
     // Register BallWallHit as an event so the observer is active from the start
     // ...existing code...
 
+    app.init_resource::<GravityConfiguration>();
     app.insert_resource(GravityConfig::default());
     app.insert_resource(GameProgress::default());
     // Physics config resources

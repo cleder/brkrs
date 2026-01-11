@@ -448,16 +448,88 @@ mod tests {
         assert_eq!(config.current, level_default);
     }
 
+    // ===== Phase 5: User Story 3 - Gravity Brick Scoring =====
+
     #[test]
-    fn test_placeholder_gravity_reset() {
-        // TODO: T024: Write integration test for gravity reset on ball loss
-        // Will test: ball lost → gravity reset to level default
+    fn test_gravity_brick_21_score() {
+        // T032: Brick 21 (Zero Gravity) awards 125 points
+        let mut rng = rand::rng();
+        let points = brkrs::systems::scoring::brick_points(21, &mut rng);
+        assert_eq!(points, 125);
     }
 
     #[test]
-    fn test_placeholder_gravity_scoring() {
-        // TODO: T032: Write integration test for gravity brick scoring
-        // Will test: destroy gravity brick → score increases
+    fn test_gravity_brick_22_score() {
+        // T032: Brick 22 (Moon gravity) awards 75 points
+        let mut rng = rand::rng();
+        let points = brkrs::systems::scoring::brick_points(22, &mut rng);
+        assert_eq!(points, 75);
+    }
+
+    #[test]
+    fn test_gravity_brick_23_score() {
+        // T032: Brick 23 (Earth gravity) awards 125 points
+        let mut rng = rand::rng();
+        let points = brkrs::systems::scoring::brick_points(23, &mut rng);
+        assert_eq!(points, 125);
+    }
+
+    #[test]
+    fn test_gravity_brick_24_score() {
+        // T032: Brick 24 (High gravity) awards 150 points
+        let mut rng = rand::rng();
+        let points = brkrs::systems::scoring::brick_points(24, &mut rng);
+        assert_eq!(points, 150);
+    }
+
+    #[test]
+    fn test_gravity_brick_25_score() {
+        // T032: Brick 25 (Queer Gravity) awards 250 points
+        let mut rng = rand::rng();
+        let points = brkrs::systems::scoring::brick_points(25, &mut rng);
+        assert_eq!(points, 250);
+    }
+
+    #[test]
+    fn test_score_updated_on_gravity_brick_destruction() {
+        // T033: Integration test - destroying gravity bricks updates score immediately
+        use bevy::{ecs::message::Messages, MinimalPlugins};
+
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+        app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+        app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
+        app.add_message::<brkrs::signals::BrickDestroyed>();
+        app.insert_resource(brkrs::systems::scoring::ScoreState::default());
+        app.add_systems(Update, brkrs::systems::scoring::award_points_system);
+
+        // Write two gravity brick destructions (21 => 125, 24 => 150)
+        {
+            let mut msgs = app
+                .world_mut()
+                .resource_mut::<Messages<brkrs::signals::BrickDestroyed>>();
+            msgs.write(brkrs::signals::BrickDestroyed {
+                brick_entity: Entity::from_raw_u32(1).expect("entity id should construct"),
+                brick_type: 21,
+                destroyed_by: None,
+            });
+            msgs.write(brkrs::signals::BrickDestroyed {
+                brick_entity: Entity::from_raw_u32(2).expect("entity id should construct"),
+                brick_type: 24,
+                destroyed_by: None,
+            });
+        }
+
+        app.update();
+
+        let score = app
+            .world()
+            .resource::<brkrs::systems::scoring::ScoreState>()
+            .current_score;
+
+        // Expected total: 125 (brick 21) + 150 (brick 24) = 275
+        assert_eq!(score, 275, "Score should include gravity brick awards");
     }
 
     #[test]
