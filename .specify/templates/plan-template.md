@@ -48,6 +48,18 @@ This check MUST also verify compliance with **Bevy 0.17 mandates & prohibitions*
   - Clarify whether directional terms (forward/backward) refer to Bevy's Transform API (-Z forward), gameplay perspective, or direct axis references.
   - Document any `LockedAxes` constraints and their relationship to camera orientation.
 
+- **Initialization System Idempotence (if feature has loader/initializer systems in Update):**
+  - Systems that initialize or load state in `Update` schedule MUST be idempotent.
+  - Use a guard field (e.g., `last_level_number: Option<u32>`) to track whether initialization has occurred.
+  - ONLY perform initialization when context changes (e.g., level transition), NOT every frame.
+  - This prevents runtime state changes (e.g., gravity from brick destruction) from being overwritten.
+  - See 020-gravity-bricks retrospective for the bug this pattern prevents.
+
+- **Multi-Frame Persistence Testing (if feature modifies runtime state):**
+  - Tests for runtime state changes MUST verify persistence across multiple `app.update()` cycles.
+  - Tests MUST include ALL systems that write to the affected resource to catch per-frame overwrites.
+  - Minimum 10 frames of persistence checking recommended.
+
 - Systems are fallible (`Result`) and do not panic on query outcomes (`?`, no `.unwrap()` on queries).
 - Queries use `With<T>`/`Without<T>` filters and `Changed<T>` where appropriate (especially UI).
 - **Message-Event Separation**: Verify correct use of `MessageWriter/Reader` for buffered, frame-agnostic streams and observers/`Trigger<T>` for immediate, reactive logic (e.g., UI/sound triggers).

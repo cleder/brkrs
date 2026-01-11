@@ -10,9 +10,11 @@ It does not introduce new gameplay features.
 ## Verification Steps
 
 1. **Run Tests**:
+
     ```bash
     cargo test
     ```
+
     Ensure all tests pass and no "fake tests" (comment-only) remain.
 
 2. **Check Visibility**:

@@ -17,6 +17,11 @@
 - How the camera view orientation affects gameplay directions
 - Any locked axes via `LockedAxes` constraints
 
+**MULTI-FRAME PERSISTENCE REQUIREMENT**: If the feature involves runtime state changes (gravity, scores, powerup effects, or any resource/component modified during gameplay), acceptance scenarios MUST include multi-frame persistence checks:
+- Tests MUST verify state persists across multiple `app.update()` cycles (minimum 10 frames)
+- Tests MUST include ALL systems that write to the affected resource/component to catch per-frame overwrite bugs
+- This requirement exists because single-frame assertions miss bugs where initialization or cleanup systems unconditionally overwrite runtime state (see 020-gravity-bricks retrospective)
+
 <!--
   IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
   Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,

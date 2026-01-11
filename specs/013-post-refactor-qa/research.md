@@ -29,6 +29,7 @@
 - **Rationale**: `spawn_camera`, `spawn_ground_plane`, `spawn_light` are currently unordered.
   Chaining them or putting them in a set ensures deterministic execution.
 - **Implementation**:
+
     ```rust
     app.add_systems(
         Startup,
@@ -42,6 +43,7 @@
         ).chain()
     );
     ```
+
     Or better, explicit ordering if dependencies exist.
     Since they are independent spawners, `.chain()` is sufficient to ensure a consistent order (even if the specific order doesn't matter for logic, it matters for determinism).
 

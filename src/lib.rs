@@ -153,7 +153,7 @@ pub(crate) struct GravityConfig {
 impl Default for GravityConfig {
     fn default() -> Self {
         Self {
-            normal: Vec3::new(2.0, 0.0, 0.0),
+            normal: systems::gravity::GRAVITY_LOW,
         }
     }
 }
@@ -162,12 +162,59 @@ impl Default for GravityConfig {
 pub struct GameProgress {
     finished: bool,
 }
+///
+/// When a brick with this component is destroyed, the gravity immediately
+/// changes to the value specified in the component. The `GravityChanged` message
+/// is sent to communicate the change to the physics system.
+///
+/// **Brick Indices**:
+/// - 21: Zero Gravity (0.0, 0.0, 0.0)
+/// - 22: Moon Gravity (0.0, 2.0, 0.0)
+/// - 23: Earth Gravity (0.0, 10.0, 0.0)
+/// - 24: High Gravity (0.0, 20.0, 0.0)
+/// - 25: Queer Gravity (random X, Y=0.0, random Z)
+#[derive(Component, Clone, Copy, Debug, PartialEq)]
+pub struct GravityBrick {
+    /// Brick index (21-25)
+    pub index: u32,
+    /// Gravity vector to apply when this brick is destroyed
+    pub gravity: Vec3,
+}
+
+/// Tracks the current and default gravity for the level.
+///
+/// This resource is updated when gravity bricks are destroyed and reset
+/// when the player loses a ball. The physics system reads `current` to
+/// apply gravity to the ball's rigid body.
+///
+/// **Coordinate System**: Bevy standard (Y = up, X = right, Z = back)
+#[derive(Resource, Clone, Copy, Debug)]
+pub struct GravityConfiguration {
+    /// Current gravity being applied to the ball
+    pub current: Vec3,
+    /// Level's starting gravity (used to reset on ball loss)
+    pub level_default: Vec3,
+    /// Last level number that was loaded. Used to prevent overwriting `current`
+    /// every Update frame when the same level is active.
+    pub last_level_number: Option<u32>,
+}
+
+impl Default for GravityConfiguration {
+    fn default() -> Self {
+        Self {
+            current: Vec3::ZERO,
+            level_default: Vec3::ZERO,
+            last_level_number: None,
+        }
+    }
+}
 
 pub fn run() {
     let mut app = App::new();
     // Register BallWallHit as an event so the observer is active from the start
     // ...existing code...
 
+    app.init_resource::<GravityConfiguration>();
     app.insert_resource(GravityConfig::default());
     app.insert_resource(GameProgress::default());
     // Physics config resources
@@ -177,6 +224,13 @@ pub fn run() {
     // Scoring system state
     app.init_resource::<systems::scoring::ScoreState>();
     app.add_message::<crate::signals::BrickDestroyed>();
+    // Per-frame dedupe set for BrickDestroyed emissions
+    app.init_resource::<EmittedBrickDestroyed>();
+    // Clear the dedupe set at the start of each frame before collision systems run
+    app.add_systems(
+        Update,
+        clear_emitted_brick_destroyed.before(mark_brick_on_ball_collision),
+    );
     app.add_message::<crate::signals::SpawnMerkabaMessage>();
     app.add_message::<crate::signals::LifeAwardMessage>();
     app.add_message::<systems::scoring::MilestoneReached>();
@@ -264,6 +318,19 @@ pub fn run() {
         ),
     );
 
+    add_scoring_systems(&mut app);
+
+    // Texture manifest system (conditional on feature flag)
+    #[cfg(feature = "texture_manifest")]
+    app.add_systems(Update, systems::multi_hit::watch_brick_type_changes);
+
+    add_core_observers(&mut app);
+    add_gravity_feature(&mut app);
+    // Note: Multi-hit brick sound observer is now registered by AudioPlugin
+    app.run();
+}
+
+fn add_scoring_systems(app: &mut App) {
     // Scoring: award points after brick despawn events have been emitted
     app.add_systems(
         Update,
@@ -275,26 +342,59 @@ pub fn run() {
             .chain()
             .after(despawn_marked_entities),
     );
+}
 
-    // Texture manifest system (conditional on feature flag)
-    #[cfg(feature = "texture_manifest")]
-    app.add_systems(Update, systems::multi_hit::watch_brick_type_changes);
-
+fn add_core_observers(app: &mut App) {
     app.add_observer(on_wall_hit);
     app.add_observer(on_paddle_ball_hit);
     app.add_observer(on_brick_hit);
     app.add_observer(start_camera_shake);
-    // Note: Multi-hit brick sound observer is now registered by AudioPlugin
-    app.run();
 }
 
-fn setup(mut rapier_config: Query<&mut RapierConfiguration>, gravity_cfg: Res<GravityConfig>) {
-    // Set gravity for normal gameplay (respawn will temporarily disable it)
-    if let Ok(mut config) = rapier_config.single_mut() {
-        config.gravity = gravity_cfg.normal;
-    } else {
-        warn!("RapierConfiguration not found; gravity not set");
-    }
+fn add_gravity_feature(app: &mut App) {
+    // GravityChanged message type registration (gravity bricks feature)
+    app.add_message::<systems::gravity::GravityChanged>();
+    // Foundation system: load gravity configuration from level metadata
+    app.add_systems(
+        Update,
+        systems::gravity::gravity_configuration_loader_system,
+    );
+    // Gravity brick destruction handler: detects destroyed gravity bricks and sends messages
+    // Reads BrickDestroyed messages sent by mark_brick_on_ball_collision
+    app.add_systems(Update, systems::gravity::brick_destruction_gravity_handler);
+    // Gravity application system: reads messages and updates GravityConfiguration
+    app.add_systems(
+        Update,
+        systems::gravity::gravity_application_system
+            .after(systems::gravity::brick_destruction_gravity_handler),
+    );
+    // Physics gravity application: applies GravityConfiguration to Rapier
+    app.add_systems(
+        Update,
+        systems::gravity::apply_gravity_to_physics
+            .after(systems::gravity::gravity_application_system),
+    );
+    // Gravity reset on ball loss: resets to level default when ball is lost
+    app.add_systems(
+        Update,
+        systems::gravity::gravity_reset_on_life_loss_system.in_set(RespawnSystems::Detect),
+    );
+}
+
+fn setup(_rapier_config: Query<&mut RapierConfiguration>, _gravity_cfg: Res<GravityConfig>) {
+    // DEPRECATED: Gravity is now managed by GravityConfiguration resource and
+    // gravity systems (gravity_configuration_loader_system, apply_gravity_to_physics).
+    // This setup function no longer sets gravity to avoid conflicts with gravity bricks feature.
+    //
+    // The gravity_configuration_loader_system loads the level's default_gravity,
+    // and apply_gravity_to_physics applies it to the Rapier physics engine.
+
+    // Kept for reference - original code:
+    // if let Ok(mut config) = rapier_config.single_mut() {
+    //     config.gravity = gravity_cfg.normal;
+    // } else {
+    //     warn!("RapierConfiguration not found; gravity not set");
+    // }
 }
 
 /// Apply speed-dependent damping to control ball velocity
@@ -377,7 +477,7 @@ fn update_paddle_growth(
     time: Res<Time>,
     mut paddles: Query<(Entity, &mut Transform, &mut PaddleGrowing)>,
     mut rapier_config: Query<&mut RapierConfiguration>,
-    gravity_cfg: Res<GravityConfig>,
+    gravity_cfg: Res<GravityConfiguration>,
     mut commands: Commands,
 ) {
     for (entity, mut transform, mut growing) in paddles.iter_mut() {
@@ -387,16 +487,16 @@ fn update_paddle_growth(
             // Growth complete: set final scale, enable gravity, remove component
             transform.scale = growing.target_scale;
             if let Ok(mut config) = rapier_config.single_mut() {
-                config.gravity = gravity_cfg.normal;
+                config.gravity = gravity_cfg.current;
             } else {
                 warn!(
-                    "Failed to restore gravity after paddle growth: RapierConfiguration not found"
+                    "Failed to restore gravity after paddle growth: RapierConfiguration not found; will retry in restore_gravity_post_growth"
                 );
             }
             commands.entity(entity).remove::<PaddleGrowing>();
             info!(
                 "Paddle growth completed, gravity restored to {:?}",
-                gravity_cfg.normal
+                gravity_cfg.current
             );
         } else {
             // Interpolate scale from start to target
@@ -411,18 +511,30 @@ fn update_paddle_growth(
 }
 
 /// Ensure gravity is restored if growth finished but previous restoration was missed.
-/// Acts as a safety net in case the growth completion frame didn't run gravity restoration.
+/// Acts as a safety net in case the growth completion frame didn't run gravity restoration
+/// or RapierConfiguration was unavailable.
 fn restore_gravity_post_growth(
     paddles: Query<&PaddleGrowing>,
     mut rapier_config: Query<&mut RapierConfiguration>,
-    gravity_cfg: Res<GravityConfig>,
+    gravity_cfg: Res<GravityConfiguration>,
 ) {
     // Only restore if no paddle is growing and gravity is currently zero.
-    if paddles.is_empty() {
-        if let Ok(mut config) = rapier_config.single_mut() {
-            if config.gravity == Vec3::ZERO {
-                config.gravity = gravity_cfg.normal;
+    if !paddles.is_empty() {
+        return;
+    }
+
+    match rapier_config.single_mut() {
+        Ok(mut config) => {
+            if config.gravity != gravity_cfg.current {
+                info!(
+                    "Restoring gravity post-growth from {:?} to {:?}",
+                    config.gravity, gravity_cfg.current
+                );
+                config.gravity = gravity_cfg.current;
             }
+        }
+        Err(_) => {
+            warn!("Unable to restore gravity post-growth: RapierConfiguration missing");
         }
     }
 }
@@ -550,6 +662,42 @@ fn spawn_border(
     ));
 }
 
+fn try_emit_brick_destroyed(
+    writer: &mut Option<MessageWriter<crate::signals::BrickDestroyed>>,
+    emitted: &mut Option<ResMut<EmittedBrickDestroyed>>,
+    entity: Entity,
+    brick_type: u8,
+    context: &str,
+) -> bool {
+    let Some(w) = writer.as_mut() else {
+        return false;
+    };
+
+    let mut should_emit = true;
+    if let Some(emitted_set) = emitted.as_mut() {
+        should_emit = emitted_set.0.insert(entity);
+    }
+
+    if should_emit {
+        info!(
+            "{} emitting BrickDestroyed for entity {:?}, type {}",
+            context, entity, brick_type
+        );
+        w.write(crate::signals::BrickDestroyed {
+            brick_entity: entity,
+            brick_type,
+            destroyed_by: None,
+        });
+    } else {
+        debug!(
+            "{} skipping duplicate BrickDestroyed for entity {:?}",
+            context, entity
+        );
+    }
+
+    should_emit
+}
+
 /// Mark bricks for despawn when hit by the ball, or transition multi-hit bricks.
 ///
 /// Multi-hit bricks (indices 10-13) transition to the next lower index instead of
@@ -583,6 +731,7 @@ pub fn mark_brick_on_ball_collision(
     mut spawn_msgs: Option<MessageWriter<crate::signals::SpawnMerkabaMessage>>,
     mut brick_destroyed_msgs: Option<MessageWriter<crate::signals::BrickDestroyed>>,
     mut life_award_msgs: Option<MessageWriter<crate::signals::LifeAwardMessage>>,
+    mut emitted: Option<ResMut<EmittedBrickDestroyed>>,
 ) {
     use crate::level_format::{is_multi_hit_brick, MULTI_HIT_BRICK_1, SIMPLE_BRICK};
     // Track bricks already processed this frame to avoid double-awards on multi-ball collisions
@@ -606,6 +755,7 @@ pub fn mark_brick_on_ball_collision(
 
             if let Some((entity, brick_type_ro, gt_opt, t_opt)) = brick_info {
                 if processed_bricks.contains(&entity) {
+                    debug!("Skipping already-processed brick entity {:?}", entity);
                     continue;
                 }
                 let current_type = brick_type_ro.0;
@@ -656,6 +806,10 @@ pub fn mark_brick_on_ball_collision(
                         }
                     }
                     processed_bricks.insert(entity);
+                    info!(
+                        "mark_brick_on_ball_collision: processing brick entity {:?}, type {}",
+                        entity, current_type
+                    );
                     if current_type == 36 {
                         if let Some(writer) = spawn_msgs.as_mut() {
                             writer.write(crate::signals::SpawnMerkabaMessage {
@@ -665,17 +819,24 @@ pub fn mark_brick_on_ball_collision(
                                 min_speed_y: 3.0,
                             });
                         }
-                        // Record last rotor spawn position as fallback for spawn processing
                         // Emit BrickDestroyed for consistency and despawn immediately to satisfy tests
-                        if let Some(writer) = brick_destroyed_msgs.as_mut() {
-                            writer.write(crate::signals::BrickDestroyed {
-                                brick_entity: entity,
-                                brick_type: current_type,
-                                destroyed_by: None,
-                            });
-                        }
+                        try_emit_brick_destroyed(
+                            &mut brick_destroyed_msgs,
+                            &mut emitted,
+                            entity,
+                            current_type,
+                            "Rotor",
+                        );
+                        info!(
+                            "mark_brick_on_ball_collision: try_despawn entity {:?}",
+                            entity
+                        );
                         commands.entity(entity).try_despawn();
                     } else {
+                        info!(
+                            "mark_brick_on_ball_collision: mark entity {:?} as MarkedForDespawn, type {}",
+                            entity, current_type
+                        );
                         commands.entity(entity).insert(MarkedForDespawn);
                     }
                 }
@@ -724,20 +885,31 @@ fn despawn_marked_entities(
     marked: Query<(Entity, Option<&BrickTypeId>), With<MarkedForDespawn>>,
     mut commands: Commands,
     mut brick_events: Option<MessageWriter<crate::signals::BrickDestroyed>>,
+    mut emitted: Option<ResMut<EmittedBrickDestroyed>>,
 ) {
     for (entity, brick_type) in marked.iter() {
         // Emit BrickDestroyed message for audio/scoring systems
         if let Some(brick_type) = brick_type {
-            if let Some(writer) = brick_events.as_mut() {
-                writer.write(crate::signals::BrickDestroyed {
-                    brick_entity: entity,
-                    brick_type: brick_type.0,
-                    destroyed_by: None,
-                });
-            }
+            try_emit_brick_destroyed(
+                &mut brick_events,
+                &mut emitted,
+                entity,
+                brick_type.0,
+                "Despawn",
+            );
         }
         commands.entity(entity).despawn();
     }
+}
+
+/// Per-frame set of already-emitted BrickDestroyed entities to avoid duplicate messages.
+/// This resource is cleared at the start of each frame by `clear_emitted_brick_destroyed`.
+#[derive(Resource, Default, Debug)]
+pub struct EmittedBrickDestroyed(pub std::collections::HashSet<Entity>);
+
+/// Clear the per-frame emitted set. Must run before any systems that may emit BrickDestroyed.
+fn clear_emitted_brick_destroyed(mut emitted: ResMut<EmittedBrickDestroyed>) {
+    emitted.0.clear();
 }
 
 /// Public helper to register the brick collision + despawn systems on an arbitrary App.
