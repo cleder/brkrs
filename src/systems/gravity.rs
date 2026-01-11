@@ -89,6 +89,25 @@ impl GravityChanged {
     }
 }
 
+/// Load gravity configuration from the current level definition.
+///
+/// Initializes `GravityConfiguration.level_default` and `GravityConfiguration.current` from
+/// `LevelDefinition.default_gravity` if present; otherwise falls back to `Vec3::ZERO`.
+/// Safe to run multiple times; it simply re-syncs the resource with the level metadata.
+pub fn gravity_configuration_loader_system(
+    current_level: Option<Res<crate::level_loader::CurrentLevel>>,
+    mut gravity_cfg: ResMut<crate::GravityConfiguration>,
+) {
+    let Some(level) = current_level else {
+        return;
+    };
+
+    let default = level.0.default_gravity.unwrap_or(Vec3::ZERO);
+
+    gravity_cfg.level_default = default;
+    gravity_cfg.current = default;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

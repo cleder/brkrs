@@ -69,6 +69,12 @@ pub struct LevelDefinition {
     /// When using markdown format, only the display name is extracted.
     #[serde(default)]
     pub author: Option<String>,
+    /// Optional default gravity for this level, applied when gravity bricks are destroyed.
+    /// This field is separate from the `gravity` field which is the initial gravity at level start.
+    /// If omitted, defaults to zero gravity (0.0, 0.0, 0.0) when gravity bricks are activated.
+    /// Format: (x, y, z) vector components as floats. Must be finite values in range [-30, +30].
+    #[serde(default)]
+    pub default_gravity: Option<Vec3>,
 }
 
 #[derive(Resource, Debug)]

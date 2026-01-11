@@ -326,6 +326,13 @@ pub fn run() {
     app.add_observer(on_paddle_ball_hit);
     app.add_observer(on_brick_hit);
     app.add_observer(start_camera_shake);
+    // GravityChanged message type registration (gravity bricks feature)
+    app.add_message::<systems::gravity::GravityChanged>();
+    // Foundation system: load gravity configuration from level metadata
+    app.add_systems(
+        Update,
+        systems::gravity::gravity_configuration_loader_system,
+    );
     // Note: Multi-hit brick sound observer is now registered by AudioPlugin
     app.run();
 }

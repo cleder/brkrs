@@ -60,6 +60,7 @@ fn merkabas_despawn_on_level_advance() {
         #[cfg(feature = "texture_manifest")]
         presentation: None,
         description: None,
+        default_gravity: None,
     };
     app.insert_resource(CurrentLevel(level_def));
     app.init_resource::<LevelAdvanceState>();

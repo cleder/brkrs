@@ -120,6 +120,7 @@ fn spawn_shows_current_level_if_present() {
             presentation: None,
             description: None,
             author: None,
+            default_gravity: None,
         },
     ));
 
@@ -174,6 +175,7 @@ fn updates_when_current_level_changes() {
             presentation: None,
             description: None,
             author: None,
+            default_gravity: None,
         },
     ));
 

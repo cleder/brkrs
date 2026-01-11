@@ -35,9 +35,9 @@ Y = 0.0 ALWAYS (no randomization on Y-axis)
 **Solution**: Added new test task `T023a` in `tasks.md`:
 
 ```text
-T023a [US1] Write test for ball-only gravity scope in 
-     tests/gravity_bricks.rs::test_gravity_does_not_affect_paddle_physics() 
-     - apply gravity change, verify paddle entity physics unchanged, 
+T023a [US1] Write test for ball-only gravity scope in
+     tests/gravity_bricks.rs::test_gravity_does_not_affect_paddle_physics()
+     - apply gravity change, verify paddle entity physics unchanged,
        verify enemies unaffected (proves FR-014: gravity applies to ball ONLY)
 ```
 

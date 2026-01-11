@@ -175,6 +175,78 @@ mod tests {
     // ===== Placeholder for Future System Integration Tests =====
     // These will be populated as Phase 3+ are implemented
 
+    // ===== Backward Compatibility Tests (T009) =====
+
+    #[test]
+    fn test_level_definition_without_default_gravity() {
+        // Verify that LevelDefinition deserializes correctly when default_gravity field is omitted
+        let ron = r#"
+            LevelDefinition(
+                number: 1,
+                gravity: Some((2.0, 0.0, 0.0)),
+                matrix: [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
+            )
+        "#;
+        let level: brkrs::level_loader::LevelDefinition =
+            ron::de::from_str(ron).expect("Should deserialize old format without default_gravity");
+        assert_eq!(level.number, 1);
+        assert_eq!(level.default_gravity, None);
+        // Verify gravity field still works for backward compatibility
+        assert_eq!(level.gravity, Some((2.0, 0.0, 0.0)));
+    }
+
+    #[test]
+    fn test_level_definition_with_default_gravity() {
+        // Verify that LevelDefinition deserializes with new default_gravity field
+        let ron = r#"
+            LevelDefinition(
+                number: 2,
+                gravity: Some((2.0, 0.0, 0.0)),
+                default_gravity: Some((0.0, 10.0, 0.0)),
+                matrix: [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
+            )
+        "#;
+        let level: brkrs::level_loader::LevelDefinition =
+            ron::de::from_str(ron).expect("Should deserialize with default_gravity");
+        assert_eq!(level.number, 2);
+        assert_eq!(level.default_gravity, Some(Vec3::new(0.0, 10.0, 0.0)));
+        assert_eq!(level.gravity, Some((2.0, 0.0, 0.0)));
+    }
+
+    #[test]
+    fn test_level_definition_minimal_backward_compat() {
+        // Verify that minimal level format (from pre-gravity-bricks era) still works
+        let ron = r#"
+            LevelDefinition(
+                number: 5,
+                matrix: [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
+            )
+        "#;
+        let level: brkrs::level_loader::LevelDefinition =
+            ron::de::from_str(ron).expect("Should deserialize minimal format");
+        assert_eq!(level.number, 5);
+        assert_eq!(level.gravity, None);
+        assert_eq!(level.default_gravity, None);
+    }
+
+    #[test]
+    fn test_gravity_configuration_loader_with_no_default_gravity() {
+        // Verify that gravity_configuration_loader_system correctly defaults to Vec3::ZERO
+        // when level has no default_gravity field
+        let config = GravityConfiguration::default();
+        assert_eq!(config.level_default, Vec3::ZERO);
+        assert_eq!(config.current, Vec3::ZERO);
+    }
+
+    #[test]
+    fn test_gravity_configuration_loader_with_default_gravity() {
+        // Verify that gravity_configuration_loader_system correctly loads default_gravity
+        let config =
+            create_test_gravity_config(Vec3::new(0.0, 10.0, 0.0), Vec3::new(0.0, 10.0, 0.0));
+        assert_eq!(config.level_default, Vec3::new(0.0, 10.0, 0.0));
+        assert_eq!(config.current, Vec3::new(0.0, 10.0, 0.0));
+    }
+
     #[test]
     fn test_placeholder_gravity_brick_destruction() {
         // TODO: T010-T016: Write integration tests for gravity brick destruction detection
