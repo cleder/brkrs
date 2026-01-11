@@ -20,6 +20,7 @@ mod tests {
         GravityConfiguration {
             current,
             level_default,
+            last_level_number: None,
         }
     }
 

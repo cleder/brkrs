@@ -35,25 +35,31 @@ pub(crate) struct LevelContext<'w> {
 /// the actual random gravity will be computed at destruction time by the
 /// brick_destruction_gravity_handler system.
 fn create_gravity_brick_component(brick_type_id: u8) -> Option<crate::GravityBrick> {
+    use crate::systems::gravity::{
+        BRICK_TYPE_GRAVITY_HIGH, BRICK_TYPE_GRAVITY_LOW, BRICK_TYPE_GRAVITY_MEDIUM,
+        BRICK_TYPE_GRAVITY_QUEER, BRICK_TYPE_GRAVITY_ZERO, GRAVITY_HIGH, GRAVITY_LOW,
+        GRAVITY_MEDIUM, GRAVITY_ZERO,
+    };
+
     match brick_type_id {
-        21 => Some(crate::GravityBrick {
-            index: 21,
-            gravity: Vec3::ZERO, // Zero gravity
+        BRICK_TYPE_GRAVITY_ZERO => Some(crate::GravityBrick {
+            index: BRICK_TYPE_GRAVITY_ZERO as u32,
+            gravity: GRAVITY_ZERO,
         }),
-        22 => Some(crate::GravityBrick {
-            index: 22,
-            gravity: Vec3::new(2.0, 0.0, 0.0), // Spec: 2 on X
+        BRICK_TYPE_GRAVITY_LOW => Some(crate::GravityBrick {
+            index: BRICK_TYPE_GRAVITY_LOW as u32,
+            gravity: GRAVITY_LOW,
         }),
-        23 => Some(crate::GravityBrick {
-            index: 23,
-            gravity: Vec3::new(10.0, 0.0, 0.0), // Spec: 10 on X
+        BRICK_TYPE_GRAVITY_MEDIUM => Some(crate::GravityBrick {
+            index: BRICK_TYPE_GRAVITY_MEDIUM as u32,
+            gravity: GRAVITY_MEDIUM,
         }),
-        24 => Some(crate::GravityBrick {
-            index: 24,
-            gravity: Vec3::new(20.0, 0.0, 0.0), // Spec: 20 on X
+        BRICK_TYPE_GRAVITY_HIGH => Some(crate::GravityBrick {
+            index: BRICK_TYPE_GRAVITY_HIGH as u32,
+            gravity: GRAVITY_HIGH,
         }),
-        25 => Some(crate::GravityBrick {
-            index: 25,
+        BRICK_TYPE_GRAVITY_QUEER => Some(crate::GravityBrick {
+            index: BRICK_TYPE_GRAVITY_QUEER as u32,
             gravity: Vec3::ZERO, // Placeholder; actual gravity computed at destruction
         }),
         _ => None,

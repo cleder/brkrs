@@ -1,16 +1,21 @@
 
 <!--
 SYNC IMPACT REPORT
-- Version change: 1.4.0 → 1.5.0
-- Modified principles: None
-- Added sections: VIII. Coordinate System Conventions (new principle for axis orientation clarity)
+- Version change: 1.5.0 → 1.6.0
+- Modified principles:
+  - VII. TDD-First: Added multi-frame state persistence testing mandate
+- Added sections:
+  - IX. Bevy 0.17 ECS Mandates: Initialization System Idempotence pattern
+  - IX. Bevy 0.17 ECS Prohibitions: NO Unconditional State Overwrites in Update
 - Removed sections: None
 - Templates requiring updates:
-  - .specify/templates/spec-template.md: ✅ added COORDINATE SYSTEM REQUIREMENT section
-  - .specify/templates/plan-template.md: ✅ added Coordinate System Guidance to Constitution Check
+  - .specify/templates/spec-template.md: ✅ added MULTI-FRAME PERSISTENCE REQUIREMENT section
+  - .specify/templates/plan-template.md: ✅ added Initialization System Idempotence and Multi-Frame Persistence Testing checks
 - Follow-up TODOs:
-  - Review existing specs for coordinate system documentation where movement/physics is involved
-  - Consider adding coordinate system diagrams to main documentation (docs/)
+  - ✅ Audit existing systems in Update schedule for unconditional state writes (none found)
+  - ✅ Add multi-frame persistence tests (tests/multi_frame_persistence.rs)
+  - ✅ Update spec and plan templates
+- Amendment source: specs/020-gravity-bricks/retrospective.md
 -->
 
 # Brkrs Constitution
@@ -181,8 +186,11 @@ All code implementations MUST follow strict Test-Driven Development (TDD):
   by a passing commit) or that remove tests.
 - **Document test intent**: Tests MUST include clear, declarative names and
   comments describing the intended behavior and acceptance criteria.
+- **Multi-frame state persistence**: Tests for runtime state changes (e.g., gravity, scores, powerup effects) MUST verify that the change persists across multiple frames by calling `app.update()` repeatedly after the change.
+  Single-frame assertions miss bugs caused by per-frame overwrites.
 
 **Rationale**: Enforcing TDD ensures that behavior is specified explicitly before implementation, reduces regressions, and improves design quality.
+Multi-frame persistence tests catch bugs where initialization systems or cleanup systems inadvertently overwrite runtime state.
 It provides objective verification (tests) for requirement fulfillment and discourages untestable or speculative changes.
 
 ### VIII. Coordinate System Conventions
@@ -287,6 +295,21 @@ Observers provide fine-grained, immediate reactivity and are essential for moder
   Group parallelizable systems within the same set.
 - **Plugin-Based Architecture:** Organize features into Plugin structs with `.build()` methods that register all related systems, resources, and schedules.
   Each plugin MUST be self-contained.
+- **Initialization System Idempotence:** Systems that initialize or load state in `Update` schedule MUST be idempotent.
+  Use a guard field (e.g., `last_level_number: Option<u32>`) to track whether initialization has occurred for the current context.
+  ONLY perform initialization when the context changes (e.g., level transition).
+  Example:
+
+  ```rust
+  fn loader_system(mut config: ResMut<Config>, level: Res<Level>) {
+      if config.initialized_for == Some(level.number) {
+          return;  // Already initialized, don't overwrite runtime changes
+      }
+      config.value = level.default_value;
+      config.initialized_for = Some(level.number);
+  }
+  ```
+
 - **Asset Handle Reuse:** Load assets once in startup systems and store handles in Resources.
   NEVER call `asset_server.load()` repeatedly for the same asset path in spawn systems.
 - **State-Scoped Cleanup:** Use `DespawnOnExit(State)` component for entities that should despawn when exiting a state.
@@ -342,6 +365,9 @@ Observers provide fine-grained, immediate reactivity and are essential for moder
   ALWAYS use Resources or Components.
 - **NO Repeated Asset Loading:** NEVER call `asset_server.load()` inside spawn loops.
   ALWAYS load assets once in startup/resource initialization and clone handles.
+- **NO Unconditional State Overwrites in Update:** NEVER unconditionally write to shared state resources in `Update` schedule systems.
+  Systems that set `resource.field = value` every frame will overwrite runtime changes made by other systems (e.g., brick destruction changing gravity).
+  ALWAYS guard with context-change detection (level number, game state) or move initialization to `Startup`/ `OnEnter` schedules.
 - **NO Over-Chaining Systems:** NEVER use `.chain()` on individual system tuples within a single set.
   ONLY chain system sets.
   Individual systems within a set SHOULD run in parallel unless explicitly ordered.
@@ -399,4 +425,4 @@ All contributions MUST comply with these principles.
 - Performance targets may be adjusted based on platform evolution
 - Development workflow may be optimized as team/tools evolve
 
-**Version**: 1.5.0 | **Ratified**: 2025-10-30 | **Last Amended**: 2026-01-09
+**Version**: 1.6.0 | **Ratified**: 2025-10-30 | **Last Amended**: 2026-01-11

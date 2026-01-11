@@ -17,6 +17,57 @@
 /// 5. `gravity_reset_on_life_loss_system` (PostUpdate): Reset gravity to level default on ball loss
 use bevy::prelude::*;
 
+// =============================================================================
+// GRAVITY BRICK CONSTANTS
+// =============================================================================
+// These constants define the gravity values for each gravity brick type.
+// Adjust these for gameplay tuning without modifying system logic.
+
+/// Brick type ID for Zero Gravity brick.
+pub const BRICK_TYPE_GRAVITY_ZERO: u8 = 21;
+/// Brick type ID for Low Gravity brick.
+pub const BRICK_TYPE_GRAVITY_LOW: u8 = 22;
+/// Brick type ID for Medium Gravity brick.
+pub const BRICK_TYPE_GRAVITY_MEDIUM: u8 = 23;
+/// Brick type ID for High Gravity brick.
+pub const BRICK_TYPE_GRAVITY_HIGH: u8 = 24;
+/// Brick type ID for Queer (random) Gravity brick.
+pub const BRICK_TYPE_GRAVITY_QUEER: u8 = 25;
+
+/// Gravity vector for Zero Gravity brick (index 21).
+/// No gravity - ball floats freely.
+pub const GRAVITY_ZERO: Vec3 = Vec3::ZERO;
+
+/// Gravity vector for Low Gravity brick (index 22).
+/// Light pull on X-axis (2 units).
+pub const GRAVITY_LOW: Vec3 = Vec3::new(2.0, 0.0, 0.0);
+
+/// Gravity vector for Medium Gravity brick (index 23).
+/// Moderate pull on X-axis (10 units).
+pub const GRAVITY_MEDIUM: Vec3 = Vec3::new(10.0, 0.0, 0.0);
+
+/// Gravity vector for High Gravity brick (index 24).
+/// Strong pull on X-axis (20 units).
+pub const GRAVITY_HIGH: Vec3 = Vec3::new(20.0, 0.0, 0.0);
+
+// =============================================================================
+// QUEER GRAVITY RANDOMIZATION BOUNDS
+// =============================================================================
+// These constants define the range for random gravity generation (brick 25).
+
+/// Minimum X-axis gravity for Queer Gravity brick.
+pub const QUEER_GRAVITY_X_MIN: f32 = -2.0;
+/// Maximum X-axis gravity for Queer Gravity brick.
+pub const QUEER_GRAVITY_X_MAX: f32 = 15.0;
+
+/// Y-axis gravity for Queer Gravity brick (always zero - no vertical randomization).
+pub const QUEER_GRAVITY_Y: f32 = 0.0;
+
+/// Minimum Z-axis gravity for Queer Gravity brick.
+pub const QUEER_GRAVITY_Z_MIN: f32 = -5.0;
+/// Maximum Z-axis gravity for Queer Gravity brick.
+pub const QUEER_GRAVITY_Z_MAX: f32 = 5.0;
+
 /// Message indicating that the world's gravity has changed due to brick destruction.
 ///
 /// This message is buffered and read by the gravity application system to update
@@ -108,8 +159,23 @@ pub fn gravity_configuration_loader_system(
         .map(|(x, y, z)| Vec3::new(x, y, z))
         .unwrap_or(Vec3::ZERO);
 
+    // Update the level default every time the level metadata is available.
     gravity_cfg.level_default = base;
-    gravity_cfg.current = base;
+
+    // Only (re-)initialize `current` when the level number has changed. This prevents
+    // the loader system from clobbering runtime gravity changes (e.g., from gravity bricks)
+    // during normal Update ticks.
+    let level_number = level.0.number;
+    if gravity_cfg.last_level_number != Some(level_number) {
+        gravity_cfg.current = base;
+        gravity_cfg.last_level_number = Some(level_number);
+        info!("Loaded gravity for level {}: {:?}", level_number, base);
+    } else {
+        debug!(
+            "Level {} gravity sync: level_default={:?}, current unchanged",
+            level_number, base
+        );
+    }
 }
 
 /// Detect gravity brick destruction by listening to BrickDestroyed messages.
@@ -118,9 +184,9 @@ pub fn gravity_configuration_loader_system(
 /// (indices 21-25). If so, sends a `GravityChanged` message with the appropriate gravity value.
 ///
 /// For brick index 25 (Queer Gravity), generates random gravity within specified ranges:
-/// - X ∈ [-2.0, +15.0]
-/// - Y = 0.0 (always, no randomization)
-/// - Z ∈ [-5.0, +5.0]
+/// - X ∈ [`QUEER_GRAVITY_X_MIN`, `QUEER_GRAVITY_X_MAX`]
+/// - Y = `QUEER_GRAVITY_Y` (always zero, no randomization)
+/// - Z ∈ [`QUEER_GRAVITY_Z_MIN`, `QUEER_GRAVITY_Z_MAX`]
 ///
 /// **Approach**: Uses the `brick_type` field from the `BrickDestroyed` message (sent by
 /// `mark_brick_on_ball_collision`) to determine gravity. This avoids querying the brick entity,
@@ -133,18 +199,18 @@ pub fn brick_destruction_gravity_handler(
     use rand::Rng;
 
     for destroyed in destroyed_bricks.read() {
-        // Map brick type to gravity; we avoid querying the entity because it may already be despawned
+        // Map brick type to gravity using constants for easy tuning
         let gravity = match destroyed.brick_type {
-            21 => Some(Vec3::ZERO),
-            22 => Some(Vec3::new(2.0, 0.0, 0.0)),
-            23 => Some(Vec3::new(10.0, 0.0, 0.0)),
-            24 => Some(Vec3::new(20.0, 0.0, 0.0)),
-            25 => {
-                // Queer Gravity: Generate random gravity
+            BRICK_TYPE_GRAVITY_ZERO => Some(GRAVITY_ZERO),
+            BRICK_TYPE_GRAVITY_LOW => Some(GRAVITY_LOW),
+            BRICK_TYPE_GRAVITY_MEDIUM => Some(GRAVITY_MEDIUM),
+            BRICK_TYPE_GRAVITY_HIGH => Some(GRAVITY_HIGH),
+            BRICK_TYPE_GRAVITY_QUEER => {
+                // Queer Gravity: Generate random gravity within configured bounds
                 let mut rng = rand::rng();
-                let x = rng.random_range(-2.0..=15.0);
-                let z = rng.random_range(-5.0..=5.0);
-                Some(Vec3::new(x, 0.0, z))
+                let x = rng.random_range(QUEER_GRAVITY_X_MIN..=QUEER_GRAVITY_X_MAX);
+                let z = rng.random_range(QUEER_GRAVITY_Z_MIN..=QUEER_GRAVITY_Z_MAX);
+                Some(Vec3::new(x, QUEER_GRAVITY_Y, z))
             }
             _ => None,
         };
@@ -159,8 +225,8 @@ pub fn brick_destruction_gravity_handler(
         match msg.validate() {
             Ok(()) => {
                 gravity_writer.write(msg);
-                debug!(
-                    "Gravity brick destroyed (entity: {:?}, brick_type: {}, gravity: {:?})",
+                info!(
+                    "Emitting GravityChanged from BrickDestroyed: entity={:?}, brick_type={}, gravity={:?}",
                     destroyed.brick_entity, destroyed.brick_type, gravity
                 );
             }
@@ -187,6 +253,8 @@ pub fn gravity_application_system(
     mut gravity_cfg: ResMut<crate::GravityConfiguration>,
 ) {
     for msg in gravity_reader.read() {
+        // Log each message read so we can trace sequences
+        info!("Gravity application read message: {:?}", msg.gravity);
         // Validate gravity before applying (defensive programming)
         if msg.validate().is_ok() {
             let old_gravity = gravity_cfg.current;

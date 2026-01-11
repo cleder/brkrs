@@ -153,7 +153,7 @@ pub(crate) struct GravityConfig {
 impl Default for GravityConfig {
     fn default() -> Self {
         Self {
-            normal: Vec3::new(2.0, 0.0, 0.0),
+            normal: systems::gravity::GRAVITY_LOW,
         }
     }
 }
@@ -194,6 +194,9 @@ pub struct GravityConfiguration {
     pub current: Vec3,
     /// Level's starting gravity (used to reset on ball loss)
     pub level_default: Vec3,
+    /// Last level number that was loaded. Used to prevent overwriting `current`
+    /// every Update frame when the same level is active.
+    pub last_level_number: Option<u32>,
 }
 
 impl Default for GravityConfiguration {
@@ -201,6 +204,7 @@ impl Default for GravityConfiguration {
         Self {
             current: Vec3::ZERO,
             level_default: Vec3::ZERO,
+            last_level_number: None,
         }
     }
 }
@@ -220,6 +224,13 @@ pub fn run() {
     // Scoring system state
     app.init_resource::<systems::scoring::ScoreState>();
     app.add_message::<crate::signals::BrickDestroyed>();
+    // Per-frame dedupe set for BrickDestroyed emissions
+    app.init_resource::<EmittedBrickDestroyed>();
+    // Clear the dedupe set at the start of each frame before collision systems run
+    app.add_systems(
+        Update,
+        clear_emitted_brick_destroyed.before(mark_brick_on_ball_collision),
+    );
     app.add_message::<crate::signals::SpawnMerkabaMessage>();
     app.add_message::<crate::signals::LifeAwardMessage>();
     app.add_message::<systems::scoring::MilestoneReached>();
@@ -660,6 +671,7 @@ pub fn mark_brick_on_ball_collision(
     mut spawn_msgs: Option<MessageWriter<crate::signals::SpawnMerkabaMessage>>,
     mut brick_destroyed_msgs: Option<MessageWriter<crate::signals::BrickDestroyed>>,
     mut life_award_msgs: Option<MessageWriter<crate::signals::LifeAwardMessage>>,
+    mut emitted: Option<ResMut<EmittedBrickDestroyed>>,
 ) {
     use crate::level_format::{is_multi_hit_brick, MULTI_HIT_BRICK_1, SIMPLE_BRICK};
     // Track bricks already processed this frame to avoid double-awards on multi-ball collisions
@@ -683,6 +695,7 @@ pub fn mark_brick_on_ball_collision(
 
             if let Some((entity, brick_type_ro, gt_opt, t_opt)) = brick_info {
                 if processed_bricks.contains(&entity) {
+                    debug!("Skipping already-processed brick entity {:?}", entity);
                     continue;
                 }
                 let current_type = brick_type_ro.0;
@@ -733,6 +746,10 @@ pub fn mark_brick_on_ball_collision(
                         }
                     }
                     processed_bricks.insert(entity);
+                    info!(
+                        "mark_brick_on_ball_collision: processing brick entity {:?}, type {}",
+                        entity, current_type
+                    );
                     if current_type == 36 {
                         if let Some(writer) = spawn_msgs.as_mut() {
                             writer.write(crate::signals::SpawnMerkabaMessage {
@@ -745,14 +762,31 @@ pub fn mark_brick_on_ball_collision(
                         // Record last rotor spawn position as fallback for spawn processing
                         // Emit BrickDestroyed for consistency and despawn immediately to satisfy tests
                         if let Some(writer) = brick_destroyed_msgs.as_mut() {
-                            writer.write(crate::signals::BrickDestroyed {
-                                brick_entity: entity,
-                                brick_type: current_type,
-                                destroyed_by: None,
-                            });
+                            let mut should_emit = true;
+                            if let Some(emitted_set) = emitted.as_mut() {
+                                should_emit = emitted_set.0.insert(entity);
+                            }
+                            if should_emit {
+                                info!("Emitting BrickDestroyed immediately for rotor entity {:?}, type {}", entity, current_type);
+                                writer.write(crate::signals::BrickDestroyed {
+                                    brick_entity: entity,
+                                    brick_type: current_type,
+                                    destroyed_by: None,
+                                });
+                            } else {
+                                debug!(
+                                    "Skipping duplicate BrickDestroyed (rotor) for entity {:?}",
+                                    entity
+                                );
+                            }
                         }
+                        info!(
+                            "mark_brick_on_ball_collision: try_despawn entity {:?}",
+                            entity
+                        );
                         commands.entity(entity).try_despawn();
                     } else {
+                        info!("mark_brick_on_ball_collision: mark entity {:?} as MarkedForDespawn, type {}", entity, current_type);
                         commands.entity(entity).insert(MarkedForDespawn);
                     }
                 }
@@ -801,20 +835,43 @@ fn despawn_marked_entities(
     marked: Query<(Entity, Option<&BrickTypeId>), With<MarkedForDespawn>>,
     mut commands: Commands,
     mut brick_events: Option<MessageWriter<crate::signals::BrickDestroyed>>,
+    mut emitted: Option<ResMut<EmittedBrickDestroyed>>,
 ) {
     for (entity, brick_type) in marked.iter() {
         // Emit BrickDestroyed message for audio/scoring systems
         if let Some(brick_type) = brick_type {
             if let Some(writer) = brick_events.as_mut() {
-                writer.write(crate::signals::BrickDestroyed {
-                    brick_entity: entity,
-                    brick_type: brick_type.0,
-                    destroyed_by: None,
-                });
+                let mut should_emit = true;
+                if let Some(emitted_set) = emitted.as_mut() {
+                    should_emit = emitted_set.0.insert(entity);
+                }
+                if should_emit {
+                    info!("Emitting BrickDestroyed from despawn_marked_entities for entity {:?}, type {}", entity, brick_type.0);
+                    writer.write(crate::signals::BrickDestroyed {
+                        brick_entity: entity,
+                        brick_type: brick_type.0,
+                        destroyed_by: None,
+                    });
+                } else {
+                    debug!(
+                        "Skipping duplicate BrickDestroyed (despawn) for entity {:?}",
+                        entity
+                    );
+                }
             }
         }
         commands.entity(entity).despawn();
     }
+}
+
+/// Per-frame set of already-emitted BrickDestroyed entities to avoid duplicate messages.
+/// This resource is cleared at the start of each frame by `clear_emitted_brick_destroyed`.
+#[derive(Resource, Default, Debug)]
+pub struct EmittedBrickDestroyed(pub std::collections::HashSet<Entity>);
+
+/// Clear the per-frame emitted set. Must run before any systems that may emit BrickDestroyed.
+fn clear_emitted_brick_destroyed(mut emitted: ResMut<EmittedBrickDestroyed>) {
+    emitted.0.clear();
 }
 
 /// Public helper to register the brick collision + despawn systems on an arbitrary App.
