@@ -108,31 +108,31 @@ pub fn gravity_configuration_loader_system(
     gravity_cfg.current = default;
 }
 
-/// Detect gravity brick destruction and send GravityChanged messages.
+/// Detect gravity brick destruction by listening to BrickDestroyed messages.
 ///
-/// When a brick with the `GravityBrick` component is despawned, this system
-/// detects the removal and sends a `GravityChanged` message with the gravity
-/// value from the brick's component.
+/// Reads `BrickDestroyed` messages and checks if the destroyed brick was a gravity brick
+/// (indices 21-25). If so, sends a `GravityChanged` message with the appropriate gravity value.
 ///
 /// For brick index 25 (Queer Gravity), generates random gravity within specified ranges:
 /// - X ∈ [-2.0, +15.0]
 /// - Y = 0.0 (always, no randomization)
 /// - Z ∈ [-5.0, +5.0]
 ///
-/// **Approach**: Tracks GravityBrick components in a resource before they're
-/// despawned, allowing us to send the correct gravity message when destruction occurs.
+/// **Approach**: Listens to BrickDestroyed messages (sent by mark_brick_on_ball_collision)
+/// and queries the entity to retrieve its GravityBrick component. This avoids command
+/// buffering issues that occur when trying to query MarkedForDespawn components.
 pub fn brick_destruction_gravity_handler(
-    // Query for bricks with GravityBrick component
-    gravity_bricks: Query<(Entity, &crate::GravityBrick), With<crate::Brick>>,
-    // Query for bricks marked for despawn
-    marked_for_despawn: Query<Entity, With<crate::MarkedForDespawn>>,
+    // Read BrickDestroyed messages to detect when gravity bricks are destroyed
+    mut destroyed_bricks: MessageReader<crate::signals::BrickDestroyed>,
+    // Query for gravity bricks to look up their gravity values
+    gravity_bricks: Query<&crate::GravityBrick>,
     mut gravity_writer: MessageWriter<GravityChanged>,
 ) {
     use rand::Rng;
 
-    // Check if any gravity bricks are marked for despawn
-    for (entity, gravity_brick) in gravity_bricks.iter() {
-        if marked_for_despawn.contains(entity) {
+    for destroyed in destroyed_bricks.read() {
+        // Check if this destroyed brick is a gravity brick (indices 21-25)
+        if let Ok(gravity_brick) = gravity_bricks.get(destroyed.brick_entity) {
             // Determine gravity based on brick index
             let gravity = if gravity_brick.index == 25 {
                 // Queer Gravity: Generate random gravity
@@ -154,13 +154,13 @@ pub fn brick_destruction_gravity_handler(
                     gravity_writer.write(msg);
                     debug!(
                         "Gravity brick detected for destruction (entity: {:?}, index: {}, gravity: {:?})",
-                        entity, gravity_brick.index, gravity
+                        destroyed.brick_entity, gravity_brick.index, gravity
                     );
                 }
                 Err(e) => {
                     warn!(
                         "Invalid gravity in brick {:?} (index {}): {}",
-                        entity, gravity_brick.index, e
+                        destroyed.brick_entity, gravity_brick.index, e
                     );
                 }
             }

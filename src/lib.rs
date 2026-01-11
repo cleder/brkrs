@@ -335,11 +335,10 @@ pub fn run() {
         systems::gravity::gravity_configuration_loader_system,
     );
     // Gravity brick destruction handler: detects destroyed gravity bricks and sends messages
+    // Reads BrickDestroyed messages sent by mark_brick_on_ball_collision
     app.add_systems(
         Update,
-        systems::gravity::brick_destruction_gravity_handler
-            .after(mark_brick_on_ball_collision)
-            .before(despawn_marked_entities),
+        systems::gravity::brick_destruction_gravity_handler,
     );
     // Gravity application system: reads messages and updates GravityConfiguration
     app.add_systems(
