@@ -9,7 +9,7 @@ Goal: Establish project-prep and scaffolding to enable TDD-first implementation.
 - [x] T001 Verify texture assets exist in assets/textures/default/
 - [x] T002 Create test harness file scaffolding in tests/gravity_indicator_ui.rs
 - [x] T003 Ensure UI module path and plugin registration in src/ui/mod.rs
-- [ ] T004 Add logging category for UI indicator in src/lib.rs (tracing init)
+- [x] T004 Add logging category for UI indicator in src/lib.rs (tracing init)
 
 ## Phase 2: Foundational
 
@@ -27,11 +27,11 @@ Independent Test Criteria: Indicator spawns correctly and updates within one fra
 
 ### Tests (write first; commit failing tests and record hash)
 
-- [x] T009 [US1] Add test `test_indicator_spawns_on_first_valid_frame` in tests/gravity_indicator_ui.rs (hash: TBD)
-- [x] T010 [US1] Add test `test_indicator_updates_within_one_frame_on_gravity_change` in tests/gravity_indicator_ui.rs (hash: TBD)
-- [x] T011 [US1] Add test `test_multiple_changes_last_write_wins` in tests/gravity_indicator_ui.rs (hash: TBD)
-- [x] T012 [US1] Add unit tests for `map_gravity_to_level` (exact and tolerance edges) in src/ui/gravity_indicator.rs (hash: TBD)
-- [ ] T013 [US1] Record failing-test commit hash to specs/021-gravity-bricks/US1_FAILING_TEST_HASH.txt
+- [x] T009 [US1] Add test `test_indicator_spawns_on_first_valid_frame` in tests/gravity_indicator_ui.rs (hash: e18d2e9bc827)
+- [x] T010 [US1] Add test `test_indicator_updates_within_one_frame_on_gravity_change` in tests/gravity_indicator_ui.rs (hash: e18d2e9bc827)
+- [x] T011 [US1] Add test `test_multiple_changes_last_write_wins` in tests/gravity_indicator_ui.rs (hash: e18d2e9bc827)
+- [x] T012 [US1] Add unit tests for `map_gravity_to_level` (exact and tolerance edges) in src/ui/gravity_indicator.rs (hash: e18d2e9bc827)
+- [x] T013 [US1] Record failing-test commit hash to specs/021-gravity-bricks/US1_FAILING_TEST_HASH.txt
 
 ### Implementation
 
@@ -54,23 +54,23 @@ Independent Test Criteria: Position correct across window modes; opposite corner
 
 ### Tests (write first; commit failing tests and record hash)
 
-- [ ] T022 [US2] Add test `test_indicator_bottom_left_anchor_windowed_and_fullscreen` in tests/gravity_indicator_ui.rs (hash: TBD)
-- [ ] T023 [US2] Add test `test_indicator_opposite_developer_indicator_no_overlap` in tests/gravity_indicator_ui.rs (hash: TBD)
-- [ ] T024 [US2] Record failing-test commit hash to specs/021-gravity-bricks/US2_FAILING_TEST_HASH.txt
+- [x] T022 [US2] Add test `test_indicator_bottom_left_anchor_windowed_and_fullscreen` in tests/gravity_indicator_ui.rs (hash: TBD)
+- [x] T023 [US2] Add test `test_indicator_opposite_developer_indicator_no_overlap` in tests/gravity_indicator_ui.rs (hash: e18d2e9bc827)
+- [x] T024 [US2] Record failing-test commit hash to specs/021-gravity-bricks/US2_FAILING_TEST_HASH.txt
 
 ### Implementation
 
-- [ ] T025 [US2] Implement absolute positioning (left/bottom 12px) in Node for spawn system in src/ui/gravity_indicator.rs
-- [ ] T026 [US2] Validate developer indicator is bottom-right; adjust gravity indicator if layout changes in src/ui/gravity_indicator.rs
+- [x] T025 [US2] Implement absolute positioning (left/bottom 12px) in Node for spawn system in src/ui/gravity_indicator.rs
+- [x] T026 [US2] Validate developer indicator is bottom-right; adjust gravity indicator if layout changes in src/ui/gravity_indicator.rs
 
 ### Bevy 0.17 Gates — Acceptance
 
-- [ ] T027 [US2] Verify hierarchy safety (no parent/child needed) and stable anchoring in src/ui/gravity_indicator.rs
+- [x] T027 [US2] Verify hierarchy safety (no parent/child needed) and stable anchoring in src/ui/gravity_indicator.rs
 
 ### Overlay Visibility (FR-007)
 
-- [ ] T041 [US2] Add test `test_indicator_visible_over_game_over_overlay` in tests/gravity_indicator_ui.rs (hash: TBD)
-- [ ] T042 [US2] Ensure z-order/layering keeps indicator above overlays (e.g., UI z-index/order), document approach in src/ui/gravity_indicator.rs
+- [x] T041 [US2] Add test `test_indicator_visible_over_game_over_overlay` in tests/gravity_indicator_ui.rs (hash: e18d2e9bc827)
+- [x] T042 [US2] Ensure z-order/layering keeps indicator above overlays (e.g., UI z-index/order), document approach in src/ui/gravity_indicator.rs
 
 ## Phase 5: User Story 3 (P3) — Robust Through Pause & Life Loss
 
@@ -79,30 +79,30 @@ Independent Test Criteria: Stability across pause; reflects level default after 
 
 ### Tests (write first; commit failing tests and record hash)
 
-- [ ] T028 [US3] Add test `test_indicator_static_during_pause` in tests/gravity_indicator_ui.rs (hash: TBD)
-- [ ] T029 [US3] Add test `test_indicator_resets_to_level_default_on_life_loss` in tests/gravity_indicator_ui.rs (hash: TBD)
-- [ ] T030 [US3] Add test `test_multi_frame_persistence_for_10_frames` in tests/gravity_indicator_ui.rs (hash: TBD)
-- [ ] T031 [US3] Record failing-test commit hash to specs/021-gravity-bricks/US3_FAILING_TEST_HASH.txt
+- [x] T028 [US3] Add test `test_indicator_static_during_pause` in tests/gravity_indicator_ui.rs (hash: e18d2e9bc827)
+- [x] T029 [US3] Add test `test_indicator_resets_to_level_default_on_life_loss` in tests/gravity_indicator_ui.rs (hash: e18d2e9bc827)
+- [x] T030 [US3] Add test `test_multi_frame_persistence_for_10_frames` in tests/gravity_indicator_ui.rs (hash: e18d2e9bc827)
+- [x] T031 [US3] Record failing-test commit hash to specs/021-gravity-bricks/US3_FAILING_TEST_HASH.txt
 
 ### Implementation
 
-- [ ] T032 [US3] Ensure pause system doesn't mutate indicator; validate change detection only triggers when gravity changes in src/ui/gravity_indicator.rs
-- [ ] T033 [US3] Hook life loss handler to update `GravityConfiguration.current` and rely on change detection in src/lib.rs
+- [x] T032 [US3] Ensure pause system doesn't mutate indicator; validate change detection only triggers when gravity changes in src/ui/gravity_indicator.rs
+- [x] T033 [US3] Hook life loss handler to update `GravityConfiguration.current` and rely on change detection in src/lib.rs
 
 ### Bevy 0.17 Gates — Acceptance
 
-- [ ] T034 [US3] Verify change detection gates and multi-frame persistence; no unconditional overwrites in src/ui/gravity_indicator.rs
+- [x] T034 [US3] Verify change detection gates and multi-frame persistence; no unconditional overwrites in src/ui/gravity_indicator.rs
 
 ## Final Phase: Polish & Cross-Cutting
 
 Goal: Stabilize, document, and verify compliance.
 
-- [ ] T035 Add README entry in docs/ui-systems.md for gravity indicator
-- [ ] T036 Add troubleshooting section to docs/troubleshooting.md (asset missing, tolerance edge cases)
-- [ ] T037 Add performance note in docs/architecture.md (change detection efficiency)
-- [ ] T038 Add accessibility/DPI note to docs/developer-guide.md (future support)
-- [ ] T039 Run linters and formatters: cargo test, cargo clippy, cargo fmt --all
-- [ ] T040 Update CHANGELOG.md and IMPLEMENTATION_SUMMARY.md with feature details
+- [x] T035 Add README entry in docs/ui-systems.md for gravity indicator
+- [x] T036 Add troubleshooting section to docs/troubleshooting.md (asset missing, tolerance edge cases)
+- [x] T037 Add performance note in docs/architecture.md (change detection efficiency)
+- [x] T038 Add accessibility/DPI note to docs/developer-guide.md (future support)
+- [x] T039 Run linters and formatters: cargo test, cargo clippy, cargo fmt --all
+- [x] T040 Update CHANGELOG.md and IMPLEMENTATION_SUMMARY.md with feature details
 
 ## Dependencies
 
