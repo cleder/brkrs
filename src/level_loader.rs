@@ -813,6 +813,11 @@ fn spawn_bricks_only(
             if brick_type_id != INDESTRUCTIBLE_BRICK {
                 entity.insert(crate::CountsTowardsCompletion);
             }
+
+            // Attach GravityBrick component for gravity bricks (21-25) when spawning bricks-only flow
+            if let Some(gravity_brick) = create_gravity_brick_component(brick_type_id) {
+                entity.insert(gravity_brick);
+            }
         }
     }
 }

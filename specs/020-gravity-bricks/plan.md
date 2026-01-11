@@ -239,8 +239,8 @@ Deliverables:
    **System Registration**:
    - `gravity_configuration_loader_system`: `Startup` (load level default gravity once)
    - `brick_destruction_gravity_handler`: `Update` (detect destroyed gravity bricks, write messages)
-   - `gravity_application_system`: `PhysicsUpdate` (read messages, update gravity config)
-   - `gravity_reset_on_life_loss_system`: `PostUpdate`, **before** ball respawn system (reset gravity before next ball spawns)
+- `gravity_application_system`: Rapier `PhysicsSet` (read messages, update gravity config)
+  - `gravity_reset_on_life_loss_system`: `PostUpdate`, **before** ball respawn system (reset gravity before next ball spawns)
 
    **Critical Ordering Constraint**:
 
@@ -249,14 +249,14 @@ Deliverables:
        ↓
    [brick_destruction_gravity_handler sends GravityChanged messages]
        ↓
-   PhysicsUpdate Schedule
-       ↓
+   PhysicsSet (runs in PostUpdate by default)
+        ↓
    [gravity_application_system reads messages, updates GravityConfiguration::current]
-       ↓
+            ↓
    PostUpdate Schedule
-       ↓
+           ↓
    [gravity_reset_on_life_loss_system resets to level_default (from level gravity) on ball loss]
-       ↓
+          ↓
    [Ball respawn occurs with reset gravity]
    ```
 

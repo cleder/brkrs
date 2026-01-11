@@ -85,12 +85,18 @@ fn test_complete_gravity_flow() {
     );
 
     // Verify RapierConfiguration was also updated
-    let rapier_gravity = app
-        .world_mut()
-        .query::<&RapierConfiguration>()
-        .single(app.world())
-        .unwrap()
-        .gravity;
+    let rapier_gravity = {
+        let mut query = app.world_mut().query::<&RapierConfiguration>();
+        let mut iter = query.iter(app.world());
+        let first = iter
+            .next()
+            .expect("Expected at least one RapierConfiguration");
+        assert!(
+            iter.next().is_none(),
+            "Expected exactly one RapierConfiguration"
+        );
+        first.gravity
+    };
 
     assert_eq!(
         rapier_gravity,
@@ -158,12 +164,18 @@ fn test_gravity_zero_brick() {
     let gravity = app.world().resource::<GravityConfiguration>().current;
     assert_eq!(gravity, Vec3::ZERO, "Gravity should change to zero");
 
-    let rapier_gravity = app
-        .world_mut()
-        .query::<&RapierConfiguration>()
-        .single(app.world())
-        .unwrap()
-        .gravity;
+    let rapier_gravity = {
+        let mut query = app.world_mut().query::<&RapierConfiguration>();
+        let mut iter = query.iter(app.world());
+        let first = iter
+            .next()
+            .expect("Expected at least one RapierConfiguration");
+        assert!(
+            iter.next().is_none(),
+            "Expected exactly one RapierConfiguration"
+        );
+        first.gravity
+    };
     assert_eq!(rapier_gravity, Vec3::ZERO, "Rapier gravity should be zero");
 }
 
@@ -264,11 +276,17 @@ fn test_sequential_gravity_changes() {
     assert_eq!(gravity3, Vec3::new(20.0, 0.0, 0.0));
 
     // Verify Rapier config matches final gravity
-    let rapier_gravity = app
-        .world_mut()
-        .query::<&RapierConfiguration>()
-        .single(app.world())
-        .unwrap()
-        .gravity;
+    let rapier_gravity = {
+        let mut query = app.world_mut().query::<&RapierConfiguration>();
+        let mut iter = query.iter(app.world());
+        let first = iter
+            .next()
+            .expect("Expected at least one RapierConfiguration");
+        assert!(
+            iter.next().is_none(),
+            "Expected exactly one RapierConfiguration"
+        );
+        first.gravity
+    };
     assert_eq!(rapier_gravity, Vec3::new(20.0, 0.0, 0.0));
 }

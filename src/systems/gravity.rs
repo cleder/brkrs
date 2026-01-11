@@ -16,6 +16,7 @@
 /// 4. Physics system applies gravity to ball's rigid body
 /// 5. `gravity_reset_on_life_loss_system` (PostUpdate): Reset gravity to level default on ball loss
 use bevy::prelude::*;
+use std::ops::RangeInclusive;
 
 // =============================================================================
 // GRAVITY BRICK CONSTANTS
@@ -49,6 +50,9 @@ pub const GRAVITY_MEDIUM: Vec3 = Vec3::new(10.0, 0.0, 0.0);
 /// Gravity vector for High Gravity brick (index 24).
 /// Strong pull on X-axis (20 units).
 pub const GRAVITY_HIGH: Vec3 = Vec3::new(20.0, 0.0, 0.0);
+
+/// Valid gravity bounds for validation.
+pub const GRAVITY_RANGE: RangeInclusive<f32> = -30.0..=30.0;
 
 // =============================================================================
 // QUEER GRAVITY RANDOMIZATION BOUNDS
@@ -125,10 +129,9 @@ impl GravityChanged {
             return Err("Gravity vector contains NaN or Inf".to_string());
         }
 
-        let valid_range = -30.0..=30.0;
-        if !valid_range.contains(&self.gravity.x)
-            || !valid_range.contains(&self.gravity.y)
-            || !valid_range.contains(&self.gravity.z)
+        if !GRAVITY_RANGE.contains(&self.gravity.x)
+            || !GRAVITY_RANGE.contains(&self.gravity.y)
+            || !GRAVITY_RANGE.contains(&self.gravity.z)
         {
             return Err(format!(
                 "Gravity vector {:?} outside valid range [-30, +30]",

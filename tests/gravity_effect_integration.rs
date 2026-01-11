@@ -58,11 +58,21 @@ fn test_gravity_change_affects_ball_velocity() {
         cfg.current = Vec3::ZERO;
     }
 
+    // Initial velocity should be zero before gravity changes
+    {
+        let entity_ref = app.world().entity(ball_entity);
+        let initial_vel = entity_ref.get::<Velocity>().unwrap().linvel;
+        assert_eq!(initial_vel, Vec3::ZERO, "Ball should start at rest");
+    }
+
     // Directly send a GravityChanged message for a strong X-axis gravity
     {
         let mut msgs = app.world_mut().resource_mut::<Messages<GravityChanged>>();
         msgs.write(GravityChanged::new(Vec3::new(10.0, 0.0, 0.0)));
     }
+
+    // Process the gravity change before stepping physics to avoid ordering races
+    app.update();
 
     // Step several frames and observe ball velocity
     let mut velocities = Vec::new();

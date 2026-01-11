@@ -318,6 +318,19 @@ pub fn run() {
         ),
     );
 
+    add_scoring_systems(&mut app);
+
+    // Texture manifest system (conditional on feature flag)
+    #[cfg(feature = "texture_manifest")]
+    app.add_systems(Update, systems::multi_hit::watch_brick_type_changes);
+
+    add_core_observers(&mut app);
+    add_gravity_feature(&mut app);
+    // Note: Multi-hit brick sound observer is now registered by AudioPlugin
+    app.run();
+}
+
+fn add_scoring_systems(app: &mut App) {
     // Scoring: award points after brick despawn events have been emitted
     app.add_systems(
         Update,
@@ -329,15 +342,16 @@ pub fn run() {
             .chain()
             .after(despawn_marked_entities),
     );
+}
 
-    // Texture manifest system (conditional on feature flag)
-    #[cfg(feature = "texture_manifest")]
-    app.add_systems(Update, systems::multi_hit::watch_brick_type_changes);
-
+fn add_core_observers(app: &mut App) {
     app.add_observer(on_wall_hit);
     app.add_observer(on_paddle_ball_hit);
     app.add_observer(on_brick_hit);
     app.add_observer(start_camera_shake);
+}
+
+fn add_gravity_feature(app: &mut App) {
     // GravityChanged message type registration (gravity bricks feature)
     app.add_message::<systems::gravity::GravityChanged>();
     // Foundation system: load gravity configuration from level metadata
@@ -365,8 +379,6 @@ pub fn run() {
         Update,
         systems::gravity::gravity_reset_on_life_loss_system.in_set(RespawnSystems::Detect),
     );
-    // Note: Multi-hit brick sound observer is now registered by AudioPlugin
-    app.run();
 }
 
 fn setup(_rapier_config: Query<&mut RapierConfiguration>, _gravity_cfg: Res<GravityConfig>) {
@@ -478,7 +490,7 @@ fn update_paddle_growth(
                 config.gravity = gravity_cfg.current;
             } else {
                 warn!(
-                    "Failed to restore gravity after paddle growth: RapierConfiguration not found"
+                    "Failed to restore gravity after paddle growth: RapierConfiguration not found; will retry in restore_gravity_post_growth"
                 );
             }
             commands.entity(entity).remove::<PaddleGrowing>();
@@ -499,18 +511,30 @@ fn update_paddle_growth(
 }
 
 /// Ensure gravity is restored if growth finished but previous restoration was missed.
-/// Acts as a safety net in case the growth completion frame didn't run gravity restoration.
+/// Acts as a safety net in case the growth completion frame didn't run gravity restoration
+/// or RapierConfiguration was unavailable.
 fn restore_gravity_post_growth(
     paddles: Query<&PaddleGrowing>,
     mut rapier_config: Query<&mut RapierConfiguration>,
     gravity_cfg: Res<GravityConfiguration>,
 ) {
     // Only restore if no paddle is growing and gravity is currently zero.
-    if paddles.is_empty() {
-        if let Ok(mut config) = rapier_config.single_mut() {
-            if config.gravity == Vec3::ZERO {
+    if !paddles.is_empty() {
+        return;
+    }
+
+    match rapier_config.single_mut() {
+        Ok(mut config) => {
+            if config.gravity != gravity_cfg.current {
+                info!(
+                    "Restoring gravity post-growth from {:?} to {:?}",
+                    config.gravity, gravity_cfg.current
+                );
                 config.gravity = gravity_cfg.current;
             }
+        }
+        Err(_) => {
+            warn!("Unable to restore gravity post-growth: RapierConfiguration missing");
         }
     }
 }
@@ -638,6 +662,42 @@ fn spawn_border(
     ));
 }
 
+fn try_emit_brick_destroyed(
+    writer: &mut Option<MessageWriter<crate::signals::BrickDestroyed>>,
+    emitted: &mut Option<ResMut<EmittedBrickDestroyed>>,
+    entity: Entity,
+    brick_type: u8,
+    context: &str,
+) -> bool {
+    let Some(w) = writer.as_mut() else {
+        return false;
+    };
+
+    let mut should_emit = true;
+    if let Some(emitted_set) = emitted.as_mut() {
+        should_emit = emitted_set.0.insert(entity);
+    }
+
+    if should_emit {
+        info!(
+            "{} emitting BrickDestroyed for entity {:?}, type {}",
+            context, entity, brick_type
+        );
+        w.write(crate::signals::BrickDestroyed {
+            brick_entity: entity,
+            brick_type,
+            destroyed_by: None,
+        });
+    } else {
+        debug!(
+            "{} skipping duplicate BrickDestroyed for entity {:?}",
+            context, entity
+        );
+    }
+
+    should_emit
+}
+
 /// Mark bricks for despawn when hit by the ball, or transition multi-hit bricks.
 ///
 /// Multi-hit bricks (indices 10-13) transition to the next lower index instead of
@@ -759,34 +819,24 @@ pub fn mark_brick_on_ball_collision(
                                 min_speed_y: 3.0,
                             });
                         }
-                        // Record last rotor spawn position as fallback for spawn processing
                         // Emit BrickDestroyed for consistency and despawn immediately to satisfy tests
-                        if let Some(writer) = brick_destroyed_msgs.as_mut() {
-                            let mut should_emit = true;
-                            if let Some(emitted_set) = emitted.as_mut() {
-                                should_emit = emitted_set.0.insert(entity);
-                            }
-                            if should_emit {
-                                info!("Emitting BrickDestroyed immediately for rotor entity {:?}, type {}", entity, current_type);
-                                writer.write(crate::signals::BrickDestroyed {
-                                    brick_entity: entity,
-                                    brick_type: current_type,
-                                    destroyed_by: None,
-                                });
-                            } else {
-                                debug!(
-                                    "Skipping duplicate BrickDestroyed (rotor) for entity {:?}",
-                                    entity
-                                );
-                            }
-                        }
+                        try_emit_brick_destroyed(
+                            &mut brick_destroyed_msgs,
+                            &mut emitted,
+                            entity,
+                            current_type,
+                            "Rotor",
+                        );
                         info!(
                             "mark_brick_on_ball_collision: try_despawn entity {:?}",
                             entity
                         );
                         commands.entity(entity).try_despawn();
                     } else {
-                        info!("mark_brick_on_ball_collision: mark entity {:?} as MarkedForDespawn, type {}", entity, current_type);
+                        info!(
+                            "mark_brick_on_ball_collision: mark entity {:?} as MarkedForDespawn, type {}",
+                            entity, current_type
+                        );
                         commands.entity(entity).insert(MarkedForDespawn);
                     }
                 }
@@ -840,25 +890,13 @@ fn despawn_marked_entities(
     for (entity, brick_type) in marked.iter() {
         // Emit BrickDestroyed message for audio/scoring systems
         if let Some(brick_type) = brick_type {
-            if let Some(writer) = brick_events.as_mut() {
-                let mut should_emit = true;
-                if let Some(emitted_set) = emitted.as_mut() {
-                    should_emit = emitted_set.0.insert(entity);
-                }
-                if should_emit {
-                    info!("Emitting BrickDestroyed from despawn_marked_entities for entity {:?}, type {}", entity, brick_type.0);
-                    writer.write(crate::signals::BrickDestroyed {
-                        brick_entity: entity,
-                        brick_type: brick_type.0,
-                        destroyed_by: None,
-                    });
-                } else {
-                    debug!(
-                        "Skipping duplicate BrickDestroyed (despawn) for entity {:?}",
-                        entity
-                    );
-                }
-            }
+            try_emit_brick_destroyed(
+                &mut brick_events,
+                &mut emitted,
+                entity,
+                brick_type.0,
+                "Despawn",
+            );
         }
         commands.entity(entity).despawn();
     }

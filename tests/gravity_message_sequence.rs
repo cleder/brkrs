@@ -45,6 +45,7 @@ fn test_gravity_message_sequence_applies_last() {
     app.update();
 
     let cfg = app.world().resource::<GravityConfiguration>().current;
-    // Expect last processed message (brick_type 23 -> gravity 10.0 on X) to be applied
+    // Messages are FIFO, so the last written message in this frame should win
+    // (brick_type 23 -> gravity 10.0 on X)
     assert_eq!(cfg, bevy::prelude::Vec3::new(10.0, 0.0, 0.0));
 }

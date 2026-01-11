@@ -4,6 +4,10 @@
 // Date: 2026-01-10
 
 use bevy::prelude::*;
+use std::ops::RangeInclusive;
+
+// Shared validation bound for gravity vectors to keep docs and code aligned.
+pub const GRAVITY_RANGE: RangeInclusive<f32> = -30.0..=30.0;
 
 /// Message indicating that the world's gravity has changed due to brick destruction.
 ///
@@ -53,10 +57,9 @@ impl GravityChanged {
         }
 
         // Allow reasonable physics range
-        let valid_range = -30.0..=30.0;
-        if !valid_range.contains(&self.gravity.x)
-            || !valid_range.contains(&self.gravity.y)
-            || !valid_range.contains(&self.gravity.z)
+        if !GRAVITY_RANGE.contains(&self.gravity.x)
+            || !GRAVITY_RANGE.contains(&self.gravity.y)
+            || !GRAVITY_RANGE.contains(&self.gravity.z)
         {
             return Err(format!(
                 "Gravity vector {:?} outside valid range [-30, +30]",
