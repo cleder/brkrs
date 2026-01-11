@@ -6,19 +6,19 @@ Generated: 2026-01-11 Feature: specs/021-gravity-bricks/spec.md Plan: specs/021-
 
 Goal: Establish project-prep and scaffolding to enable TDD-first implementation.
 
-- [ ] T001 Verify texture assets exist in assets/textures/default/
-- [ ] T002 Create test harness file scaffolding in tests/gravity_indicator_ui.rs
-- [ ] T003 Ensure UI module path and plugin registration in src/ui/mod.rs
+- [x] T001 Verify texture assets exist in assets/textures/default/
+- [x] T002 Create test harness file scaffolding in tests/gravity_indicator_ui.rs
+- [x] T003 Ensure UI module path and plugin registration in src/ui/mod.rs
 - [ ] T004 Add logging category for UI indicator in src/lib.rs (tracing init)
 
 ## Phase 2: Foundational
 
 Goal: Shared prerequisites blocking all user stories.
 
-- [ ] T005 Add resource `GravityIndicatorTextures` and loader in src/ui/gravity_indicator.rs
-- [ ] T006 Ensure `GravityConfiguration` change detection is active (is_changed usage) in src/lib.rs
-- [ ] T007 Add `GravityIndicator` marker component in src/ui/gravity_indicator.rs
-- [ ] T008 Register spawn/update systems in UiPlugin in src/ui/mod.rs
+- [x] T005 Add resource `GravityIndicatorTextures` and loader in src/ui/gravity_indicator.rs
+- [x] T006 Ensure `GravityConfiguration` change detection is active (is_changed usage) in src/lib.rs
+- [x] T007 Add `GravityIndicator` marker component in src/ui/gravity_indicator.rs
+- [x] T008 Register spawn/update systems in UiPlugin in src/ui/mod.rs
 
 ## Phase 3: User Story 1 (P1) — See Current Gravity
 
@@ -27,25 +27,25 @@ Independent Test Criteria: Indicator spawns correctly and updates within one fra
 
 ### Tests (write first; commit failing tests and record hash)
 
-- [ ] T009 [US1] Add test `test_indicator_spawns_on_first_valid_frame` in tests/gravity_indicator_ui.rs (hash: TBD)
-- [ ] T010 [US1] Add test `test_indicator_updates_within_one_frame_on_gravity_change` in tests/gravity_indicator_ui.rs (hash: TBD)
-- [ ] T011 [US1] Add test `test_multiple_changes_last_write_wins` in tests/gravity_indicator_ui.rs (hash: TBD)
-- [ ] T012 [US1] Add unit tests for `map_gravity_to_level` (exact and tolerance edges) in src/ui/gravity_indicator.rs (hash: TBD)
+- [x] T009 [US1] Add test `test_indicator_spawns_on_first_valid_frame` in tests/gravity_indicator_ui.rs (hash: TBD)
+- [x] T010 [US1] Add test `test_indicator_updates_within_one_frame_on_gravity_change` in tests/gravity_indicator_ui.rs (hash: TBD)
+- [x] T011 [US1] Add test `test_multiple_changes_last_write_wins` in tests/gravity_indicator_ui.rs (hash: TBD)
+- [x] T012 [US1] Add unit tests for `map_gravity_to_level` (exact and tolerance edges) in src/ui/gravity_indicator.rs (hash: TBD)
 - [ ] T013 [US1] Record failing-test commit hash to specs/021-gravity-bricks/US1_FAILING_TEST_HASH.txt
 
 ### Implementation
 
-- [ ] T014 [US1] Implement `map_gravity_to_level(Vec3)` in src/ui/gravity_indicator.rs
-- [ ] T015 [US1] Implement `select_texture(GravityLevel)` in src/ui/gravity_indicator.rs
-- [ ] T016 [US1] Implement `spawn_gravity_indicator()` with idempotent guard in src/ui/gravity_indicator.rs
-- [ ] T017 [US1] Implement `update_gravity_indicator()` gated by `is_changed()` in src/ui/gravity_indicator.rs
-- [ ] T018 [US1] Add asset load deferral and graceful skip (warn) in src/ui/gravity_indicator.rs
+- [x] T014 [US1] Implement `map_gravity_to_level(Vec3)` in src/ui/gravity_indicator.rs
+- [x] T015 [US1] Implement `select_texture(GravityLevel)` in src/ui/gravity_indicator.rs
+- [x] T016 [US1] Implement `spawn_gravity_indicator()` with idempotent guard in src/ui/gravity_indicator.rs
+- [x] T017 [US1] Implement `update_gravity_indicator()` gated by `is_changed()` in src/ui/gravity_indicator.rs
+- [x] T018 [US1] Add asset load deferral and graceful skip (warn) in src/ui/gravity_indicator.rs
 
 ### Bevy 0.17 Gates — Acceptance
 
-- [ ] T019 [US1] Verify no per-frame UI updates (Changed<GravityConfiguration> gate) in src/ui/gravity_indicator.rs
-- [ ] T020 [US1] Verify specific queries (With<GravityIndicator>) and no panicking unwraps in src/ui/gravity_indicator.rs
-- [ ] T021 [US1] Verify asset handle reuse from resource (no repeated loads) in src/ui/gravity_indicator.rs
+- [x] T019 [US1] Verify no per-frame UI updates (Changed<GravityConfiguration> gate) in src/ui/gravity_indicator.rs
+- [x] T020 [US1] Verify specific queries (With<GravityIndicator>) and no panicking unwraps in src/ui/gravity_indicator.rs
+- [x] T021 [US1] Verify asset handle reuse from resource (no repeated loads) in src/ui/gravity_indicator.rs
 
 ## Phase 4: User Story 2 (P2) — Non-Intrusive Placement
 
