@@ -46,4 +46,4 @@
 ---
 
 *Each item should be checked before implementation or review.*
-                                                                                                                                                                                                                     *If any are incomplete, update the spec or plan before proceeding.*
+                                                                                                                                                                                                                                                                                                                         *If any are incomplete, update the spec or plan before proceeding.*
