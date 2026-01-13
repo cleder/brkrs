@@ -1,9 +1,6 @@
 # Implementation Tasks: Brick Types 42 & 91 — Paddle Life Loss
 
-**Feature**: 023-brick-42-91-life-loss  
-**Created**: 2026-01-13  
-**Status**: READY FOR IMPLEMENTATION  
-**Total Tasks**: 24
+**Feature**: 023-brick-42-91-life-loss **Created**: 2026-01-13 **Status**: READY FOR IMPLEMENTATION **Total Tasks**: 24
 
 ---
 
@@ -24,8 +21,7 @@ Each task is independently completable and includes:
 
 **Goal**: Set up brick type constants and helper functions; ensure type 91 is recognized by the system.
 
-**Prerequisites**: None  
-**Acceptance**: `cargo clippy --all-targets` passes; helper functions compile without errors.
+**Prerequisites**: None **Acceptance**: `cargo clippy --all-targets` passes; helper functions compile without errors.
 
 ### Tasks
 
@@ -39,8 +35,7 @@ Each task is independently completable and includes:
 
 **Goal**: Implement paddle collision detection for hazard bricks and emit `LifeLostEvent` with single-loss-per-frame guarantee.
 
-**Prerequisites**: Phase 0 complete  
-**Acceptance**: Paddle collision with type 42 or 91 emits exactly one `LifeLostEvent` per frame; multiple hazardous contacts in same frame emit only one event.
+**Prerequisites**: Phase 0 complete **Acceptance**: Paddle collision with type 42 or 91 emits exactly one `LifeLostEvent` per frame; multiple hazardous contacts in same frame emit only one event.
 
 ### Tasks
 
@@ -71,8 +66,7 @@ Each task is independently completable and includes:
 
 **Goal**: Ensure type 42 is destroyed by ball collision and type 91 is indestructible; verify scoring integration.
 
-**Prerequisites**: Phase 0 complete  
-**Acceptance**: Type 42 destroyed on ball collision, scores 90 points, emits `BrickDestroyed`; type 91 remains on ball collision, awards 0 points, no event emitted.
+**Prerequisites**: Phase 0 complete **Acceptance**: Type 42 destroyed on ball collision, scores 90 points, emits `BrickDestroyed`; type 91 remains on ball collision, awards 0 points, no event emitted.
 
 ### Tasks
 
@@ -100,8 +94,7 @@ Each task is independently completable and includes:
 
 **Goal**: Integrate type 91 indestructibility; verify level completion logic; add visual assets.
 
-**Prerequisites**: Phases 0–2 complete  
-**Acceptance**: Type 91 bricks do not block level completion; levels with only type 91 are immediately complete; visual representation consistent with indestructible bricks.
+**Prerequisites**: Phases 0–2 complete **Acceptance**: Type 91 bricks do not block level completion; levels with only type 91 are immediately complete; visual representation consistent with indestructible bricks.
 
 ### Tasks
 
@@ -135,8 +128,7 @@ Each task is independently completable and includes:
 
 **Goal**: Complete comprehensive test suite; validate all user stories; ensure no regressions.
 
-**Prerequisites**: Phases 0–3 complete  
-**Acceptance**: All 9 tests pass; no clippy/fmt errors; success criteria met; zero regressions.
+**Prerequisites**: Phases 0–3 complete **Acceptance**: All 9 tests pass; no clippy/fmt errors; success criteria met; zero regressions.
 
 ### Tasks
 

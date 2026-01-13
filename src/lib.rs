@@ -1065,7 +1065,7 @@ pub fn read_character_controller_collisions(
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     mut commands: Commands,
     spawn_points: Res<crate::systems::respawn::SpawnPoints>,
-    mut frame_loss_flag: Local<bool>,
+    mut frame_loss_state: ResMut<crate::systems::respawn::FrameLossState>,
     mut life_lost_writer: MessageWriter<crate::systems::respawn::LifeLostEvent>,
 ) {
     let output = match paddle_outputs.single() {
@@ -1099,7 +1099,9 @@ pub fn read_character_controller_collisions(
                         commands.entity(brick).insert(MarkedForDespawn);
                     }
                     // Check if this is a hazard brick (type 42 or 91) and emit life loss
-                    if crate::level_format::is_hazard_brick(brick_type.0) && !*frame_loss_flag {
+                    if crate::level_format::is_hazard_brick(brick_type.0)
+                        && !frame_loss_state.hazard_loss_emitted
+                    {
                         // Only emit one life loss per frame even if multiple hazards contacted
                         if let Ok(ball) = balls.iter().next().ok_or(()) {
                             let ball_spawn = spawn_points.ball_spawn();
@@ -1108,7 +1110,7 @@ pub fn read_character_controller_collisions(
                                 cause: crate::systems::respawn::LifeLossCause::PaddleHazard,
                                 ball_spawn,
                             });
-                            *frame_loss_flag = true;
+                            frame_loss_state.hazard_loss_emitted = true;
                         }
                     }
                 }

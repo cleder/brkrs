@@ -11,7 +11,7 @@ use bevy_rapier3d::{control::CharacterCollision, geometry::ShapeCastHit, prelude
 use brkrs::{
     level_format::{is_paddle_destroyable_brick, PADDLE_DESTROYABLE_BRICK},
     signals::BrickDestroyed,
-    systems::respawn::{LifeLostEvent, SpawnPoints},
+    systems::respawn::{FrameLossState, LifeLostEvent, SpawnPoints},
     systems::scoring::{MilestoneReached, ScoreState},
     Ball, Brick, BrickTypeId, CountsTowardsCompletion, MarkedForDespawn, Paddle,
 };
@@ -34,6 +34,7 @@ fn test_app() -> App {
         last_milestone_reached: 0,
     });
     app.insert_resource(SpawnPoints::default());
+    app.insert_resource(FrameLossState::default());
     app.world_mut().spawn(RapierConfiguration::new(1.0));
 
     // Register systems

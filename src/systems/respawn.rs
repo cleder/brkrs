@@ -57,11 +57,26 @@ pub fn apply_life_awards(
 /// result in exactly one life loss.
 ///
 /// # System Scheduling
-///
+/// Tracks whether a life-loss event was emitted this frame.
+/// Reset at frame start to allow one life loss per frame per entity.
+#[derive(Resource, Debug, Default, Clone, Copy)]
+pub struct FrameLossState {
+    pub hazard_loss_emitted: bool,
+}
+
+/// Resets the frame loss flag at the start of each frame.
 /// Must run in the Update schedule before `read_character_controller_collisions`.
-/// Uses `Local<bool>` for per-system-instance state, automatically reset per invocation.
-pub fn clear_life_loss_frame_flag(mut frame_loss_flag: Local<bool>) {
-    *frame_loss_flag = false;
+pub fn clear_life_loss_frame_flag(mut frame_loss_state: ResMut<FrameLossState>) {
+    frame_loss_state.hazard_loss_emitted = false;
+}
+
+/// Resets the frame loss flag when a respawn is scheduled.
+/// This ensures hazard collisions can trigger life loss after respawn.
+fn reset_frame_loss_on_respawn(
+    mut frame_loss_state: ResMut<FrameLossState>,
+    _events: MessageReader<RespawnScheduled>,
+) {
+    frame_loss_state.hazard_loss_emitted = false;
 }
 
 /// Shared lives resource maintained by the lives system.
@@ -272,6 +287,7 @@ impl Plugin for RespawnPlugin {
             .init_resource::<LivesState>()
             .init_resource::<SpawnPoints>()
             .init_resource::<RespawnVisualState>()
+            .init_resource::<FrameLossState>()
             .init_resource::<crate::physics_config::BallPhysicsConfig>()
             .init_resource::<crate::physics_config::PaddlePhysicsConfig>()
             .init_resource::<crate::physics_config::BrickPhysicsConfig>()
@@ -320,6 +336,12 @@ impl Plugin for RespawnPlugin {
         app.add_systems(
             Update,
             log_respawn_scheduled
+                .in_set(RespawnSystems::Schedule)
+                .after(process_respawn_queue),
+        );
+        app.add_systems(
+            Update,
+            reset_frame_loss_on_respawn
                 .in_set(RespawnSystems::Schedule)
                 .after(process_respawn_queue),
         );
