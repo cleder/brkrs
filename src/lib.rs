@@ -773,8 +773,9 @@ pub fn mark_brick_on_ball_collision(
                 }
 
                 // Skip hazard brick type 91 - indestructible by ball collision
+                // Use trace-level logging to avoid flooding logs during frequent grazing collisions
                 if current_type == crate::level_format::HAZARD_BRICK_91 {
-                    debug!(
+                    trace!(
                         "Ball-hazard brick collision: brick {} is indestructible type 91, skipping destruction",
                         entity
                     );
@@ -1103,7 +1104,7 @@ pub fn read_character_controller_collisions(
                         && !frame_loss_state.hazard_loss_emitted
                     {
                         // Only emit one life loss per frame even if multiple hazards contacted
-                        if let Ok(ball) = balls.iter().next().ok_or(()) {
+                        if let Some(ball) = balls.iter().next() {
                             let ball_spawn = spawn_points.ball_spawn();
                             life_lost_writer.write(crate::systems::respawn::LifeLostEvent {
                                 ball,

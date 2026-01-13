@@ -2,7 +2,7 @@
 
 **Feature Branch**: `023-brick-42-91-life-loss` **Created**: 2026-01-13 **Status**: Draft **Input**: User description: "brick types 42 and 91.
 When the paddle hits the brick, the life is lost.
-Brick type 42 is destroyed when the ball hits the brick, scores 90 points Brick type 91 is indistractable"
+Brick type 42 is destroyed when the ball hits the brick, scores 90 points Brick type 91 is indestructible"
 
 ## User Scenarios & Testing *(mandatory)*
 

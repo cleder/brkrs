@@ -36,6 +36,10 @@ pub const EXTRA_LIFE_BRICK: u8 = 41;
 /// Paddle-destroyable brick index 57: destroyed by paddle contact only.
 pub const PADDLE_DESTROYABLE_BRICK: u8 = 57;
 
+/// Brick type 42: destructible hazard that causes life loss on paddle collision.
+/// Ball collisions destroy it and award 90 points.
+pub const HAZARD_BRICK_42: u8 = 42;
+
 /// Brick type 91: indestructible hazard that causes life loss on paddle collision.
 /// Ball collisions have no effect (no destruction, no points).
 pub const HAZARD_BRICK_91: u8 = 91;
@@ -88,7 +92,7 @@ pub fn is_paddle_destroyable_brick(type_id: u8) -> bool {
 /// ```
 #[inline]
 pub fn is_hazard_brick(type_id: u8) -> bool {
-    type_id == 42 || type_id == HAZARD_BRICK_91
+    type_id == HAZARD_BRICK_42 || type_id == HAZARD_BRICK_91
 }
 
 #[cfg(test)]

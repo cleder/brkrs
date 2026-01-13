@@ -132,24 +132,6 @@ Each task is independently completable and includes:
 
 ### Tasks
 
-- [ ] T015 [P] [US1] Create test `test_brick_42_ball_collision_awards_90_points()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
-  - **Setup**: Spawn world with brick type 42 and ball
-  - **Action**: Simulate ball-brick collision
-  - **Assert**:
-    - Brick is removed from world
-    - Score increased by exactly 90
-    - `BrickDestroyed` message emitted
-  - **Acceptance**: Test passes consistently on 10 runs
-
-- [ ] T016 [P] [US1] Create test `test_brick_42_multiple_destroys_score_correctly()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
-  - **Setup**: Spawn world with 3 type 42 bricks and ball
-  - **Action**: Simulate ball collisions with each brick sequentially
-  - **Assert**:
-    - Each destruction awards 90 points
-    - Total score = 270
-    - No double-scoring on single brick
-  - **Acceptance**: Test passes; validates no scoring bugs with multiple bricks
-
 - [X] T015 [P] [US1] Create test `test_brick_42_ball_collision_awards_90_points()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
   - **Setup**: Spawn world with brick type 42 and ball
   - **Action**: Simulate ball-brick collision

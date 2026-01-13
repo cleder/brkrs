@@ -253,3 +253,53 @@ fn ball_collision_no_brick_destroyed_message() {
         "Ball collision with type 57 should NOT emit BrickDestroyed message"
     );
 }
+
+// =============================================================================
+// Paddle-Hazard Brick Collision (Types 42/91)
+// =============================================================================
+
+#[test]
+fn paddle_hazard_collision_integration_setup() {
+    // Integration test: Verify paddle-hazard collision system infrastructure
+    //
+    // This test validates that the core hazard brick types and life-loss
+    // systems are properly initialized and integrated:
+    // - Hazard brick types (42, 91) are properly identified
+    // - FrameLossState resource exists and initializes correctly
+    // - LifeLostEvent message type is registered
+    // - SpawnPoints resource is available for respawning
+    //
+    // Note: Full collision simulation requires extensive physics setup.
+    // This test validates the infrastructure is in place.
+
+    use brkrs::level_format::{is_hazard_brick, HAZARD_BRICK_42};
+
+    let mut app = test_app();
+
+    // Verify hazard brick types are properly identified
+    assert!(
+        is_hazard_brick(HAZARD_BRICK_42),
+        "Type 42 must be identified as hazard"
+    );
+    assert!(is_hazard_brick(91), "Type 91 must be identified as hazard");
+
+    // Verify FrameLossState is initialized
+    let frame_loss_state = app.world().resource::<FrameLossState>();
+    assert!(
+        !frame_loss_state.hazard_loss_emitted,
+        "FrameLossState should initialize with flag = false"
+    );
+
+    // Verify LifeLostEvent message system is available
+    let messages = app.world().resource::<Messages<LifeLostEvent>>();
+    assert!(
+        messages.is_empty(),
+        "LifeLostEvent messages should be empty initially"
+    );
+
+    // Verify SpawnPoints resource is available
+    let spawn_points = app.world().resource::<SpawnPoints>();
+    let _ = spawn_points.ball_spawn();
+
+    // Test passes - infrastructure is properly set up
+}
