@@ -91,7 +91,7 @@ The brick correctly loads with all required components.
 ### Edge Cases
 
 - What happens when the paddle and ball simultaneously contact the brick?
-  The paddle contact takes precedence - brick is destroyed, 250 points awarded
+  The paddle contact takes precedence - brick is destroyed, 250 points awarded (implementation: ball handler checks MarkedForDespawn guard, see plan.md Phase 0 Q5)
 - What happens if multiple paddle-destroyable bricks are touched by the paddle in one frame?
   Each brick is independently destroyed and awards 250 points (resulting in 500 points for 2 bricks, etc.)
 - What happens if the brick is destroyed while the ball is inside the brick's collider?
@@ -111,7 +111,7 @@ The brick correctly loads with all required components.
 - **FR-002**: System MUST detect collision events between the paddle entity and paddle-destroyable brick entities
 - **FR-003**: System MUST immediately despawn paddle-destroyable brick entities upon paddle collision
 - **FR-004**: System MUST award exactly 250 points when a paddle-destroyable brick is destroyed by paddle contact
-- **FR-005**: System MUST reflect the ball's velocity according to physics when the ball collides with a paddle-destroyable brick (ball bounces off)
+- **FR-005**: System MUST reflect the ball's velocity according to physics when the ball collides with a paddle-destroyable brick (ball bounces off) - see AS 2.1 for measurable criterion (angle of incidence = angle of reflection)
 - **FR-006**: System MUST NOT despawn paddle-destroyable brick entities when the ball collides with them
 - **FR-007**: System MUST NOT award any points when the ball collides with a paddle-destroyable brick
 - **FR-008**: System MUST mark paddle-destroyable bricks with countsTowardsCompletion=true, requiring their destruction for level completion

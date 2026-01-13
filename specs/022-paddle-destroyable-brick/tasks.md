@@ -59,7 +59,7 @@
 - [ ] T007 [P] [US1] Acceptance test AS 1.2: Paddle contact awards exactly 250 points in tests/paddle_destroyable_brick.rs
 - [ ] T008 [P] [US1] Acceptance test AS 1.3: Level completion when all paddle-destroyable bricks destroyed in tests/paddle_destroyable_brick.rs
 - [ ] T009 [P] [US1] Acceptance test AS 1.4: Multi-frame persistence (10 frames) for score award in tests/paddle_destroyable_brick.rs
-- [ ] T010 [P] [US1] Acceptance test AS 1.5: Brick destruction uses Messages via MessageWriter (not observers) in tests/paddle_destroyable_brick.rs
+- [ ] T010 [P] [US1] Acceptance test AS 1.5: Brick destruction uses Messages via MessageWriter (not observers), verify BrickDestroyed message has destroyed_by=None for paddle destruction in tests/paddle_destroyable_brick.rs
 - [ ] T011 [P] [US1] Acceptance test AS 1.6: Hierarchy safety - despawn uses despawn_recursive() in tests/paddle_destroyable_brick.rs
 - [ ] T012 [US1] Commit failing tests with message "test(US1): add paddle destroys brick acceptance tests (red)" and record commit hash
 
@@ -154,7 +154,7 @@
 ### Implementation for User Story 3
 
 - [ ] T036 [US3] Create test level file assets/levels/test_paddle_destroyable.ron with 3 paddle-destroyable bricks (type 57)
-- [ ] T037 [US3] Verify level loader in src/level_loader.rs spawns type 57 bricks with `BrickTypeId(57)` component (no changes needed per research.md Q4)
+- [ ] T037 [US3] Run acceptance tests T031-T034 to verify level loader spawns type 57 bricks with `BrickTypeId(57)` component (no loader changes needed per research.md Q4)
 - [ ] T038 [US3] Verify level loader adds `CountsTowardsCompletion` component to type 57 bricks (should be automatic for all typed bricks - verify via test)
 - [ ] T039 [US3] Run all US3 acceptance tests to verify green (all 4 tests pass)
 - [ ] T040 [US3] Commit implementation with message "feat(US3): add level file support for paddle-destroyable brick (green)"
@@ -171,6 +171,8 @@
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 **Purpose**: Improvements that affect multiple user stories
+
+**Note**: Edge cases 4 (all bricks paddle-destroyable) and 5 (nested entities) are covered by US1 tests T008 and T011 respectively.
 
 - [ ] T041 [P] Add edge case test: Simultaneous paddle+ball contact (paddle takes precedence) in tests/paddle_destroyable_brick.rs
 - [ ] T042 [P] Add edge case test: Multiple paddle-destroyable bricks touched in one frame (each awards 250 points) in tests/paddle_destroyable_brick.rs
