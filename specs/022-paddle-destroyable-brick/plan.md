@@ -18,7 +18,7 @@ This inverts the normal brick-ball destruction mechanic by making the paddle the
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research.*
-                                                                                                                                                                                                                                                                                                           *Re-check after Phase 1 design.*
+                                                                                                                                                                                                                                                                                                                                                                                                               *Re-check after Phase 1 design.*
 
 ### Test-Driven Development (TDD) Compliance
 
