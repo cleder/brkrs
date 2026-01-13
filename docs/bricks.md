@@ -35,11 +35,11 @@ The `Index` column refers to the brick's identifier in the map file, the ✅️ 
 
 | Index | Image | Name | Score | Description |
 |-------|-------|------|-------|-------------|
-| 21 | ![Zero G](img/bricks/Stone00g.gif) | Zero Gravity | 125 | Turns off gravity |
-| 22 | ![5 G](img/bricks/Stone05g.gif) | 5G | 75 | Light gravity (like Mars) |
-| 23 | ![10 G](img/bricks/Stone10g.gif) | 10G | 125 | Normal gravity (Earth) |
-| 24 | ![20 G](img/bricks/Stone20g.gif) | 20G | 150 | High gravity |
-| 25 | ![Queer G](img/bricks/Stone22g.gif) | Queer Gravity | 250 | Random changing gravity in intensity and direction |
+| 21 ✅️ | ![Zero G](img/bricks/Stone00g.gif) | Zero Gravity | 125 | Turns off gravity |
+| 22 ✅️ | ![2 G](img/bricks/Stone05g.gif) | 2G | 75 | Light gravity (like Mars) |
+| 23 ✅️ | ![10 G](img/bricks/Stone10g.gif) | 10G | 125 | Normal gravity (Earth) |
+| 24 ✅️ | ![20 G](img/bricks/Stone20g.gif) | 20G | 150 | High gravity |
+| 25 ✅️ | ![Queer G](img/bricks/Stone22g.gif) | Queer Gravity | 250 | Random changing gravity in intensity and direction |
 
 ### Score Multiplier Bricks
 
@@ -85,7 +85,7 @@ The `Index` column refers to the brick's identifier in the map file, the ✅️ 
 | Index | Image | Name | Score | Description |
 |-------|-------|------|-------|-------------|
 | 40 | ![Bomb](img/bricks/Stonebomb.gif) | Bomb | 100 | Explodes, spawns fragments, if the paddle is in the 'blast radius' the player "dies" |
-| 42 | ![Killer](img/bricks/Stonekill.gif) | Killer | 90 | **Deadly** - Touching with paddle kills you |
+| 42 ✅️ | ![Killer](img/bricks/Stonekill.gif) | Killer | 90 | **Deadly** - Touching with paddle kills you |
 
 ### Direction Bricks
 
@@ -121,7 +121,7 @@ The `Index` column refers to the brick's identifier in the map file, the ✅️ 
 
 | Index | Image | Name | Score | Description |
 |-------|-------|------|-------|-------------|
-| 57 | ![Bat](img/bricks/Stonebat.gif) | Bat | 250 (paddle) | Cannot be destroyed by ball, only by paddle |
+| 57 ✅️ | ![Bat](img/bricks/Stonebat.gif) | Bat | 250 (paddle) | Cannot be destroyed by ball, only by paddle |
 
 ### Solid/Indestructible Bricks (Index 90-97)
 
@@ -130,7 +130,7 @@ These bricks cannot be destroyed and don't count toward level completion.
 | Index | Image | Name | Description |
 |-------|-------|------|-------------|
 | 90 ✅️ | ![Solid](img/bricks/Stonesolid.gif) | Solid | Indestructible, ball bounces off |
-| 91 | | Solid Die | **Deadly** - Kills paddle on contact |
+| 91 ✅️ | | Solid Die | **Deadly** - Kills paddle on contact |
 | 92 | | Solid Down | Solid + accelerates ball downward on bottom hit |
 | 93 | | Solid Left | Solid + accelerates ball leftward |
 | 94 | | Solid Right | Solid + accelerates ball rightward |
