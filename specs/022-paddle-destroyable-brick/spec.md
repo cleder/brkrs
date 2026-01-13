@@ -5,6 +5,14 @@ This brick will be destroyed on contact with the paddle, the ball bounces off th
 On destruction 250 points are awarded, the ball cannot destroy the brick, no points are awarded when the ball hits the brick.
 The brick (countsTowardsCompletion), this brick contributes to level completion - all bricks of this type must be destroyed"
 
+## Clarifications
+
+### Session 2026-01-13
+
+- Q: What is the maximum number of paddle-destroyable bricks allowed in a single level? → A: No hard limit - as many as level designer places
+- Q: Should paddle-brick collision events be logged for debugging purposes? → A: Include collision event logging at DEBUG level
+- Q: What should happen if a paddle-destroyable brick spawns overlapping the paddle at level start? → A: Brick immediately destroyed on first frame, 250 points awarded
+
 ## User Scenarios & Testing *(mandatory)*
 
 **TDD REQUIREMENT**: For every user story, **tests must be written first** and included in this spec as testable acceptance scenarios.
@@ -92,6 +100,8 @@ The brick correctly loads with all required components.
   Level completion requires the player to move the paddle to touch all bricks (ball alone cannot complete the level)
 - What happens when a paddle-destroyable brick is part of a compound/nested entity structure?
   The entire brick entity (and any children) must be despawned using `despawn_recursive()`
+- What happens if a paddle-destroyable brick spawns overlapping the paddle at level start?
+  The brick is immediately destroyed on the first frame after level load, and 250 points are awarded
 
 ## Requirements *(mandatory)*
 
@@ -110,6 +120,7 @@ The brick correctly loads with all required components.
 - **FR-011**: System MUST persist the brick's destruction state (once destroyed, it cannot respawn) across all frames until level completion or restart
 - **FR-012**: System MUST use the Message system (via `MessageWriter`) for brick destruction events to maintain consistency with existing brick destruction patterns
 - **FR-013**: System MUST ensure paddle-destroyable bricks can be configured in level RON files with the same structure as other brick types (position, rotation, material)
+- **FR-014**: System MUST log paddle-brick collision events at DEBUG level using the tracing framework for troubleshooting and development purposes
 
 ### Key Entities
 
@@ -144,6 +155,7 @@ The brick correctly loads with all required components.
 - The completion tracking system monitors brick destruction events via Messages and updates countsTowardsCompletion totals
 - Hierarchy safety is required (use of `despawn_recursive()`) based on existing brick destruction patterns
 - Message system (not observers) is used for brick destruction to maintain consistency with existing architecture
+- No hard limit on number of paddle-destroyable bricks per level - level designers can place as many as needed without validation constraints
 
 ## Technical Context
 
