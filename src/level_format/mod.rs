@@ -53,6 +53,16 @@ pub fn is_multi_hit_brick(type_id: u8) -> bool {
     (MULTI_HIT_BRICK_1..=MULTI_HIT_BRICK_4).contains(&type_id)
 }
 
+/// Returns true if the brick type is paddle-destroyable (type 57).
+///
+/// Paddle-destroyable bricks are destroyed only by paddle contact,
+/// not by ball collisions. The ball bounces off these bricks without
+/// destroying them.
+#[inline]
+pub fn is_paddle_destroyable_brick(type_id: u8) -> bool {
+    type_id == 57
+}
+
 /// Metrics collected during matrix normalization.
 ///
 /// These metrics indicate how the input matrix was adjusted to fit

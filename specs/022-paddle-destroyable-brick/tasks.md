@@ -1,11 +1,13 @@
 # Tasks: Paddle-Destroyable Brick (Type 57)
 
-**Input**: Design documents from `/specs/022-paddle-destroyable-brick/`
-**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/events.md, quickstart.md
+**Input**: Design documents from `/specs/022-paddle-destroyable-brick/` **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/events.md, quickstart.md
 
-**Tests**: Tests are MANDATORY for all user stories. Each story MUST include integration tests. Tests MUST be written and committed first, verified to FAIL (red), and then approved before implementation begins; record the test-proof commit hash in the task description.
+**Tests**: Tests are MANDATORY for all user stories.
+Each story MUST include integration tests.
+Tests MUST be written and committed first, verified to FAIL (red), and then approved before implementation begins; record the test-proof commit hash in the task description.
 
 **Bevy 0.17 compliance**: Tasks include explicit acceptance criteria to ensure compliance with the constitution's Bevy 0.17 mandates & prohibitions:
+
 - No panicking queries (use fallible patterns with early returns)
 - Filtered queries (`With`/`Without` for marker components)
 - Messages (via `MessageWriter`) for brick destruction (NOT observers)
@@ -26,8 +28,8 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Verify existing project structure matches plan.md requirements (src/, tests/, assets/levels/)
-- [ ] T002 Verify Rust 1.81 (edition 2021) with Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1 dependencies in Cargo.toml
+- [X] T001 Verify existing project structure matches plan.md requirements (src/, tests/, assets/levels/)
+- [X] T002 Verify Rust 1.81 (edition 2021) with Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1 dependencies in Cargo.toml
 
 ---
 
@@ -37,8 +39,8 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 Add `is_paddle_destroyable_brick(brick_type: u8) -> bool` helper function in src/lib.rs (returns true for type 57)
-- [ ] T004 Verify `brick_points(57, _) -> 250` mapping exists in src/systems/scoring.rs (already implemented per research.md Q2)
+- [X] T003 Add `is_paddle_destroyable_brick(brick_type: u8) -> bool` helper function in src/lib.rs (returns true for type 57)
+- [X] T004 Verify `brick_points(57, _) -> 250` mapping exists in src/systems/scoring.rs (already implemented per research.md Q2)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -53,17 +55,19 @@
 ### Tests for User Story 1 (REQUIRED) ⚠️
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation; include failing-test commit hash in task**
+> **COMPLETED**: Commit 6ecb938 - test(US1,US2,US3): add paddle-destroyable brick acceptance tests (red)
 
-- [ ] T005 [P] [US1] Create integration test file tests/paddle_destroyable_brick.rs with test module structure
-- [ ] T006 [P] [US1] Acceptance test AS 1.1: Paddle collision despawns brick within 1 frame in tests/paddle_destroyable_brick.rs
-- [ ] T007 [P] [US1] Acceptance test AS 1.2: Paddle contact awards exactly 250 points in tests/paddle_destroyable_brick.rs
-- [ ] T008 [P] [US1] Acceptance test AS 1.3: Level completion when all paddle-destroyable bricks destroyed in tests/paddle_destroyable_brick.rs
-- [ ] T009 [P] [US1] Acceptance test AS 1.4: Multi-frame persistence (10 frames) for score award in tests/paddle_destroyable_brick.rs
-- [ ] T010 [P] [US1] Acceptance test AS 1.5: Brick destruction uses Messages via MessageWriter (not observers), verify BrickDestroyed message has destroyed_by=None for paddle destruction in tests/paddle_destroyable_brick.rs
-- [ ] T011 [P] [US1] Acceptance test AS 1.6: Hierarchy safety - despawn uses despawn_recursive() in tests/paddle_destroyable_brick.rs
-- [ ] T012 [US1] Commit failing tests with message "test(US1): add paddle destroys brick acceptance tests (red)" and record commit hash
+- [X] T005 [P] [US1] Create integration test file tests/paddle_destroyable_brick.rs with test module structure
+- [X] T006 [P] [US1] Acceptance test AS 1.1: Paddle collision despawns brick within 1 frame in tests/paddle_destroyable_brick.rs
+- [X] T007 [P] [US1] Acceptance test AS 1.2: Paddle contact awards exactly 250 points in tests/paddle_destroyable_brick.rs
+- [X] T008 [P] [US1] Acceptance test AS 1.3: Level completion when all paddle-destroyable bricks destroyed in tests/paddle_destroyable_brick.rs
+- [X] T009 [P] [US1] Acceptance test AS 1.4: Multi-frame persistence (10 frames) for score award in tests/paddle_destroyable_brick.rs
+- [X] T010 [P] [US1] Acceptance test AS 1.5: Brick destruction uses Messages via MessageWriter (not observers), verify BrickDestroyed message has destroyed_by=None for paddle destruction in tests/paddle_destroyable_brick.rs
+- [X] T011 [P] [US1] Acceptance test AS 1.6: Hierarchy safety - despawn uses despawn_recursive() in tests/paddle_destroyable_brick.rs
+- [X] T012 [US1] Commit failing tests with message "test(US1): add paddle destroys brick acceptance tests (red)" and record commit hash
 
 **Bevy 0.17 Acceptance Criteria for Tests**:
+
 - Test MUST verify no panicking queries (system continues if brick missing)
 - Test MUST verify `MessageWriter<BrickDestroyed>` used (not observers)
 - Test MUST verify `despawn_recursive()` used (check via hierarchy test)
@@ -71,15 +75,16 @@
 
 ### Implementation for User Story 1
 
-- [ ] T013 [US1] Extend `read_character_controller_collisions` system in src/lib.rs to detect paddle-brick type 57 collisions (add `brick_types: Query<&BrickTypeId, With<Brick>>` parameter)
-- [ ] T014 [US1] Add type 57 check in paddle collision handler: if `brick_type.0 == 57`, insert `MarkedForDespawn` component in src/lib.rs
-- [ ] T015 [US1] Add DEBUG logging for paddle-brick type 57 collisions using `debug!(target: "paddle_destroyable", ...)` in src/lib.rs
-- [ ] T016 [US1] Verify `despawn_marked_entities` system emits `BrickDestroyed` message with `brick_type=57`, `destroyed_by=None` (no changes needed per data-model.md)
-- [ ] T017 [US1] Verify `award_points_system` awards 250 points for `brick_type=57` via existing `brick_points()` function (no changes needed per research.md Q2)
-- [ ] T018 [US1] Run all US1 acceptance tests to verify green (all 6 tests pass)
-- [ ] T019 [US1] Commit implementation with message "feat(US1): implement paddle destroys brick type 57 (green)"
+- [X] T013 [US1] Extend `read_character_controller_collisions` system in src/lib.rs to detect paddle-brick type 57 collisions (add `brick_types: Query<&BrickTypeId, With<Brick>>` parameter)
+- [X] T014 [US1] Add type 57 check in paddle collision handler: if `brick_type.0 == 57`, insert `MarkedForDespawn` component in src/lib.rs
+- [X] T015 [US1] Add DEBUG logging for paddle-brick type 57 collisions using `debug!(target: "paddle_destroyable", ...)` in src/lib.rs
+- [X] T016 [US1] Verify `despawn_marked_entities` system emits `BrickDestroyed` message with `brick_type=57`, `destroyed_by=None` (no changes needed per data-model.md)
+- [X] T017 [US1] Verify `award_points_system` awards 250 points for `brick_type=57` via existing `brick_points()` function (no changes needed per research.md Q2)
+- [X] T018 [US1] Run all US1 acceptance tests to verify green (all 6 tests pass)
+- [X] T019 [US1] Commit implementation with message "feat(US1): implement paddle destroys brick type 57 (green)"
 
 **Bevy 0.17 Implementation Requirements**:
+
 - MUST use fallible query patterns: `if let Ok(brick_type) = brick_types.get(brick) { ... }`
 - MUST use `With<Brick>` filter in brick_types query
 - MUST NOT use `.unwrap()` on query results
@@ -99,32 +104,35 @@
 ### Tests for User Story 2 (REQUIRED) ⚠️
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation; include failing-test commit hash in task**
+> **COMPLETED**: Commit 6ecb938 - test(US1,US2,US3): add paddle-destroyable brick acceptance tests (red)
 
-- [ ] T020 [P] [US2] Acceptance test AS 2.1: Ball reflects at correct angle (physics-based) in tests/paddle_destroyable_brick.rs
-- [ ] T021 [P] [US2] Acceptance test AS 2.2: Brick entity NOT despawned after ball collision in tests/paddle_destroyable_brick.rs
-- [ ] T022 [P] [US2] Acceptance test AS 2.3: Zero points awarded on ball-brick collision in tests/paddle_destroyable_brick.rs
-- [ ] T023 [P] [US2] Acceptance test AS 2.4: Multi-frame persistence (10 frames) - brick exists after ball collision in tests/paddle_destroyable_brick.rs
-- [ ] T024 [P] [US2] Acceptance test AS 2.5: Ball collision uses bevy_rapier3d contact events (not custom observers) in tests/paddle_destroyable_brick.rs
-- [ ] T025 [US2] Commit failing tests with message "test(US2): add ball bounces off brick acceptance tests (red)" and record commit hash
+- [X] T020 [P] [US2] Acceptance test AS 2.1: Ball reflects at correct angle (physics-based) in tests/paddle_destroyable_brick.rs
+- [X] T021 [P] [US2] Acceptance test AS 2.2: Brick entity NOT despawned after ball collision in tests/paddle_destroyable_brick.rs
+- [X] T022 [P] [US2] Acceptance test AS 2.3: Zero points awarded on ball-brick collision in tests/paddle_destroyable_brick.rs
+- [X] T023 [P] [US2] Acceptance test AS 2.4: Multi-frame persistence (10 frames) - brick exists after ball collision in tests/paddle_destroyable_brick.rs
+- [X] T024 [P] [US2] Acceptance test AS 2.5: Ball collision uses bevy_rapier3d contact events (not custom observers) in tests/paddle_destroyable_brick.rs
+- [X] T025 [US2] Commit failing tests with message "test(US2): add ball bounces off brick acceptance tests (red)" and record commit hash
 
 **Bevy 0.17 Acceptance Criteria for Tests**:
+
 - Test MUST verify brick entity exists after 10 `app.update()` cycles (multi-frame persistence)
 - Test MUST verify no `BrickDestroyed` message emitted for type 57 ball collisions
 - Test MUST verify bevy_rapier3d `CollisionEvent` handling (existing system, no observers)
 
 ### Implementation for User Story 2
 
-- [ ] T026 [US2] Add `is_paddle_destroyable_brick()` guard in `handle_collision_events` ball-brick collision handler in src/lib.rs
-- [ ] T027 [US2] Add early return (`continue`) if `is_paddle_destroyable_brick(current_type) == true` to skip destruction logic in src/lib.rs
-- [ ] T028 [US2] Verify ball physics reflection handled automatically by bevy_rapier3d collider (no code changes - verify via test)
-- [ ] T029 [US2] Run all US2 acceptance tests to verify green (all 5 tests pass)
-- [ ] T030 [US2] Commit implementation with message "feat(US2): ball bounces off paddle-destroyable brick (green)"
+- [X] T026 [US2] Add `is_paddle_destroyable_brick()` guard in `handle_collision_events` ball-brick collision handler in src/lib.rs
+- [X] T027 [US2] Add early return (`continue`) if `is_paddle_destroyable_brick(current_type) == true` to skip destruction logic in src/lib.rs
+- [X] T028 [US2] Add DEBUG logging for ball-brick type 57 collisions using `debug!(target: "paddle_destroyable", ...)` in src/lib.rs
+- [X] T029 [US2] Run all US2 acceptance tests to verify green (all 5 tests pass)
+- [X] T030 [US2] Commit implementation with message "feat(US2): implement ball bounces off paddle-destroyable brick (green)"
 
 **Bevy 0.17 Implementation Requirements**:
-- MUST use `is_paddle_destroyable_brick(current_type)` check before processing ball-brick collision
-- MUST NOT mark brick with `MarkedForDespawn` for type 57 ball collisions
-- MUST rely on bevy_rapier3d automatic collision response (no custom physics code)
-- Ball bounce behavior verification via test only (no implementation code needed)
+
+- MUST use early-return/continue pattern: `if is_paddle_destroyable_brick(current_type) { continue; }`
+- MUST NOT apply `MarkedForDespawn` component for type 57
+- MUST NOT emit `BrickDestroyed` message for type 57 (guard prevents it)
+- MUST log with `debug!(target: "paddle_destroyable", ...)`
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work - paddle destroys brick, ball bounces off brick
 
@@ -139,27 +147,38 @@
 ### Tests for User Story 3 (REQUIRED) ⚠️
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation; include failing-test commit hash in task**
+> **COMPLETED**: Commit 6ecb938 - test(US1,US2,US3): add paddle-destroyable brick acceptance tests (red)
 
-- [ ] T031 [P] [US3] Acceptance test AS 3.1: RON file with `{ brick_type: 57 }` spawns paddle-destroyable brick in tests/paddle_destroyable_brick.rs
-- [ ] T032 [P] [US3] Acceptance test AS 3.2: Spawned brick has all required components (Transform, BrickTypeId(57), Collider, CountsTowardsCompletion) in tests/paddle_destroyable_brick.rs
-- [ ] T033 [P] [US3] Acceptance test AS 3.3: Level with 3 type 57 bricks spawns exactly 3 entities in tests/paddle_destroyable_brick.rs
-- [ ] T034 [P] [US3] Acceptance test AS 3.4: Multi-frame persistence (10 frames) - spawned bricks maintain properties in tests/paddle_destroyable_brick.rs
-- [ ] T035 [US3] Commit failing tests with message "test(US3): add level file configuration acceptance tests (red)" and record commit hash
+- [X] T031 [P] [US3] Acceptance test AS 3.1: RON file with `{ brick_type: 57 }` spawns paddle-destroyable brick in tests/paddle_destroyable_brick.rs
+- [X] T032 [P] [US3] Acceptance test AS 3.2: Spawned brick has all required components (Transform, BrickTypeId(57), Collider, CountsTowardsCompletion) in tests/paddle_destroyable_brick.rs
+- [X] T033 [P] [US3] Acceptance test AS 3.3: Level with 3 type 57 bricks spawns exactly 3 entities in tests/paddle_destroyable_brick.rs
+- [X] T034 [P] [US3] Acceptance test AS 3.4: Multi-frame persistence (10 frames) - spawned bricks maintain properties in tests/paddle_destroyable_brick.rs
+- [X] T035 [US3] Commit failing tests with message "test(US3): add level file configuration acceptance tests (red)" and record commit hash
 
 **Bevy 0.17 Acceptance Criteria for Tests**:
+
 - Test MUST verify `CountsTowardsCompletion` component present on spawned bricks
 - Test MUST use fallible queries to get components (`if let Ok(components) = query.get(entity) { ... }`)
 - Test MUST verify brick properties persist across 10 `app.update()` cycles
 
 ### Implementation for User Story 3
 
-- [ ] T036 [US3] Create test level file assets/levels/test_paddle_destroyable.ron with 3 paddle-destroyable bricks (type 57)
-- [ ] T037 [US3] Run acceptance tests T031-T034 to verify level loader spawns type 57 bricks with `BrickTypeId(57)` component (no loader changes needed per research.md Q4)
-- [ ] T038 [US3] Verify level loader adds `CountsTowardsCompletion` component to type 57 bricks (should be automatic for all typed bricks - verify via test)
-- [ ] T039 [US3] Run all US3 acceptance tests to verify green (all 4 tests pass)
-- [ ] T040 [US3] Commit implementation with message "feat(US3): add level file support for paddle-destroyable brick (green)"
+- [X] T036 [US3] Create test level file assets/levels/test_paddle_destroyable.ron with 3 paddle-destroyable bricks (type 57)
+- [X] T037 [US3] Run acceptance tests T031-T034 to verify level loader spawns type 57 bricks with `BrickTypeId(57)` component (no loader changes needed per research.md Q4)
+- [X] T038 [US3] Verify level loader adds `CountsTowardsCompletion` component to type 57 bricks (should be automatic for all typed bricks - verify via test)
+- [X] T039 [US3] Run all US3 acceptance tests to verify green (all 4 tests pass)
+- [X] T040 [US3] Commit implementation with message "feat(US3): add level file support for paddle-destroyable brick (green)"
 
 **Bevy 0.17 Implementation Requirements**:
+
+- Level loader MUST spawn type 57 bricks with same component pattern as other brick types
+- Level loader MUST add `CountsTowardsCompletion` marker component
+- No special handling needed (type 57 follows existing brick spawn pattern per data-model.md)
+
+**Checkpoint**: All user stories should now be independently functional - paddle destroys, ball bounces, level files work
+
+**Bevy 0.17 Implementation Requirements**:
+
 - Level loader MUST spawn type 57 bricks with same component pattern as other brick types
 - Level loader MUST add `CountsTowardsCompletion` marker component
 - No special handling needed (type 57 follows existing brick spawn pattern per data-model.md)

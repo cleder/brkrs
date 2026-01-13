@@ -1,0 +1,20 @@
+// Test level for paddle-destroyable brick (type 57)
+// Contains 3 type 57 bricks for integration testing
+(
+    name: "Paddle Destroyable Test",
+    description: "Test level containing paddle-destroyable bricks (type 57)",
+    width: 5,
+    height: 3,
+    bricks: [
+        // Top row: type 57 bricks
+        (x: 0, y: 0, brick_type: 57), // Left paddle-destroyable
+        (x: 2, y: 0, brick_type: 57), // Center paddle-destroyable
+        (x: 4, y: 0, brick_type: 57), // Right paddle-destroyable
+        
+        // Middle row: regular bricks for comparison
+        (x: 1, y: 1, brick_type: 20), // Regular stone brick
+        (x: 3, y: 1, brick_type: 20), // Regular stone brick
+        
+        // Bottom row: empty (reserved for paddle movement)
+    ],
+)
