@@ -33,6 +33,9 @@ pub const MULTI_HIT_BRICK_4: u8 = 13;
 /// This brick is destructible (durability 1) and plays a unique destruction sound.
 pub const EXTRA_LIFE_BRICK: u8 = 41;
 
+/// Paddle-destroyable brick index 57: destroyed by paddle contact only.
+pub const PADDLE_DESTROYABLE_BRICK: u8 = 57;
+
 /// Returns `true` if the given type ID represents a multi-hit brick (indices 10-13).
 ///
 /// Multi-hit bricks require multiple ball collisions to destroy. Each hit decrements
@@ -51,6 +54,16 @@ pub const EXTRA_LIFE_BRICK: u8 = 41;
 #[inline]
 pub fn is_multi_hit_brick(type_id: u8) -> bool {
     (MULTI_HIT_BRICK_1..=MULTI_HIT_BRICK_4).contains(&type_id)
+}
+
+/// Returns true if the brick type is paddle-destroyable (type 57).
+///
+/// Paddle-destroyable bricks are destroyed only by paddle contact,
+/// not by ball collisions. The ball bounces off these bricks without
+/// destroying them.
+#[inline]
+pub fn is_paddle_destroyable_brick(type_id: u8) -> bool {
+    type_id == PADDLE_DESTROYABLE_BRICK
 }
 
 /// Metrics collected during matrix normalization.

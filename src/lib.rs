@@ -759,6 +759,18 @@ pub fn mark_brick_on_ball_collision(
                     continue;
                 }
                 let current_type = brick_type_ro.0;
+
+                // Skip paddle-destroyable bricks (type 57) - they are only destroyed by paddle contact
+                if crate::level_format::is_paddle_destroyable_brick(current_type) {
+                    debug!(
+                        target: "paddle_destroyable",
+                        event = "ball_collision_skip",
+                        brick = ?entity,
+                        brick_type = crate::level_format::PADDLE_DESTROYABLE_BRICK,
+                    );
+                    continue;
+                }
+
                 // Prefer Transform over GlobalTransform over direct query
                 let brick_pos = if let Some(t) = t_opt {
                     t.translation
@@ -881,8 +893,36 @@ fn detect_ball_wall_collisions(
 
 /// Despawn entities marked for removal (runs after physics step).
 /// Emits BrickDestroyed messages for audio/scoring integration.
-fn despawn_marked_entities(
+/// Despawn entities marked with `MarkedForDespawn` component and emit `BrickDestroyed` messages.
+///
+/// This system is the primary despawn handler for all marked entities (bricks, balls, etc.).
+/// For brick entities, it emits a `BrickDestroyed` message with the brick type and destroyed_by field.
+///
+/// **Paddle-destroyable bricks (type 57):**
+/// - Emits `BrickDestroyed { brick_type: 57, destroyed_by: None }`
+/// - `destroyed_by: None` indicates paddle destruction (vs ball collision)
+/// - Scoring system uses brick_type to award 250 points
+///
+/// # System parameters
+///
+/// - `commands`: Entity commands for despawning
+/// - `to_despawn`: Query for entities with MarkedForDespawn component
+/// - `brick_types`: Query for brick type IDs
+/// - `brick_destroyed_msgs`: Message writer for BrickDestroyed events
+/// - `emitted`: Local resource to prevent duplicate message emissions
+///
+/// # Ordering
+///
+/// Must run after systems that mark entities for despawn (e.g., `read_character_controller_collisions`).
+/// Must run before scoring systems that consume `BrickDestroyed` messages.
+///
+/// # See also
+///
+/// - `read_character_controller_collisions`: Marks type 57 bricks for despawn on paddle collision
+/// - `award_points_system`: Consumes BrickDestroyed messages to award points
+pub fn despawn_marked_entities(
     marked: Query<(Entity, Option<&BrickTypeId>), With<MarkedForDespawn>>,
+    children: Query<&Children>,
     mut commands: Commands,
     mut brick_events: Option<MessageWriter<crate::signals::BrickDestroyed>>,
     mut emitted: Option<ResMut<EmittedBrickDestroyed>>,
@@ -898,8 +938,18 @@ fn despawn_marked_entities(
                 "Despawn",
             );
         }
-        commands.entity(entity).despawn();
+        despawn_with_children(entity, &children, &mut commands);
     }
+}
+
+fn despawn_with_children(entity: Entity, children: &Query<&Children>, commands: &mut Commands) {
+    if let Ok(child_links) = children.get(entity) {
+        #[allow(clippy::unnecessary_to_owned)]
+        for child in child_links.to_vec() {
+            despawn_with_children(child, children, commands);
+        }
+    }
+    commands.entity(entity).despawn();
 }
 
 /// Per-frame set of already-emitted BrickDestroyed entities to avoid duplicate messages.
@@ -965,10 +1015,41 @@ fn grab_mouse(
 }
 
 /* Read the character controller collisions stored in the character controller’s output. */
-fn read_character_controller_collisions(
+/// Handle paddle collision with other entities (walls, bricks, balls).
+///
+/// This system processes `KinematicCharacterControllerOutput` from the paddle entity to detect
+/// collisions with walls, bricks, and balls. For each collision type, it emits appropriate
+/// trigger events (WallHit, BrickHit, BallHit) for downstream systems to handle.
+///
+/// **Special handling for paddle-destroyable bricks (type 57):**
+/// - When paddle collides with brick type 57, immediately marks the brick with `MarkedForDespawn`
+/// - DEBUG-level logging emitted for debugging collision events
+/// - Brick destruction is processed by `despawn_marked_entities` system
+///
+/// # System parameters
+///
+/// - `paddle_outputs`: Query for kinematic controller output from paddle entity
+/// - `walls`: Query for border/wall entities
+/// - `bricks`: Query for brick entities
+/// - `brick_types`: Query for brick type IDs (used to identify type 57)
+/// - `balls`: Query for ball entities
+/// - `time`: Time resource for impulse calculations
+/// - `accumulated_mouse_motion`: Mouse motion accumulator (unused in collision logic)
+/// - `commands`: Entity commands for inserting MarkedForDespawn component
+///
+/// # Ordering
+///
+/// Must run before `despawn_marked_entities` to ensure brick despawn happens within same frame.
+///
+/// # See also
+///
+/// - `despawn_marked_entities`: Processes MarkedForDespawn and emits BrickDestroyed
+/// - `award_points_system`: Awards 250 points for type 57 brick destruction
+pub fn read_character_controller_collisions(
     paddle_outputs: Query<&KinematicCharacterControllerOutput, With<Paddle>>,
     walls: Query<Entity, With<Border>>,
     bricks: Query<Entity, With<Brick>>,
+    brick_types: Query<&BrickTypeId, With<Brick>>,
     balls: Query<Entity, With<Ball>>,
     time: Res<Time>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
@@ -993,6 +1074,18 @@ fn read_character_controller_collisions(
         // paddle collides with the bricks: emit BrickHit (separate from walls)
         for brick in bricks.iter() {
             if collision.entity == brick {
+                // Check if this is a paddle-destroyable brick (type 57)
+                if let Ok(brick_type) = brick_types.get(brick) {
+                    if brick_type.0 == crate::level_format::PADDLE_DESTROYABLE_BRICK {
+                        debug!(
+                            target: "paddle_destroyable",
+                            event = "paddle_collision_mark",
+                            brick = ?brick,
+                            brick_type = crate::level_format::PADDLE_DESTROYABLE_BRICK,
+                        );
+                        commands.entity(brick).insert(MarkedForDespawn);
+                    }
+                }
                 commands.trigger(BrickHit {
                     impulse: (collision.translation_applied + collision.translation_remaining)
                         / time.delta_secs(),

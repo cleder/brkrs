@@ -12,6 +12,8 @@ Auto-generated from all feature plans. Last updated: 2025-12-19
 - Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde/ron for level data, tracing (019-extra-ball-brick)
 - Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0 (physics), tracing 0.1 (021-gravity-bricks)
 - In-memory ECS state only (no persistent storage) (021-gravity-bricks)
+- Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0 for collision detection, tracing 0.1 for logging (022-paddle-destroyable-brick)
+- RON files in `assets/levels/` directory for level definitions (022-paddle-destroyable-brick)
 
 - Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde/ron, tracing (011-refactor-systems)
 
@@ -36,9 +38,9 @@ Rust 1.81 (edition 2021): Follow standard conventions
 - Include unit tests, integration/acceptance tests for user scenarios, and WASM-targeted tests when behavior differs on the web.
 - CI pipelines MUST enforce tests and reject merges that do not comply with the tests-first proof.
 ## Recent Changes
+- 022-paddle-destroyable-brick: Added Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0 for collision detection, tracing 0.1 for logging
 - 021-gravity-bricks: Added Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0 (physics), tracing 0.1
 - 019-extra-ball-brick: Added Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde/ron for level data, tracing
-- 018-merkaba-rotor-brick: Added Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1
 
 
 <!-- MANUAL ADDITIONS START -->
