@@ -860,6 +860,9 @@ pub fn set_spawn_points_only(def: &LevelDefinition, spawn_points: &mut SpawnPoin
 }
 
 /// Advance to the next level when all bricks have been cleared.
+///
+/// Only bricks with the `CountsTowardsCompletion` marker are counted.
+/// Type 91 (hazard) bricks are excluded from this marker and do not block level completion.
 fn advance_level_when_cleared(
     destructible_bricks: Query<Entity, (With<Brick>, With<crate::CountsTowardsCompletion>)>,
     bricks: Query<Entity, With<Brick>>,

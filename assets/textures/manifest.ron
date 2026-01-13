@@ -1263,6 +1263,13 @@
             animation: None,
         ),
         (
+            object_class: Brick,
+            type_id: 91,
+            profile_id: "brick/indestructible",
+            emissive_color: None,
+            animation: None,
+        ),
+        (
             object_class: Merkaba,
             type_id: 0,
             profile_id: "merkaba/blue",
