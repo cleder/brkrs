@@ -6,13 +6,13 @@
 //! - Multi-frame persistence (10 frames minimum)
 
 use bevy::{app::App, ecs::message::Messages, prelude::*, MinimalPlugins};
-use bevy_rapier3d::prelude::*;
+use bevy_rapier3d::{control::CharacterCollision, geometry::ShapeCastHit, prelude::*};
 
 use brkrs::{
-    level_format::is_paddle_destroyable_brick,
+    level_format::{is_paddle_destroyable_brick, PADDLE_DESTROYABLE_BRICK},
     signals::BrickDestroyed,
     systems::scoring::{MilestoneReached, ScoreState},
-    Ball, Brick, BrickTypeId, CountsTowardsCompletion, MarkedForDespawn,
+    Ball, Brick, BrickTypeId, CountsTowardsCompletion, MarkedForDespawn, Paddle,
 };
 
 fn test_app() -> App {
@@ -56,7 +56,7 @@ fn test_app() -> App {
 #[test]
 fn is_paddle_destroyable_brick_returns_true_for_type_57() {
     assert!(
-        is_paddle_destroyable_brick(57),
+        is_paddle_destroyable_brick(PADDLE_DESTROYABLE_BRICK),
         "Type 57 should be paddle-destroyable"
     );
 }
@@ -85,12 +85,22 @@ fn is_paddle_destroyable_brick_returns_false_for_other_types() {
 fn paddle_collision_destroys_type_57_brick() {
     let mut app = test_app();
 
+    // Spawn paddle with controller output to feed collisions into the system
+    let paddle = app
+        .world_mut()
+        .spawn((
+            Paddle,
+            KinematicCharacterController::default(),
+            KinematicCharacterControllerOutput::default(),
+        ))
+        .id();
+
     // Spawn type 57 brick
     let brick = app
         .world_mut()
         .spawn((
             Brick,
-            BrickTypeId(57),
+            BrickTypeId(PADDLE_DESTROYABLE_BRICK),
             CountsTowardsCompletion,
             Transform::from_xyz(0.0, -4.0, 0.0),
         ))
@@ -103,9 +113,20 @@ fn paddle_collision_destroys_type_57_brick() {
         "Initial score should be 0"
     );
 
-    // Simulate paddle collision by inserting MarkedForDespawn
-    // (this is what read_character_controller_collisions does for type 57)
-    app.world_mut().entity_mut(brick).insert(MarkedForDespawn);
+    // Simulate paddle collision by populating the controller output
+    let mut paddle_output = app
+        .world_mut()
+        .get_mut::<KinematicCharacterControllerOutput>(paddle)
+        .expect("paddle output component present");
+    paddle_output.collisions.push(CharacterCollision {
+        entity: brick,
+        character_translation: Vec3::ZERO,
+        character_rotation: Quat::IDENTITY,
+        translation_applied: Vec3::ZERO,
+        translation_remaining: Vec3::ZERO,
+        // ShapeCastHit lacks Default; zeroed is sufficient for stubbed collision data in this test.
+        hit: unsafe { std::mem::zeroed::<ShapeCastHit>() },
+    });
 
     // Run update loop for multi-frame persistence (10 frames minimum)
     for _ in 0..10 {
@@ -149,7 +170,7 @@ fn ball_collision_does_not_destroy_type_57_brick() {
         .world_mut()
         .spawn((
             Brick,
-            BrickTypeId(57),
+            BrickTypeId(PADDLE_DESTROYABLE_BRICK),
             CountsTowardsCompletion,
             Transform::from_xyz(0.0, 4.0, 0.0),
         ))
@@ -203,7 +224,7 @@ fn ball_collision_no_brick_destroyed_message() {
         .world_mut()
         .spawn((
             Brick,
-            BrickTypeId(57),
+            BrickTypeId(PADDLE_DESTROYABLE_BRICK),
             CountsTowardsCompletion,
             Transform::from_xyz(0.0, 4.0, 0.0),
         ))

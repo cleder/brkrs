@@ -764,8 +764,9 @@ pub fn mark_brick_on_ball_collision(
                 if crate::level_format::is_paddle_destroyable_brick(current_type) {
                     debug!(
                         target: "paddle_destroyable",
-                        "Ball-brick type 57 collision: ball bounces, no destruction. brick={:?}",
-                        entity
+                        event = "ball_collision_skip",
+                        brick = ?entity,
+                        brick_type = crate::level_format::PADDLE_DESTROYABLE_BRICK,
                     );
                     continue;
                 }
@@ -921,6 +922,7 @@ fn detect_ball_wall_collisions(
 /// - `award_points_system`: Consumes BrickDestroyed messages to award points
 pub fn despawn_marked_entities(
     marked: Query<(Entity, Option<&BrickTypeId>), With<MarkedForDespawn>>,
+    children: Query<&Children>,
     mut commands: Commands,
     mut brick_events: Option<MessageWriter<crate::signals::BrickDestroyed>>,
     mut emitted: Option<ResMut<EmittedBrickDestroyed>>,
@@ -936,8 +938,18 @@ pub fn despawn_marked_entities(
                 "Despawn",
             );
         }
-        commands.entity(entity).despawn();
+        despawn_with_children(entity, &children, &mut commands);
     }
+}
+
+fn despawn_with_children(entity: Entity, children: &Query<&Children>, commands: &mut Commands) {
+    if let Ok(child_links) = children.get(entity) {
+        #[allow(clippy::unnecessary_to_owned)]
+        for child in child_links.to_vec() {
+            despawn_with_children(child, children, commands);
+        }
+    }
+    commands.entity(entity).despawn();
 }
 
 /// Per-frame set of already-emitted BrickDestroyed entities to avoid duplicate messages.
@@ -1064,11 +1076,12 @@ pub fn read_character_controller_collisions(
             if collision.entity == brick {
                 // Check if this is a paddle-destroyable brick (type 57)
                 if let Ok(brick_type) = brick_types.get(brick) {
-                    if brick_type.0 == 57 {
+                    if brick_type.0 == crate::level_format::PADDLE_DESTROYABLE_BRICK {
                         debug!(
                             target: "paddle_destroyable",
-                            "Paddle-brick type 57 collision detected: brick={:?}",
-                            brick
+                            event = "paddle_collision_mark",
+                            brick = ?brick,
+                            brick_type = crate::level_format::PADDLE_DESTROYABLE_BRICK,
                         );
                         commands.entity(brick).insert(MarkedForDespawn);
                     }
