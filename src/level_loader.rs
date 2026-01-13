@@ -1,4 +1,4 @@
-use crate::level_format::{normalize_matrix_simple, INDESTRUCTIBLE_BRICK};
+use crate::level_format::{normalize_matrix_simple, HAZARD_BRICK_91, INDESTRUCTIBLE_BRICK};
 use crate::systems::level_switch::{LevelSwitchRequested, LevelSwitchState};
 use crate::systems::merkaba::Merkaba;
 use crate::systems::respawn::{RespawnEntityKind, RespawnHandle, SpawnPoints, SpawnTransform};
@@ -641,7 +641,9 @@ fn spawn_level_entities_impl(
                         CollidingEntities::default(),
                         ActiveEvents::COLLISION_EVENTS,
                     ));
-                    if brick_type_id != INDESTRUCTIBLE_BRICK {
+                    // Only destructible bricks contribute to level completion.
+                    // Type 91 (hazard) bricks do not count toward completion.
+                    if brick_type_id != INDESTRUCTIBLE_BRICK && brick_type_id != HAZARD_BRICK_91 {
                         entity.insert(CountsTowardsCompletion);
                     }
 

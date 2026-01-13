@@ -36,6 +36,10 @@ pub const EXTRA_LIFE_BRICK: u8 = 41;
 /// Paddle-destroyable brick index 57: destroyed by paddle contact only.
 pub const PADDLE_DESTROYABLE_BRICK: u8 = 57;
 
+/// Brick type 91: indestructible hazard that causes life loss on paddle collision.
+/// Ball collisions have no effect (no destruction, no points).
+pub const HAZARD_BRICK_91: u8 = 91;
+
 /// Returns `true` if the given type ID represents a multi-hit brick (indices 10-13).
 ///
 /// Multi-hit bricks require multiple ball collisions to destroy. Each hit decrements
@@ -64,6 +68,53 @@ pub fn is_multi_hit_brick(type_id: u8) -> bool {
 #[inline]
 pub fn is_paddle_destroyable_brick(type_id: u8) -> bool {
     type_id == PADDLE_DESTROYABLE_BRICK
+}
+
+/// Returns `true` if the given type ID represents a hazard brick (types 42 or 91).
+///
+/// Hazard bricks cause life loss when the paddle makes contact with them.
+/// - Type 42: Destructible by ball, awards 90 points, hazardous to paddle.
+/// - Type 91: Indestructible by ball, awards 0 points, hazardous to paddle.
+///
+/// # Examples
+///
+/// ```no_run
+/// use brkrs::level_format::is_hazard_brick;
+///
+/// assert!(is_hazard_brick(42));  // Type 42 brick
+/// assert!(is_hazard_brick(91));  // Type 91 brick
+/// assert!(!is_hazard_brick(20)); // Simple stone
+/// assert!(!is_hazard_brick(90)); // Indestructible non-hazard
+/// ```
+#[inline]
+pub fn is_hazard_brick(type_id: u8) -> bool {
+    type_id == 42 || type_id == HAZARD_BRICK_91
+}
+
+#[cfg(test)]
+mod hazard_tests {
+    use super::*;
+
+    #[test]
+    fn test_is_hazard_brick() {
+        assert!(is_hazard_brick(42), "Type 42 should be a hazard brick");
+        assert!(
+            is_hazard_brick(91),
+            "Type 91 (HAZARD_BRICK_91) should be a hazard brick"
+        );
+        assert!(
+            !is_hazard_brick(20),
+            "Type 20 (simple brick) should not be a hazard brick"
+        );
+        assert!(
+            !is_hazard_brick(90),
+            "Type 90 (indestructible) should not be a hazard brick"
+        );
+        assert!(
+            !is_hazard_brick(10),
+            "Type 10 (multi-hit) should not be a hazard brick"
+        );
+    }
 }
 
 /// Metrics collected during matrix normalization.
