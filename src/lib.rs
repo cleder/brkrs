@@ -772,6 +772,15 @@ pub fn mark_brick_on_ball_collision(
                     continue;
                 }
 
+                // Skip hazard brick type 91 - indestructible by ball collision
+                if current_type == crate::level_format::HAZARD_BRICK_91 {
+                    debug!(
+                        "Ball-hazard brick collision: brick {} is indestructible type 91, skipping destruction",
+                        entity
+                    );
+                    continue;
+                }
+
                 // Prefer Transform over GlobalTransform over direct query
                 let brick_pos = if let Some(t) = t_opt {
                     t.translation
