@@ -49,6 +49,21 @@ pub fn apply_life_awards(
     }
 }
 
+/// Clears the per-frame paddle-hazard collision flag at the start of each Update cycle.
+///
+/// This system must run early in the Update schedule (before paddle collision detection)
+/// to reset the flag that tracks whether a life has been lost to paddle-hazard collision
+/// during the current frame. This ensures that multiple hazard contacts in the same frame
+/// result in exactly one life loss.
+///
+/// # System Scheduling
+///
+/// Must run in the Update schedule before `read_character_controller_collisions`.
+/// Uses `Local<bool>` for per-system-instance state, automatically reset per invocation.
+pub fn clear_life_loss_frame_flag(mut frame_loss_flag: Local<bool>) {
+    *frame_loss_flag = false;
+}
+
 /// Shared lives resource maintained by the lives system.
 #[derive(Resource, Debug, Clone, Copy)]
 pub struct LivesState {
@@ -212,6 +227,7 @@ pub struct LifeLostEvent {
 pub enum LifeLossCause {
     LowerGoal,
     MerkabaCollision,
+    PaddleHazard,
 }
 
 #[allow(dead_code)]
