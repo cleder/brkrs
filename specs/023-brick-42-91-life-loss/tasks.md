@@ -1,6 +1,6 @@
 # Implementation Tasks: Brick Types 42 & 91 — Paddle Life Loss
 
-**Feature**: 023-brick-42-91-life-loss **Created**: 2026-01-13 **Status**: READY FOR IMPLEMENTATION **Total Tasks**: 24
+**Feature**: 023-brick-42-91-life-loss **Created**: 2026-01-13 **Status**: ✅ COMPLETE **Total Tasks**: 24
 
 ---
 
@@ -25,9 +25,9 @@ Each task is independently completable and includes:
 
 ### Tasks
 
-- [ ] T001 Add `HAZARD_BRICK_91` constant to [src/level_format/mod.rs](src/level_format/mod.rs) with value 91 and doc comment: "Brick type 91: indestructible hazard that causes life loss on paddle collision"
-- [ ] T002 [P] Add `is_hazard_brick(type_id: u8) -> bool` helper function in [src/level_format/mod.rs](src/level_format/mod.rs) returning `true` for types 42 and 91; include unit test verifying both return `true`
-- [ ] T003 Update level loader in [src/level_loader.rs](src/level_loader.rs) line ~120–150 to exclude type 91 from `CountsTowardsCompletion` marker insertion: replace `if brick_type_id != INDESTRUCTIBLE_BRICK { entity.insert(...); }` with `if brick_type_id != INDESTRUCTIBLE_BRICK && brick_type_id != HAZARD_BRICK_91 { entity.insert(...); }`
+- [X] T001 Add `HAZARD_BRICK_91` constant to [src/level_format/mod.rs](src/level_format/mod.rs) with value 91 and doc comment: "Brick type 91: indestructible hazard that causes life loss on paddle collision"
+- [X] T002 [P] Add `is_hazard_brick(type_id: u8) -> bool` helper function in [src/level_format/mod.rs](src/level_format/mod.rs) returning `true` for types 42 and 91; include unit test verifying both return `true`
+- [X] T003 Update level loader in [src/level_loader.rs](src/level_loader.rs) line ~120–150 to exclude type 91 from `CountsTowardsCompletion` marker insertion: replace `if brick_type_id != INDESTRUCTIBLE_BRICK { entity.insert(...); }` with `if brick_type_id != INDESTRUCTIBLE_BRICK && brick_type_id != HAZARD_BRICK_91 { entity.insert(...); }`
 
 ---
 
@@ -39,22 +39,22 @@ Each task is independently completable and includes:
 
 ### Tasks
 
-- [ ] T004 [P] [US2] Create frame-scoped life-loss tracking system by adding `clear_life_loss_frame_flag` system in [src/systems/respawn.rs](src/systems/respawn.rs) that:
-  - Adds parameter `mut frame_flag: Local<bool>`
-  - Resets `frame_flag` to `false` at start of each frame
-  - Runs in `Update` schedule before `read_character_controller_collisions` (verify schedule insertion point)
+- [X] T004 [P] [US2] Create frame-scoped life-loss tracking system by adding `clear_life_loss_frame_flag` system in [src/systems/respawn.rs](src/systems/respawn.rs) that:
+  - Adds `FrameLossState` Resource and parameter `mut frame_loss_state: ResMut<FrameLossState>` (uses Resource instead of Local for respawn safety)
+  - Resets `frame_loss_state.hazard_loss_emitted` to `false` at start of each frame
+  - Runs in `Update` schedule before `read_character_controller_collisions` (verified)
 
-- [ ] T005 [P] [US2] Extend paddle collision detection in [src/lib.rs](src/lib.rs) function `read_character_controller_collisions()` to:
+- [X] T005 [P] [US2] Extend paddle collision detection in [src/lib.rs](src/lib.rs) function `read_character_controller_collisions()` to:
   - Add `brick_types: Query<&BrickTypeId>` parameter
   - Add `mut life_lost_writer: MessageWriter<LifeLostEvent>` parameter
-  - Add `frame_loss_flag: Local<bool>` to track per-frame losses
+  - Add `mut frame_loss_state: ResMut<FrameLossState>` to track per-frame losses
   - When paddle collides with entity, query brick type and check `is_hazard_brick(type_id)`
   - If hazard and flag is `false`: emit `LifeLostEvent` with first ball entity found and set flag to `true`
   - If hazard and flag is `true`: skip emission (already sent this frame)
 
-- [ ] T006 [US2] Add `LifeLossCause::PaddleHazard` variant to enum in [src/systems/respawn.rs](src/systems/respawn.rs) (or document reuse of `LifeLossCause::LowerGoal` if extending not desired) and update `LifeLostEvent` handling to accept this cause without panicking
+- [X] T006 [US2] Add `LifeLossCause::PaddleHazard` variant to enum in [src/systems/respawn.rs](src/systems/respawn.rs) and update `LifeLostEvent` handling to accept this cause without panicking
 
-- [ ] T007 [P] [US2] Create integration test fixture in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs) named `test_paddle_brick_42_life_loss()` that:
+- [X] T007 [P] [US2] Create integration test fixture in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs) named `test_paddle_brick_42_life_loss()` that:
   - Spawns a test level with one type 42 brick, paddle, and ball
   - Simulates paddle-brick collision
   - Verifies exactly one `LifeLostEvent` message is emitted
@@ -70,18 +70,18 @@ Each task is independently completable and includes:
 
 ### Tasks
 
-- [ ] T008 [P] [US1] Extend ball-brick collision system in [src/lib.rs](src/lib.rs) function `mark_brick_on_ball_collision()` to:
+- [X] T008 [P] [US1] Extend ball-brick collision system in [src/lib.rs](src/lib.rs) function `mark_brick_on_ball_collision()` to:
   - Before marking brick for destruction, query brick type
   - If `is_hazard_brick(type_id) && type_id == HAZARD_BRICK_91`: skip marking (brick remains)
   - If `type_id == BRICK_TYPE_42` or other destructible: mark with `MarkedForDespawn` as normal
   - Verify `BrickDestroyed` message is emitted only for type 42
 
-- [ ] T009 [P] [US1] Verify scoring system in [src/systems/scoring.rs](src/systems/scoring.rs) correctly maps type 42 to 90 points:
+- [X] T009 [P] [US1] Verify scoring system in [src/systems/scoring.rs](src/systems/scoring.rs) correctly maps type 42 to 90 points:
   - Locate `brick_points()` function and confirm it returns 90 for `brick_type == 42`
   - Add comment: `// Type 42: Destructible, awards 90 points`
   - If not already present, no code change needed (existing behavior)
 
-- [ ] T010 [US1] Create integration test fixture in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs) named `test_ball_brick_42_destroyed_scores_90()` that:
+- [X] T010 [US1] Create integration test fixture in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs) named `test_ball_brick_42_destroyed_scores_90()` that:
   - Spawns a test level with one type 42 brick and ball
   - Simulates ball-brick collision
   - Verifies brick is removed from world (despawned)
@@ -98,26 +98,26 @@ Each task is independently completable and includes:
 
 ### Tasks
 
-- [ ] T011 [P] [US3] Create integration test fixture in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs) named `test_ball_brick_91_indestructible()` that:
+- [X] T011 [P] [US3] Create integration test fixture in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs) named `test_ball_brick_91_indestructible()` that:
   - Spawns a test level with one type 91 brick and ball
   - Simulates ball-brick collision
   - Verifies brick remains in world (not despawned)
   - Verifies score unchanged (0 points awarded)
   - Verifies NO `BrickDestroyed` message emitted
 
-- [ ] T012 [P] [US3] Create integration test fixture in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs) named `test_brick_42_contributes_to_completion()` that:
+- [X] T012 [P] [US3] Create integration test fixture in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs) named `test_brick_42_contributes_to_completion()` that:
   - Spawns a test level with 2 type 42 bricks and 1 type 91 brick
   - Simulates destruction of all type 42 bricks via ball collision
   - Verifies level completion is triggered (count of `CountsTowardsCompletion` entities reaches 0)
   - Verifies type 91 brick remains visible
 
-- [ ] T013 [US3] Verify level completion query in [src/level_loader.rs](src/level_loader.rs) line ~200–250:
+- [X] T013 [US3] Verify level completion query in [src/level_loader.rs](src/level_loader.rs) line ~200–250:
   - Locate completion check: query entities with `With<CountsTowardsCompletion>`
   - Confirm it only counts type 42 (which have marker) and NOT type 91 (which don't)
   - Add comment: `// Type 91 bricks excluded from completion (no CountsTowardsCompletion marker)`
   - If no changes needed, document existing behavior
 
-- [ ] T014 [P] [US3] Add texture/material support for type 91 in [assets/textures/manifest.ron](assets/textures/manifest.ron):
+- [X] T014 [P] [US3] Add texture/material support for type 91 in [assets/textures/manifest.ron](assets/textures/manifest.ron):
   - Add entry for brick type 91 with same material as type 90 (indestructible) or create distinct material
   - Include visual indicator (e.g., different color) that distinguishes from destructible bricks
   - Verify texture loads without errors: `cargo build`
@@ -150,7 +150,25 @@ Each task is independently completable and includes:
     - No double-scoring on single brick
   - **Acceptance**: Test passes; validates no scoring bugs with multiple bricks
 
-- [ ] T017 [P] [US2] Create test `test_paddle_brick_42_life_loss()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
+- [X] T015 [P] [US1] Create test `test_brick_42_ball_collision_awards_90_points()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
+  - **Setup**: Spawn world with brick type 42 and ball
+  - **Action**: Simulate ball-brick collision
+  - **Assert**:
+    - Brick is removed from world
+    - Score increased by exactly 90
+    - `BrickDestroyed` message emitted
+  - **Acceptance**: Test passes consistently on 10 runs
+
+- [X] T016 [P] [US1] Create test `test_brick_42_multiple_destroys_score_correctly()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
+  - **Setup**: Spawn world with 3 type 42 bricks and ball
+  - **Action**: Simulate ball collisions with each brick sequentially
+  - **Assert**:
+    - Each destruction awards 90 points
+    - Total score = 270
+    - No double-scoring on single brick
+  - **Acceptance**: Test passes; validates no scoring bugs with multiple bricks
+
+- [X] T017 [P] [US2] Create test `test_paddle_brick_42_life_loss()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
   - **Setup**: Spawn world with 3 lives, paddle, and type 42 brick
   - **Action**: Simulate paddle collision with brick
   - **Assert**:
@@ -159,7 +177,7 @@ Each task is independently completable and includes:
     - Standard respawn flow initiates
   - **Acceptance**: Test passes; validates paddle-brick 42 life loss integration
 
-- [ ] T018 [P] [US2] Create test `test_paddle_brick_91_life_loss()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
+- [X] T018 [P] [US2] Create test `test_paddle_brick_91_life_loss()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
   - **Setup**: Spawn world with 3 lives, paddle, and type 91 brick
   - **Action**: Simulate paddle collision with brick
   - **Assert**:
@@ -168,7 +186,7 @@ Each task is independently completable and includes:
     - Type 91 brick remains (not destroyed)
   - **Acceptance**: Test passes; validates paddle-brick 91 life loss integration
 
-- [ ] T019 [P] [US2] Create test `test_single_life_loss_per_frame_multi_contact()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
+- [X] T019 [P] [US2] Create test `test_single_life_loss_per_frame_multi_contact()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
   - **Setup**: Spawn world with 3 lives, paddle, 1 type 42 brick, and 1 type 91 brick positioned to contact paddle simultaneously
   - **Action**: Simulate single-frame paddle collision with both bricks
   - **Assert**:
@@ -177,7 +195,7 @@ Each task is independently completable and includes:
     - Both bricks' collision data processed (one loss only)
   - **Acceptance**: Test passes; validates multi-contact policy (one loss per frame max)
 
-- [ ] T020 [P] [US2] Create test `test_life_loss_frame_flag_resets()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
+- [X] T020 [P] [US2] Create test `test_life_loss_frame_flag_resets()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
   - **Setup**: Spawn world with 3 lives, paddle, and type 42 brick
   - **Action**:
     - Frame 0: Simulate paddle collision with brick → expect 1 `LifeLostEvent`
@@ -187,7 +205,7 @@ Each task is independently completable and includes:
     - Frame flag resets between frames correctly
   - **Acceptance**: Test passes; validates per-frame flag behavior
 
-- [ ] T021 [P] [US3] Create test `test_brick_91_indestructible_ball_collision()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
+- [X] T021 [P] [US3] Create test `test_brick_91_indestructible_ball_collision()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
   - **Setup**: Spawn world with type 91 brick and ball
   - **Action**: Simulate ball-brick collision
   - **Assert**:
@@ -196,7 +214,7 @@ Each task is independently completable and includes:
     - No `BrickDestroyed` message emitted
   - **Acceptance**: Test passes; validates indestructibility contract
 
-- [ ] T022 [P] [US3] Create test `test_level_completion_with_type_91_present()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
+- [X] T022 [P] [US3] Create test `test_level_completion_with_type_91_present()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
   - **Setup**: Spawn test level with 2 type 42 bricks and 3 type 91 bricks
   - **Action**: Destroy all type 42 bricks via ball collision
   - **Assert**:
@@ -205,7 +223,7 @@ Each task is independently completable and includes:
     - Completion not blocked by type 91 presence
   - **Acceptance**: Test passes; validates level completion integration
 
-- [ ] T023 [P] [US1] [US2] [US3] Create test `test_score_and_lives_persist_multi_frame()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
+- [X] T023 [P] [US1] [US2] [US3] Create test `test_score_and_lives_persist_multi_frame()` in [tests/brick_42_91_life_loss.rs](tests/brick_42_91_life_loss.rs):
   - **Setup**: Spawn world with 3 lives, type 42 brick, type 91 brick, paddle, and ball
   - **Action**:
     - Destroy type 42 via ball collision (score += 90)
@@ -217,7 +235,7 @@ Each task is independently completable and includes:
     - Multi-frame persistence confirmed
   - **Acceptance**: Test passes; validates no frame-boundary regressions
 
-- [ ] T024 Run full test suite, linting, and formatting checks:
+- [X] T024 Run full test suite, linting, and formatting checks:
   - `cargo test --all` in [/home/christian/devel/bevy/brkrs](/)
   - `cargo clippy --all-targets --all-features` — must pass with no warnings
   - `cargo fmt --all` — must have no formatting changes required
