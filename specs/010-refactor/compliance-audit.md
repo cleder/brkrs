@@ -15,6 +15,7 @@
 - [src/ui/cheat_indicator.rs](../../src/ui/cheat_indicator.rs): `handle_cheat_indicator`
 - [src/ui/fonts.rs](../../src/ui/fonts.rs): `load_ui_fonts` (native + wasm variants), `ensure_ui_fonts_loaded` (wasm + native variants)
 - [src/ui/game_over_overlay.rs](../../src/ui/game_over_overlay.rs): `spawn_game_over_overlay`
+- [src/ui/gravity_indicator.rs](../../src/ui/gravity_indicator.rs): `spawn_gravity_indicator`, `update_gravity_indicator`
 - [src/ui/level_label.rs](../../src/ui/level_label.rs): `spawn_level_label`, `on_level_started`, `sync_with_current_level`
 - [src/ui/lives_counter.rs](../../src/ui/lives_counter.rs): `spawn_lives_counter`, `update_lives_counter`
 - [src/ui/palette.rs](../../src/ui/palette.rs): `toggle_palette`, `ensure_palette_ui`, `handle_palette_selection`, `update_palette_selection_feedback`, `update_ghost_preview`, `place_bricks_on_drag`
@@ -94,6 +95,7 @@ Do NOT chain individual systems directly; use sets to express dependencies and e
 - [src/ui/score_display.rs](../../src/ui/score_display.rs): `spawn_score_display_system` and `update_score_display_system` lack system set organization.
 - [src/ui/level_label.rs](../../src/ui/level_label.rs): `spawn_level_label`, `on_level_started`, `sync_with_current_level` are registered independently without set organization.
 - [src/ui/cheat_indicator.rs](../../src/ui/cheat_indicator.rs): `handle_cheat_indicator` lacks system set organization.
+- [src/ui/gravity_indicator.rs](../../src/ui/gravity_indicator.rs): `spawn_gravity_indicator` and `update_gravity_indicator` are registered without system set organization.
 
 ### IV. Performance-First Implementation (supporting)
 

@@ -91,7 +91,7 @@ pub struct PreviewViewport {
     pub material: Option<Handle<StandardMaterial>>,
 }
 
-pub fn toggle_palette(_keyboard: Res<ButtonInput<KeyCode>>, _state: ResMut<PaletteState>) {
+pub fn toggle_palette(_keyboard: Option<Res<ButtonInput<KeyCode>>>, _state: ResMut<PaletteState>) {
     // Binding for 'P' removed to reserve the key for previous-level control in cheat mode.
     // Palette can still be toggled via UI or other explicit commands if needed.
 }

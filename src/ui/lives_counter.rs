@@ -39,7 +39,7 @@ pub struct LivesCounter;
 pub fn spawn_lives_counter(
     mut commands: Commands,
     existing: Query<Entity, With<LivesCounter>>,
-    lives_state: Res<LivesState>,
+    lives_state: Option<Res<LivesState>>,
     ui_fonts: Option<Res<UiFonts>>,
 ) {
     // Only spawn if it doesn't already exist
@@ -52,10 +52,14 @@ pub fn spawn_lives_counter(
         return;
     };
 
+    let lives_str = lives_state
+        .map(|s| format!("Lives: {}", s.lives_remaining))
+        .unwrap_or_else(|| "Lives: ?".to_string());
+
     let font = fonts.orbitron.clone();
 
     commands.spawn((
-        Text::new(format!("Lives: {}", lives_state.lives_remaining)),
+        Text::new(lives_str),
         TextFont {
             font,
             font_size: 24.0,
@@ -74,9 +78,12 @@ pub fn spawn_lives_counter(
 
 /// Updates the lives counter text when the lives state changes.
 pub fn update_lives_counter(
-    lives_state: Res<LivesState>,
+    lives_state: Option<Res<LivesState>>,
     mut counter_query: Query<&mut Text, With<LivesCounter>>,
 ) {
+    let Some(lives_state) = lives_state else {
+        return;
+    };
     // Only update if lives state actually changed
     if !lives_state.is_changed() {
         return;

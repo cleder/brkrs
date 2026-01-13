@@ -20,10 +20,13 @@ pub struct CheatIndicatorTexture {
 /// Spawns or removes the cheat mode indicator in response to CheatModeToggled events
 pub fn handle_cheat_indicator(
     mut commands: Commands,
-    mut events: MessageReader<CheatModeToggled>,
+    events: Option<MessageReader<CheatModeToggled>>,
     existing: Query<Entity, With<CheatModeIndicator>>,
     cached_texture: Option<Res<CheatIndicatorTexture>>,
 ) {
+    let Some(mut events) = events else {
+        return;
+    };
     for event in events.read() {
         if event.active {
             if !existing.is_empty() {

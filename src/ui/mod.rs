@@ -48,6 +48,7 @@ impl std::error::Error for UiSystemError {}
 pub mod cheat_indicator;
 pub mod fonts;
 pub mod game_over_overlay;
+pub mod gravity_indicator;
 pub mod level_label;
 pub mod lives_counter;
 pub mod palette;
@@ -136,6 +137,7 @@ impl Plugin for UiPlugin {
                 score_display::spawn_score_display_system,
                 lives_counter::spawn_lives_counter,
                 level_label::spawn_level_label,
+                gravity_indicator::spawn_gravity_indicator,
             )
                 .in_set(UiSystems::Spawn),
         );
@@ -148,6 +150,7 @@ impl Plugin for UiPlugin {
                 game_over_overlay::spawn_game_over_overlay,
                 cheat_indicator::handle_cheat_indicator,
                 level_label::sync_with_current_level,
+                gravity_indicator::update_gravity_indicator,
                 score_display::update_score_display_system
                     .after(crate::systems::scoring::detect_milestone_system),
             )
@@ -183,7 +186,7 @@ impl Plugin for UiPlugin {
 fn setup_ui_assets(
     mut commands: Commands,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
+    asset_server: Option<Res<AssetServer>>,
 ) {
     use bevy::prelude::*;
 
@@ -197,9 +200,23 @@ fn setup_ui_assets(
         handle: ghost_material,
     });
 
+    // Only initialize asset-based resources if AssetServer is available
+    let Some(asset_server) = asset_server else {
+        return;
+    };
+
     // Initialize cheat indicator texture (cached for cheat mode system)
     let cheat_texture = asset_server.load("textures/default/cheat-mode-128.png");
     commands.insert_resource(cheat_indicator::CheatIndicatorTexture {
         handle: cheat_texture,
+    });
+
+    // Initialize gravity indicator textures (cached for gravity indicator system)
+    commands.insert_resource(gravity_indicator::GravityIndicatorTextures {
+        question: asset_server.load("textures/default/weight-question.png"),
+        weight0: asset_server.load("textures/default/weight-0.png"),
+        weight2: asset_server.load("textures/default/weight-2.png"),
+        weight10: asset_server.load("textures/default/weight-10.png"),
+        weight20: asset_server.load("textures/default/weight-20.png"),
     });
 }
