@@ -31,7 +31,7 @@ Add a limited “balls/lives” counter: start at 3, decrement on each `LifeLost
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research.*
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 *Re-check after Phase 1 design.*
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     *Re-check after Phase 1 design.*
 
 - ECS-first: PASS (lives state stored as ECS resources; logic in systems)
 - Physics-driven gameplay: PASS (feature is UI/state; does not bypass physics for gameplay)

@@ -18,7 +18,7 @@ Reliability hinges on the new `FallbackRegistry` resource that guarantees canoni
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research.*
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 *Re-check after Phase 1 design.*
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     *Re-check after Phase 1 design.*
 
 - **ECS-First**: Texture lookups, fallback tracking, and level switching implemented as resources + systems; no global mutable state. ✅
 - **Physics-Driven Gameplay**: Visual systems decorate meshes spawned by physics entities without overriding Rapier ownership, so collisions remain authoritative. ✅
