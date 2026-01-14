@@ -21,7 +21,7 @@ Implementation approach: add a small HUD system that listens for `LevelStarted` 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research.*
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 *Re-check after Phase 1 design.*
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         *Re-check after Phase 1 design.*
 
 - ECS-first: ✔ Feature will be implemented as Bevy systems updating components and responding to events (no global mutable state).
 - Physics-driven: n/a (HUD-only change; no physics changes required).

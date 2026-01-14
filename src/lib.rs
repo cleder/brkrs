@@ -306,6 +306,7 @@ pub fn run() {
             #[cfg(not(target_arch = "wasm32"))]
             systems::grid_debug::toggle_grid_visibility,
             grab_mouse,
+            crate::systems::respawn::clear_life_loss_frame_flag,
             read_character_controller_collisions,
             detect_ball_wall_collisions,
             // Chain brick-hit handling, despawn, and life award application to guarantee ordering
@@ -771,6 +772,16 @@ pub fn mark_brick_on_ball_collision(
                     continue;
                 }
 
+                // Skip hazard brick type 91 - indestructible by ball collision
+                // Use trace-level logging to avoid flooding logs during frequent grazing collisions
+                if current_type == crate::level_format::HAZARD_BRICK_91 {
+                    trace!(
+                        "Ball-hazard brick collision: brick {} is indestructible type 91, skipping destruction",
+                        entity
+                    );
+                    continue;
+                }
+
                 // Prefer Transform over GlobalTransform over direct query
                 let brick_pos = if let Some(t) = t_opt {
                     t.translation
@@ -1054,6 +1065,9 @@ pub fn read_character_controller_collisions(
     time: Res<Time>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     mut commands: Commands,
+    spawn_points: Res<crate::systems::respawn::SpawnPoints>,
+    mut frame_loss_state: ResMut<crate::systems::respawn::FrameLossState>,
+    mut life_lost_writer: MessageWriter<crate::systems::respawn::LifeLostEvent>,
 ) {
     let output = match paddle_outputs.single() {
         Ok(controller) => controller,
@@ -1084,6 +1098,21 @@ pub fn read_character_controller_collisions(
                             brick_type = crate::level_format::PADDLE_DESTROYABLE_BRICK,
                         );
                         commands.entity(brick).insert(MarkedForDespawn);
+                    }
+                    // Check if this is a hazard brick (type 42 or 91) and emit life loss
+                    if crate::level_format::is_hazard_brick(brick_type.0)
+                        && !frame_loss_state.hazard_loss_emitted
+                    {
+                        // Only emit one life loss per frame even if multiple hazards contacted
+                        if let Some(ball) = balls.iter().next() {
+                            let ball_spawn = spawn_points.ball_spawn();
+                            life_lost_writer.write(crate::systems::respawn::LifeLostEvent {
+                                ball,
+                                cause: crate::systems::respawn::LifeLossCause::PaddleHazard,
+                                ball_spawn,
+                            });
+                            frame_loss_state.hazard_loss_emitted = true;
+                        }
                     }
                 }
                 commands.trigger(BrickHit {

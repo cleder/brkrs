@@ -99,7 +99,7 @@ pub fn brick_points(brick_type: u8, rng: &mut impl Rng) -> u32 {
 
         // Hazard bricks
         40 => 100, // Bomb
-        42 => 90,  // Killer
+        42 => 90,  // Killer (Type 42: Destructible hazard, awards 90 points)
 
         // Extra ball brick (no points)
         41 => 0,
