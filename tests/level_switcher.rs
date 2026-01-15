@@ -3,6 +3,7 @@ use bevy_rapier3d::prelude::RapierConfiguration;
 use brkrs::level_loader::{
     self, CurrentLevel, LevelAdvanceState, LevelDefinition, LevelLoaderPlugin,
 };
+use brkrs::systems::level_switch::LevelSwitchDirection;
 use brkrs::systems::respawn::SpawnPoints;
 use brkrs::systems::{
     LevelSwitchPlugin, LevelSwitchRequested, LevelSwitchSource, LevelSwitchState,
@@ -11,6 +12,9 @@ use brkrs::GameProgress;
 
 fn level_switch_test_app() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins((MinimalPlugins, InputPlugin));
     app.insert_resource(GameProgress::default());
     app.insert_resource(LevelAdvanceState::default());
@@ -34,6 +38,7 @@ fn initialize_level_systems(app: &mut App) {
 fn trigger_level_switch(app: &mut App) {
     app.world_mut().write_message(LevelSwitchRequested {
         source: LevelSwitchSource::Keyboard,
+        direction: LevelSwitchDirection::Next,
     });
     // First update processes the event and queues commands.
     app.update();

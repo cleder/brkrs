@@ -1,16 +1,32 @@
 //! Audio system module for the brick-breaker game.
 //!
-//! This module provides an event-driven audio system that plays sounds in response
-//! to game events such as brick collisions, wall bounces, and level transitions.
+//! This module provides a message-driven audio system that plays sounds in response
+//! to game events via Constitution-compliant Message boundaries.
 //!
 //! # Architecture
 //!
-//! The audio system uses Bevy's observer pattern to react to game events:
+//! The audio system uses Bevy's Message pattern for clean inter-system communication:
 //!
-//! - [`AudioPlugin`] registers all audio resources and observers
+//! - [`AudioPlugin`] registers all audio resources and message consumer systems
+//! - [`consume_ui_beep_messages`] reads [`UiBeep`](crate::signals::UiBeep) messages
+//! - [`consume_brick_destroyed_messages`] reads [`BrickDestroyed`](crate::signals::BrickDestroyed) messages
 //! - [`AudioConfig`] stores user-adjustable volume and mute settings
 //! - [`AudioAssets`] holds loaded audio asset handles keyed by [`SoundType`]
 //! - [`ActiveSounds`] tracks concurrent playback to limit simultaneous sounds
+//!
+//! # Message Boundaries (Constitution Compliance)
+//!
+//! The system follows the Constitution requirement for unified message boundaries:
+//!
+//! - **UiBeep**: Consumed by [`consume_ui_beep_messages`] system
+//!   - Single message path (no observer callbacks)
+//!   - Triggered by UI interactions, pause menu, game state changes
+//!   - Produces: Short beep audio feedback
+//!
+//! - **BrickDestroyed**: Consumed by [`consume_brick_destroyed_messages`] system
+//!   - Single message path (no dual producer/consumer)
+//!   - Fired by collision/despawn systems with destruction context
+//!   - Produces: Brick break sound effect based on brick type
 //!
 //! # Sound Types
 //!
@@ -25,6 +41,13 @@
 //! - `LevelStart` - Level begins
 //! - `LevelComplete` - Level completed
 //!
+//! # System Organization
+//!
+//! Systems are organized using the [`AudioSystems`] SystemSet enum:
+//! - [`AudioSystems::Startup`]: Load manifest and asset handles
+//! - [`AudioSystems::Update`]: Message consumer systems run here
+//! - [`AudioSystems::Cleanup`]: Remove stale active sound tracking
+//!
 //! # Graceful Degradation
 //!
 //! The system handles missing audio assets gracefully by logging warnings
@@ -36,15 +59,34 @@
 //! // Register the audio plugin in your app
 //! app.add_plugins(AudioPlugin);
 //!
-//! // Audio will automatically play when game events occur
+//! // Audio will automatically play when game events occur via messages
+//! // Sending a UI beep:
+//! fn my_system(mut writer: MessageWriter<UiBeep>) {
+//!     writer.write(UiBeep);
+//! }
 //! ```
 
+use crate::signals::{
+    BallWallHit, BrickDestroyed as BrickDestroyedMsg, MerkabaBrickCollision,
+    MerkabaPaddleCollision, MerkabaWallCollision, UiBeep,
+};
+use bevy::ecs::message::MessageReader;
 use bevy::prelude::*;
 use ron::de::from_str;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 #[cfg(target_arch = "wasm32")]
 use web_sys;
+/// System set organization for audio-related systems.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemSet)]
+pub enum AudioSystems {
+    /// Startup initialization (config, assets)
+    Startup,
+    /// Regular update consumers and management
+    Update,
+    /// Cleanup finished sounds / instances
+    Cleanup,
+}
 
 /// Maximum number of concurrent sounds of the same type.
 const MAX_CONCURRENT_SOUNDS: u8 = 4;
@@ -68,6 +110,18 @@ pub enum SoundType {
     LevelStart,
     /// Level completed.
     LevelComplete,
+    /// UI feedback (short soft beep)
+    UiBeep,
+    /// Merkaba collision with wall.
+    MerkabaWall,
+    /// Merkaba collision with brick.
+    MerkabaBrick,
+    /// Merkaba collision with paddle.
+    MerkabaPaddle,
+    /// Merkaba helicopter blade loop (background).
+    MerkabaLoop,
+    /// Brick 41 (Extra Life) unique destruction sound.
+    Brick41ExtraLife,
 }
 
 /// User-adjustable audio settings, persisted across sessions.
@@ -194,17 +248,26 @@ impl Plugin for AudioPlugin {
         app.init_resource::<AudioAssets>()
             .init_resource::<ActiveSounds>()
             .init_resource::<ActiveAudioInstances>()
-            .add_systems(Startup, (load_audio_config, load_audio_assets).chain())
+            .init_resource::<AudioLoopState>()
+            .add_message::<UiBeep>()
+            .add_message::<MerkabaWallCollision>()
+            .add_message::<MerkabaBrickCollision>()
+            .add_systems(Startup, load_audio_config)
+            .add_systems(Startup, load_audio_assets)
             .add_systems(Update, save_audio_config_on_change)
             .add_systems(Update, cleanup_finished_sounds)
             .add_observer(on_multi_hit_brick_sound)
-            .add_observer(on_brick_destroyed_sound)
-            .add_observer(on_ball_wall_hit_sound)
             .add_observer(on_paddle_ball_hit_sound)
             .add_observer(on_paddle_wall_hit_sound)
             .add_observer(on_paddle_brick_hit_sound)
+            .add_observer(on_ball_wall_hit_sound)
             .add_observer(on_level_started_sound)
-            .add_observer(on_level_complete_sound);
+            .add_observer(on_level_complete_sound)
+            .add_observer(on_merkaba_paddle_collision_sound)
+            .add_systems(Update, consume_brick_destroyed_messages)
+            .add_systems(Update, consume_ui_beep_messages)
+            .add_systems(Update, consume_merkaba_wall_collision_messages)
+            .add_systems(Update, consume_merkaba_brick_collision_messages);
     }
 }
 
@@ -221,6 +284,8 @@ fn cleanup_finished_sounds(
         }
     }
 }
+
+// UiBeep buffered message consumed via MessageReader
 
 /// Path to the audio config file.
 const AUDIO_CONFIG_PATH: &str = "config/audio.ron";
@@ -370,7 +435,7 @@ fn save_audio_config_on_change(config: Res<AudioConfig>) {
                             if let Err(e) = storage.set_item(storage_key, &serialized) {
                                 warn!(
                                     target: "audio",
-                                    error = %e,
+                                    error = ?e,
                                     "Failed to save audio config to localStorage"
                                 );
                             } else {
@@ -403,6 +468,7 @@ fn save_audio_config_on_change(config: Res<AudioConfig>) {
 fn load_audio_assets(
     asset_server: Option<Res<AssetServer>>,
     mut audio_assets: ResMut<AudioAssets>,
+    audio_sources: Option<Res<Assets<AudioSource>>>,
 ) {
     // If there's no AssetServer available, skip loading (graceful degradation).
     let asset_server = match asset_server {
@@ -412,6 +478,13 @@ fn load_audio_assets(
             return;
         }
     };
+
+    // If AudioSource is not registered (e.g. AudioPlugin not added), skip loading
+    if audio_sources.is_none() {
+        warn!(target: "audio", "AudioSource asset not registered; skipping audio asset loading");
+        return;
+    }
+
     // Try to read the manifest file
     #[cfg(not(target_arch = "wasm32"))]
     let manifest_content = std::fs::read_to_string("assets/audio/manifest.ron");
@@ -466,6 +539,47 @@ fn load_audio_assets(
             );
         }
     }
+
+    // Ensure merkaba audio handles exist even if the manifest is missing entries.
+    // This reuses the placeholder assets added in Phase 1.
+    let insert_placeholder = |assets: &mut AudioAssets, ty: SoundType, path: &'static str| {
+        assets.sounds.entry(ty).or_insert_with(|| {
+            let handle: Handle<AudioSource> = asset_server.load(path);
+            handle
+        });
+    };
+
+    insert_placeholder(
+        &mut audio_assets,
+        SoundType::MerkabaWall,
+        "audio/merkaba_wall.ogg",
+    );
+    insert_placeholder(
+        &mut audio_assets,
+        SoundType::MerkabaBrick,
+        "audio/merkaba_brick.ogg",
+    );
+    insert_placeholder(
+        &mut audio_assets,
+        SoundType::MerkabaPaddle,
+        "audio/merkaba_paddle.ogg",
+    );
+    insert_placeholder(
+        &mut audio_assets,
+        SoundType::MerkabaLoop,
+        "audio/merkaba_loop_helicopter.ogg",
+    );
+}
+
+/// Tracks the helicopter loop state for merkaba hazards.
+#[derive(Resource, Default, Debug)]
+pub struct AudioLoopState {
+    /// Handle to the loop audio asset (merkaba blades)
+    pub loop_handle: Option<Handle<AudioSource>>,
+    /// Active loop audio entity (if playing)
+    pub active_entity: Option<Entity>,
+    /// Whether the loop is currently playing
+    pub is_playing: bool,
 }
 
 /// Play a sound of the given type, respecting volume, mute, and concurrent limits.
@@ -473,6 +587,7 @@ fn play_sound(
     sound_type: SoundType,
     config: &AudioConfig,
     assets: &AudioAssets,
+    audio_sources: Option<&Assets<AudioSource>>,
     active_sounds: &mut ActiveSounds,
     active_instances: &mut ActiveAudioInstances,
     commands: &mut Commands,
@@ -508,6 +623,19 @@ fn play_sound(
         return;
     };
 
+    // Check if the asset is actually loaded
+    if let Some(audio_assets) = audio_sources {
+        if !audio_assets.contains(handle) {
+            debug!(
+                target: "audio",
+                ?sound_type,
+                "Audio asset not yet loaded, skipping playback"
+            );
+            active_sounds.decrement(sound_type);
+            return;
+        }
+    }
+
     // Spawn the audio player and record the spawned entity so we can
     // decrement the concurrent-count when playback finishes (entity despawn).
     let entity = commands
@@ -537,25 +665,9 @@ fn play_sound(
 // Event definitions
 // =============================================================================
 
-/// Emitted when a destructible brick is removed from the game.
-/// Used by audio system to play brick destruction sound.
-#[derive(Event, Debug, Clone)]
-pub struct BrickDestroyed {
-    /// The entity that was destroyed.
-    pub entity: Entity,
-    /// The brick type that was destroyed.
-    pub brick_type: u8,
-}
+// BrickDestroyed moved to `crate::signals` and is now a Message.
 
-/// Emitted when the ball bounces off a wall boundary.
-/// Used by audio system to play wall bounce sound.
-#[derive(Event, Debug, Clone)]
-pub struct BallWallHit {
-    /// The ball entity that hit the wall.
-    pub entity: Entity,
-    /// The collision impulse.
-    pub impulse: Vec3,
-}
+// BallWallHit event is now defined in signals.rs and imported above
 
 /// Emitted when a level has finished loading and is ready for play.
 /// Used by audio system to play level start sound.
@@ -598,47 +710,91 @@ fn on_multi_hit_brick_sound(
         SoundType::MultiHitImpact,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
     );
 }
 
-/// Observer for brick destruction sound.
-fn on_brick_destroyed_sound(
-    trigger: On<BrickDestroyed>,
-    config: Res<AudioConfig>,
-    assets: Res<AudioAssets>,
-    mut active_sounds: ResMut<ActiveSounds>,
-    mut active_instances: ResMut<ActiveAudioInstances>,
+/// Consumer for brick destruction messages to play destruction sound.
+fn consume_brick_destroyed_messages(
+    reader: Option<MessageReader<BrickDestroyedMsg>>,
+    config: Option<Res<AudioConfig>>,
+    assets: Option<Res<AudioAssets>>,
+    active_sounds: Option<ResMut<ActiveSounds>>,
+    active_instances: Option<ResMut<ActiveAudioInstances>>,
+    mut brick41_available: Local<Option<bool>>,
     mut commands: Commands,
 ) {
-    let event = trigger.event();
-    // Don't play destruction sound for multi-hit bricks (they use MultiHitImpact)
-    if crate::level_format::is_multi_hit_brick(event.brick_type) {
+    let Some(mut reader) = reader else {
         return;
+    };
+    let Some(config) = config else {
+        return;
+    };
+    let Some(assets) = assets else {
+        return;
+    };
+    let Some(mut active_sounds) = active_sounds else {
+        return;
+    };
+    let Some(mut active_instances) = active_instances else {
+        return;
+    };
+
+    for event in reader.read() {
+        // Don't play destruction sound for multi-hit bricks (they use MultiHitImpact)
+        if crate::level_format::is_multi_hit_brick(event.brick_type) {
+            continue;
+        }
+        debug!(
+            target: "audio",
+            entity = ?event.brick_entity,
+            brick_type = event.brick_type,
+            "Brick destroyed"
+        );
+
+        // Brick 41 (Extra Life) has unique sound; cache availability to avoid repeated lookups/logs
+        if brick41_available.is_none() {
+            let available = assets.get(SoundType::Brick41ExtraLife).is_some();
+            if !available {
+                warn!(
+                    target: "audio",
+                    "Brick 41 unique sound handle missing; falling back to generic BrickDestroy"
+                );
+            }
+            *brick41_available = Some(available);
+        }
+
+        let brick41_sound_available = brick41_available.unwrap_or(false);
+
+        let sound_type = if event.brick_type == crate::level_format::EXTRA_LIFE_BRICK
+            && brick41_sound_available
+        {
+            SoundType::Brick41ExtraLife
+        } else {
+            SoundType::BrickDestroy
+        };
+
+        play_sound(
+            sound_type,
+            &config,
+            &assets,
+            None,
+            &mut active_sounds,
+            &mut active_instances,
+            &mut commands,
+        );
     }
-    debug!(
-        target: "audio",
-        entity = ?event.entity,
-        brick_type = event.brick_type,
-        "Brick destroyed"
-    );
-    play_sound(
-        SoundType::BrickDestroy,
-        &config,
-        &assets,
-        &mut active_sounds,
-        &mut active_instances,
-        &mut commands,
-    );
 }
 
 /// Observer for ball wall hit sound.
-fn on_ball_wall_hit_sound(
+pub(crate) fn on_ball_wall_hit_sound(
     trigger: On<BallWallHit>,
     config: Res<AudioConfig>,
     assets: Res<AudioAssets>,
+    audio_sources: Option<Res<Assets<AudioSource>>>,
     mut active_sounds: ResMut<ActiveSounds>,
     mut active_instances: ResMut<ActiveAudioInstances>,
     mut commands: Commands,
@@ -646,14 +802,15 @@ fn on_ball_wall_hit_sound(
     let event = trigger.event();
     debug!(
         target: "audio",
-        entity = ?event.entity,
-        impulse = ?event.impulse,
+        ball_entity = ?event.ball_entity,
+        wall_entity = ?event.wall_entity,
         "Ball wall hit"
     );
     play_sound(
         SoundType::WallBounce,
         &config,
         &assets,
+        audio_sources.as_deref(),
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -680,6 +837,7 @@ fn on_paddle_ball_hit_sound(
         SoundType::PaddleHit,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -705,10 +863,96 @@ fn on_paddle_wall_hit_sound(
         SoundType::PaddleWallHit,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
     );
+}
+
+#[cfg(test)]
+mod brick41_audio_tests {
+    use super::*;
+    use bevy::{audio::AudioSource, MinimalPlugins};
+
+    fn make_handle() -> Handle<AudioSource> {
+        Handle::default()
+    }
+
+    fn setup_app(include_brick41: bool) -> App {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_message::<BrickDestroyedMsg>();
+        app.insert_resource(AudioConfig::default());
+
+        let mut audio_assets = AudioAssets::default();
+        audio_assets
+            .sounds
+            .insert(SoundType::BrickDestroy, make_handle());
+        if include_brick41 {
+            audio_assets
+                .sounds
+                .insert(SoundType::Brick41ExtraLife, make_handle());
+        }
+        app.insert_resource(audio_assets);
+        app.insert_resource(ActiveSounds::default());
+        app.insert_resource(ActiveAudioInstances::default());
+
+        app.add_systems(Update, consume_brick_destroyed_messages);
+        app
+    }
+
+    #[test]
+    fn brick_41_uses_unique_sound_when_available() {
+        let mut app = setup_app(true);
+
+        let brick = app.world_mut().spawn_empty().id();
+        app.world_mut().write_message(BrickDestroyedMsg {
+            brick_entity: brick,
+            brick_type: crate::level_format::EXTRA_LIFE_BRICK,
+            destroyed_by: None,
+        });
+
+        app.update();
+
+        let counts = app.world().resource::<ActiveSounds>();
+        assert_eq!(
+            1,
+            counts.count(SoundType::Brick41ExtraLife),
+            "Brick 41 should play its unique sound when available"
+        );
+        assert_eq!(
+            0,
+            counts.count(SoundType::BrickDestroy),
+            "Brick 41 should not fall back when unique sound exists"
+        );
+    }
+
+    #[test]
+    fn brick_41_falls_back_when_unique_sound_missing() {
+        let mut app = setup_app(false);
+
+        let brick = app.world_mut().spawn_empty().id();
+        app.world_mut().write_message(BrickDestroyedMsg {
+            brick_entity: brick,
+            brick_type: crate::level_format::EXTRA_LIFE_BRICK,
+            destroyed_by: None,
+        });
+
+        app.update();
+
+        let counts = app.world().resource::<ActiveSounds>();
+        assert_eq!(
+            0,
+            counts.count(SoundType::Brick41ExtraLife),
+            "Brick 41 should not attempt unique sound when handle is missing"
+        );
+        assert_eq!(
+            1,
+            counts.count(SoundType::BrickDestroy),
+            "Brick 41 should fall back to generic destroy sound when unique handle missing"
+        );
+    }
 }
 
 /// Observer for paddle-brick hit sound.
@@ -730,6 +974,7 @@ fn on_paddle_brick_hit_sound(
         SoundType::PaddleBrickHit,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -755,6 +1000,7 @@ fn on_level_started_sound(
         SoundType::LevelStart,
         &config,
         &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -780,6 +1026,146 @@ fn on_level_complete_sound(
         SoundType::LevelComplete,
         &config,
         &assets,
+        None,
+        &mut active_sounds,
+        &mut active_instances,
+        &mut commands,
+    );
+}
+
+/// UI beep observer - plays a short soft beep when requested
+fn consume_ui_beep_messages(
+    reader: Option<MessageReader<UiBeep>>,
+    config: Option<Res<AudioConfig>>,
+    assets: Option<Res<AudioAssets>>,
+    active_sounds: Option<ResMut<ActiveSounds>>,
+    active_instances: Option<ResMut<ActiveAudioInstances>>,
+    mut commands: Commands,
+) {
+    let Some(mut reader) = reader else { return };
+    let Some(config) = config else { return };
+    let Some(assets) = assets else { return };
+    let Some(mut active_sounds) = active_sounds else {
+        return;
+    };
+    let Some(mut active_instances) = active_instances else {
+        return;
+    };
+
+    let mut count = 0u32;
+    for _ in reader.read() {
+        count += 1;
+        play_sound(
+            SoundType::UiBeep,
+            &config,
+            &assets,
+            None,
+            &mut active_sounds,
+            &mut active_instances,
+            &mut commands,
+        );
+    }
+    if count > 0 {
+        debug!(target: "audio", messages = count, "UI beep messages consumed");
+    }
+}
+
+/// Message consumer for merkaba-wall collision sounds.
+fn consume_merkaba_wall_collision_messages(
+    reader: Option<MessageReader<MerkabaWallCollision>>,
+    config: Option<Res<AudioConfig>>,
+    assets: Option<Res<AudioAssets>>,
+    active_sounds: Option<ResMut<ActiveSounds>>,
+    active_instances: Option<ResMut<ActiveAudioInstances>>,
+    mut commands: Commands,
+) {
+    let Some(mut reader) = reader else { return };
+    let Some(config) = config else { return };
+    let Some(assets) = assets else { return };
+    let Some(mut active_sounds) = active_sounds else {
+        return;
+    };
+    let Some(mut active_instances) = active_instances else {
+        return;
+    };
+
+    for event in reader.read() {
+        debug!(
+            target: "audio",
+            merkaba_entity = ?event.merkaba_entity,
+            wall_entity = ?event.wall_entity,
+            "Merkaba wall collision"
+        );
+        play_sound(
+            SoundType::MerkabaWall,
+            &config,
+            &assets,
+            None,
+            &mut active_sounds,
+            &mut active_instances,
+            &mut commands,
+        );
+    }
+}
+
+/// Message consumer for merkaba-brick collision sounds.
+fn consume_merkaba_brick_collision_messages(
+    reader: Option<MessageReader<MerkabaBrickCollision>>,
+    config: Option<Res<AudioConfig>>,
+    assets: Option<Res<AudioAssets>>,
+    active_sounds: Option<ResMut<ActiveSounds>>,
+    active_instances: Option<ResMut<ActiveAudioInstances>>,
+    mut commands: Commands,
+) {
+    let Some(mut reader) = reader else { return };
+    let Some(config) = config else { return };
+    let Some(assets) = assets else { return };
+    let Some(mut active_sounds) = active_sounds else {
+        return;
+    };
+    let Some(mut active_instances) = active_instances else {
+        return;
+    };
+
+    for event in reader.read() {
+        debug!(
+            target: "audio",
+            merkaba_entity = ?event.merkaba_entity,
+            brick_entity = ?event.brick_entity,
+            "Merkaba brick collision"
+        );
+        play_sound(
+            SoundType::MerkabaBrick,
+            &config,
+            &assets,
+            None,
+            &mut active_sounds,
+            &mut active_instances,
+            &mut commands,
+        );
+    }
+}
+
+/// Observer for merkaba-paddle collision sounds.
+fn on_merkaba_paddle_collision_sound(
+    trigger: On<MerkabaPaddleCollision>,
+    config: Res<AudioConfig>,
+    assets: Res<AudioAssets>,
+    mut active_sounds: ResMut<ActiveSounds>,
+    mut active_instances: ResMut<ActiveAudioInstances>,
+    mut commands: Commands,
+) {
+    debug!(
+        target: "audio",
+        merkaba_entity = ?trigger.event().merkaba_entity,
+        paddle_entity = ?trigger.event().paddle_entity,
+        "Merkaba paddle collision"
+    );
+    play_sound(
+        SoundType::MerkabaPaddle,
+        &config,
+        &assets,
+        None,
         &mut active_sounds,
         &mut active_instances,
         &mut commands,
@@ -868,10 +1254,11 @@ mod tests {
     }
 
     #[test]
-    fn brick_destroyed_event_fields() {
-        let event = BrickDestroyed {
-            entity: Entity::PLACEHOLDER,
+    fn brick_destroyed_message_fields() {
+        let event = BrickDestroyedMsg {
+            brick_entity: Entity::PLACEHOLDER,
             brick_type: 20,
+            destroyed_by: None,
         };
         assert_eq!(event.brick_type, 20);
     }
@@ -879,10 +1266,11 @@ mod tests {
     #[test]
     fn ball_wall_hit_event_fields() {
         let event = BallWallHit {
-            entity: Entity::PLACEHOLDER,
-            impulse: Vec3::new(1.0, 0.0, 0.0),
+            ball_entity: Entity::PLACEHOLDER,
+            wall_entity: Entity::PLACEHOLDER,
         };
-        assert_eq!(event.impulse.x, 1.0);
+        assert_eq!(event.ball_entity, Entity::PLACEHOLDER);
+        assert_eq!(event.wall_entity, Entity::PLACEHOLDER);
     }
 
     #[test]

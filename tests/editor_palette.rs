@@ -7,10 +7,14 @@ use brkrs::systems::textures::{FallbackRegistry, ProfileMaterialBank, TypeVarian
 
 fn palette_test_app() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
     // Provide asset containers used by the texture system and initialize texture plugin.
     app.insert_resource(Assets::<StandardMaterial>::default());
     app.insert_resource(Assets::<Mesh>::default());
+    app.insert_resource(Assets::<Image>::default());
     app.add_plugins(TextureMaterialsPlugin);
     // run once so TextureMaterialsPlugin initializes fallback/bank/registry resources
     app.update();
@@ -78,7 +82,7 @@ fn palette_test_app() -> App {
         world.resource_scope(|world, mut registry: Mut<TypeVariantRegistry>| {
             world.resource_scope(|world, bank: Mut<ProfileMaterialBank>| {
                 world.resource_scope(|_world, mut fallback: Mut<FallbackRegistry>| {
-                    registry.rebuild(&manifest, &bank, &mut fallback);
+                    registry.rebuild(&manifest, &bank, &mut fallback, None, None);
                 });
             });
         });
@@ -101,10 +105,12 @@ fn pressing_p_opens_and_closes_palette() {
             == 0
     );
 
-    // Press P to open
+    // Open palette by setting the PaletteState directly (P binding removed)
     {
-        let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
-        input.press(KeyCode::KeyP);
+        let mut state = app
+            .world_mut()
+            .resource_mut::<brkrs::ui::palette::PaletteState>();
+        state.open = true;
     }
     app.update();
     app.update();
@@ -113,7 +119,10 @@ fn pressing_p_opens_and_closes_palette() {
         .query::<&brkrs::ui::palette::PaletteRoot>()
         .iter(world)
         .count();
-    assert!(found == 1, "Palette should be spawned when P is pressed");
+    assert!(
+        found == 1,
+        "Palette should be spawned when open state is set"
+    );
 
     // Verify palette contains the expected labels (simple / indestructible).
     fn contains_text(world: &mut World, needle: &str) -> bool {
@@ -210,20 +219,13 @@ fn pressing_p_opens_and_closes_palette() {
     assert_eq!(color_20.unwrap(), Color::srgba(0.5, 0.5, 0.5, 1.0));
     assert_eq!(color_90.unwrap(), Color::srgba(0.9, 0.2, 0.2, 1.0));
 
-    // Press P again to close — ensure we release and then press in separate frames so
-    // InputPlugin registers a new `just_pressed` event.
+    // Close the palette by setting the state to closed
     {
-        let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
-        input.release(KeyCode::KeyP);
+        let mut state = app
+            .world_mut()
+            .resource_mut::<brkrs::ui::palette::PaletteState>();
+        state.open = false;
     }
-    // allow the input state to update for the release
-    app.update();
-
-    {
-        let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
-        input.press(KeyCode::KeyP);
-    }
-    app.update();
     app.update();
     let world = app.world_mut();
     let found2 = world
@@ -232,7 +234,7 @@ fn pressing_p_opens_and_closes_palette() {
         .count();
     assert!(
         found2 == 0,
-        "Palette should be removed when P is pressed again"
+        "Palette should be removed when open state is cleared"
     );
 
     // After closing the palette the labels should no longer be present.
@@ -256,14 +258,16 @@ fn click_selects_palette_item_and_updates_resource() {
         ),
     );
 
-    // Open palette
+    // Open palette via state (P binding removed)
     {
-        let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
-        input.press(KeyCode::KeyP);
+        let mut state = app
+            .world_mut()
+            .resource_mut::<brkrs::ui::palette::PaletteState>();
+        state.open = true;
     }
     app.update();
 
-    // Clear the input so just_pressed doesn't trigger again
+    // Clear any input state
     {
         let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
         input.clear();

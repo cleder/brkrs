@@ -67,6 +67,7 @@ pub fn spawn_grid_overlay(
 pub fn toggle_grid_visibility(
     wireframe_config: Res<WireframeConfig>,
     mut grid_query: Query<&mut Visibility, With<GridOverlay>>,
+    added_grid: Query<Entity, Added<GridOverlay>>,
 ) {
     let target_visibility = if wireframe_config.global {
         Visibility::Visible
@@ -74,8 +75,20 @@ pub fn toggle_grid_visibility(
         Visibility::Hidden
     };
 
-    for mut visibility in grid_query.iter_mut() {
-        *visibility = target_visibility;
+    if wireframe_config.is_changed() {
+        for mut visibility in grid_query.iter_mut() {
+            if *visibility != target_visibility {
+                *visibility = target_visibility;
+            }
+        }
+    } else {
+        for entity in added_grid.iter() {
+            if let Ok(mut visibility) = grid_query.get_mut(entity) {
+                if *visibility != target_visibility {
+                    *visibility = target_visibility;
+                }
+            }
+        }
     }
 }
 

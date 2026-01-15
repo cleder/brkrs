@@ -1,0 +1,37 @@
+openapi: 3.0.0
+info:
+  title: Brkrs Messages & Events for Merkaba Rotor Brick
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    SpawnMerkabaMessage:
+      type: object
+      properties:
+        position:
+          type: object
+          properties:
+            x: { type: number }
+            y: { type: number }
+            z: { type: number }
+        angle_variance_deg:
+          type: number
+          example: 20.0
+        delay_s:
+          type: number
+          example: 0.5
+      required: [position, angle_variance_deg, delay_s]
+    MerkabaCollisionEvent:
+      type: object
+      properties:
+        surface:
+          type: string
+          enum: [Wall, Brick, Paddle]
+      required: [surface]
+    PlayerLifeLost:
+      type: object
+      properties:
+        cause:
+          type: string
+          enum: [MerkabaPaddleContact, Other]
+      required: [cause]

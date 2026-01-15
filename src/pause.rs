@@ -9,9 +9,9 @@
 //! The pause system is implemented as a Bevy plugin that can be added to the app.
 
 use bevy::prelude::*;
+use bevy::window::{CursorOptions, PrimaryWindow};
 #[cfg(not(target_arch = "wasm32"))]
-use bevy::window::WindowMode;
-use bevy::window::{CursorOptions, PrimaryWindow, Window};
+use bevy::window::{Window, WindowMode};
 use bevy_rapier3d::prelude::*;
 
 use crate::level_loader::LevelAdvanceState;
@@ -77,8 +77,14 @@ fn handle_pause_input(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut pause_state: ResMut<PauseState>,
     level_advance: Res<LevelAdvanceState>,
+    lives_state: Res<crate::systems::respawn::LivesState>,
     #[cfg(not(target_arch = "wasm32"))] window: Single<&Window, With<PrimaryWindow>>,
 ) {
+    // Disable pause input when game is over (lives = 0)
+    if lives_state.lives_remaining == 0 {
+        return;
+    }
+
     // Only allow pause if:
     // 1. ESC was just pressed (frame-level debouncing via just_pressed)
     // 2. Game is currently Active (not already paused)
@@ -108,7 +114,9 @@ fn apply_pause_to_physics(
     pause_state: Res<PauseState>,
     mut rapier_config: Query<&mut RapierConfiguration>,
 ) {
-    let mut config = rapier_config.single_mut().unwrap();
+    let Ok(mut config) = rapier_config.single_mut() else {
+        return;
+    };
     match *pause_state {
         PauseState::Active => {
             config.physics_pipeline_active = true;

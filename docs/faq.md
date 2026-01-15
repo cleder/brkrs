@@ -96,6 +96,17 @@ Key modules:
 - `src/pause.rs` — Pause state machine
 - `src/systems/` — Game systems (respawn, textures, etc.)
 
+### How do I tune physics properties?
+
+Physics properties are centralized in `src/physics_config.rs`:
+
+- `BallPhysicsConfig` — Ball bounciness, friction, damping
+- `PaddlePhysicsConfig` — Paddle physics
+- `BrickPhysicsConfig` — Brick collision properties
+
+Modify these resources to adjust gameplay feel.
+All configs include validation to prevent invalid physics values.
+
 ### How do I contribute?
 
 Read the {doc} `contributing` guide for the PR workflow, code style requirements, and commit message conventions.

@@ -95,6 +95,19 @@ pub struct VisualAssetProfile {
     pub albedo_path: String,
     #[serde(default)]
     pub normal_path: Option<String>,
+
+    // NEW: Packed ORM texture (Occlusion-Roughness-Metallic)
+    #[serde(default)]
+    pub orm_path: Option<String>,
+
+    // NEW: Emissive glow map
+    #[serde(default)]
+    pub emissive_path: Option<String>,
+
+    // NEW: Depth/parallax map
+    #[serde(default)]
+    pub depth_path: Option<String>,
+
     #[serde(default = "default_roughness")]
     pub roughness: f32,
     #[serde(default = "default_metallic")]
@@ -103,6 +116,11 @@ pub struct VisualAssetProfile {
     pub uv_scale: Vec2,
     #[serde(default)]
     pub uv_offset: Vec2,
+
+    // NEW: Parallax depth scale
+    #[serde(default = "default_depth_scale")]
+    pub depth_scale: f32,
+
     #[serde(default)]
     pub fallback_chain: Vec<String>,
 }
@@ -119,11 +137,16 @@ fn default_metallic() -> f32 {
     0.0
 }
 
+fn default_depth_scale() -> f32 {
+    0.1
+}
+
 #[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "PascalCase")]
 pub enum ObjectClass {
     Ball,
     Brick,
+    Merkaba,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -296,10 +319,14 @@ fn process_preview_requests(
             id: event.profile.id.clone(),
             albedo_path: event.profile.albedo_path.clone(),
             normal_path: event.profile.normal_path.clone(),
+            orm_path: event.profile.orm_path.clone(),
+            emissive_path: event.profile.emissive_path.clone(),
+            depth_path: event.profile.depth_path.clone(),
             roughness: event.profile.roughness,
             metallic: event.profile.metallic,
             uv_scale: Vec2::from_array(event.profile.uv_scale),
             uv_offset: Vec2::from_array(event.profile.uv_offset),
+            depth_scale: event.profile.depth_scale,
             fallback_chain: event.profile.fallback_chain.clone(),
         };
 

@@ -11,6 +11,9 @@ use brkrs::{level_format::is_multi_hit_brick, BrickTypeId, CountsTowardsCompleti
 
 fn test_app() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins((MinimalPlugins, bevy::input::InputPlugin));
     // Collision events are delivered via the global CollisionEvent message resource
     app.add_message::<bevy_rapier3d::prelude::CollisionEvent>();

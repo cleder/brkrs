@@ -9,8 +9,14 @@ use tracing::warn;
 #[derive(Message, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LevelSwitchRequested {
     pub source: LevelSwitchSource,
+    pub direction: LevelSwitchDirection,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LevelSwitchDirection {
+    Next,
+    Previous,
+}
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LevelSwitchSource {
     Keyboard,
@@ -48,6 +54,17 @@ impl LevelSwitchState {
             .iter()
             .find(|slot| slot.number > current)
             .or_else(|| self.ordered_levels.first())
+    }
+
+    pub fn previous_level_before(&self, current: u32) -> Option<&LevelSlot> {
+        if self.ordered_levels.is_empty() {
+            return None;
+        }
+        // find the last level with number < current, otherwise return last
+        self.ordered_levels
+            .iter()
+            .rfind(|slot| slot.number < current)
+            .or_else(|| self.ordered_levels.last())
     }
 
     pub fn mark_transition_start(&mut self) {
@@ -97,13 +114,24 @@ fn discover_level_slots() -> Vec<LevelSlot> {
     #[cfg(target_arch = "wasm32")]
     {
         // On WASM, hardcode the level list since there's no filesystem access
+        for i in 1..=74 {
+            slots.push(LevelSlot {
+                number: i,
+                path: format!("assets/levels/level_{:03}.ron", i),
+            });
+        }
+        // Add special debug levels
         slots.push(LevelSlot {
-            number: 1,
-            path: "assets/levels/level_001.ron".to_string(),
+            number: 997,
+            path: "assets/levels/level_997.ron".to_string(),
         });
         slots.push(LevelSlot {
-            number: 2,
-            path: "assets/levels/level_002.ron".to_string(),
+            number: 998,
+            path: "assets/levels/level_998.ron".to_string(),
+        });
+        slots.push(LevelSlot {
+            number: 999,
+            path: "assets/levels/level_999.ron".to_string(),
         });
     }
     if slots.is_empty() {
@@ -134,18 +162,47 @@ impl Plugin for LevelSwitchPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<LevelSwitchRequested>()
             .init_resource::<LevelSwitchState>()
-            .add_systems(Update, (queue_keyboard_requests, poll_contract_trigger));
+            // Run the keyboard producer in PreUpdate so it observes `just_pressed` reliably
+            .add_systems(PreUpdate, queue_keyboard_requests)
+            // Contract/polling can remain in Update
+            .add_systems(Update, poll_contract_trigger);
     }
 }
 
 fn queue_keyboard_requests(
     keyboard: Res<ButtonInput<KeyCode>>,
+    cheat: Option<Res<crate::systems::cheat_mode::CheatModeState>>,
     mut events: MessageWriter<LevelSwitchRequested>,
+    mut beep: Option<MessageWriter<crate::signals::UiBeep>>,
 ) {
-    if keyboard.just_pressed(KeyCode::KeyL) {
-        events.write(LevelSwitchRequested {
-            source: LevelSwitchSource::Keyboard,
-        });
+    // N/P reserved for cheat mode only
+    if keyboard.just_pressed(KeyCode::KeyN) {
+        if let Some(cheat) = cheat.as_ref() {
+            if cheat.is_active() {
+                events.write(LevelSwitchRequested {
+                    source: LevelSwitchSource::Keyboard,
+                    direction: LevelSwitchDirection::Next,
+                });
+            } else {
+                // blocked - play soft beep (optional if audio plugin not present)
+                if let Some(b) = beep.as_mut() {
+                    b.write(crate::signals::UiBeep);
+                }
+            }
+        }
+    }
+
+    if keyboard.just_pressed(KeyCode::KeyP) {
+        if let Some(cheat) = cheat.as_ref() {
+            if cheat.is_active() {
+                events.write(LevelSwitchRequested {
+                    source: LevelSwitchSource::Keyboard,
+                    direction: LevelSwitchDirection::Previous,
+                });
+            } else if let Some(b) = beep.as_mut() {
+                b.write(crate::signals::UiBeep);
+            }
+        }
     }
 }
 
@@ -167,7 +224,101 @@ fn poll_contract_trigger(
             }
             events.write(LevelSwitchRequested {
                 source: LevelSwitchSource::Automation,
+                direction: LevelSwitchDirection::Next,
             });
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::systems::audio::AudioPlugin;
+    use bevy::MinimalPlugins;
+
+    #[derive(Resource, Default)]
+    struct BeepCount(u32);
+
+    #[derive(Resource, Default)]
+    struct SwitchCount(u32);
+
+    fn capture_beep(
+        mut reader: bevy::ecs::message::MessageReader<crate::signals::UiBeep>,
+        mut c: ResMut<BeepCount>,
+    ) {
+        for _ in reader.read() {
+            c.0 += 1;
+        }
+    }
+
+    fn capture_switch(
+        mut reader: bevy::ecs::message::MessageReader<LevelSwitchRequested>,
+        mut c: ResMut<SwitchCount>,
+    ) {
+        for _ in reader.read() {
+            c.0 += 1;
+        }
+    }
+
+    fn app_with_plugins() -> App {
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, bevy::input::InputPlugin));
+        app.add_plugins(LevelSwitchPlugin);
+        app.add_plugins(AudioPlugin);
+        // Ensure PauseState exists so run conditions like `not_paused` pass in tests
+        app.init_resource::<crate::pause::PauseState>();
+        // scoring state required by cheat-mode toggle
+        app.init_resource::<crate::systems::scoring::ScoreState>();
+        app.init_resource::<BeepCount>();
+        app.init_resource::<SwitchCount>();
+        // Add capture systems so they run in Update (producer now runs in PreUpdate)
+        app.add_systems(Update, (capture_beep, capture_switch));
+        app
+    }
+
+    #[test]
+    fn queue_blocks_n_when_cheat_inactive_emits_beep() {
+        let mut app = app_with_plugins();
+        // Ensure cheat state exists and is inactive
+        app.add_plugins(crate::systems::cheat_mode::CheatModePlugin);
+        {
+            let mut cheat = app
+                .world_mut()
+                .resource_mut::<crate::systems::cheat_mode::CheatModeState>();
+            cheat.active = false;
+        }
+        // Press N
+        {
+            let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+            input.press(KeyCode::KeyN);
+        }
+        app.update();
+        // After one update, capture systems have run
+        let beep = app.world().resource::<BeepCount>();
+        let sw = app.world().resource::<SwitchCount>();
+        assert!(beep.0 >= 1, "Blocked N should emit a beep");
+        assert_eq!(sw.0, 0, "Blocked N should not create a switch request");
+    }
+
+    #[test]
+    fn queue_allows_n_when_cheat_active_emits_switch() {
+        let mut app = app_with_plugins();
+        app.add_plugins(crate::systems::cheat_mode::CheatModePlugin);
+        {
+            let mut cheat = app
+                .world_mut()
+                .resource_mut::<crate::systems::cheat_mode::CheatModeState>();
+            cheat.active = true;
+        }
+        // Press N
+        {
+            let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+            input.press(KeyCode::KeyN);
+        }
+        app.update();
+        let beep = app.world().resource::<BeepCount>();
+        let sw = app.world().resource::<SwitchCount>();
+        assert_eq!(beep.0, 0, "Allowed N should not emit a beep");
+        assert_eq!(sw.0, 1, "Allowed N should create a single switch request");
     }
 }

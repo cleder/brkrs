@@ -3,8 +3,7 @@
 **Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `/speckit.plan` command.
-See `.specify/templates/commands/plan.md` for the execution workflow.
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
@@ -18,18 +17,54 @@ See `.specify/templates/commands/plan.md` for the execution workflow.
   the iteration process.
 -->
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION] **Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [single/web/mobile - determines source structure]
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
 **Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+
+This check MUST verify compliance with the constitution, including **Test-Driven Development (TDD)** gates:
+
+- Tests are defined and committed prior to implementation efforts for each story/feature.
+- A proof-of-failure commit (tests that FAIL) MUST exist in the branch history prior to implementation commits.
+- Tests MUST be reviewed and approved by the feature owner or requestor before implementation begins.
+
+This check MUST also verify compliance with **Bevy 0.17 mandates & prohibitions** (if the feature touches ECS, rendering, assets, or scheduling):
+
+- **Bevy Event System Guidance:**
+  - For any feature using events, messages, or observers, the plan MUST explicitly state which system is used (Messages vs Observers) and why, referencing the constitution's "Bevy 0.17 Event, Message, and Observer Clarification" section.
+  - Justify the choice (e.g., "Messages for batchable, cross-frame work; Observers for immediate, reactive logic").
+
+- **Coordinate System Guidance (if feature involves spatial movement/physics):**
+  - Plan MUST specify which axes are used for movement (XZ plane for horizontal, Y for vertical, etc.).
+  - Clarify whether directional terms (forward/backward) refer to Bevy's Transform API (-Z forward), gameplay perspective, or direct axis references.
+  - Document any `LockedAxes` constraints and their relationship to camera orientation.
+
+- **Initialization System Idempotence (if feature has loader/initializer systems in Update):**
+  - Systems that initialize or load state in `Update` schedule MUST be idempotent.
+  - Use a guard field (e.g., `last_level_number: Option<u32>`) to track whether initialization has occurred.
+  - ONLY perform initialization when context changes (e.g., level transition), NOT every frame.
+  - This prevents runtime state changes (e.g., gravity from brick destruction) from being overwritten.
+  - See 020-gravity-bricks retrospective for the bug this pattern prevents.
+
+- **Multi-Frame Persistence Testing (if feature modifies runtime state):**
+  - Tests for runtime state changes MUST verify persistence across multiple `app.update()` cycles.
+  - Tests MUST include ALL systems that write to the affected resource to catch per-frame overwrites.
+  - Minimum 10 frames of persistence checking recommended.
+
+- Systems are fallible (`Result`) and do not panic on query outcomes (`?`, no `.unwrap()` on queries).
+- Queries use `With<T>`/`Without<T>` filters and `Changed<T>` where appropriate (especially UI).
+- **Message-Event Separation**: Verify correct use of `MessageWriter/Reader` for buffered, frame-agnostic streams and observers/`Trigger<T>` for immediate, reactive logic (e.g., UI/sound triggers).
+- Assets are loaded once and handles are stored in Resources (no repeated `asset_server.load()` in loops).
+- Hierarchies use `ChildOf::parent()` and `add_children()`/`remove::<Children>()` patterns.
 
 [Gates determined based on constitution file]
 
@@ -48,7 +83,6 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
-
 <!--
   ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
   for this feature. Delete unused options and expand the chosen structure with
@@ -92,7 +126,8 @@ ios/ or android/
 └── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real directories captured above]
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Complexity Tracking
 

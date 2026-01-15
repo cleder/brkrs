@@ -12,6 +12,7 @@ fn app_with_variant_registry() -> App {
     let mut app = App::new();
     app.add_plugins(MinimalPlugins);
     app.insert_resource(Assets::<StandardMaterial>::default());
+    app.insert_resource(Assets::<Image>::default());
     app.add_plugins(TextureMaterialsPlugin);
     app.update();
     app
@@ -58,7 +59,7 @@ fn disk_manifest_populates_registry_for_new_bricks() {
         world.resource_scope(|world, mut registry: Mut<TypeVariantRegistry>| {
             world.resource_scope(|world, bank: Mut<ProfileMaterialBank>| {
                 world.resource_scope(|_world, mut fallback: Mut<FallbackRegistry>| {
-                    registry.rebuild(&manifest, &bank, &mut fallback);
+                    registry.rebuild(&manifest, &bank, &mut fallback, None, None);
                 });
             });
         });
@@ -118,7 +119,7 @@ fn immediate_spawn_registry_populated_from_manifest() {
         world.resource_scope(|world, mut registry: Mut<TypeVariantRegistry>| {
             world.resource_scope(|world, bank: Mut<ProfileMaterialBank>| {
                 world.resource_scope(|_world, mut fallback: Mut<FallbackRegistry>| {
-                    registry.rebuild(&manifest, &bank, &mut fallback);
+                    registry.rebuild(&manifest, &bank, &mut fallback, None, None);
                 });
             });
         });
@@ -177,7 +178,7 @@ fn runtime_mutation_updates_registry_mapping() {
         world.resource_scope(|world, mut registry: Mut<TypeVariantRegistry>| {
             world.resource_scope(|world, bank: Mut<ProfileMaterialBank>| {
                 world.resource_scope(|_world, mut fallback: Mut<FallbackRegistry>| {
-                    registry.rebuild(&manifest, &bank, &mut fallback);
+                    registry.rebuild(&manifest, &bank, &mut fallback, None, None);
                 });
             });
         });
@@ -201,7 +202,7 @@ fn runtime_mutation_updates_registry_mapping() {
         world.resource_scope(|world, mut registry: Mut<TypeVariantRegistry>| {
             world.resource_scope(|world, bank: Mut<ProfileMaterialBank>| {
                 world.resource_scope(|_world, mut fallback: Mut<FallbackRegistry>| {
-                    registry.rebuild(&manifest, &bank, &mut fallback);
+                    registry.rebuild(&manifest, &bank, &mut fallback, None, None);
                 });
             });
         });

@@ -6,8 +6,12 @@ use brkrs::systems::textures::materials::{
 
 fn app_with_fallback_registry() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
     app.insert_resource(Assets::<StandardMaterial>::default());
+    app.insert_resource(Assets::<Image>::default());
     app.add_plugins(TextureMaterialsPlugin);
     app.update();
     app

@@ -1,18 +1,13 @@
 # brkrs Documentation
 
-Welcome to the brkrs documentation! **brkrs** is a Breakout/Arkanoid style game built with Rust and the Bevy engine.
+## Welcome to the brkrs documentation
 
-```{image} _static/images/sample-gameplay.png
-:alt: brkrs gameplay
-:width: 400px
-:align: center
+```{include} ../README.md
+:start-after: <!-- INCLUSION-MARKER-DO-NOT-REMOVE -->
+:end-before: <!-- INCLUSION-MARKER-END-DO-NOT-REMOVE -->
+:heading-offset: 1
+:relative-images: docs/
 ```
-
-**Quick links**:
-
-- 🎮 [Play the web version](https://cleder.github.io/brkrs/)
-- 📖 {doc}`quickstart` — Get running in 10 minutes
-- 🛠️ {doc}`developer-guide` — Contribute to the project
 
 ## Getting Started
 
@@ -37,6 +32,7 @@ contributors
 asset-format
 architecture
 bricks
+ui-systems
 ```
 
 ## API Reference

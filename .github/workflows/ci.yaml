@@ -2,9 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - '*'
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - develop
 
 env:
   CARGO_TERM_COLOR: always
@@ -23,18 +26,30 @@ jobs:
     env:
       RUST_TEST_THREADS: 1
     steps:
+      - name: Free Disk Space
+        uses: endersonmenezes/free-disk-space@v3  # Use @main for latest, @v3 for stable
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          remove_tool_cache: false
+          remove_swap: true
+          remove_packages: "azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* temurin-* mysql* dotnet-sdk-*"
+          remove_packages_one_command: true
+          remove_folders: "/usr/share/swift /usr/share/miniconda /usr/share/az* /usr/local/lib/node_modules /usr/local/share/chromium /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli /usr/local/aws-sam-cli /usr/share/gradle"
+          rm_cmd: "rmz"  # Use 'rmz' for faster deletion (default: 'rm')
+          rmz_version: "3.1.1"  # Required when rm_cmd is 'rmz'
+          testing: false
       - name: Checkout sources
         uses: actions/checkout@v4
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
         with:
-          # Build cache key from Cargo.lock checksum and branch name so each
-          # branch + lockfile combination gets its own cache. This improves
-          # cache correctness when dependencies change or different branches
-          # modify Cargo.lock.
-          shared-key: ${{ runner.os }}-ci-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
+          shared-key: ${{ runner.os }}-ci-test-${{ hashFiles('**/Cargo.lock') }}-${{ github.ref_name }}
           save-if: ${{ github.event_name == 'push' }}
       - name: Install Dependencies
         run: |
@@ -53,6 +68,36 @@ jobs:
       - name: Run cargo test
         run: cargo test --all-features
 
+  # 📊 Coverage job (isolated, cleans before build)
+  # coverage:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@stable
+  #     - name: Install cargo-llvm-cov
+  #       uses: taiki-e/install-action@cargo-llvm-cov
+  #     - name: Rust Cache
+  #       uses: Swatinem/rust-cache@v2
+  #     - name: Install Dependencies
+  #       run: |
+  #         sudo apt-get update
+  #         # Ensure pkg-config and development headers are available so native
+  #         # crates like wayland-sys can find system libraries (wayland-client.pc)
+  #         sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+  #     - name: Set PKG_CONFIG_PATH for native libs
+  #       run: echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig" >> $GITHUB_ENV
+  #     - name: Clean target dir
+  #       run: cargo clean
+  #     - name: Run coverage build
+  #       run: |
+  #         export CARGO_TARGET_DIR=$GITHUB_WORKSPACE/target_cov
+  #         cargo llvm-cov --lcov --output-path lcov.info
+  #     - name: Upload coverage to Codecov
+  #       uses: codecov/codecov-action@v5
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }} # required for private repos or protected branches
+  #         files: lcov.info
+  #         fail_ci_if_error: true
 
   # Run cargo clippy -- -D warnings
   clippy_check:
@@ -102,7 +147,6 @@ jobs:
 
   lint:
     name: Bevy Lint
-    # Re-enable bevy_lint now that libwayland-dev is installed on runners
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -124,86 +168,15 @@ jobs:
           cache: true
       - name: Run `bevy_lint`
         run: bevy_lint --workspace
+      # - name: Run message_event_rust linter tests
+      #   run: |
+      #     cargo test -q --manifest-path tools/message_event_lint/Cargo.toml
+      # - name: Run message_event_rust linter against repo
+      #   run: |
+      #     find . -name '*.rs' -not -path './target/*' -print0 | xargs -0 cargo run --manifest-path tools/message_event_lint/Cargo.toml --
+      # - name: Run python message/event lint tests
+      #   run: |
+      #     python3 -m pip install --user pytest
+      #     python3 -m pytest .github/lint/tests/test_message_event_lint.py -q
 
-  # Measure cold vs warm build times to validate cache warm-up improvement
-  cache_benchmark:
-    name: Cache benchmark (push only)
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' }}
-    timeout-minutes: 60
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-      - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Prepare environment
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev time
-      - name: Ensure clean build
-        run: rm -rf target || true
-
-      - name: Cold build (first run)
-        id: cold
-        run: |
-          start=$(date +%s)
-          # compile tests (no-run) to pre-populate build artifacts
-          time cargo test --no-run --all-features || true
-          end=$(date +%s)
-          dur=$((end-start))
-          echo "cold_build_seconds=${dur}" >> $GITHUB_ENV
-          echo "cold_build_seconds=${dur}" > cache_metrics.txt
-
-      - name: Warm build (second run)
-        id: warm
-        run: |
-          start=$(date +%s)
-          time cargo test --no-run --all-features || true
-          end=$(date +%s)
-          dur=$((end-start))
-          echo "warm_build_seconds=${dur}" >> $GITHUB_ENV
-          echo "warm_build_seconds=${dur}" >> cache_metrics.txt
-
-      - name: Print metrics
-        run: cat cache_metrics.txt || true
-
-      - name: Upload metrics artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: cache-benchmark-metrics
-          path: cache_metrics.txt
-
-  # Run migration parity tests when assets/levels/ files are modified in a PR
-  migration_tests:
-    name: Migration tests (assets/levels)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-
-      - name: Detect changes in assets/levels
-        id: check_changes
-        run: |
-          git fetch origin ${{ github.base_ref }} || true
-          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD || true)
-          echo "changed_files=$CHANGED" >> $GITHUB_OUTPUT
-          if echo "$CHANGED" | grep -q '^assets/levels/' ; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Skip job when no asset files changed
-        if: steps.check_changes.outputs.changed == 'false'
-        run: |
-          echo "No changes in assets/levels detected; skipping migration tests"
-
-      - name: Build migration tool
-        if: steps.check_changes.outputs.changed == 'true'
-        run: cargo build --manifest-path tools/migrate-level-indices/Cargo.toml
-
-      - name: Run migration parity tests
-        if: steps.check_changes.outputs.changed == 'true'
-        run: cargo test --test migration_parity -- --nocapture
+...

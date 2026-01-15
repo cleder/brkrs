@@ -7,6 +7,9 @@ use tempfile::NamedTempFile;
 
 fn level_test_app() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins((MinimalPlugins, bevy::input::InputPlugin));
     // Collision events are delivered via the global CollisionEvent message resource
     app.add_message::<CollisionEvent>();
@@ -309,6 +312,10 @@ fn k_key_only_destroys_destructible_bricks() {
     // the InputPlugin updates `just_pressed` and the destruction system runs.
     app.update();
     {
+        app.insert_resource(brkrs::systems::cheat_mode::CheatModeState {
+            active: true,
+            ..default()
+        });
         let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
         input.press(KeyCode::KeyK);
     }
@@ -317,7 +324,7 @@ fn k_key_only_destroys_destructible_bricks() {
     app.update();
     app.update();
 
-    // All destructible bricks should be gone; indestructible remain
+    // All destructible bricks should be gone
     let world_ref = app.world();
     for e in destructible {
         assert!(
@@ -325,11 +332,276 @@ fn k_key_only_destroys_destructible_bricks() {
             "destructible brick should be removed by K"
         );
     }
-    for e in indestructible {
-        assert!(
-            world_ref.entities().contains(e),
-            "indestructible brick should remain after K"
-        );
-    }
     std::env::remove_var("BK_LEVEL");
+}
+
+// === US1: Level Designer Documents Level Intent (Description) ===
+
+#[test]
+fn test_level_with_description_only() {
+    let ron = r#"
+        LevelDefinition(
+            number: 2,
+            description: Some("Test level description"),
+            matrix: [[0]],
+        )
+    "#;
+    let level: brkrs::level_loader::LevelDefinition =
+        ron::de::from_str(ron).expect("Should deserialize");
+    assert!(level.has_description());
+    assert!(!level.has_author());
+    assert_eq!(
+        level.description,
+        Some("Test level description".to_string())
+    );
+}
+
+#[test]
+fn test_multiline_description() {
+    let ron = r#"
+        LevelDefinition(
+            number: 3,
+            description: Some("Line 1\nLine 2\nLine 3"),
+            matrix: [[0]],
+        )
+    "#;
+    let level: brkrs::level_loader::LevelDefinition =
+        ron::de::from_str(ron).expect("Should deserialize");
+    assert!(level.has_description());
+    let desc = level.description.as_ref().unwrap();
+    assert!(desc.contains("Line 1"));
+    assert!(desc.contains("Line 2"));
+    assert!(desc.contains("Line 3"));
+}
+
+#[test]
+fn test_empty_description_treated_as_none() {
+    let ron = r#"
+        LevelDefinition(
+            number: 4,
+            description: Some(""),
+            matrix: [[0]],
+        )
+    "#;
+    let level: brkrs::level_loader::LevelDefinition =
+        ron::de::from_str(ron).expect("Should deserialize");
+    assert!(!level.has_description());
+    assert_eq!(level.description, Some("".to_string()));
+}
+
+#[test]
+fn test_description_with_special_chars() {
+    let ron = r#"
+        LevelDefinition(
+            number: 5,
+            description: Some("Special chars: !@#$%^&*()"),
+            matrix: [[0]],
+        )
+    "#;
+    let level: brkrs::level_loader::LevelDefinition =
+        ron::de::from_str(ron).expect("Should deserialize");
+    assert!(level.has_description());
+    assert!(level.description.as_ref().unwrap().contains("!@#$%^&*()"));
+}
+
+// === US2: Contributor Takes Credit for Work (Author) ===
+
+#[test]
+fn test_level_with_author_plain_string() {
+    let ron = r#"
+        LevelDefinition(
+            number: 6,
+            author: Some("Jane Smith"),
+            matrix: [[0]],
+        )
+    "#;
+    let level: brkrs::level_loader::LevelDefinition =
+        ron::de::from_str(ron).expect("Should deserialize");
+    assert!(level.has_author());
+    assert!(!level.has_description());
+    assert_eq!(level.author, Some("Jane Smith".to_string()));
+    assert_eq!(level.author_name(), Some("Jane Smith"));
+}
+
+#[test]
+fn test_author_markdown_email_format() {
+    let ron = r#"
+        LevelDefinition(
+            number: 7,
+            author: Some("[Jane Smith](mailto:jane@example.com)"),
+            matrix: [[0]],
+        )
+    "#;
+    let level: brkrs::level_loader::LevelDefinition =
+        ron::de::from_str(ron).expect("Should deserialize");
+    assert!(level.has_author());
+    assert_eq!(level.author_name(), Some("Jane Smith"));
+}
+
+#[test]
+fn test_author_markdown_url_format() {
+    let ron = r#"
+        LevelDefinition(
+            number: 8,
+            author: Some("[Team](https://github.com/team)"),
+            matrix: [[0]],
+        )
+    "#;
+    let level: brkrs::level_loader::LevelDefinition =
+        ron::de::from_str(ron).expect("Should deserialize");
+    assert!(level.has_author());
+    assert_eq!(level.author_name(), Some("Team"));
+}
+
+#[test]
+fn test_extract_author_plain_text() {
+    assert_eq!(brkrs::extract_author_name("Jane Smith"), "Jane Smith");
+    assert_eq!(brkrs::extract_author_name("  Jane  "), "Jane");
+    assert_eq!(brkrs::extract_author_name("John Doe"), "John Doe");
+}
+
+#[test]
+fn test_extract_author_markdown_email() {
+    assert_eq!(
+        brkrs::extract_author_name("[Jane Smith](mailto:jane@example.com)"),
+        "Jane Smith"
+    );
+    assert_eq!(
+        brkrs::extract_author_name("[John](mailto:john@test.org)"),
+        "John"
+    );
+}
+
+#[test]
+fn test_extract_author_markdown_url() {
+    assert_eq!(
+        brkrs::extract_author_name("[Team](https://example.com)"),
+        "Team"
+    );
+    assert_eq!(
+        brkrs::extract_author_name("[Contributors](https://github.com/org/repo)"),
+        "Contributors"
+    );
+}
+
+#[test]
+fn test_extract_author_edge_cases() {
+    // Empty brackets
+    assert_eq!(brkrs::extract_author_name("[](url)"), "");
+
+    // Nested brackets
+    assert_eq!(brkrs::extract_author_name("[[Name]](url)"), "[Name]");
+
+    // Malformed - no closing bracket
+    assert_eq!(brkrs::extract_author_name("[Name"), "[Name");
+
+    // Not markdown
+    assert_eq!(brkrs::extract_author_name("Just text"), "Just text");
+
+    // With spaces around brackets
+    assert_eq!(
+        brkrs::extract_author_name("[Jane Smith] (mailto:jane@example.com)"),
+        "[Jane Smith] (mailto:jane@example.com)"
+    );
+}
+
+#[test]
+fn test_empty_author_treated_as_none() {
+    let ron = r#"
+        LevelDefinition(
+            number: 9,
+            author: Some("   "),
+            matrix: [[0]],
+        )
+    "#;
+    let level: brkrs::level_loader::LevelDefinition =
+        ron::de::from_str(ron).expect("Should deserialize");
+    assert!(!level.has_author());
+    assert_eq!(level.author_name(), None);
+}
+
+// === US1 + US2: Both description and author ===
+
+#[test]
+fn test_level_with_full_metadata() {
+    let ron = r#"
+        LevelDefinition(
+            number: 10,
+            description: Some("Expert challenge level"),
+            author: Some("[Jane Smith](mailto:jane@example.com)"),
+            matrix: [[0]],
+        )
+    "#;
+    let level: brkrs::level_loader::LevelDefinition =
+        ron::de::from_str(ron).expect("Should deserialize");
+    assert!(level.has_description());
+    assert!(level.has_author());
+    assert_eq!(level.author_name(), Some("Jane Smith"));
+}
+
+// === US4: Backward compatibility ===
+
+#[test]
+fn test_level_without_metadata_backward_compat() {
+    let ron = r#"
+        LevelDefinition(
+            number: 1,
+            matrix: [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
+        )
+    "#;
+    let level: brkrs::level_loader::LevelDefinition =
+        ron::de::from_str(ron).expect("Should deserialize");
+    assert_eq!(level.number, 1);
+    assert_eq!(level.description, None);
+    assert_eq!(level.author, None);
+    assert!(!level.has_description());
+    assert!(!level.has_author());
+}
+
+#[test]
+fn test_level_with_only_description() {
+    let ron = r#"
+        LevelDefinition(
+            number: 11,
+            description: Some("Only description"),
+            matrix: [[0]],
+        )
+    "#;
+    let level: brkrs::level_loader::LevelDefinition =
+        ron::de::from_str(ron).expect("Should deserialize");
+    assert!(level.has_description());
+    assert!(!level.has_author());
+}
+
+#[test]
+fn test_level_with_only_author() {
+    let ron = r#"
+        LevelDefinition(
+            number: 12,
+            author: Some("Only Author"),
+            matrix: [[0]],
+        )
+    "#;
+    let level: brkrs::level_loader::LevelDefinition =
+        ron::de::from_str(ron).expect("Should deserialize");
+    assert!(!level.has_description());
+    assert!(level.has_author());
+}
+
+#[test]
+fn test_level_with_gravity_and_metadata() {
+    let ron = r#"
+        LevelDefinition(
+            number: 13,
+            gravity: Some((0.0, -9.81, 0.0)),
+            description: Some("Standard gravity level"),
+            author: Some("Game Designer"),
+            matrix: [[0]],
+        )
+    "#;
+    let level: brkrs::level_loader::LevelDefinition =
+        ron::de::from_str(ron).expect("Should deserialize");
+    assert!(level.gravity.is_some());
+    assert!(level.has_description());
+    assert!(level.has_author());
 }

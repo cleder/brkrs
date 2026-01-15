@@ -3,6 +3,7 @@
 AudioManifest(
     sounds: {
         BrickDestroy: "brick_destroy.ogg",
+        Brick41ExtraLife: "zapThreeToneDown.ogg",
         MultiHitImpact: "multi_hit_impact.ogg",
         WallBounce: "wall_bounce.ogg",
         PaddleHit: "paddle_hit.ogg",
@@ -10,5 +11,6 @@ AudioManifest(
         PaddleBrickHit: "paddle_brick_hit.ogg",
         LevelStart: "level_start.ogg",
         LevelComplete: "level_complete.ogg",
+        UiBeep: "cheat_mode_toggle.ogg",
     }
 )

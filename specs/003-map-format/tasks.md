@@ -15,7 +15,7 @@
 ## Path Conventions
 
 - **Single Bevy project**: `src/`, `assets/`, `tests/` at repository root
-- All paths are absolute from `/home/christian/devel/bevy/brkrs/`
+- All paths are relative to repository root
 
 ---
 

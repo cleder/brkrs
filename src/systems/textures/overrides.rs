@@ -18,14 +18,14 @@ pub struct LevelOverridesPlugin;
 impl Plugin for LevelOverridesPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<LevelPresentation>();
+        // Use the custom SystemSet from level_loader to order after sync_level_presentation
+        use crate::systems::sets::LevelFadeInStartSystems;
         app.add_systems(
             Update,
-            (
-                refresh_presentation_on_manifest_change,
-                apply_level_overrides,
-            )
-                .chain(),
+            apply_level_overrides.in_set(LevelFadeInStartSystems),
         );
+        // Keep refresh_presentation_on_manifest_change in Update for hot-reload
+        app.add_systems(Update, refresh_presentation_on_manifest_change);
     }
 }
 
@@ -157,7 +157,8 @@ impl LevelPresentation {
             // Other kinds don't have per-level overrides
             BaselineMaterialKind::Ball
             | BaselineMaterialKind::Paddle
-            | BaselineMaterialKind::Brick => None,
+            | BaselineMaterialKind::Brick
+            | BaselineMaterialKind::Merkaba => None,
         }
     }
 

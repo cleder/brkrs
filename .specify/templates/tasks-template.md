@@ -5,10 +5,12 @@ description: "Task list template for feature implementation"
 
 # Tasks: [FEATURE NAME]
 
-**Input**: Design documents from `/specs/[###-feature-name]/` **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
+**Input**: Design documents from `/specs/[###-feature-name]/`
+**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks.
-Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
+**Tests**: Tests are MANDATORY for all user stories. Each story MUST include unit tests and feature-level acceptance tests (integration or contract tests as appropriate). Tests MUST be written and committed first, verified to FAIL (red), and then approved before implementation begins; record the test-proof commit hash in the task description.
+
+**Bevy 0.17 compliance**: When generating tasks for ECS/rendering/UI work, include explicit tasks (or acceptance criteria within test tasks) to ensure compliance with the constitution's Bevy 0.17 mandates & prohibitions (no panicking queries, filtered queries, `Changed<T>` for reactive UI, message vs event correctness, asset handle reuse, and correct hierarchy APIs). For any event-driven feature, tasks MUST specify which event system is used (Messages vs Observers), justify the choice, and include acceptance criteria for **Message-Event Separation** (e.g., verify buffered messages used for frame-agnostic logs and observers used for immediate UI/sound triggers) and **Hierarchy Safety** (verifying use of `commands.entity(parent).add_child(child)` or `EntityCommands::set_parent`).
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -79,9 +81,9 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 1 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 1 (REQUIRED) ⚠️
 
-> **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
+> **NOTE: Write these tests FIRST, ensure they FAIL before implementation; include failing-test commit hash in task**
 
 - [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
 - [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
@@ -105,7 +107,7 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 2 (REQUIRED) ⚠️
 
 - [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
 - [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
@@ -127,7 +129,7 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 3 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 3 (REQUIRED) ⚠️
 
 - [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
 - [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
@@ -178,7 +180,9 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Within Each User Story
 
-- Tests (if included) MUST be written and FAIL before implementation
+- Tests MUST be written first and verified to FAIL before implementation begins; include failing-test commit in the branch and record its hash in the task description.
+- Tests MUST be approved by the feature owner/requestor before implementation proceeds.
+- Implementations MUST comply with the constitution's Bevy 0.17 mandates & prohibitions (where applicable): fallible systems, no `.unwrap()` on queries, filtered queries (`With`/`Without`), `Changed<T>` for reactive updates, correct message vs event usage, asset handle reuse, and correct hierarchy APIs.
 - Models before services
 - Services before endpoints
 - Core implementation before integration

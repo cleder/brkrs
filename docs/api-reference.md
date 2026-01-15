@@ -21,6 +21,61 @@ The rustdoc includes:
 
 ## Module Overview
 
+## Physics Config Resources
+
+The following resources centralize physics configuration for balls, paddles, and bricks:
+
+### BallPhysicsConfig
+
+- `restitution: f32` — Bounciness coefficient (0.0–2.0 recommended)
+- `friction: f32` — Friction coefficient (0.0–2.0 recommended)
+- `linear_damping: f32` — Linear velocity damping (0.0–10.0 recommended)
+- `angular_damping: f32` — Angular velocity damping (0.0–10.0 recommended)
+
+### PaddlePhysicsConfig
+
+- `restitution: f32` — Bounciness coefficient
+- `friction: f32` — Friction coefficient
+- `linear_damping: f32` — Linear velocity damping
+- `angular_damping: f32` — Angular velocity damping
+
+### BrickPhysicsConfig
+
+- `restitution: f32` — Bounciness coefficient
+- `friction: f32` — Friction coefficient
+
+All configs provide a `validate()` method to check for finite, non-negative, and reasonable values.
+Use these resources in spawn systems to ensure consistent physics parameters and prevent hardcoded values.
+
+**Usage Example:**
+
+```rust
+use bevy::prelude::*;
+use brkrs::physics_config::BallPhysicsConfig;
+
+fn spawn_ball(
+    mut commands: Commands,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<StandardMaterial>>,
+    ball_config: Res<BallPhysicsConfig>, // Inject config
+) {
+    commands.spawn((
+        Mesh3d(meshes.add(Sphere::new(0.3).mesh())),
+        MeshMaterial3d(materials.add(Color::srgb(1.0, 1.0, 1.0))),
+        RigidBody::Dynamic,
+        Collider::ball(0.3),
+        Restitution::coefficient(ball_config.restitution),
+        Friction::coefficient(ball_config.friction),
+        Damping {
+            linear_damping: ball_config.linear_damping,
+            angular_damping: ball_config.angular_damping,
+        },
+    ));
+}
+```
+
+See `src/physics_config.rs` for implementation and extension notes.
+
 The crate is organized into the following modules:
 
 | Module | Description |
@@ -29,8 +84,24 @@ The crate is organized into the following modules:
 | `level_format` | Level file parsing and RON deserialization |
 | `level_loader` | Level loading, entity spawning, and grid management |
 | `pause` | Pause system state machine and UI overlay |
-| `systems` | Game systems (respawn, textures, level switching, debug) |
+| `systems` | Game systems (respawn, spawning, textures, level switching, debug) |
 | `ui` | User interface components and palette definitions |
+
+### UI Module Subcomponents
+
+The `ui` module is further organized into specialized submodules:
+
+| Submodule | Purpose |
+|-----------|---------|
+| `ui::score_display` | Score HUD element showing cumulative player score (top-right) |
+| `ui::lives_counter` | Lives remaining counter display (top-right, below score) |
+| `ui::game_over_overlay` | Centered full-screen "Game Over" message when player exhausts all lives |
+| `ui::level_label` | Current level display HUD element |
+| `ui::cheat_indicator` | Visual indicator showing when cheat mode is active (lower-right corner) |
+| `ui::pause_overlay` | Pause menu and overlay displayed when ESC is pressed |
+| `ui::palette` | Designer tool for in-game brick selection and placement (press P) |
+| `ui::fonts` | Platform-specific font loading (desktop vs WASM, idempotent) |
+| `ui::mod` | UI error types and system registration pattern documentation |
 
 ## Building Documentation Locally
 

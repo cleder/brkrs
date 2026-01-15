@@ -5,9 +5,79 @@ use std::{collections::VecDeque, f32::consts::PI, time::Duration};
 use tracing::{info, warn};
 
 use crate::{
-    Ball, BallFrozen, LowerGoal, Paddle, PaddleGrowing, BALL_RADIUS, PADDLE_GROWTH_DURATION,
-    PADDLE_HEIGHT, PADDLE_RADIUS,
+    systems::scoring::MilestoneReached, Ball, BallFrozen, LowerGoal, Paddle, PaddleGrowing,
+    BALL_RADIUS, PADDLE_GROWTH_DURATION, PADDLE_HEIGHT, PADDLE_RADIUS,
 };
+
+/// Applies life awards from `LifeAwardMessage` to `LivesState`, with clamping.
+///
+/// - Clamps lives to `[0, MAX_LIVES]`
+/// - Ignores zero-delta awards
+/// - Logs a warning if a corrupted state is detected (shouldn't happen with `u8`)
+pub fn apply_life_awards(
+    awards: Option<MessageReader<crate::signals::LifeAwardMessage>>,
+    lives_state: Option<ResMut<LivesState>>,
+) {
+    const MAX_LIVES: i32 = 5; // TODO: load from config when available
+
+    let Some(mut awards) = awards else {
+        return;
+    };
+    let Some(mut lives_state) = lives_state else {
+        return;
+    };
+    for award in awards.read() {
+        if award.delta == 0 {
+            continue;
+        }
+
+        let current = lives_state.lives_remaining as i32;
+        let mut next = current + award.delta;
+
+        if !(0..=MAX_LIVES).contains(&current) {
+            warn!(
+                target = "respawn",
+                current, MAX_LIVES, "LivesState corrupted prior to award; clamping to valid range"
+            );
+        }
+
+        next = next.clamp(0, MAX_LIVES);
+
+        if next != current {
+            lives_state.lives_remaining = next as u8;
+        }
+    }
+}
+
+/// Clears the per-frame paddle-hazard collision flag at the start of each Update cycle.
+///
+/// This system must run early in the Update schedule (before paddle collision detection)
+/// to reset the flag that tracks whether a life has been lost to paddle-hazard collision
+/// during the current frame. This ensures that multiple hazard contacts in the same frame
+/// result in exactly one life loss.
+///
+/// # System Scheduling
+/// Tracks whether a life-loss event was emitted this frame.
+/// Reset at frame start to allow one life loss per frame per entity.
+#[derive(Resource, Debug, Default, Clone, Copy)]
+pub struct FrameLossState {
+    pub hazard_loss_emitted: bool,
+}
+
+/// Resets the frame loss flag at the start of each frame.
+/// Must run in the Update schedule before `read_character_controller_collisions`.
+pub fn clear_life_loss_frame_flag(mut frame_loss_state: ResMut<FrameLossState>) {
+    frame_loss_state.hazard_loss_emitted = false;
+}
+
+/// Resets the frame loss flag when a respawn is scheduled.
+/// This ensures hazard collisions can trigger life loss after respawn.
+fn reset_frame_loss_on_respawn(
+    mut frame_loss_state: ResMut<FrameLossState>,
+    _events: MessageReader<RespawnScheduled>,
+) {
+    frame_loss_state.hazard_loss_emitted = false;
+}
 
 /// Shared lives resource maintained by the lives system.
 #[derive(Resource, Debug, Clone, Copy)]
@@ -171,6 +241,8 @@ pub struct LifeLostEvent {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LifeLossCause {
     LowerGoal,
+    MerkabaCollision,
+    PaddleHazard,
 }
 
 #[allow(dead_code)]
@@ -215,6 +287,10 @@ impl Plugin for RespawnPlugin {
             .init_resource::<LivesState>()
             .init_resource::<SpawnPoints>()
             .init_resource::<RespawnVisualState>()
+            .init_resource::<FrameLossState>()
+            .init_resource::<crate::physics_config::BallPhysicsConfig>()
+            .init_resource::<crate::physics_config::PaddlePhysicsConfig>()
+            .init_resource::<crate::physics_config::BrickPhysicsConfig>()
             .add_message::<LifeLostEvent>()
             .add_message::<RespawnScheduled>()
             .add_message::<RespawnCompleted>()
@@ -229,31 +305,73 @@ impl Plugin for RespawnPlugin {
                     RespawnSystems::Control,
                 )
                     .chain(),
-            )
-            .add_systems(
-                Update,
-                (
-                    detect_ball_loss.in_set(RespawnSystems::Detect),
-                    life_loss_logging
-                        .in_set(RespawnSystems::Detect)
-                        .after(detect_ball_loss),
-                    enqueue_respawn_requests.in_set(RespawnSystems::Schedule),
-                    process_respawn_queue
-                        .in_set(RespawnSystems::Schedule)
-                        .after(enqueue_respawn_requests),
-                    log_respawn_scheduled
-                        .in_set(RespawnSystems::Schedule)
-                        .after(process_respawn_queue),
-                    log_game_over_requested
-                        .in_set(RespawnSystems::Schedule)
-                        .after(enqueue_respawn_requests),
-                    respawn_executor.in_set(RespawnSystems::Execute),
-                    (respawn_visual_trigger, animate_respawn_visual)
-                        .chain()
-                        .in_set(RespawnSystems::Visual),
-                    restore_paddle_control.in_set(RespawnSystems::Control),
-                ),
             );
+
+        // Detect phase systems
+        app.add_systems(Update, detect_ball_loss.in_set(RespawnSystems::Detect));
+        app.add_systems(
+            Update,
+            life_loss_logging
+                .in_set(RespawnSystems::Detect)
+                .after(detect_ball_loss),
+        );
+        app.add_systems(
+            Update,
+            apply_paddle_shrink
+                .in_set(RespawnSystems::Detect)
+                .after(detect_ball_loss),
+        );
+
+        // Schedule phase systems
+        app.add_systems(
+            Update,
+            enqueue_respawn_requests.in_set(RespawnSystems::Schedule),
+        );
+        app.add_systems(
+            Update,
+            process_respawn_queue
+                .in_set(RespawnSystems::Schedule)
+                .after(enqueue_respawn_requests),
+        );
+        app.add_systems(
+            Update,
+            log_respawn_scheduled
+                .in_set(RespawnSystems::Schedule)
+                .after(process_respawn_queue),
+        );
+        app.add_systems(
+            Update,
+            reset_frame_loss_on_respawn
+                .in_set(RespawnSystems::Schedule)
+                .after(process_respawn_queue),
+        );
+        app.add_systems(
+            Update,
+            log_game_over_requested
+                .in_set(RespawnSystems::Schedule)
+                .after(enqueue_respawn_requests),
+        );
+
+        // Execute phase system
+        app.add_systems(Update, respawn_executor.in_set(RespawnSystems::Execute));
+
+        // Visual phase systems
+        app.add_systems(
+            Update,
+            respawn_visual_trigger.in_set(RespawnSystems::Visual),
+        );
+        app.add_systems(
+            Update,
+            animate_respawn_visual
+                .in_set(RespawnSystems::Visual)
+                .after(respawn_visual_trigger),
+        );
+
+        // Control phase system
+        app.add_systems(
+            Update,
+            restore_paddle_control.in_set(RespawnSystems::Control),
+        );
     }
 }
 
@@ -314,6 +432,61 @@ fn life_loss_logging(mut life_lost_events: MessageReader<LifeLostEvent>) {
     }
 }
 
+/// Applies paddle shrink animation when a ball is lost.
+///
+/// This system reacts to `LifeLostEvent` messages and adds a `PaddleGrowing` component
+/// to paddles that don't already have one. The component configures the paddle to shrink
+/// from its current scale down to near-zero (Vec3::splat(0.01)) over the duration of the
+/// respawn delay timer.
+///
+/// The shrink animation runs concurrently with the respawn delay and fadeout overlay,
+/// providing immediate visual feedback to the player that they lost a life.
+///
+/// # Animation Details
+///
+/// - **Duration**: Matches the respawn delay timer (typically 1.0 second)
+/// - **Start scale**: Current paddle scale (captured when component is added)
+/// - **Target scale**: Vec3::splat(0.01) (near-zero, barely visible)
+/// - **Easing**: Cubic ease-out (applied by `update_paddle_growth` system)
+///
+/// # Integration
+///
+/// - Runs in `RespawnSystems::Detect` set after `detect_ball_loss`
+/// - Only affects paddles without an active `PaddleGrowing` component
+/// - Works seamlessly with the existing respawn system
+/// - Paddle input remains locked via `InputLocked` component (added by ball loss detection)
+///
+/// # Note on Multiple Paddles
+///
+/// Currently, the game design assumes a single paddle. If multiple paddles exist,
+/// all paddles without an active `PaddleGrowing` animation will shrink on ball loss.
+/// This is acceptable for the current single-paddle game design.
+fn apply_paddle_shrink(
+    mut life_lost_events: MessageReader<LifeLostEvent>,
+    paddles: Query<(Entity, &Transform), (With<Paddle>, Without<PaddleGrowing>)>,
+    respawn_schedule: Res<RespawnSchedule>,
+    mut commands: Commands,
+) {
+    for _event in life_lost_events.read() {
+        for (entity, transform) in paddles.iter() {
+            let shrink_duration = respawn_schedule.timer.duration();
+            commands.entity(entity).insert(PaddleGrowing {
+                timer: Timer::from_seconds(shrink_duration.as_secs_f32(), TimerMode::Once),
+                target_scale: Vec3::splat(0.01),
+                start_scale: transform.scale,
+            });
+            info!(
+                target: "respawn",
+                event = "paddle_shrink_started",
+                ?entity,
+                start_scale = ?transform.scale,
+                duration_secs = shrink_duration.as_secs_f32(),
+                "Paddle shrink animation triggered by ball loss"
+            );
+        }
+    }
+}
+
 fn log_respawn_scheduled(mut events: MessageReader<RespawnScheduled>) {
     for event in events.read() {
         info!(
@@ -336,6 +509,17 @@ fn log_game_over_requested(mut events: MessageReader<GameOverRequested>) {
             remaining_lives = event.remaining_lives,
             "Lives exhausted; requesting game over"
         );
+    }
+}
+
+/// Grants an extra life for each milestone reached.
+pub(crate) fn award_milestone_ball_system(
+    mut milestone_events: MessageReader<MilestoneReached>,
+    mut lives_state: ResMut<LivesState>,
+) {
+    for _ in milestone_events.read() {
+        lives_state.lives_remaining = lives_state.lives_remaining.saturating_add(1);
+        lives_state.on_last_life = lives_state.lives_remaining == 1;
     }
 }
 
@@ -415,7 +599,7 @@ fn hydrate_respawn_request(
 fn enqueue_respawn_requests(
     mut respawn_schedule: ResMut<RespawnSchedule>,
     mut events: MessageReader<LifeLostEvent>,
-    lives_state: Res<LivesState>,
+    mut lives_state: ResMut<LivesState>,
     time: Res<Time>,
     spawn_points: Res<SpawnPoints>,
     mut game_over_events: MessageWriter<GameOverRequested>,
@@ -424,13 +608,21 @@ fn enqueue_respawn_requests(
     mut commands: Commands,
 ) {
     let mut saw_event = false;
+    let mut game_over_emitted = false;
+
     for event in events.read().copied() {
         saw_event = true;
 
+        // Decrement lives on each LifeLostEvent (strictly event-driven, one per event)
+        lives_state.lives_remaining = lives_state.lives_remaining.saturating_sub(1);
+
         if lives_state.lives_remaining == 0 {
-            game_over_events.write(GameOverRequested {
-                remaining_lives: lives_state.lives_remaining,
-            });
+            if !game_over_emitted {
+                game_over_events.write(GameOverRequested {
+                    remaining_lives: lives_state.lives_remaining,
+                });
+                game_over_emitted = true;
+            }
             continue;
         }
 
@@ -502,8 +694,8 @@ fn respawn_executor(
     time: Res<Time>,
     mut respawn_schedule: ResMut<RespawnSchedule>,
     spawn_points: Res<SpawnPoints>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    meshes: Option<ResMut<Assets<Mesh>>>,
+    materials: Option<ResMut<Assets<StandardMaterial>>>,
     mut paddles: Query<(Entity, &mut Transform, Option<&mut Velocity>), With<Paddle>>,
     mut respawn_completed_events: MessageWriter<RespawnCompleted>,
     mut commands: Commands,
@@ -513,17 +705,28 @@ fn respawn_executor(
     #[cfg(feature = "texture_manifest")] mut fallback: Option<
         ResMut<crate::systems::textures::FallbackRegistry>,
     >,
+    ball_config_res: Res<crate::physics_config::BallPhysicsConfig>,
+    paddle_config_res: Res<crate::physics_config::PaddlePhysicsConfig>,
 ) {
     if respawn_schedule.pending.is_none() {
         return;
     }
+
+    let Some(mut meshes) = meshes else {
+        return;
+    };
+    let Some(mut materials) = materials else {
+        return;
+    };
 
     respawn_schedule.timer.tick(time.delta());
     if !respawn_schedule.timer.is_finished() {
         return;
     }
 
-    let request = respawn_schedule.pending.take().unwrap();
+    let Some(request) = respawn_schedule.pending.take() else {
+        return;
+    };
     respawn_schedule.timer.reset();
 
     let paddle_spawn = request
@@ -579,6 +782,7 @@ fn respawn_executor(
                 PaddleGrowing {
                     timer: Timer::from_seconds(PADDLE_GROWTH_DURATION, TimerMode::Once),
                     target_scale: Vec3::ONE,
+                    start_scale: Vec3::splat(0.01),
                 },
                 RespawnHandle {
                     spawn: paddle_spawn,
@@ -592,32 +796,54 @@ fn respawn_executor(
     if respawn_paddle_entity.is_none() {
         let mut transform = paddle_spawn.to_transform();
         transform.scale = Vec3::splat(0.01);
+        // Use PaddlePhysicsConfig resource for physics parameters
+        let paddle_config = &*paddle_config_res;
+        if let Err(err) = paddle_config.validate() {
+            bevy::log::error!("Invalid PaddlePhysicsConfig during respawn: {}", err);
+        }
+
         let new_entity = commands
             .spawn((
                 Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
                 MeshMaterial3d(paddle_material.clone()),
                 transform,
                 Paddle,
-                PaddleGrowing {
-                    timer: Timer::from_seconds(PADDLE_GROWTH_DURATION, TimerMode::Once),
-                    target_scale: Vec3::ONE,
-                },
-                InputLocked,
                 RigidBody::KinematicPositionBased,
                 GravityScale(0.0),
-                CollidingEntities::default(),
                 Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
                 LockedAxes::TRANSLATION_LOCKED_Y,
-                KinematicCharacterController::default(),
-                Ccd::enabled(),
-                RespawnHandle {
-                    spawn: paddle_spawn,
-                    kind: RespawnEntityKind::Paddle,
+                KinematicCharacterController {
+                    filter_groups: Some(CollisionGroups::new(
+                        Group::GROUP_1,
+                        Group::ALL ^ Group::GROUP_2,
+                    )),
+                    ..default()
                 },
+                SolverGroups::new(Group::GROUP_1, Group::ALL),
+                Ccd::enabled(),
+                ActiveEvents::COLLISION_EVENTS, // T032: required for merkaba collision detection
             ))
-            .insert(Friction {
-                coefficient: 2.0,
+            .insert(PaddleGrowing {
+                timer: Timer::from_seconds(PADDLE_GROWTH_DURATION, TimerMode::Once),
+                target_scale: Vec3::ONE,
+                start_scale: Vec3::splat(0.01),
+            })
+            .insert(InputLocked)
+            .insert(RespawnHandle {
+                spawn: paddle_spawn,
+                kind: RespawnEntityKind::Paddle,
+            })
+            .insert(Restitution {
+                coefficient: paddle_config.restitution,
                 combine_rule: CoefficientCombineRule::Max,
+            })
+            .insert(Friction {
+                coefficient: paddle_config.friction,
+                combine_rule: CoefficientCombineRule::Max,
+            })
+            .insert(Damping {
+                linear_damping: paddle_config.linear_damping,
+                angular_damping: paddle_config.angular_damping,
             })
             .id();
         respawn_paddle_entity = Some(new_entity);
@@ -628,6 +854,12 @@ fn respawn_executor(
     }
 
     let ball_transform = ball_spawn.to_transform();
+    // Use BallPhysicsConfig resource for physics parameters
+    let ball_config = &*ball_config_res;
+    if let Err(err) = ball_config.validate() {
+        bevy::log::error!("Invalid BallPhysicsConfig during respawn: {}", err);
+    }
+
     let respawned_ball = commands
         .spawn((
             Mesh3d(meshes.add(Sphere::new(BALL_RADIUS).mesh())),
@@ -641,16 +873,16 @@ fn respawn_executor(
             ActiveEvents::COLLISION_EVENTS,
             Collider::ball(BALL_RADIUS),
             Restitution {
-                coefficient: 0.9,
+                coefficient: ball_config.restitution,
                 combine_rule: CoefficientCombineRule::Max,
             },
             Friction {
-                coefficient: 2.0,
+                coefficient: ball_config.friction,
                 combine_rule: CoefficientCombineRule::Max,
             },
             Damping {
-                linear_damping: 0.5,
-                angular_damping: 0.5,
+                linear_damping: ball_config.linear_damping,
+                angular_damping: ball_config.angular_damping,
             },
             RespawnHandle {
                 spawn: ball_spawn,
@@ -789,6 +1021,9 @@ mod tests {
 
     pub(super) fn test_app() -> App {
         let mut app = App::new();
+        app.insert_resource(crate::physics_config::BallPhysicsConfig::default());
+        app.insert_resource(crate::physics_config::PaddlePhysicsConfig::default());
+        app.insert_resource(crate::physics_config::BrickPhysicsConfig::default());
         app.add_plugins(MinimalPlugins)
             .insert_resource(Assets::<Mesh>::default())
             .insert_resource(Assets::<StandardMaterial>::default())
@@ -948,6 +1183,7 @@ mod tests {
                 PaddleGrowing {
                     timer: Timer::from_seconds(1.0, TimerMode::Once),
                     target_scale: Vec3::ONE,
+                    start_scale: Vec3::splat(0.01),
                 },
             ))
             .id();
@@ -970,6 +1206,7 @@ mod tests {
                 PaddleGrowing {
                     timer: Timer::from_seconds(1.0, TimerMode::Once),
                     target_scale: Vec3::ONE,
+                    start_scale: Vec3::splat(0.01),
                 },
             ))
             .id();

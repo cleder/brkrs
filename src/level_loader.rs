@@ -1,5 +1,6 @@
-use crate::level_format::{normalize_matrix_simple, INDESTRUCTIBLE_BRICK};
+use crate::level_format::{normalize_matrix_simple, HAZARD_BRICK_91, INDESTRUCTIBLE_BRICK};
 use crate::systems::level_switch::{LevelSwitchRequested, LevelSwitchState};
+use crate::systems::merkaba::Merkaba;
 use crate::systems::respawn::{RespawnEntityKind, RespawnHandle, SpawnPoints, SpawnTransform};
 #[cfg(feature = "texture_manifest")]
 use crate::systems::textures::{
@@ -7,7 +8,6 @@ use crate::systems::textures::{
     CanonicalMaterialHandles, FallbackRegistry, LevelPresentation, TextureManifest,
     TypeVariantRegistry,
 };
-#[cfg(feature = "texture_manifest")]
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use ron::de::from_str;
@@ -19,6 +19,52 @@ use crate::{
     PLANE_W,
 };
 use bevy_rapier3d::prelude::*;
+
+#[derive(SystemParam)]
+pub(crate) struct LevelContext<'w> {
+    pub meshes: ResMut<'w, Assets<Mesh>>,
+    pub materials: ResMut<'w, Assets<StandardMaterial>>,
+    pub spawn_points: ResMut<'w, SpawnPoints>,
+    pub gravity_cfg: ResMut<'w, GravityConfig>,
+    pub game_progress: ResMut<'w, GameProgress>,
+    pub level_advance: ResMut<'w, LevelAdvanceState>,
+}
+/// Helper function to create GravityBrick component for gravity brick types (21-25).
+///
+/// For brick type 25 (Queer Gravity), the gravity value is just a placeholder;
+/// the actual random gravity will be computed at destruction time by the
+/// brick_destruction_gravity_handler system.
+fn create_gravity_brick_component(brick_type_id: u8) -> Option<crate::GravityBrick> {
+    use crate::systems::gravity::{
+        BRICK_TYPE_GRAVITY_HIGH, BRICK_TYPE_GRAVITY_LOW, BRICK_TYPE_GRAVITY_MEDIUM,
+        BRICK_TYPE_GRAVITY_QUEER, BRICK_TYPE_GRAVITY_ZERO, GRAVITY_HIGH, GRAVITY_LOW,
+        GRAVITY_MEDIUM, GRAVITY_ZERO,
+    };
+
+    match brick_type_id {
+        BRICK_TYPE_GRAVITY_ZERO => Some(crate::GravityBrick {
+            index: BRICK_TYPE_GRAVITY_ZERO as u32,
+            gravity: GRAVITY_ZERO,
+        }),
+        BRICK_TYPE_GRAVITY_LOW => Some(crate::GravityBrick {
+            index: BRICK_TYPE_GRAVITY_LOW as u32,
+            gravity: GRAVITY_LOW,
+        }),
+        BRICK_TYPE_GRAVITY_MEDIUM => Some(crate::GravityBrick {
+            index: BRICK_TYPE_GRAVITY_MEDIUM as u32,
+            gravity: GRAVITY_MEDIUM,
+        }),
+        BRICK_TYPE_GRAVITY_HIGH => Some(crate::GravityBrick {
+            index: BRICK_TYPE_GRAVITY_HIGH as u32,
+            gravity: GRAVITY_HIGH,
+        }),
+        BRICK_TYPE_GRAVITY_QUEER => Some(crate::GravityBrick {
+            index: BRICK_TYPE_GRAVITY_QUEER as u32,
+            gravity: Vec3::ZERO, // Placeholder; actual gravity computed at destruction
+        }),
+        _ => None,
+    }
+}
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LevelAdvanceSystems;
@@ -50,55 +96,156 @@ pub struct LevelDefinition {
     #[cfg(feature = "texture_manifest")]
     #[serde(default)]
     pub presentation: Option<crate::systems::textures::loader::LevelTextureSet>,
+    /// Optional description documenting the level's design intent, unique features, or gameplay characteristics.
+    /// This is for documentation purposes only and is not displayed during gameplay.
+    #[serde(default)]
+    pub description: Option<String>,
+    /// Optional author field for contributor attribution.
+    /// Supports plain text names (e.g., "Jane Smith") or markdown links (e.g., "[Jane Smith](mailto:jane@example.com)").
+    /// When using markdown format, only the display name is extracted.
+    #[serde(default)]
+    pub author: Option<String>,
 }
 
 #[derive(Resource, Debug)]
 pub struct CurrentLevel(pub LevelDefinition);
+
+/// Extract display name from author field (handles plain text and markdown link formats)
+///
+/// Converts:
+/// - Plain text: "Jane Smith" → "Jane Smith"
+/// - Markdown link: "[Jane Smith](mailto:jane@example.com)" → "Jane Smith"
+/// - Markdown link: "[Team](https://github.com/team)" → "Team"
+///
+/// If the author string doesn't match the markdown pattern, it's returned as-is.
+///
+/// # Examples
+///
+/// ```ignore
+/// assert_eq!(extract_author_name("Jane Smith"), "Jane Smith");
+/// assert_eq!(extract_author_name("[Jane Smith](mailto:jane@example.com)"), "Jane Smith");
+/// ```
+pub fn extract_author_name(author: &str) -> &str {
+    let trimmed = author.trim();
+    if trimmed.starts_with('[') {
+        if let Some(end_bracket) = trimmed.find("](") {
+            return trimmed[1..end_bracket].trim();
+        }
+    }
+    trimmed
+}
+
+impl LevelDefinition {
+    /// Returns true if the level has a non-empty description
+    ///
+    /// Returns `false` if the description field is `None` or contains only whitespace.
+    pub fn has_description(&self) -> bool {
+        self.description
+            .as_ref()
+            .is_some_and(|s| !s.trim().is_empty())
+    }
+
+    /// Returns true if the level has a non-empty author
+    ///
+    /// Returns `false` if the author field is `None` or contains only whitespace.
+    pub fn has_author(&self) -> bool {
+        self.author.as_ref().is_some_and(|s| !s.trim().is_empty())
+    }
+
+    /// Get the author display name, extracting from markdown format if needed
+    ///
+    /// Returns `None` if author field is empty or absent.
+    /// Automatically extracts the name from markdown links like `[Name](url)`.
+    pub fn author_name(&self) -> Option<&str> {
+        self.author
+            .as_ref()
+            .filter(|s| !s.trim().is_empty())
+            .map(|s| extract_author_name(s))
+    }
+}
 
 pub struct LevelLoaderPlugin;
 
 impl Plugin for LevelLoaderPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<GravityConfig>();
+        app.add_message::<RestartRequested>();
         app.add_systems(Startup, (load_level, spawn_level_entities).chain());
         #[cfg(feature = "texture_manifest")]
-        app.add_systems(
-            Update,
-            (
+        {
+            use crate::systems::sets::LevelFadeInStartSystems;
+            app.add_systems(
+                Update,
                 (
                     advance_level_when_cleared,
                     handle_level_advance_delay,
+                    // Insert LevelFadeInStartSet after handle_level_advance_delay
                     finalize_level_advance.after(handle_level_advance_delay),
                     spawn_fade_overlay_if_needed,
+                )
+                    .in_set(LevelAdvanceSystems),
+            );
+            app.configure_sets(
+                Update,
+                (
+                    LevelAdvanceSystems
+                        .after(crate::systems::merkaba::MerkabaSpawnFlowSystems::Queue),
+                    LevelFadeInStartSystems.after(handle_level_advance_delay),
                 ),
+            );
+
+            app.add_systems(
+                Update,
                 (
                     update_fade_overlay,
-                    restart_level_on_key,
                     destroy_all_bricks_on_key,
                     process_level_switch_requests,
-                    sync_level_presentation,
                 ),
-            )
-                .in_set(LevelAdvanceSystems),
-        );
+            );
+            // Run sync_level_presentation in PreUpdate, before apply_level_overrides
+            app.add_systems(
+                PreUpdate,
+                sync_level_presentation.in_set(SyncLevelPresentationSystems),
+            );
+
+            // Use shared system set for ordering background/material override after sync_level_presentation
+            use crate::systems::sets::SyncLevelPresentationSystems;
+            // Register restart queue and processor
+            // Run the restart producer in PreUpdate so it observes just_pressed reliably
+            app.add_systems(PreUpdate, queue_restart_requests);
+            // Keep the heavy restart processing in Update
+            app.add_systems(Update, process_restart_requests);
+        }
         #[cfg(not(feature = "texture_manifest"))]
-        app.add_systems(
-            Update,
-            (
+        {
+            app.add_systems(
+                Update,
                 (
                     advance_level_when_cleared,
                     handle_level_advance_delay,
                     finalize_level_advance.after(handle_level_advance_delay),
                     spawn_fade_overlay_if_needed,
-                ),
+                )
+                    .in_set(LevelAdvanceSystems),
+            );
+            app.configure_sets(
+                Update,
+                LevelAdvanceSystems.after(crate::systems::merkaba::MerkabaSpawnFlowSystems::Queue),
+            );
+
+            app.add_systems(
+                Update,
                 (
                     update_fade_overlay,
-                    restart_level_on_key,
                     destroy_all_bricks_on_key,
                     process_level_switch_requests,
                 ),
-            ),
-        );
+            );
+            // Run the restart producer in PreUpdate so it observes just_pressed reliably
+            app.add_systems(PreUpdate, queue_restart_requests);
+            // Keep the heavy restart processing in Update
+            app.add_systems(Update, process_restart_requests);
+        }
     }
 }
 
@@ -247,6 +394,7 @@ fn spawn_level_entities(
     #[cfg(feature = "texture_manifest")] canonical: Option<Res<CanonicalMaterialHandles>>,
     #[cfg(feature = "texture_manifest")] mut fallback: Option<ResMut<FallbackRegistry>>,
     #[cfg(feature = "texture_manifest")] type_registry: Option<Res<TypeVariantRegistry>>,
+    brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
     let Some(level) = level else {
         return;
@@ -264,6 +412,7 @@ fn spawn_level_entities(
         fallback.as_deref_mut(),
         #[cfg(feature = "texture_manifest")]
         type_registry.as_deref(),
+        brick_config_res,
     );
 
     // Emit LevelStarted event for audio system
@@ -281,6 +430,7 @@ fn spawn_level_entities_impl(
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
     #[cfg(feature = "texture_manifest")] mut fallback: Option<&mut FallbackRegistry>,
     #[cfg(feature = "texture_manifest")] type_registry: Option<&TypeVariantRegistry>,
+    brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
     debug!("Spawning entities for level {}", def.number);
     // Shared material
@@ -358,10 +508,10 @@ fn spawn_level_entities_impl(
     for (row, row_data) in def.matrix.iter().enumerate() {
         for (col, value) in row_data.iter().enumerate() {
             let x = -PLANE_H / 2.0 + (row as f32 + 0.5) * CELL_HEIGHT;
-            let z = -PLANE_W / 2.0 + (col as f32 + 0.5) * CELL_WIDTH;
+            let z = PLANE_W / 2.0 - (col as f32 + 0.5) * CELL_WIDTH;
             match value {
                 0 => {}
-                1 => {
+                2 => {
                     // Paddle
                     if !paddle_spawned {
                         paddle_spawned = true;
@@ -382,7 +532,14 @@ fn spawn_level_entities_impl(
                                 CollidingEntities::default(),
                                 Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
                                 LockedAxes::TRANSLATION_LOCKED_Y,
-                                KinematicCharacterController::default(),
+                                KinematicCharacterController {
+                                    filter_groups: Some(CollisionGroups::new(
+                                        Group::GROUP_1,
+                                        Group::ALL ^ Group::GROUP_2,
+                                    )),
+                                    ..default()
+                                },
+                                SolverGroups::new(Group::GROUP_1, Group::ALL),
                                 Ccd::enabled(),
                                 Friction {
                                     coefficient: 2.0,
@@ -392,7 +549,7 @@ fn spawn_level_entities_impl(
                             .insert(paddle_respawn_handle(position));
                     }
                 }
-                2 => {
+                1 => {
                     // Ball
                     if !ball_spawned {
                         ball_spawned = true;
@@ -405,6 +562,7 @@ fn spawn_level_entities_impl(
                                 Transform::from_xyz(x, 2.0, z),
                                 Ball,
                                 RigidBody::Dynamic,
+                                Velocity::zero(),
                                 CollidingEntities::default(),
                                 ActiveEvents::COLLISION_EVENTS,
                                 Collider::ball(BALL_RADIUS),
@@ -453,26 +611,45 @@ fn spawn_level_entities_impl(
                     };
                     #[cfg(not(feature = "texture_manifest"))]
                     let brick_mat = brick_material.clone();
+                    let brick_config = &*brick_config_res;
+                    if let Err(err) = brick_config.validate() {
+                        bevy::log::error!("Invalid BrickPhysicsConfig during brick spawn: {}", err);
+                    }
+                    let mut mesh =
+                        Mesh::from(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9));
+                    // this computes normals AND tangents so normal maps work
+                    mesh.compute_area_weighted_normals(); // normals
+                    mesh.generate_tangents().unwrap(); // tangents
 
+                    let mesh_handle = meshes.add(mesh);
                     let mut entity = commands.spawn((
-                        Mesh3d(meshes.add(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9))),
+                        Mesh3d(mesh_handle),
                         MeshMaterial3d(brick_mat),
                         Transform::from_xyz(x, 2.0, z),
                         Brick,
                         BrickTypeId(brick_type_id),
-                        // Brick counts towards level completion unless it's the indestructible tile.
-                        // Legacy index `3` is considered destructible (compatibility window); newly authored simple bricks should use 20.
                         RigidBody::Fixed,
                         Collider::cuboid(CELL_HEIGHT * 0.9 / 2.0, 0.25, CELL_WIDTH * 0.9 / 2.0),
                         Restitution {
-                            coefficient: 1.0,
+                            coefficient: brick_config.restitution,
+                            combine_rule: CoefficientCombineRule::Max,
+                        },
+                        Friction {
+                            coefficient: brick_config.friction,
                             combine_rule: CoefficientCombineRule::Max,
                         },
                         CollidingEntities::default(),
                         ActiveEvents::COLLISION_EVENTS,
                     ));
-                    if brick_type_id != INDESTRUCTIBLE_BRICK {
+                    // Only destructible bricks contribute to level completion.
+                    // Type 91 (hazard) bricks do not count toward completion.
+                    if brick_type_id != INDESTRUCTIBLE_BRICK && brick_type_id != HAZARD_BRICK_91 {
                         entity.insert(CountsTowardsCompletion);
+                    }
+
+                    // Attach GravityBrick component for gravity bricks (21-25)
+                    if let Some(gravity_brick) = create_gravity_brick_component(brick_type_id) {
+                        entity.insert(gravity_brick);
                     }
                 }
             }
@@ -497,7 +674,14 @@ fn spawn_level_entities_impl(
                 CollidingEntities::default(),
                 Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
                 LockedAxes::TRANSLATION_LOCKED_Y,
-                KinematicCharacterController::default(),
+                KinematicCharacterController {
+                    filter_groups: Some(CollisionGroups::new(
+                        Group::GROUP_1,
+                        Group::ALL ^ Group::GROUP_2,
+                    )),
+                    ..default()
+                },
+                SolverGroups::new(Group::GROUP_1, Group::ALL),
                 Ccd::enabled(),
                 Friction {
                     coefficient: 2.0,
@@ -517,6 +701,7 @@ fn spawn_level_entities_impl(
                 Transform::from_xyz(0.0, 2.0, 0.0),
                 Ball,
                 RigidBody::Dynamic,
+                Velocity::zero(),
                 CollidingEntities::default(),
                 ActiveEvents::COLLISION_EVENTS,
                 Collider::ball(BALL_RADIUS),
@@ -586,8 +771,7 @@ fn spawn_bricks_only(
             }
             let brick_type_id = *value;
             let x = -PLANE_H / 2.0 + (row as f32 + 0.5) * CELL_HEIGHT;
-            let z = -PLANE_W / 2.0 + (col as f32 + 0.5) * CELL_WIDTH;
-
+            let z = PLANE_W / 2.0 - (col as f32 + 0.5) * CELL_WIDTH;
             #[cfg(feature = "texture_manifest")]
             let brick_mat = {
                 type_registry
@@ -607,8 +791,14 @@ fn spawn_bricks_only(
             #[cfg(not(feature = "texture_manifest"))]
             let brick_mat = brick_material.clone();
 
+            let mut mesh = Mesh::from(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9));
+            // this computes normals AND tangents so normal maps work
+            mesh.compute_area_weighted_normals(); // normals
+            mesh.generate_tangents().unwrap(); // tangents
+
+            let mesh_handle = meshes.add(mesh);
             let mut entity = commands.spawn((
-                Mesh3d(meshes.add(Cuboid::new(CELL_HEIGHT * 0.9, 0.5, CELL_WIDTH * 0.9))),
+                Mesh3d(mesh_handle),
                 MeshMaterial3d(brick_mat),
                 Transform::from_xyz(x, 2.0, z),
                 Brick,
@@ -624,6 +814,11 @@ fn spawn_bricks_only(
             ));
             if brick_type_id != INDESTRUCTIBLE_BRICK {
                 entity.insert(crate::CountsTowardsCompletion);
+            }
+
+            // Attach GravityBrick component for gravity bricks (21-25) when spawning bricks-only flow
+            if let Some(gravity_brick) = create_gravity_brick_component(brick_type_id) {
+                entity.insert(gravity_brick);
             }
         }
     }
@@ -642,13 +837,13 @@ pub fn set_spawn_points_only(def: &LevelDefinition, spawn_points: &mut SpawnPoin
     for (row, row_data) in def.matrix.iter().enumerate() {
         for (col, value) in row_data.iter().enumerate() {
             let x = -PLANE_H / 2.0 + (row as f32 + 0.5) * CELL_HEIGHT;
-            let z = -PLANE_W / 2.0 + (col as f32 + 0.5) * CELL_WIDTH;
+            let z = PLANE_W / 2.0 - (col as f32 + 0.5) * CELL_WIDTH;
             match value {
-                1 if !paddle_set => {
+                2 if !paddle_set => {
                     paddle_set = true;
                     spawn_points.paddle = Some(Vec3::new(x, 2.0, z));
                 }
-                2 if !ball_set => {
+                1 if !ball_set => {
                     ball_set = true;
                     spawn_points.ball = Some(Vec3::new(x, 2.0, z));
                 }
@@ -665,15 +860,21 @@ pub fn set_spawn_points_only(def: &LevelDefinition, spawn_points: &mut SpawnPoin
 }
 
 /// Advance to the next level when all bricks have been cleared.
+///
+/// Only bricks with the `CountsTowardsCompletion` marker are counted.
+/// Type 91 (hazard) bricks are excluded from this marker and do not block level completion.
 fn advance_level_when_cleared(
-    // Only consider bricks that count towards completion
     destructible_bricks: Query<Entity, (With<Brick>, With<crate::CountsTowardsCompletion>)>,
+    bricks: Query<Entity, With<Brick>>,
     paddle_q: Query<Entity, With<Paddle>>,
     ball_q: Query<Entity, With<Ball>>,
+    merkaba_q: Query<Entity, With<Merkaba>>,
     current_level: Option<Res<CurrentLevel>>,
     mut commands: Commands,
     mut game_progress: ResMut<GameProgress>,
     mut level_advance: ResMut<LevelAdvanceState>,
+    ui_fonts: Option<Res<crate::ui::fonts::UiFonts>>,
+    pending_merkaba_spawns: Option<ResMut<crate::systems::merkaba::PendingMerkabaSpawns>>,
 ) {
     let Some(curr) = current_level else {
         return;
@@ -691,6 +892,11 @@ fn advance_level_when_cleared(
         level_index: curr.0.number,
     });
 
+    // Despawn all bricks before fade-out and next level setup
+    for entity in bricks.iter() {
+        commands.entity(entity).despawn();
+    }
+
     let next_number = curr.0.number + 1;
     let path = format!("assets/levels/level_{:03}.ron", next_number);
     #[cfg(not(target_arch = "wasm32"))]
@@ -704,24 +910,35 @@ fn advance_level_when_cleared(
                 path
             );
             game_progress.finished = true;
-            // Despawn remaining paddle and ball to freeze gameplay
+            // Despawn remaining paddle, ball, and merkaba to freeze gameplay
             for p in paddle_q.iter() {
                 commands.entity(p).despawn();
             }
             for b in ball_q.iter() {
                 commands.entity(b).despawn();
             }
+            for m in merkaba_q.iter() {
+                commands.entity(m).despawn();
+            }
+            // Clear pending merkaba spawns to prevent spawning after game completion
+            if let Some(mut spawns) = pending_merkaba_spawns {
+                spawns.entries.clear();
+            }
             // Spawn completion text (desktop only UI style similar to wireframe text)
             #[cfg(not(target_arch = "wasm32"))]
-            commands.spawn((
-                Text::new("GAME COMPLETE - Press Q to Quit"),
-                Node {
-                    position_type: PositionType::Absolute,
-                    top: Val::Px(60.0),
-                    left: Val::Px(60.0),
-                    ..default()
-                },
-            ));
+            if let Some(ui_fonts) = ui_fonts {
+                let font = ui_fonts.orbitron.clone();
+                commands.spawn((
+                    Text::new("GAME COMPLETE - Press Q to Quit"),
+                    TextFont { font, ..default() },
+                    Node {
+                        position_type: PositionType::Absolute,
+                        top: Val::Px(60.0),
+                        left: Val::Px(60.0),
+                        ..default()
+                    },
+                ));
+            }
         }
         return;
     }
@@ -740,12 +957,19 @@ fn advance_level_when_cleared(
                 level_advance.active = true;
                 level_advance.growth_spawned = false;
                 level_advance.pending = Some(def);
-                // Despawn paddle & ball now to show empty field during fade-out.
+                // Despawn paddle, ball, and merkaba now to show empty field during fade-out.
                 for p in paddle_q.iter() {
                     commands.entity(p).despawn();
                 }
                 for b in ball_q.iter() {
                     commands.entity(b).despawn();
+                }
+                for m in merkaba_q.iter() {
+                    commands.entity(m).despawn();
+                }
+                // Clear pending merkaba spawns to prevent spawning during level transition
+                if let Some(mut spawns) = pending_merkaba_spawns {
+                    spawns.entries.clear();
                 }
             }
             Err(e) => warn!("Failed to parse next level '{}': {e}", path),
@@ -755,55 +979,109 @@ fn advance_level_when_cleared(
 }
 
 /// Restart the current level when the user presses R.
-fn restart_level_on_key(
+// Restart messaging: small producer + heavy consumer split so registration is reliable
+
+#[derive(Message, Debug, Clone, Copy)]
+pub struct RestartRequested;
+
+/// Producer: queue restart requests when 'R' is pressed; emits UiBeep when blocked.
+fn queue_restart_requests(
     keyboard: Res<ButtonInput<KeyCode>>,
-    current_level: Option<Res<CurrentLevel>>,
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut spawn_points: ResMut<SpawnPoints>,
-    mut gravity_cfg: ResMut<GravityConfig>,
-    mut rapier_config: Query<&mut RapierConfiguration>,
-    bricks: Query<Entity, With<Brick>>,
-    paddle_q: Query<Entity, With<Paddle>>,
-    ball_q: Query<Entity, With<Ball>>,
-    mut game_progress: ResMut<GameProgress>,
-    mut level_advance: ResMut<LevelAdvanceState>,
-    #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
+    cheat: Option<Res<crate::systems::cheat_mode::CheatModeState>>,
+    mut restart: Option<MessageWriter<RestartRequested>>,
+    mut beep: Option<MessageWriter<crate::signals::UiBeep>>,
 ) {
     if !keyboard.just_pressed(KeyCode::KeyR) {
         return;
     }
+    if let Some(cheat) = cheat.as_ref() {
+        if cheat.is_active() {
+            if let Some(r) = restart.as_mut() {
+                r.write(RestartRequested);
+            }
+        } else if let Some(b) = beep.as_mut() {
+            b.write(crate::signals::UiBeep);
+        }
+    } else {
+        // conservative: block if cheat state not present
+        if let Some(b) = beep.as_mut() {
+            b.write(crate::signals::UiBeep);
+        }
+    }
+}
+
+/// Consumer: handle restart requests and perform the heavy restart operation.
+fn process_restart_requests(
+    mut requests: bevy::ecs::message::MessageReader<RestartRequested>,
+    current_level: Option<Res<CurrentLevel>>,
+    mut commands: Commands,
+    mut ctx: LevelContext,
+    mut rapier_config: Query<&mut RapierConfiguration>,
+    bricks: Query<Entity, With<Brick>>,
+    paddle_q: Query<Entity, With<Paddle>>,
+    ball_q: Query<Entity, With<Ball>>,
+    merkaba_q: Query<Entity, With<Merkaba>>,
+    lives_state: Option<ResMut<crate::systems::respawn::LivesState>>,
+    mut pending_merkaba_spawns: Option<ResMut<crate::systems::merkaba::PendingMerkabaSpawns>>,
+    #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
+    brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
+) {
+    if requests.is_empty() {
+        return;
+    }
+
+    // Only process the first request per frame
+    let Some(_) = requests.read().next() else {
+        requests.clear();
+        return;
+    };
+
+    // Reset lives to 3 when restarting level
+    if let Some(mut lives_state) = lives_state {
+        lives_state.lives_remaining = 3;
+    } else {
+        warn!("LivesState resource missing during level restart; skipping lives reset");
+    }
+
     let level_number = current_level.map(|cl| cl.0.number).unwrap_or(1);
     let path = format!("assets/levels/level_{:03}.ron", level_number);
+    // Despawn all bricks before restarting the level
+    for entity in bricks.iter() {
+        commands.entity(entity).despawn();
+    }
     match force_load_level_from_path(
         &path,
         &mut commands,
-        &mut meshes,
-        &mut materials,
-        &mut spawn_points,
-        &mut gravity_cfg,
+        &mut ctx.meshes,
+        &mut ctx.materials,
+        &mut ctx.spawn_points,
+        &mut ctx.gravity_cfg,
         &mut rapier_config,
         &bricks,
         &paddle_q,
         &ball_q,
-        &mut game_progress,
-        &mut level_advance,
+        &merkaba_q,
+        &mut ctx.game_progress,
+        &mut ctx.level_advance,
+        pending_merkaba_spawns.as_mut(),
         #[cfg(feature = "texture_manifest")]
         tex_res.canonical.as_deref(),
         #[cfg(feature = "texture_manifest")]
         tex_res.fallback.as_deref_mut(),
         #[cfg(feature = "texture_manifest")]
         tex_res.type_registry.as_deref(),
+        brick_config_res,
     ) {
         Ok(_) => info!("Restarted level {level_number}"),
         Err(err) => warn!("Failed to restart level {level_number}: {err}"),
     }
+    requests.clear();
 }
 
 /// Destroy all bricks when K is pressed (for testing level transitions).
 fn destroy_all_bricks_on_key(
     keyboard: Res<ButtonInput<KeyCode>>,
+    cheat: Option<Res<crate::systems::cheat_mode::CheatModeState>>,
     // Only destroy bricks that count towards completion. Indestructible bricks (no
     // CountsTowardsCompletion) should remain in the scene even when testing with K.
     bricks: Query<Entity, (With<Brick>, With<crate::CountsTowardsCompletion>)>,
@@ -815,6 +1093,16 @@ fn destroy_all_bricks_on_key(
     // Accept either a single-frame `just_pressed` or continuous `pressed` state so
     // test harnesses and interactive play both trigger the test-delete behaviour.
     if keyboard.just_pressed(KeyCode::KeyK) || keyboard.pressed(KeyCode::KeyK) {
+        // Check cheat mode
+        if let Some(cheat) = cheat {
+            if !cheat.is_active() {
+                return;
+            }
+        } else {
+            // If cheat resource is missing, default to blocked
+            return;
+        }
+
         // KeyK detected — destroy destructible bricks for testing
         for entity in bricks.iter() {
             commands.entity(entity).despawn();
@@ -827,22 +1115,20 @@ pub(crate) fn process_level_switch_requests(
     mut switch_state: ResMut<LevelSwitchState>,
     current_level: Option<Res<CurrentLevel>>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut spawn_points: ResMut<SpawnPoints>,
-    mut gravity_cfg: ResMut<GravityConfig>,
+    mut ctx: LevelContext,
     mut rapier_config: Query<&mut RapierConfiguration>,
     bricks: Query<Entity, With<Brick>>,
     paddle_q: Query<Entity, With<Paddle>>,
     ball_q: Query<Entity, With<Ball>>,
-    mut game_progress: ResMut<GameProgress>,
-    mut level_advance: ResMut<LevelAdvanceState>,
+    merkaba_q: Query<Entity, With<Merkaba>>,
+    mut pending_merkaba_spawns: Option<ResMut<crate::systems::merkaba::PendingMerkabaSpawns>>,
     #[cfg(feature = "texture_manifest")] mut tex_res: TextureResources,
+    brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
     if requests.is_empty() {
         return;
     }
-    if switch_state.is_transition_pending() || level_advance.active {
+    if switch_state.is_transition_pending() || ctx.level_advance.active {
         info!(
             target: "level_switch",
             "Level transition already active; ignoring switch request"
@@ -851,31 +1137,52 @@ pub(crate) fn process_level_switch_requests(
         return;
     }
     let current_number = current_level.map(|c| c.0.number).unwrap_or(0);
-    let Some(target_slot) = switch_state.next_level_after(current_number).cloned() else {
+    let Some(request) = requests.read().next() else {
+        requests.clear();
+        return;
+    };
+
+    let maybe_slot = match request.direction {
+        crate::systems::level_switch::LevelSwitchDirection::Next => {
+            switch_state.next_level_after(current_number).cloned()
+        }
+        crate::systems::level_switch::LevelSwitchDirection::Previous => {
+            switch_state.previous_level_before(current_number).cloned()
+        }
+    };
+
+    let Some(target_slot) = maybe_slot else {
         warn!(target: "level_switch", "No level entries available for switching");
         requests.clear();
         return;
     };
     switch_state.mark_transition_start();
+    // Despawn all bricks before loading the new level
+    for entity in bricks.iter() {
+        commands.entity(entity).despawn();
+    }
     match force_load_level_from_path(
         &target_slot.path,
         &mut commands,
-        &mut meshes,
-        &mut materials,
-        &mut spawn_points,
-        &mut gravity_cfg,
+        &mut ctx.meshes,
+        &mut ctx.materials,
+        &mut ctx.spawn_points,
+        &mut ctx.gravity_cfg,
         &mut rapier_config,
         &bricks,
         &paddle_q,
         &ball_q,
-        &mut game_progress,
-        &mut level_advance,
+        &merkaba_q,
+        &mut ctx.game_progress,
+        &mut ctx.level_advance,
+        pending_merkaba_spawns.as_mut(),
         #[cfg(feature = "texture_manifest")]
         tex_res.canonical.as_deref(),
         #[cfg(feature = "texture_manifest")]
         tex_res.fallback.as_deref_mut(),
         #[cfg(feature = "texture_manifest")]
         tex_res.type_registry.as_deref(),
+        brick_config_res,
     ) {
         Ok(def) => info!(
             target: "level_switch",
@@ -914,7 +1221,9 @@ fn handle_level_advance_delay(
     if !level_advance.timer.is_finished() {
         return;
     }
-    let def = level_advance.pending.as_ref().unwrap();
+    let Some(def) = level_advance.pending.as_ref() else {
+        return;
+    };
 
     // Spawn bricks at peak of fade (when screen is fully black)
     #[cfg(feature = "texture_manifest")]
@@ -1009,13 +1318,21 @@ fn handle_level_advance_delay(
                 crate::PaddleGrowing {
                     timer: Timer::from_seconds(crate::PADDLE_GROWTH_DURATION, TimerMode::Once),
                     target_scale: Vec3::ONE,
+                    start_scale: Vec3::splat(0.01),
                 },
                 RigidBody::KinematicPositionBased,
                 GravityScale(0.0),
                 CollidingEntities::default(),
                 Collider::capsule_y(PADDLE_HEIGHT / 2.0, PADDLE_RADIUS),
                 LockedAxes::TRANSLATION_LOCKED_Y,
-                KinematicCharacterController::default(),
+                KinematicCharacterController {
+                    filter_groups: Some(CollisionGroups::new(
+                        Group::GROUP_1,
+                        Group::ALL ^ Group::GROUP_2,
+                    )),
+                    ..default()
+                },
+                SolverGroups::new(Group::GROUP_1, Group::ALL),
                 Ccd::enabled(),
             ))
             .insert(Friction {
@@ -1056,6 +1373,10 @@ fn handle_level_advance_delay(
                 GravityScale(0.0), // Keep at 0.0 until paddle growth completes
             ))
             .insert(ball_respawn_handle(ball_pos));
+    }
+    // At the end of fade-out, before fade-in, set CurrentLevel to the new level
+    if let Some(def) = level_advance.pending.as_ref() {
+        commands.insert_resource(CurrentLevel(def.clone()));
     }
     level_advance.growth_spawned = true;
 }
@@ -1099,7 +1420,7 @@ fn finalize_level_advance(
     }
 
     // Stage 2: Now BallFrozen is removed, stabilize_frozen_balls won't act anymore
-    let def = level_advance.pending.take().unwrap();
+    let _ = level_advance.pending.take();
 
     for (entity, mut gravity_scale, _velocity) in balls.iter_mut() {
         // Remove Velocity component so Rapier manages it internally (like R/L do)
@@ -1116,8 +1437,6 @@ fn finalize_level_advance(
     if let Ok(mut config) = rapier_config.single_mut() {
         config.gravity = gravity_cfg.normal;
     }
-    // Update CurrentLevel resource.
-    commands.insert_resource(CurrentLevel(def));
     // Reset state.
     level_advance.active = false;
     level_advance.growth_spawned = false;
@@ -1187,20 +1506,25 @@ fn force_load_level_from_path(
     bricks: &Query<Entity, With<Brick>>,
     paddle_q: &Query<Entity, With<Paddle>>,
     ball_q: &Query<Entity, With<Ball>>,
+    merkaba_q: &Query<Entity, With<Merkaba>>,
     game_progress: &mut ResMut<GameProgress>,
     level_advance: &mut ResMut<LevelAdvanceState>,
+    pending_merkaba_spawns: Option<&mut ResMut<crate::systems::merkaba::PendingMerkabaSpawns>>,
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
     #[cfg(feature = "texture_manifest")] fallback: Option<&mut FallbackRegistry>,
     #[cfg(feature = "texture_manifest")] type_registry: Option<&TypeVariantRegistry>,
+    brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) -> Result<LevelDefinition, String> {
     reset_level_state(
         commands,
         bricks,
         paddle_q,
         ball_q,
+        merkaba_q,
         spawn_points,
         game_progress,
         level_advance,
+        pending_merkaba_spawns,
     );
     #[cfg(not(target_arch = "wasm32"))]
     let content = std::fs::read_to_string(path)
@@ -1224,6 +1548,7 @@ fn force_load_level_from_path(
         fallback,
         #[cfg(feature = "texture_manifest")]
         type_registry,
+        brick_config_res,
     );
     commands.insert_resource(CurrentLevel(def.clone()));
     Ok(def)
@@ -1235,6 +1560,81 @@ fn embedded_level_str(path: &str) -> Option<&'static str> {
     match path {
         "assets/levels/level_001.ron" => Some(include_str!("../assets/levels/level_001.ron")),
         "assets/levels/level_002.ron" => Some(include_str!("../assets/levels/level_002.ron")),
+        "assets/levels/level_003.ron" => Some(include_str!("../assets/levels/level_003.ron")),
+        "assets/levels/level_004.ron" => Some(include_str!("../assets/levels/level_004.ron")),
+        "assets/levels/level_005.ron" => Some(include_str!("../assets/levels/level_005.ron")),
+        "assets/levels/level_006.ron" => Some(include_str!("../assets/levels/level_006.ron")),
+        "assets/levels/level_007.ron" => Some(include_str!("../assets/levels/level_007.ron")),
+        "assets/levels/level_008.ron" => Some(include_str!("../assets/levels/level_008.ron")),
+        "assets/levels/level_009.ron" => Some(include_str!("../assets/levels/level_009.ron")),
+        "assets/levels/level_010.ron" => Some(include_str!("../assets/levels/level_010.ron")),
+        "assets/levels/level_011.ron" => Some(include_str!("../assets/levels/level_011.ron")),
+        "assets/levels/level_012.ron" => Some(include_str!("../assets/levels/level_012.ron")),
+        "assets/levels/level_013.ron" => Some(include_str!("../assets/levels/level_013.ron")),
+        "assets/levels/level_014.ron" => Some(include_str!("../assets/levels/level_014.ron")),
+        "assets/levels/level_015.ron" => Some(include_str!("../assets/levels/level_015.ron")),
+        "assets/levels/level_016.ron" => Some(include_str!("../assets/levels/level_016.ron")),
+        "assets/levels/level_017.ron" => Some(include_str!("../assets/levels/level_017.ron")),
+        "assets/levels/level_018.ron" => Some(include_str!("../assets/levels/level_018.ron")),
+        "assets/levels/level_019.ron" => Some(include_str!("../assets/levels/level_019.ron")),
+        "assets/levels/level_020.ron" => Some(include_str!("../assets/levels/level_020.ron")),
+        "assets/levels/level_021.ron" => Some(include_str!("../assets/levels/level_021.ron")),
+        "assets/levels/level_022.ron" => Some(include_str!("../assets/levels/level_022.ron")),
+        "assets/levels/level_023.ron" => Some(include_str!("../assets/levels/level_023.ron")),
+        "assets/levels/level_024.ron" => Some(include_str!("../assets/levels/level_024.ron")),
+        "assets/levels/level_025.ron" => Some(include_str!("../assets/levels/level_025.ron")),
+        "assets/levels/level_026.ron" => Some(include_str!("../assets/levels/level_026.ron")),
+        "assets/levels/level_027.ron" => Some(include_str!("../assets/levels/level_027.ron")),
+        "assets/levels/level_028.ron" => Some(include_str!("../assets/levels/level_028.ron")),
+        "assets/levels/level_029.ron" => Some(include_str!("../assets/levels/level_029.ron")),
+        "assets/levels/level_030.ron" => Some(include_str!("../assets/levels/level_030.ron")),
+        "assets/levels/level_031.ron" => Some(include_str!("../assets/levels/level_031.ron")),
+        "assets/levels/level_032.ron" => Some(include_str!("../assets/levels/level_032.ron")),
+        "assets/levels/level_033.ron" => Some(include_str!("../assets/levels/level_033.ron")),
+        "assets/levels/level_034.ron" => Some(include_str!("../assets/levels/level_034.ron")),
+        "assets/levels/level_035.ron" => Some(include_str!("../assets/levels/level_035.ron")),
+        "assets/levels/level_036.ron" => Some(include_str!("../assets/levels/level_036.ron")),
+        "assets/levels/level_037.ron" => Some(include_str!("../assets/levels/level_037.ron")),
+        "assets/levels/level_038.ron" => Some(include_str!("../assets/levels/level_038.ron")),
+        "assets/levels/level_039.ron" => Some(include_str!("../assets/levels/level_039.ron")),
+        "assets/levels/level_040.ron" => Some(include_str!("../assets/levels/level_040.ron")),
+        "assets/levels/level_041.ron" => Some(include_str!("../assets/levels/level_041.ron")),
+        "assets/levels/level_042.ron" => Some(include_str!("../assets/levels/level_042.ron")),
+        "assets/levels/level_043.ron" => Some(include_str!("../assets/levels/level_043.ron")),
+        "assets/levels/level_044.ron" => Some(include_str!("../assets/levels/level_044.ron")),
+        "assets/levels/level_045.ron" => Some(include_str!("../assets/levels/level_045.ron")),
+        "assets/levels/level_046.ron" => Some(include_str!("../assets/levels/level_046.ron")),
+        "assets/levels/level_047.ron" => Some(include_str!("../assets/levels/level_047.ron")),
+        "assets/levels/level_048.ron" => Some(include_str!("../assets/levels/level_048.ron")),
+        "assets/levels/level_049.ron" => Some(include_str!("../assets/levels/level_049.ron")),
+        "assets/levels/level_050.ron" => Some(include_str!("../assets/levels/level_050.ron")),
+        "assets/levels/level_051.ron" => Some(include_str!("../assets/levels/level_051.ron")),
+        "assets/levels/level_052.ron" => Some(include_str!("../assets/levels/level_052.ron")),
+        "assets/levels/level_053.ron" => Some(include_str!("../assets/levels/level_053.ron")),
+        "assets/levels/level_054.ron" => Some(include_str!("../assets/levels/level_054.ron")),
+        "assets/levels/level_055.ron" => Some(include_str!("../assets/levels/level_055.ron")),
+        "assets/levels/level_056.ron" => Some(include_str!("../assets/levels/level_056.ron")),
+        "assets/levels/level_057.ron" => Some(include_str!("../assets/levels/level_057.ron")),
+        "assets/levels/level_058.ron" => Some(include_str!("../assets/levels/level_058.ron")),
+        "assets/levels/level_059.ron" => Some(include_str!("../assets/levels/level_059.ron")),
+        "assets/levels/level_060.ron" => Some(include_str!("../assets/levels/level_060.ron")),
+        "assets/levels/level_061.ron" => Some(include_str!("../assets/levels/level_061.ron")),
+        "assets/levels/level_062.ron" => Some(include_str!("../assets/levels/level_062.ron")),
+        "assets/levels/level_063.ron" => Some(include_str!("../assets/levels/level_063.ron")),
+        "assets/levels/level_064.ron" => Some(include_str!("../assets/levels/level_064.ron")),
+        "assets/levels/level_065.ron" => Some(include_str!("../assets/levels/level_065.ron")),
+        "assets/levels/level_066.ron" => Some(include_str!("../assets/levels/level_066.ron")),
+        "assets/levels/level_067.ron" => Some(include_str!("../assets/levels/level_067.ron")),
+        "assets/levels/level_068.ron" => Some(include_str!("../assets/levels/level_068.ron")),
+        "assets/levels/level_069.ron" => Some(include_str!("../assets/levels/level_069.ron")),
+        "assets/levels/level_070.ron" => Some(include_str!("../assets/levels/level_070.ron")),
+        "assets/levels/level_071.ron" => Some(include_str!("../assets/levels/level_071.ron")),
+        "assets/levels/level_072.ron" => Some(include_str!("../assets/levels/level_072.ron")),
+        "assets/levels/level_073.ron" => Some(include_str!("../assets/levels/level_073.ron")),
+        "assets/levels/level_074.ron" => Some(include_str!("../assets/levels/level_074.ron")),
+        "assets/levels/level_997.ron" => Some(include_str!("../assets/levels/level_997.ron")),
+        "assets/levels/level_998.ron" => Some(include_str!("../assets/levels/level_998.ron")),
+        "assets/levels/level_999.ron" => Some(include_str!("../assets/levels/level_999.ron")),
         _ => None,
     }
 }
@@ -1244,9 +1644,11 @@ fn reset_level_state(
     bricks: &Query<Entity, With<Brick>>,
     paddle_q: &Query<Entity, With<Paddle>>,
     ball_q: &Query<Entity, With<Ball>>,
+    merkaba_q: &Query<Entity, With<Merkaba>>,
     spawn_points: &mut ResMut<SpawnPoints>,
     game_progress: &mut ResMut<GameProgress>,
     level_advance: &mut ResMut<LevelAdvanceState>,
+    pending_merkaba_spawns: Option<&mut ResMut<crate::systems::merkaba::PendingMerkabaSpawns>>,
 ) {
     for entity in bricks.iter() {
         commands.entity(entity).despawn();
@@ -1256,6 +1658,13 @@ fn reset_level_state(
     }
     for entity in ball_q.iter() {
         commands.entity(entity).despawn();
+    }
+    for entity in merkaba_q.iter() {
+        commands.entity(entity).despawn();
+    }
+    // Clear pending merkaba spawns to prevent spawning after level change
+    if let Some(spawns) = pending_merkaba_spawns {
+        spawns.entries.clear();
     }
     spawn_points.paddle = None;
     spawn_points.ball = None;
@@ -1276,6 +1685,7 @@ fn apply_level_definition(
     #[cfg(feature = "texture_manifest")] canonical: Option<&CanonicalMaterialHandles>,
     #[cfg(feature = "texture_manifest")] fallback: Option<&mut FallbackRegistry>,
     #[cfg(feature = "texture_manifest")] type_registry: Option<&TypeVariantRegistry>,
+    brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
     if let Some((x, y, z)) = def.gravity {
         gravity_cfg.normal = Vec3::new(x, y, z);
@@ -1298,6 +1708,7 @@ fn apply_level_definition(
         fallback,
         #[cfg(feature = "texture_manifest")]
         type_registry,
+        brick_config_res,
     );
 }
 
@@ -1446,5 +1857,93 @@ mod tests {
                 assert_eq!(val, input[r][c]);
             }
         }
+    }
+
+    // Unit tests for restart gating
+
+    use super::*;
+
+    #[derive(Resource, Default)]
+    struct BeepCount(u32);
+
+    fn capture_beep(
+        mut reader: bevy::ecs::message::MessageReader<crate::signals::UiBeep>,
+        mut c: ResMut<BeepCount>,
+    ) {
+        for _ in reader.read() {
+            c.0 += 1;
+        }
+    }
+
+    fn app_with_plugins() -> App {
+        let mut app = App::new();
+        app.insert_resource(crate::physics_config::BallPhysicsConfig::default());
+        app.insert_resource(crate::physics_config::PaddlePhysicsConfig::default());
+        app.insert_resource(crate::physics_config::BrickPhysicsConfig::default());
+        app.add_plugins((MinimalPlugins, bevy::input::InputPlugin));
+        app.add_plugins(crate::systems::audio::AudioPlugin);
+        // Register level switch plugin so LevelSwitchRequested message is initialized for processing
+        app.add_plugins(crate::systems::level_switch::LevelSwitchPlugin);
+        app.add_plugins(LevelLoaderPlugin);
+        // Minimal resources required by level loader systems (spawn_level_entities, restarts, etc.)
+        app.insert_resource(Assets::<Mesh>::default());
+        app.insert_resource(Assets::<StandardMaterial>::default());
+        app.insert_resource(GameProgress::default());
+        app.insert_resource(LevelAdvanceState::default());
+        app.insert_resource(SpawnPoints::default());
+        // Capture beeps
+        app.init_resource::<BeepCount>();
+        // Pause state required by run conditions
+        app.init_resource::<crate::pause::PauseState>();
+        // Scoring state required by cheat-mode toggle
+        app.init_resource::<crate::systems::scoring::ScoreState>();
+        // capture after restart system to ensure we observe writes
+        app.add_systems(Update, capture_beep);
+        app
+    }
+
+    #[test]
+    fn restart_blocks_when_cheat_inactive_emits_beep() {
+        let mut app = app_with_plugins();
+        app.add_plugins(crate::systems::cheat_mode::CheatModePlugin);
+        // ensure cheat off
+        {
+            let mut cheat = app
+                .world_mut()
+                .resource_mut::<crate::systems::cheat_mode::CheatModeState>();
+            cheat.active = false;
+        }
+        // press R
+        {
+            let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+            input.press(KeyCode::KeyR);
+        }
+        app.update();
+        app.update();
+        // capture runs on second frame and should observe the beep
+        let beep = app.world().resource::<BeepCount>();
+        assert!(beep.0 >= 1, "Blocked restart should emit a UI beep");
+    }
+
+    #[test]
+    fn restart_allowed_when_cheat_active_no_beep() {
+        let mut app = app_with_plugins();
+        app.add_plugins(crate::systems::cheat_mode::CheatModePlugin);
+        // ensure cheat on
+        {
+            let mut cheat = app
+                .world_mut()
+                .resource_mut::<crate::systems::cheat_mode::CheatModeState>();
+            cheat.active = true;
+        }
+        // press R
+        {
+            let mut input = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+            input.press(KeyCode::KeyR);
+        }
+        app.update();
+        app.update();
+        let beep = app.world().resource::<BeepCount>();
+        assert_eq!(beep.0, 0, "Allowed restart should not emit a UI beep");
     }
 }

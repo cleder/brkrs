@@ -174,6 +174,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.100"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
+
+[[package]]
 name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1638,10 +1644,13 @@ dependencies = [
 
 [[package]]
 name = "brkrs"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
+ "anyhow",
  "bevy",
  "bevy_rapier3d",
+ "getrandom 0.2.15",
+ "rand",
  "ron 0.8.1",
  "serde",
  "serde_json",
@@ -2392,8 +2401,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4567c8db10ae91089c99af84c68c38da3ec2f087c3f82960bcdbf3656b6f4d7"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "wasi",
+ "wasm-bindgen",
 ]
 
 [[package]]

@@ -35,6 +35,9 @@ The project follows these architectural principles (from the project Constitutio
 3. **Modular Features**: Each feature is independently testable
 4. **Performance-First**: 60 FPS target on native and WASM
 5. **Cross-Platform**: Supports native (Linux/Windows/macOS) and WASM
+6. **Rustdoc**: Public APIs are documented (intent-focused)
+7. **TDD-First**: Tests are written first, fail (red), and are approved before implementation
+8. **Bevy 0.17 mandates**: Follow Bevy 0.17 ECS/graphics/performance rules and prohibitions
 
 ## System Overview
 
@@ -46,9 +49,18 @@ The project follows these architectural principles (from the project Constitutio
 | Pause System | Freezes physics, shows overlay | `src/pause.rs` |
 | Respawn | Ball respawn after loss | `src/systems/respawn.rs` |
 | Level Switch | Transitions between levels | `src/systems/level_switch.rs` |
+| Scoring | Tracks points, awards milestone bonuses | `src/systems/scoring.rs` |
+| Audio System | Plays sound effects for collisions, level transitions, milestones | `src/systems/audio.rs` |
+| Cheat Mode | Developer/testing feature for quick level exploration | `src/systems/cheat_mode.rs` |
+| Paddle Size | Handles paddle size powerup effects (shrink/enlarge) | `src/systems/paddle_size.rs` |
+| Multi-Hit Bricks | Manages multi-hit brick durability and transitions | `src/systems/multi_hit.rs` |
+| Textures | Loads and manages textures, per-level material overrides | `src/systems/textures/` |
 | Grid Debug | Development visualization | `src/systems/grid_debug.rs` |
+| Spawning | Initial scene setup (camera, light, ground) | `src/systems/spawning.rs` |
 
 ### Component Structure
+
+Entities use centralized physics configuration resources instead of hardcoded values:
 
 ```text
 Entity: Ball
@@ -56,21 +68,45 @@ Entity: Ball
 ├── RigidBody (Dynamic)
 ├── Collider (Sphere)
 ├── Velocity
+├── Restitution (from BallPhysicsConfig.restitution)
+├── Friction (from BallPhysicsConfig.friction)
+├── Damping (from BallPhysicsConfig.linear_damping/angular_damping)
 └── Ball (marker component)
 
 Entity: Paddle
 ├── Transform
 ├── RigidBody (Kinematic)
 ├── Collider (Box)
+├── Restitution (from PaddlePhysicsConfig.restitution)
+├── Friction (from PaddlePhysicsConfig.friction)
 └── Paddle (marker component)
 
 Entity: Brick
 ├── Transform
 ├── RigidBody (Fixed)
 ├── Collider (Box)
+├── Restitution (from BrickPhysicsConfig.restitution)
+├── Friction (from BrickPhysicsConfig.friction)
 ├── Brick (marker component)
 └── [Optional] Indestructible
+
+Entity: Merkaba (Hazard)
+├── Transform
+├── RigidBody (Dynamic)
+├── Collider (Cylinder)
+├── CollisionGroups (Group 2, ALL)
+├── SolverGroups (Group 2, ALL ^ Group 1)
+├── Velocity
+└── Merkaba (marker component)
 ```
+
+**Physics Configuration Resources:**
+
+- `BallPhysicsConfig` — Ball physics properties (restitution, friction, damping)
+- `PaddlePhysicsConfig` — Paddle physics properties
+- `BrickPhysicsConfig` — Brick physics properties
+
+All configs include validation methods to ensure physics values are reasonable and prevent runtime errors.
 
 ### State Machine
 
@@ -95,12 +131,27 @@ Entity: Brick
 
 ## Physics Architecture
 
+### Coordinate System
+
+**Bevy Convention**: Right-handed Y-up coordinate system
+
+- **Y-axis**: Vertical (up/down), locked for gameplay entities
+- **X-axis**: Lateral movement (left/right)
+- **Z-axis**: Forward/backward movement (+Z toward camera, -Z into screen)
+
+**Game Implementation**: Top-down view with movement on XZ plane
+
+- Camera positioned at Y=37 looking down at origin
+- Entities use `LockedAxes::TRANSLATION_LOCKED_Y` to constrain movement to XZ plane
+- From player perspective: +Z = forward (toward goal/bricks), -Z = backward (toward paddle)
+- Gameplay "forward" refers to +Z direction, not Bevy's `Transform::forward()` API (-Z)
+
 ### Plane Constraint
 
-All gameplay occurs on a 2D plane at Y=2.0:
+All gameplay occurs on the XZ horizontal plane at Y=2.0:
 
 - Entities use `LockedAxes::TRANSLATION_LOCKED_Y`
-- Camera positioned above, looking down
+- Camera positioned above at Y=37, looking down
 - 3D rendering provides depth and shadows
 
 ### Collision Handling
@@ -150,6 +201,68 @@ assets/levels/level_001.ron
 2. Parse new level file
 3. Spawn new entities
 4. Reset ball/paddle positions if needed
+
+## Game State Resources
+
+### Scoring System
+
+The scoring system tracks cumulative points throughout a game session:
+
+```text
+Brick Destroyed
+      |
+      v
+BrickDestroyed (message)
+      |
+      v
+award_points_system
+      |
+      v
+ScoreState (resource)
+   - current_score: u32
+   - last_milestone_reached: u32
+      |
+      v
+detect_milestone_system
+      |
+      v (if milestone crossed)
+MilestoneReached (message)
+      |
+      v
+award_milestone_ball_system
+      |
+      v
+LivesState.lives_remaining += 1
+```
+
+**Point Values**: Defined in `docs/bricks.md`, ranging from 25-300 points per brick
+
+**Milestones**: Every 5000 points awards an extra life
+
+**Special Cases**:
+
+- Question brick (53): Random 25-300 points
+- Extra Ball brick (41): 0 points (grants life via separate mechanism)
+- Magnet bricks (55-56): 0 points (effect-only)
+
+**Persistence**: Score accumulates across level transitions, resets on game restart
+
+**Messages vs Observers (Bevy 0.17+)**
+
+See the constitution's "Bevy 0.17 Event, Message, and Observer Clarification" for authoritative guidance.
+
+- **Messages** (`#[derive(Message)]`) are for double-buffered, frame-agnostic data streams (e.g., scoring, telemetry).
+  Produced via `MessageWriter`, consumed via `MessageReader`.
+  Use for work that can be batched or delayed to the next schedule step.
+  Not for immediate side-effects.
+- **Observers** (with `#[derive(Event)]`, `On<T>`, `Trigger<T>`, or observer systems) are for immediate or next-frame reactions (e.g., UI, sound, spawning).
+  Use for real-time, reactive logic that needs full system access and instant feedback.
+
+**Key rules:**
+
+- Use Messages for batchable, cross-frame work; Observers for instant, reactive logic.
+- Never create observer systems that listen to Messages; only Events/Triggers are valid for observers.
+- Always justify your choice in specs/plans (see constitution for rationale and examples).
 
 ## UI System
 

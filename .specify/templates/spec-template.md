@@ -1,11 +1,26 @@
 # Feature Specification: [FEATURE NAME]
 
-**Feature Branch**: `[###-feature-name]`  
-**Created**: [DATE]  
-**Status**: Draft  
+**Feature Branch**: `[###-feature-name]`
+**Created**: [DATE]
+**Status**: Draft
 **Input**: User description: "$ARGUMENTS"
 
 ## User Scenarios & Testing *(mandatory)*
+
+**TDD REQUIREMENT**: For every user story, **tests must be written first** and included in this spec as testable acceptance scenarios. Tests MUST be committed before implementation and a failing-test commit (red) MUST exist in the branch history as proof.
+
+**BEVY 0.17 REQUIREMENT**: If the feature touches ECS systems, queries, events/messages, rendering, assets, UI updates, or hierarchy, the implementation MUST comply with the constitution's **Bevy 0.17 mandates & prohibitions**. Acceptance scenarios SHOULD include at least one check that guards against prohibited patterns (e.g., panicking queries or per-frame UI updates without `Changed<T>`). Acceptance criteria MUST explicitly state which event system is used (Messages vs Observers), justify the choice, and check for **Message-Event Separation** (correct use of `MessageWriter` vs observers/`Trigger<T>`) and **Hierarchy Safety** (use of `commands.entity(parent).add_child(child)` or `EntityCommands::set_parent`).
+
+**COORDINATE SYSTEM REQUIREMENT**: If the feature involves spatial movement, physics velocity, or directional behavior, the specification MUST include a coordinate system note clarifying:
+- Which axes are used for movement (XZ plane for horizontal, Y for vertical, etc.)
+- Whether directional terms (forward/backward/left/right) refer to Bevy's Transform API convention (forward = -Z), gameplay-relative directions (player perspective), or direct axis manipulation (±X, ±Y, ±Z)
+- How the camera view orientation affects gameplay directions
+- Any locked axes via `LockedAxes` constraints
+
+**MULTI-FRAME PERSISTENCE REQUIREMENT**: If the feature involves runtime state changes (gravity, scores, powerup effects, or any resource/component modified during gameplay), acceptance scenarios MUST include multi-frame persistence checks:
+- Tests MUST verify state persists across multiple `app.update()` cycles (minimum 10 frames)
+- Tests MUST include ALL systems that write to the affected resource/component to catch per-frame overwrite bugs
+- This requirement exists because single-frame assertions miss bugs where initialization or cleanup systems unconditionally overwrite runtime state (see 020-gravity-bricks retrospective)
 
 <!--
   IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
@@ -85,7 +100,7 @@
 ### Functional Requirements
 
 - **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
+- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]
 - **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]

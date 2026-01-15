@@ -21,6 +21,10 @@ extensions = [
     "sphinx_copybutton",
 ]
 
+# If using :github: option
+github_username = "cleder"
+github_repository = "brkrs"
+
 # MyST-Parser configuration
 myst_enable_extensions = [
     "colon_fence",
@@ -47,7 +51,7 @@ html_static_path = ["_static"]
 # Furo theme options
 html_theme_options = {
     "source_repository": "https://github.com/cleder/brkrs",
-    "source_branch": "main",
+    "source_branch": "develop",
     "source_directory": "docs/",
 }
 

@@ -14,22 +14,24 @@ fn level_with_markers(
 ) -> LevelDefinition {
     let mut matrix = vec![vec![0_u8; GRID_DIM]; GRID_DIM];
     if let Some((row, col)) = paddle_marker {
-        matrix[row][col] = 1;
+        matrix[row][col] = 2;
         // Duplicate markers should be ignored once the first is recorded.
         if row + 1 < GRID_DIM {
-            matrix[row + 1][col] = 1;
+            matrix[row + 1][col] = 2;
         }
     }
     if let Some((row, col)) = ball_marker {
-        matrix[row][col] = 2;
+        matrix[row][col] = 1;
         if row + 1 < GRID_DIM {
-            matrix[row + 1][col] = 2;
+            matrix[row + 1][col] = 1;
         }
     }
     LevelDefinition {
         number: 1,
         gravity: None,
         matrix,
+        description: None,
+        author: None,
         #[cfg(feature = "texture_manifest")]
         presentation: None,
     }
@@ -37,7 +39,7 @@ fn level_with_markers(
 
 fn expected_position(row: usize, col: usize) -> Vec3 {
     let x = -PLANE_H / 2.0 + (row as f32 + 0.5) * CELL_HEIGHT;
-    let z = -PLANE_W / 2.0 + (col as f32 + 0.5) * CELL_WIDTH;
+    let z = PLANE_W / 2.0 - (col as f32 + 0.5) * CELL_WIDTH;
     Vec3::new(x, 2.0, z)
 }
 

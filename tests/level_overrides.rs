@@ -16,6 +16,9 @@ use brkrs::systems::textures::{
 
 fn app_with_texture_system() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins);
     app.insert_resource(Assets::<StandardMaterial>::default());
     app.add_plugins(TextureMaterialsPlugin);
@@ -29,10 +32,14 @@ fn create_test_profile(id: &str) -> VisualAssetProfile {
         id: id.to_string(),
         albedo_path: format!("test/{id}.png"),
         normal_path: None,
+        orm_path: None,
+        emissive_path: None,
+        depth_path: None,
         roughness: 0.5,
         metallic: 0.0,
         uv_scale: Vec2::splat(1.0),
         uv_offset: Vec2::ZERO,
+        depth_scale: 0.1,
         fallback_chain: vec![],
     }
 }

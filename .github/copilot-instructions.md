@@ -4,14 +4,17 @@ Auto-generated from all feature plans.
 Last updated: 2025-11-24
 
 ## Active Technologies
+- Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1 (001-ball-lives)
+- In-memory ECS state only (no persistent storage) (008-paddle-shrink-feedback)
+- RON files in `assets/levels/` directory (007-level-metadata)
+- In-memory ECS state only (no persistent storage) (008-paddle-shrink-feedback)
+- Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0 (physics baseline), tracing 0.1 (001-cheat-mode-safeguards)
 
-- Rust 1.81 (Rust 2021 edition) + Bevy 0.17, bevy_rapier3d (physics/collision) (005-multi-hit-bricks)
-- RON level files (existing format supports indices 10-13) (005-multi-hit-bricks)
-- Rust 1.81 (Rust 2021 edition) + Bevy 0.17 (AudioPlugin, AudioSource, observers), bevy_rapier3d (006-audio-system)
-- RON configuration file for audio settings persistence (006-audio-system)
-- Rust 1.81 (project), Python 3.11 for docs toolchain + Sphinx, MyST-Parser, furo-theme, sphinx-rtd-theme-compat (if needed), `cargo doc` for rustdoc generation (001-sphinx-docs)
-- N/A — documentation stored in repo under `/docs/` and `specs/` for plans (001-sphinx-docs)
-- Rust 1.81 (Rust 2021 edition via rustup) + Bevy 0.17 (ECS, input handling, window management, Time, rendering), bevy_rapier3d (physics simulation control)
+- N/A (in-memory ECS state only) (008-paddle-shrink-feedback)
+
+- Rust 1.81 (Rust 2021 edition) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde 1.0, ron 0.8 (007-level-metadata)
+- RON files in `assets/levels/` directory (007-level-metadata)
+- ECS architecture with Bevy (all features)
 
 ## Project Structure
 
@@ -36,10 +39,12 @@ run these commands to verify your work:
 Rust 2021 edition (toolchain managed by rustup): Follow standard conventions
 
 ## Recent Changes
+- 001-display-current-level: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+- 001-cheat-mode-safeguards: Added Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0 (physics baseline), tracing 0.1
+- 009-add-scoring: Added Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1
 
-- 006-audio-system: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17 (AudioPlugin, AudioSource, observers), bevy_rapier3d
-- 005-multi-hit-bricks: Added Rust 1.81 (Rust 2021 edition) + Bevy 0.17, bevy_rapier3d (physics/collision)
-- 001-sphinx-docs: Added Rust 1.81 (project), Python 3.11 for docs toolchain + Sphinx, MyST-Parser, furo-theme, sphinx-rtd-theme-compat (if needed), `cargo doc` for rustdoc generation
+
+
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
