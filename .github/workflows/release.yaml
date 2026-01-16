@@ -26,6 +26,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Free Disk Space
+        uses: endersonmenezes/free-disk-space@v3  # Use @main for latest, @v3 for stable
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          remove_tool_cache: false
+          remove_swap: true
+          remove_packages: "azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* temurin-* mysql* dotnet-sdk-*"
+          remove_packages_one_command: true
+          remove_folders: "/usr/share/swift /usr/share/miniconda /usr/share/az* /usr/local/lib/node_modules /usr/local/share/chromium /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli /usr/local/aws-sam-cli /usr/share/gradle"
+          rm_cmd: "rmz"  # Use 'rmz' for faster deletion (default: 'rm')
+          rmz_version: "3.1.1"  # Required when rm_cmd is 'rmz'
+          testing: false
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
       - uses: actions/checkout@v4
@@ -74,6 +88,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Free Disk Space
+        uses: endersonmenezes/free-disk-space@v3  # Use @main for latest, @v3 for stable
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          remove_tool_cache: false
+          remove_swap: true
+          remove_packages: "azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* temurin-* mysql* dotnet-sdk-*"
+          remove_packages_one_command: true
+          remove_folders: "/usr/share/swift /usr/share/miniconda /usr/share/az* /usr/local/lib/node_modules /usr/local/share/chromium /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli /usr/local/aws-sam-cli /usr/share/gradle"
+          rm_cmd: "rmz"  # Use 'rmz' for faster deletion (default: 'rm')
+          rmz_version: "3.1.1"  # Required when rm_cmd is 'rmz'
+          testing: false
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
       - uses: actions/checkout@v4
@@ -86,7 +114,7 @@ jobs:
         run: |
           sudo apt-get update
           # Ensure pkg-config and wayland client dev headers are available
-          sudo apt-get install -y pkg-config libwayland-client-dev libx11-dev libasound2-dev libudev-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
+          sudo apt-get install --no-install-recommends -y pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
       - name: Set PKG_CONFIG_PATH
         run: echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig" >> $GITHUB_ENV
 
