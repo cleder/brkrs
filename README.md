@@ -4,7 +4,7 @@
 
 [![CI-main](https://github.com/cleder/brkrs/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/cleder/brkrs/actions/workflows/ci.yaml?branch=main) [![CI-develop](https://github.com/cleder/brkrs/actions/workflows/ci.yaml/badge.svg?branch=develop)](https://github.com/cleder/brkrs/actions/workflows/ci.yaml?branch=develop)
 
-[![itch.io](https://github.com/cleder/brkrs/img/itchio-badge-color.svg?raw=true)](https://cleder.itch.io/brkrs)
+[![itch.io](https://raw.githubusercontent.com/cleder/brkrs/e74eb3851125e52ab6296a4ce1197cf200355e8e/img/itchio-badge-color.svg)](https://cleder.itch.io/brkrs)
 <!-- INCLUSION-MARKER-DO-NOT-REMOVE -->
 
 ## 🔗 Quick links
