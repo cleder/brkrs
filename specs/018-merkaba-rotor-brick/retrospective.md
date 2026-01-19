@@ -32,7 +32,8 @@ The primary goal was to introduce a dynamic hazard that interacts with the physi
   The `reset_level_state` function was clearing standard entities (Bricks, Balls, Paddles) but failing to despawn Merkabas.
   Old, malformed entities persisted in the scene.
 - **Resolution:** Updated `reset_level_state` to explicitly query and `despawn` all `Merkaba` entities.
-- **Key Learning:** Every new entity type added to the game requires updates to the cleanup/reset logic. "Respawn" (player death) logic and "Restart" (level reload) logic often reside in different systems and must be kept in sync.
+- **Key Learning:** Every new entity type added to the game requires updates to the cleanup/reset logic.
+  "Respawn" (player death) logic and "Restart" (level reload) logic often reside in different systems and must be kept in sync.
 
 ### 4. Compilation & Dependencies
 

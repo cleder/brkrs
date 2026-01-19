@@ -83,17 +83,10 @@ Pygments (used by Sphinx) doesn't have a RON lexer, but RON syntax is Rust-like 
 
 ```markdown
 <!-- Do this -->
-` ` `rust
-LevelDefinition(
-  number: 1,
-  matrix: [...],
-)
-` ` `
+`` `rust LevelDefinition(   number: 1,   matrix: [...], )` ``
 
 <!-- Not this (will cause build warnings) -->
-` ` `ron
-LevelDefinition(...)
-` ` `
+`` `ron LevelDefinition(...)` ``
 ```
 
 Example:

@@ -291,7 +291,8 @@ description: Some(r#"
 
 ### Author field
 
-Take credit for your work! Use your name or include contact information:
+Take credit for your work!
+Use your name or include contact information:
 
 ```ron
 // Plain name
@@ -304,7 +305,7 @@ author: Some("[Jane Smith](mailto:jane@example.com)")
 author: Some("[Community Team](https://github.com/example/team)")
 ```
 
-**Note**: When using markdown link format `[Name](url)`, only the name is extracted and used (the URL is preserved in the file for documentation purposes).
+**Note**: When using Markdown link format `[Name](url)`, only the name is extracted and used (the URL is preserved in the file for documentation purposes).
 
 ### When to add metadata
 
@@ -402,43 +403,30 @@ Level files support optional metadata for documentation and attribution:
 
 Document your level's design intent, unique features, and gameplay characteristics:
 
-\`\`\`ron
-LevelDefinition(
-  number: 42,
-  description: Some("Classic corridor layout testing precision"),
-  matrix: [ /* ... */ ],
-)
-\`\`\`
+\ `\`\ `ron LevelDefinition(   number: 42,   description: Some("Classic corridor layout testing precision"),   matrix: [ /* ... */ ], ) \`\ `\`
 
 For multi-line descriptions, use RON raw strings:
 
-\`\`\`ron
-description: Some(r#"
-  "The Gauntlet" - Expert level challenge
+\ `\`\`ron description: Some(r#" "The Gauntlet" - Expert level challenge
 
   Design Intent:
-  - Tests player precision with narrow passages
-  - Features indestructible maze (type 90)
-  - Includes high-value multi-hit targets
+
+- Tests player precision with narrow passages
+- Features indestructible maze (type 90)
+- Includes high-value multi-hit targets
 
   Average completion: 5-7 minutes
-"#)
-\`\`\`
+"#) \ `\`\`
 
 ### Author Field
 
 Take credit for your work with contributor attribution:
 
-\`\`\`ron
-// Simple name
-author: Some("Jane Smith")
+\ `\`\`ron // Simple name author: Some("Jane Smith")
 
-// With contact information (markdown link)
-author: Some("[Jane Smith](mailto:jane@example.com)")
-author: Some("[Team Name](https://github.com/org/repo)")
-\`\`\`
+// With contact information (Markdown link) author: Some(" [Jane Smith](mailto:jane@example.com)") author: Some(" [Team Name](https://github.com/org/repo)") \ `\`\`
 
-**Note**: When using markdown format `[Name](url)`, the system extracts and uses only the display name.
+**Note**: When using Markdown format `[Name](url)`, the system extracts and uses only the display name.
 
 ### When to Use Metadata
 
@@ -458,12 +446,7 @@ When creating or editing level files, consider adding metadata to document your 
 
 ### Example: Complete Level File
 
-\`\`\`ron
-LevelDefinition(
-  number: 100,
-  gravity: Some((0.0, -9.81, 0.0)),
-  description: Some(r#"
-    Tournament-grade expert challenge.
+\ `\`\`ron LevelDefinition( number: 100, gravity: Some((0.0, -9.81, 0.0)), description: Some(r#" Tournament-grade expert challenge.
 
     Features:
     - Precision-required narrow corridors
@@ -472,13 +455,7 @@ LevelDefinition(
 
     Designed for competitive play.
     Estimated completion: 5-7 minutes.
-  "#),
-  author: Some("[Your Name](mailto:your@email.com)"),
-  matrix: [
-    // ... 20x20 tile grid
-  ],
-)
-\`\`\`
+"#), author: Some(" [Your Name](mailto:your@email.com)"), matrix: [ // ... 20x20 tile grid ], ) \ `\`\`
 
 ### Tips for Good Descriptions
 

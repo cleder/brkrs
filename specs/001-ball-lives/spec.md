@@ -109,7 +109,8 @@ As a player, I want the remaining lives count to be consistent and never become 
 - **FR-004**: The system MUST display the remaining lives count on-screen during gameplay.
 - **FR-005**: The on-screen remaining lives count MUST update to reflect the new value synchronously within one frame (at 60 FPS target, ~16ms) after the count changes.
   When the remaining lives transitions from 1 to 0 due to a LifeLostEvent, the decrement to 0, the HUD update, and the appearance of the "Game over" message MUST occur within the same frame.
-**FR-006**: When a LifeLostEvent occurs while the remaining lives count is 1 (resulting in 0), the system MUST display the exact message "Game over" (lowercase, centered on-screen). "No lives left" is explicitly defined as `remaining lives count == 0` (game state), not a world-state query for physical ball entities.
+**FR-006**: When a LifeLostEvent occurs while the remaining lives count is 1 (resulting in 0), the system MUST display the exact message "Game over" (lowercase, centered on-screen).
+"No lives left" is explicitly defined as `remaining lives count == 0` (game state), not a world-state query for physical ball entities.
 
 The lives display remains visible during gameplay and while the game-over message is active.
 **FR-007**: Once the "Game over" message is displayed, it MUST remain displayed while the remaining lives count is 0.
@@ -155,5 +156,6 @@ The lives display remains visible during gameplay and while the game-over messag
 - **SC-003**: In 100% of tested cases where the last life is lost (transition from 1 to 0), the remaining lives count updates on-screen within one frame (~16ms), and the "Game over" message becomes visible within 1 second (allowing for animation/transition effects).
 - **SC-004**: Usability test protocol: Recruit at least 5 participants familiar with action games.
   Test on native desktop build (Linux) with standard resolution (1920x1080).
-  Prompt wording: "Without pausing, how many lives remain right now?" Measurement: Success if the participant verbally reports the correct number within 5 seconds of the prompt while gameplay is visible.
+  Prompt wording: "Without pausing, how many lives remain right now?"
+  Measurement: Success if the participant verbally reports the correct number within 5 seconds of the prompt while gameplay is visible.
   Threshold: At least 80% of participants succeed.

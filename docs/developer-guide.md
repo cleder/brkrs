@@ -474,6 +474,7 @@ See the constitution's "Bevy 0.17 Event, Message, and Observer Clarification" fo
 - Use Messages for batchable, cross-frame work; Observers for instant, reactive logic.
 - Never create observer systems that listen to Messages; only Events/Triggers are valid for observers.
 - Always justify your choice in specs/plans (see constitution for rationale and examples).
+>
 > - **Never** create observer systems that listen to Messages; only Events/Triggers are valid for observers.
 
 #### Events (immediate, observer pattern)

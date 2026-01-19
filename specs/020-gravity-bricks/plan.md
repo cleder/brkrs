@@ -239,6 +239,7 @@ Deliverables:
    **System Registration**:
    - `gravity_configuration_loader_system`: `Startup` (load level default gravity once)
    - `brick_destruction_gravity_handler`: `Update` (detect destroyed gravity bricks, write messages)
+
 - `gravity_application_system`: Rapier `PhysicsSet` (read messages, update gravity config)
   - `gravity_reset_on_life_loss_system`: `PostUpdate`, **before** ball respawn system (reset gravity before next ball spawns)
 

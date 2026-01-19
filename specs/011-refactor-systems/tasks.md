@@ -63,7 +63,8 @@ Tests MUST be written and committed first, verified to FAIL (red), and then appr
 
 ### Fallible Systems Conversion
 
-**NOTE**: Bevy systems MUST return `()`, not `Result`. "Fallible systems" means:
+**NOTE**: Bevy systems MUST return `()`, not `Result`.
+"Fallible systems" means:
 
 - Systems handle errors gracefully (no panics)
 - Use early returns for missing optional resources
