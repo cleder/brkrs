@@ -4,7 +4,8 @@
 It's a feature-rich clone with advanced gameplay mechanics beyond the basic Breakout formula.
 It features a paddle that can be controlled with the mouse, in all directions (left/right (x), up/down (y)).
 If the player is moving the paddle to the right when the ball makes contact, the game calculates a greater horizontal velocity component in the rightward direction, sending the ball off at a sharper horizontal angle.
-Conversely, moving the paddle to the left imparts a leftward 'english.' The mouse wheel controls the rotation of the paddle.
+Conversely, moving the paddle to the left imparts a leftward 'english.'
+The mouse wheel controls the rotation of the paddle.
 It uses 3D rendering to display the bricks, the walls, and the ball.
 The game will be implemented in 3D but constrained to a 2D plane above the ground.
 The game area is divided into a 22x22 grid, the stones are placed into this grid and fill a grid cell."

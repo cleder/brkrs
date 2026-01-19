@@ -1,7 +1,8 @@
 # Feature Specification: Audio System
 
 **Feature Branch**: `006-audio-system` **Created**: 2025-11-29 **Status**: Draft **Input**: User description: "Audio event hooks for brick interactions, level transitions, and multi-hit brick feedback.
-Addresses GitHub issues #10 and #23." **Related Issues**: [#10](https://github.com/cleder/brkrs/issues/10), [#23](https://github.com/cleder/brkrs/issues/23)
+Addresses GitHub issues #10 and #23."
+**Related Issues**: [#10](https://github.com/cleder/brkrs/issues/10), [#23](https://github.com/cleder/brkrs/issues/23)
 
 ## User Scenarios & Testing *(mandatory)*
 
