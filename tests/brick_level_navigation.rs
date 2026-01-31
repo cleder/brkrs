@@ -7,7 +7,7 @@
 use bevy::{app::App, input::InputPlugin, prelude::*};
 use bevy_rapier3d::prelude::RapierConfiguration;
 use brkrs::level_format::{BRICK_50, BRICK_54};
-use brkrs::level_loader::{CurrentLevel, LevelAdvanceState, LevelDefinition, LevelLoaderPlugin};
+use brkrs::level_loader::{CurrentLevel, LevelAdvanceState, LevelDefinition};
 use brkrs::systems::level_switch::{LevelSwitchDirection, LevelSwitchRequested, LevelSwitchSource};
 use brkrs::systems::respawn::SpawnPoints;
 use brkrs::systems::LevelSwitchPlugin;
@@ -16,13 +16,8 @@ use brkrs::GameProgress;
 fn test_app() -> App {
     let mut app = App::new();
 
-    // Core plugins
-    app.add_plugins((
-        MinimalPlugins,
-        InputPlugin,
-        LevelSwitchPlugin,
-        LevelLoaderPlugin,
-    ));
+    // Core plugins (skip LevelLoaderPlugin for tests that manually set CurrentLevel)
+    app.add_plugins((MinimalPlugins, InputPlugin, LevelSwitchPlugin));
 
     // Physics configuration
     app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
