@@ -38,6 +38,7 @@ fn gravity_playtest_sequence_simulation() {
         msgs.write(BrickDestroyed {
             brick_entity: Entity::from_bits(100),
             brick_type: 20,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }
@@ -53,6 +54,7 @@ fn gravity_playtest_sequence_simulation() {
         msgs.write(BrickDestroyed {
             brick_entity: Entity::from_bits(101),
             brick_type: 23,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }
@@ -77,6 +79,7 @@ fn gravity_playtest_sequence_simulation() {
         msgs.write(BrickDestroyed {
             brick_entity: Entity::from_bits(102),
             brick_type: 20,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }
@@ -92,6 +95,7 @@ fn gravity_playtest_sequence_simulation() {
         msgs.write(BrickDestroyed {
             brick_entity: Entity::from_bits(103),
             brick_type: 21,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }

@@ -13,8 +13,8 @@ pub use level_loader::extract_author_name;
 #[cfg(feature = "texture_manifest")]
 use crate::systems::TextureManifestPlugin;
 use crate::systems::{
-    AudioPlugin, InputLocked, LevelSwitchPlugin, MerkabaPlugin, PaddleSizePlugin, RespawnPlugin,
-    RespawnSystems,
+    AudioPlugin, BallSpawnBricksPlugin, InputLocked, LevelSwitchPlugin, MerkabaPlugin,
+    PaddleSizePlugin, RespawnPlugin, RespawnSystems,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -264,6 +264,7 @@ pub fn run() {
     app.add_plugins(AudioPlugin);
     app.add_plugins(MerkabaPlugin);
     app.add_plugins(PaddleSizePlugin);
+    app.add_plugins(BallSpawnBricksPlugin);
     // Cheat mode plugin (feature: toggle, indicator, gated level controls)
     app.add_plugins(systems::CheatModePlugin);
 
@@ -668,6 +669,8 @@ fn try_emit_brick_destroyed(
     emitted: &mut Option<ResMut<EmittedBrickDestroyed>>,
     entity: Entity,
     brick_type: u8,
+    brick_position: Vec3,
+    destroyed_by: Option<Entity>,
     context: &str,
 ) -> bool {
     let Some(w) = writer.as_mut() else {
@@ -687,7 +690,8 @@ fn try_emit_brick_destroyed(
         w.write(crate::signals::BrickDestroyed {
             brick_entity: entity,
             brick_type,
-            destroyed_by: None,
+            brick_position,
+            destroyed_by,
         });
     } else {
         debug!(
@@ -744,6 +748,13 @@ pub fn mark_brick_on_ball_collision(
         if let CollisionEvent::Started(e1, e2, _) = event {
             let e1_is_ball = balls.get(*e1).is_ok();
             let e2_is_ball = balls.get(*e2).is_ok();
+            let triggering_ball = if e1_is_ball {
+                Some(*e1)
+            } else if e2_is_ball {
+                Some(*e2)
+            } else {
+                None
+            };
 
             // Determine which entity is the brick (if any)
             let bricks_info = bricks.p0();
@@ -756,6 +767,9 @@ pub fn mark_brick_on_ball_collision(
             };
 
             if let Some((entity, brick_type_ro, gt_opt, t_opt)) = brick_info {
+                let Some(triggering_ball) = triggering_ball else {
+                    continue;
+                };
                 if processed_bricks.contains(&entity) {
                     debug!("Skipping already-processed brick entity {:?}", entity);
                     continue;
@@ -868,6 +882,8 @@ pub fn mark_brick_on_ball_collision(
                             &mut emitted,
                             entity,
                             current_type,
+                            brick_pos,
+                            Some(triggering_ball),
                             "Rotor",
                         );
                         info!(
@@ -876,6 +892,17 @@ pub fn mark_brick_on_ball_collision(
                         );
                         commands.entity(entity).try_despawn();
                     } else {
+                        // Emit BrickDestroyed now so downstream systems can react using
+                        // brick position and triggering ball before the entity is despawned.
+                        try_emit_brick_destroyed(
+                            &mut brick_destroyed_msgs,
+                            &mut emitted,
+                            entity,
+                            current_type,
+                            brick_pos,
+                            Some(triggering_ball),
+                            "BallCollision",
+                        );
                         info!(
                             "mark_brick_on_ball_collision: mark entity {:?} as MarkedForDespawn, type {}",
                             entity, current_type
@@ -927,10 +954,10 @@ fn detect_ball_wall_collisions(
 /// Despawn entities marked with `MarkedForDespawn` component and emit `BrickDestroyed` messages.
 ///
 /// This system is the primary despawn handler for all marked entities (bricks, balls, etc.).
-/// For brick entities, it emits a `BrickDestroyed` message with the brick type and destroyed_by field.
+/// For brick entities, it emits a `BrickDestroyed` message with brick type, position, and destroyed_by fields.
 ///
 /// **Paddle-destroyable bricks (type 57):**
-/// - Emits `BrickDestroyed { brick_type: 57, destroyed_by: None }`
+/// - Emits `BrickDestroyed { brick_type: 57, brick_position: <brick center>, destroyed_by: None }`
 /// - `destroyed_by: None` indicates paddle destruction (vs ball collision)
 /// - Scoring system uses brick_type to award 250 points
 ///
@@ -953,6 +980,8 @@ fn detect_ball_wall_collisions(
 /// - `award_points_system`: Consumes BrickDestroyed messages to award points
 pub fn despawn_marked_entities(
     marked: Query<(Entity, Option<&BrickTypeId>), With<MarkedForDespawn>>,
+    transforms: Query<&Transform>,
+    global_transforms: Query<&GlobalTransform>,
     children: Query<&Children>,
     mut commands: Commands,
     mut brick_events: Option<MessageWriter<crate::signals::BrickDestroyed>>,
@@ -961,11 +990,18 @@ pub fn despawn_marked_entities(
     for (entity, brick_type) in marked.iter() {
         // Emit BrickDestroyed message for audio/scoring systems
         if let Some(brick_type) = brick_type {
+            let brick_position = transforms
+                .get(entity)
+                .map(|transform| transform.translation)
+                .or_else(|_| global_transforms.get(entity).map(|gt| gt.translation()))
+                .unwrap_or(Vec3::ZERO);
             try_emit_brick_destroyed(
                 &mut brick_events,
                 &mut emitted,
                 entity,
                 brick_type.0,
+                brick_position,
+                None,
                 "Despawn",
             );
         }

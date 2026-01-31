@@ -12,6 +12,7 @@ fn brick_destroyed_message_has_correct_fields() {
     let event = BrickDestroyed {
         brick_entity: Entity::PLACEHOLDER,
         brick_type: 20,
+        brick_position: Vec3::ZERO,
         destroyed_by: None,
     };
     assert_eq!(event.brick_type, 20);
@@ -83,6 +84,7 @@ fn audio_events_are_cloneable() {
     let brick_destroyed = BrickDestroyed {
         brick_entity: Entity::PLACEHOLDER,
         brick_type: 20,
+        brick_position: Vec3::ZERO,
         destroyed_by: None,
     };
     let cloned = brick_destroyed;

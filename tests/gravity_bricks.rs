@@ -511,11 +511,13 @@ mod tests {
             msgs.write(brkrs::signals::BrickDestroyed {
                 brick_entity: Entity::from_raw_u32(1).expect("entity id should construct"),
                 brick_type: 21,
+                brick_position: Vec3::ZERO,
                 destroyed_by: None,
             });
             msgs.write(brkrs::signals::BrickDestroyed {
                 brick_entity: Entity::from_raw_u32(2).expect("entity id should construct"),
                 brick_type: 24,
+                brick_position: Vec3::ZERO,
                 destroyed_by: None,
             });
         }
