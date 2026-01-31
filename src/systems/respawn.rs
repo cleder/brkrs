@@ -384,6 +384,9 @@ fn detect_ball_loss(
     mut commands: Commands,
     mut life_lost_events: MessageWriter<LifeLostEvent>,
 ) {
+    let total_balls = balls.iter().count();
+    let mut lost_balls: std::collections::HashMap<Entity, SpawnTransform> =
+        std::collections::HashMap::new();
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
             let e1_is_ball = balls.get(*e1).is_ok();
@@ -393,6 +396,9 @@ fn detect_ball_loss(
 
             if (e1_is_ball && e2_is_lower) || (e2_is_ball && e1_is_lower) {
                 let ball_entity = if e1_is_ball { *e1 } else { *e2 };
+                if lost_balls.contains_key(&ball_entity) {
+                    continue;
+                }
                 let ball_spawn = match ball_handles.get(ball_entity) {
                     Ok(handle) => handle.spawn,
                     Err(_) => {
@@ -405,13 +411,22 @@ fn detect_ball_loss(
                         spawn_points.ball_spawn()
                     }
                 };
-                life_lost_events.write(LifeLostEvent {
-                    ball: ball_entity,
-                    cause: LifeLossCause::LowerGoal,
-                    ball_spawn,
-                });
+                lost_balls.insert(ball_entity, ball_spawn);
                 commands.entity(ball_entity).despawn();
             }
+        }
+    }
+
+    if total_balls == 0 {
+        return;
+    }
+    if lost_balls.len() >= total_balls {
+        if let Some((ball, ball_spawn)) = lost_balls.into_iter().next() {
+            life_lost_events.write(LifeLostEvent {
+                ball,
+                cause: LifeLossCause::LowerGoal,
+                ball_spawn,
+            });
         }
     }
 }
