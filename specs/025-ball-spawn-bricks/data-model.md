@@ -36,17 +36,12 @@ pub struct Ball {
 ```rust
 #[derive(Resource, Debug, Clone)]
 pub struct BrickSpawnConfig {
-    /// Map brick index → (spawn_count, velocity_modifier)
-    pub brick_spawn_rules: HashMap<u32, BrickSpawnRule>,
-
-    /// Point value for all ball spawn bricks (37, 38, 39)
-    pub spawn_brick_score: u32,
+    /// Map brick index → spawn rule
+    pub brick_spawn_rules: HashMap<u8, BrickSpawnRule>,
 }
 
 #[derive(Debug, Clone)]
 pub struct BrickSpawnRule {
-    /// Brick index (37, 38, or 39)
-    pub brick_index: u32,
 
     /// How many balls to spawn (0 for Red 1/despawn, 1 for Red 2, 2 for Red 3)
     pub spawn_count: u32,
@@ -115,9 +110,9 @@ fn init_brick_spawn_config(mut commands: Commands) {
 #[derive(Message, Debug, Clone)]
 pub struct BrickDestroyed {
     pub brick_entity: Entity,
-    pub brick_index: u32,
+    pub brick_type: u8,
     pub brick_position: Vec3,  // Needed for spawning at brick center
-    pub triggering_ball: Entity,  // Needed to identify which ball triggered
+    pub destroyed_by: Option<Entity>,  // Needed to identify which ball triggered
 }
 ```
 
@@ -356,10 +351,10 @@ for frame in 0..10 {
 The data model is minimal and extends existing infrastructure:
 
 | Item | Type | New/Reuse | Notes |
-|------|------|-----------|-------|
+| ---- | ---- | -------- | ----- |
 | Ball | Component | Reuse | No changes; spawned balls use existing template |
 | BrickSpawnConfig | Resource | New | Maps indices 37/38/39 to spawn behaviors |
-| BrickDestroyed | Message | Reuse | Already contains position & triggering ball |
+| BrickDestroyed | Message | Reuse | Contains brick_position + destroyed_by |
 | VelocityModifier | Enum | New | Configuration for velocity transformation |
 | State Transitions | Logic | New | Tracked implicitly (balls exist or don't) |
 

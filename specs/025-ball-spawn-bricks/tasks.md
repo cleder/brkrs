@@ -43,7 +43,7 @@ Single binary Bevy game project: `src/`, `tests/` at repository root
 
 - [x] T004 Create `BrickSpawnConfig` resource in `src/systems/ball_spawn_bricks.rs` with HashMap mapping brick indices 37/38/39 to spawn rules (spawn_count, velocity_modifier, score_value=100)
 - [x] T005 Create `VelocityModifier` enum in `src/systems/ball_spawn_bricks.rs` with variants: `DespawnAll`, `Inverse`, `YShaped { angle_degrees: f32 }`
-- [x] T006 Verify `BrickDestroyed` message in `src/signals.rs` contains required fields: `brick_entity`, `brick_index`, `brick_position: Vec3`, `triggering_ball: Entity` (read-only verification, no code changes expected)
+- [x] T006 Verify `BrickDestroyed` message in `src/signals.rs` contains required fields: `brick_entity`, `brick_type: u8`, `brick_position: Vec3`, `destroyed_by: Option<Entity>` (read-only verification, no code changes expected)
 - [x] T007 Create `BallSpawnBricksPlugin` struct in `src/systems/ball_spawn_bricks.rs` with plugin registration for config resource and systems
 - [x] T008 Register `BallSpawnBricksPlugin` in `src/lib.rs` with other game plugins
 

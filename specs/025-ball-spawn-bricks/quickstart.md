@@ -67,12 +67,12 @@ mod red_2_tests {
 
         // Trigger collision
         app.world_mut()
-            .resource_mut::<MessageWriter<BrickDestroyed>>()
+            .resource_mut::<Messages<BrickDestroyed>>()
             .write(BrickDestroyed {
                 brick_entity: brick,
-                brick_index: 38,
+                brick_type: 38,
                 brick_position: Vec3::new(5.0, 0.0, 10.0),
-                triggering_ball: ball,
+                destroyed_by: Some(ball),
             });
 
         app.update();  // Process message + spawn system
@@ -142,6 +142,7 @@ fn setup_test_app() -> App {
     let mut app = App::new();
     app.add_plugins(MinimalPlugins)
         .add_plugins(PhysicsPlugin)  // Rapier3D
+        .add_message::<BrickDestroyed>()
         .add_systems(Update, ball_spawn_system)  // Will be implemented
         .init_resource::<BrickSpawnConfig>();
     app
@@ -200,48 +201,55 @@ use crate::signals::BrickDestroyed;
 
 #[derive(Resource, Debug, Clone)]
 pub struct BrickSpawnConfig {
-    pub spawn_brick_score: u32,  // 100 for all three types
+    pub brick_spawn_rules: HashMap<u8, BrickSpawnRule>,
+}
+
+#[derive(Debug, Clone)]
+pub struct BrickSpawnRule {
+    pub spawn_count: u32,
+    pub velocity_modifier: VelocityModifier,
+    pub name: &'static str,
+}
+
+#[derive(Debug, Clone)]
+pub enum VelocityModifier {
+    DespawnAll,
+    Inverse,
+    YShaped { angle_degrees: f32 },
 }
 
 pub fn ball_spawn_system(
     mut commands: Commands,
     config: Res<BrickSpawnConfig>,
     mut reader: MessageReader<BrickDestroyed>,
-    mut ball_query: Query<&Velocity, With<Ball>>,
+    ball_entities: Query<Entity, With<Ball>>,
+    ball_sources: Query<&Velocity, With<Ball>>,
 ) {
     for message in reader.read() {
-        match message.brick_index {
-            37 => {
+        let Some(triggering_ball) = message.destroyed_by else { continue; };
+        let Some(rule) = config.brick_spawn_rules.get(&message.brick_type) else { continue; };
+
+        match &rule.velocity_modifier {
+            VelocityModifier::DespawnAll => {
                 // Red 1: Despawn all except triggering
-                for ball in ball_query.iter() {
-                    if ball.entity() != message.triggering_ball {
-                        commands.entity(ball.entity()).despawn();
+                for entity in ball_entities.iter() {
+                    if entity != triggering_ball {
+                        commands.entity(entity).despawn();
                     }
                 }
             }
-            38 => {
+            VelocityModifier::Inverse => {
                 // Red 2: Spawn 1 with inverse velocity
-                let trigger_vel = ball_query
-                    .get(message.triggering_ball)
-                    .ok()
-                    .map(|v| v.linvel);
-                if let Some(vel) = trigger_vel {
-                    spawn_ball(&mut commands, message.brick_position, -vel);
-                }
+                let Ok(trigger_vel) = ball_sources.get(triggering_ball) else { continue; };
+                spawn_ball(&mut commands, message.brick_position, -trigger_vel.linvel);
             }
-            39 => {
+            VelocityModifier::YShaped { angle_degrees } => {
                 // Red 3: Spawn 2 with Y-shaped spread
-                let trigger_vel = ball_query
-                    .get(message.triggering_ball)
-                    .ok()
-                    .map(|v| v.linvel);
-                if let Some(vel) = trigger_vel {
-                    let (vel1, vel2) = y_shaped_velocity(vel, 45.0);
-                    spawn_ball(&mut commands, message.brick_position, vel1);
-                    spawn_ball(&mut commands, message.brick_position, vel2);
-                }
+                let Ok(trigger_vel) = ball_sources.get(triggering_ball) else { continue; };
+                let (vel1, vel2) = y_shaped_velocity(trigger_vel.linvel, *angle_degrees);
+                spawn_ball(&mut commands, message.brick_position, vel1);
+                spawn_ball(&mut commands, message.brick_position, vel2);
             }
-            _ => {}
         }
     }
 }
@@ -254,7 +262,7 @@ fn spawn_ball(commands: &mut Commands, position: Vec3, velocity: Vec3) {
 
 fn y_shaped_velocity(base_vel: Vec3, angle_deg: f32) -> (Vec3, Vec3) {
     // Split velocity into Y-shaped pattern
-    // Left and right ~45 degrees from original
+    // Left and right at angle_deg degrees from original
     todo!()
 }
 ```

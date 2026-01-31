@@ -224,7 +224,7 @@ See [data-model.md](data-model.md) for complete entity and message specification
 
 - **BrickSpawnConfig (new Resource)**: Holds brick index mappings for Red 1/2/3 and their associated spawn behaviors
 - **Ball (existing Component)**: Updated to track "was spawned by brick" for proper lifecycle
-- **BrickDestroyed (existing Message)**: Already contains enough context (brick entity, triggering ball entity)
+- **BrickDestroyed (existing Message)**: Includes brick entity, brick_position, and destroyed_by (Option<Entity>) for spawn context
 
 ### 2. API Contracts
 

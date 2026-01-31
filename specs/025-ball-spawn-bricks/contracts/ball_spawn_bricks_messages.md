@@ -29,23 +29,23 @@ pub struct BrickDestroyed {
     pub brick_entity: Entity,
 
     /// Brick type/index from level data (range: 10-57, 90-97)
-    pub brick_index: u32,
+    pub brick_type: u8,
 
     /// 3D world position of brick center
     /// Used for: ball spawning position, audio source location
     pub brick_position: Vec3,
 
-    /// Entity ID of the ball that triggered the destruction
+    /// Entity ID of the ball that triggered the destruction (if any)
     /// Used for: velocity inheritance, Red 1 despawning logic
-    pub triggering_ball: Entity,
+    pub destroyed_by: Option<Entity>,
 }
 ```
 
 **Constraint Verification** (from spec):
 
-- ✅ Contains `brick_index` to identify Red 1 (37), Red 2 (38), Red 3 (39)
+- ✅ Contains `brick_type` to identify Red 1 (37), Red 2 (38), Red 3 (39)
 - ✅ Contains `brick_position` for spawning at brick center
-- ✅ Contains `triggering_ball` to access its velocity component
+- ✅ Contains `destroyed_by` (Option<Entity>) to access triggering ball's velocity
 - ✅ No additional message types needed
 
 **Producer**:
@@ -106,28 +106,29 @@ fn ball_spawn_system(
     mut commands: Commands,
     config: Res<BrickSpawnConfig>,
     mut reader: MessageReader<BrickDestroyed>,
-    ball_query: Query<&Velocity, With<Ball>>,
+    ball_sources: Query<&Velocity, With<Ball>>,
     // other params
 ) {
     for message in reader.read() {
-        match message.brick_index {
+        let Some(triggering_ball) = message.destroyed_by else { continue; };
+        match message.brick_type {
             37 => {
                 // Red 1: Despawn all balls except triggering_ball
-                despawn_except_triggering(&mut commands, &ball_query, message.triggering_ball);
+                despawn_except_triggering(&mut commands, &ball_sources, triggering_ball);
             }
             38 => {
                 // Red 2: Spawn 1 ball with inverse velocity
-                let trigger_vel = ball_query.get(message.triggering_ball).unwrap().linvel;
+                let Ok(trigger_vel) = ball_sources.get(triggering_ball) else { continue; };
                 spawn_ball(
                     &mut commands,
                     message.brick_position,
-                    -trigger_vel,  // Inverse direction
+                    -trigger_vel.linvel,  // Inverse direction
                 );
             }
             39 => {
                 // Red 3: Spawn 2 balls with Y-shaped spread
-                let trigger_vel = ball_query.get(message.triggering_ball).unwrap().linvel;
-                let (vel1, vel2) = spread_velocity_y_shaped(trigger_vel, angle: 45.0);
+                let Ok(trigger_vel) = ball_sources.get(triggering_ball) else { continue; };
+                let (vel1, vel2) = spread_velocity_y_shaped(trigger_vel.linvel, 37.5);
                 spawn_ball(&mut commands, message.brick_position, vel1);
                 spawn_ball(&mut commands, message.brick_position, vel2);
             }
@@ -271,7 +272,7 @@ fn test_message_flow_red_2_spawning() {
 - Scoring system continues to read `BrickDestroyed` as before
 - Audio system continues to read `BrickDestroyed` as before
 - New ball spawn system is **additive** (reads same message, new logic path)
-- Message structure unchanged (same fields, same meaning)
+- Message structure **extended** with `brick_position` and optional `destroyed_by` (additive fields)
 
 **Migration Path**: None required.
 Feature is backward compatible.
@@ -281,7 +282,7 @@ Feature is backward compatible.
 ## Summary Table
 
 | Aspect | Detail |
-|--------|--------|
+| ------ | ------ |
 | **Message Type** | `BrickDestroyed` (existing, reused) |
 | **Bevy Pattern** | `MessageWriter<T>` / `MessageReader<T>` (buffered) |
 | **Producers** | Brick destruction system (1 producer path) |

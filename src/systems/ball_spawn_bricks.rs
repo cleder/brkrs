@@ -138,58 +138,146 @@ pub fn ball_spawn_system(
         With<Ball>,
     >,
 ) {
+    let mut spawned_this_frame: Vec<Entity> = Vec::new();
     for event in reader.read() {
         let Some(rule) = config.brick_spawn_rules.get(&event.brick_type) else {
             continue;
         };
         let Some(triggering_ball) = event.destroyed_by else {
+            warn!(
+                "BrickDestroyed event missing triggering ball for brick type {}",
+                event.brick_type
+            );
             continue;
         };
 
         match rule.velocity_modifier {
             VelocityModifier::DespawnAll => {
+                // Verify triggering ball exists before despawning others
+                if ball_entities.get(triggering_ball).is_err() {
+                    continue;
+                }
+                // Despawn all existing balls except triggering
                 for ball in ball_entities.iter() {
                     if ball != triggering_ball {
                         commands.entity(ball).despawn();
+                    }
+                }
+                // Despawn any balls spawned in this same frame, except triggering
+                for spawned in spawned_this_frame.iter() {
+                    if *spawned != triggering_ball {
+                        commands.entity(*spawned).despawn();
                     }
                 }
             }
             VelocityModifier::Inverse => {
                 let Ok((velocity, mesh, material, ball_type)) = ball_sources.get(triggering_ball)
                 else {
+                    warn!(
+                        "Triggering ball {:?} not found for Red 2 (inverse) spawn",
+                        triggering_ball
+                    );
                     continue;
                 };
                 let visuals = BallVisuals::from_source(mesh, material, ball_type);
-                spawn_ball(
+                let spawned = spawn_ball(
                     &mut commands,
                     &physics,
                     event.brick_position,
                     -velocity.linvel,
                     visuals,
                 );
+                spawned_this_frame.push(spawned);
             }
             VelocityModifier::YShaped { angle_degrees } => {
                 let Ok((velocity, mesh, material, ball_type)) = ball_sources.get(triggering_ball)
                 else {
+                    warn!(
+                        "Triggering ball {:?} not found for Red 3 (Y-shaped) spawn",
+                        triggering_ball
+                    );
                     continue;
                 };
                 let visuals = BallVisuals::from_source(mesh, material, ball_type);
                 let (left, right) = y_shaped_velocity(velocity.linvel, angle_degrees);
-                spawn_ball(
+                let left_id = spawn_ball(
                     &mut commands,
                     &physics,
                     event.brick_position,
                     left,
                     visuals.clone(),
                 );
-                spawn_ball(
+                let right_id = spawn_ball(
                     &mut commands,
                     &physics,
                     event.brick_position,
                     right,
                     visuals,
                 );
+                spawned_this_frame.push(left_id);
+                spawned_this_frame.push(right_id);
             }
+        }
+    }
+}
+
+/// Bundle for spawning ball entities with full physics configuration.
+///
+/// Combines all required components for a physical, renderable ball that participates
+/// in collision detection. Uses the provided physics config to ensure consistency with
+/// existing balls in the world.
+#[derive(Bundle)]
+struct BallBundle {
+    ball: Ball,
+    transform: Transform,
+    rigid_body: RigidBody,
+    velocity: Velocity,
+    colliding_entities: CollidingEntities,
+    active_events: ActiveEvents,
+    collider: Collider,
+    restitution: Restitution,
+    friction: Friction,
+    damping: Damping,
+    locked_axes: LockedAxes,
+    ccd: Ccd,
+    impulse: ExternalImpulse,
+    gravity_scale: GravityScale,
+    ball_type: BallTypeId,
+}
+
+impl BallBundle {
+    /// Create a new ball bundle at the given position and velocity.
+    fn new(
+        position: Vec3,
+        velocity: Vec3,
+        physics: &BallPhysicsConfig,
+        ball_type: BallTypeId,
+    ) -> Self {
+        Self {
+            ball: Ball,
+            transform: Transform::from_translation(position),
+            rigid_body: RigidBody::Dynamic,
+            velocity: Velocity::linear(velocity),
+            colliding_entities: CollidingEntities::default(),
+            active_events: ActiveEvents::COLLISION_EVENTS,
+            collider: Collider::ball(BALL_RADIUS),
+            restitution: Restitution {
+                coefficient: physics.restitution,
+                combine_rule: CoefficientCombineRule::Max,
+            },
+            friction: Friction {
+                coefficient: physics.friction,
+                combine_rule: CoefficientCombineRule::Max,
+            },
+            damping: Damping {
+                linear_damping: physics.linear_damping,
+                angular_damping: physics.angular_damping,
+            },
+            locked_axes: LockedAxes::TRANSLATION_LOCKED_Y,
+            ccd: Ccd::enabled(),
+            impulse: ExternalImpulse::default(),
+            gravity_scale: GravityScale(1.0),
+            ball_type,
         }
     }
 }
@@ -205,32 +293,8 @@ fn spawn_ball(
     velocity: Vec3,
     visuals: BallVisuals,
 ) -> Entity {
-    let mut entity = commands.spawn((
-        Ball,
-        Transform::from_translation(position),
-        RigidBody::Dynamic,
-        Velocity::linear(velocity),
-        CollidingEntities::default(),
-        ActiveEvents::COLLISION_EVENTS,
-        Collider::ball(BALL_RADIUS),
-        Restitution {
-            coefficient: physics.restitution,
-            combine_rule: CoefficientCombineRule::Max,
-        },
-        Friction {
-            coefficient: physics.friction,
-            combine_rule: CoefficientCombineRule::Max,
-        },
-        Damping {
-            linear_damping: physics.linear_damping,
-            angular_damping: physics.angular_damping,
-        },
-        LockedAxes::TRANSLATION_LOCKED_Y,
-        Ccd::enabled(),
-        ExternalImpulse::default(),
-        GravityScale(1.0),
-        visuals.ball_type,
-    ));
+    let bundle = BallBundle::new(position, velocity, physics, visuals.ball_type);
+    let mut entity = commands.spawn(bundle);
 
     if let Some(mesh) = visuals.mesh {
         entity.insert(mesh);
@@ -250,7 +314,13 @@ fn y_shaped_velocity(base: Vec3, angle_degrees: f32) -> (Vec3, Vec3) {
     let horizontal = Vec2::new(base.x, base.z);
     let speed = horizontal.length();
     if speed == 0.0 {
-        return (Vec3::ZERO, Vec3::ZERO);
+        // Zero horizontal speed: preserve Y component, return minimal velocities
+        // to avoid spawning fully stationary balls
+        let min_vel = 0.1; // Minimal movement to prevent stuck balls
+        return (
+            Vec3::new(min_vel, base.y, 0.0),
+            Vec3::new(-min_vel, base.y, 0.0),
+        );
     }
     let base_angle = horizontal.y.atan2(horizontal.x);
     let offset = angle_degrees.to_radians();

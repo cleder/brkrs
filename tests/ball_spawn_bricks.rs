@@ -425,6 +425,49 @@ fn rapid_consecutive_triggers() {
 }
 
 #[test]
+fn ignores_brick_destroyed_without_triggering_ball() {
+    // Negative test: BrickDestroyed with None destroyed_by should not spawn/despawn
+    let mut app = setup_test_app();
+    let ball = spawn_test_ball(&mut app, Vec3::ZERO, Vec3::new(1.0, 0.0, 0.5));
+
+    // Write brick destroyed event WITHOUT triggering ball
+    let mut msgs = app.world_mut().resource_mut::<Messages<BrickDestroyed>>();
+    msgs.write(BrickDestroyed {
+        brick_entity: Entity::PLACEHOLDER,
+        brick_type: 38, // Red 2 - should spawn
+        brick_position: Vec3::new(5.0, 0.0, 3.0),
+        destroyed_by: None, // Missing triggering ball!
+    });
+
+    app.update();
+
+    // Should still have only 1 ball (no spawn because no triggering ball)
+    assert_eq!(count_balls(&mut app), 1);
+}
+
+#[test]
+fn ignores_unconfigured_brick_types() {
+    // Negative test: BrickDestroyed with wrong brick_type should not spawn/despawn
+    let mut app = setup_test_app();
+    let ball = spawn_test_ball(&mut app, Vec3::ZERO, Vec3::new(1.0, 0.0, 0.5));
+    let initial_count = count_balls(&mut app);
+
+    // Write brick destroyed event with unconfigured type
+    let mut msgs = app.world_mut().resource_mut::<Messages<BrickDestroyed>>();
+    msgs.write(BrickDestroyed {
+        brick_entity: Entity::PLACEHOLDER,
+        brick_type: 99, // Not 37, 38, or 39
+        brick_position: Vec3::new(5.0, 0.0, 3.0),
+        destroyed_by: Some(ball),
+    });
+
+    app.update();
+
+    // Ball count should be unchanged
+    assert_eq!(count_balls(&mut app), initial_count);
+}
+
+#[test]
 fn ball_spawn_bricks_count_toward_level_completion() {
     use std::fs;
     use std::path::PathBuf;
@@ -437,6 +480,23 @@ fn ball_spawn_bricks_count_toward_level_completion() {
 
     static LEVEL_ENV_LOCK: Mutex<()> = Mutex::new(());
     let _guard = LEVEL_ENV_LOCK.lock().expect("lock level env");
+
+    /// Guard that restores environment variables and cleans up files on drop
+    struct EnvGuard {
+        prev_level_path: Option<String>,
+        temp_file: PathBuf,
+    }
+
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            if let Some(prev) = self.prev_level_path.take() {
+                std::env::set_var("BK_LEVEL_PATH", prev);
+            } else {
+                std::env::remove_var("BK_LEVEL_PATH");
+            }
+            let _ = fs::remove_file(&self.temp_file);
+        }
+    }
 
     let mut matrix = vec![vec![0u8; 20]; 20];
     matrix[0][0] = 37;
@@ -464,6 +524,11 @@ fn ball_spawn_bricks_count_toward_level_completion() {
 
     let prev_level_path = std::env::var("BK_LEVEL_PATH").ok();
     std::env::set_var("BK_LEVEL_PATH", &path);
+
+    let _env_guard = EnvGuard {
+        prev_level_path,
+        temp_file: path.clone(),
+    };
 
     #[derive(Resource, Default)]
     struct CompletedCount(u32);
@@ -514,11 +579,5 @@ fn ball_spawn_bricks_count_toward_level_completion() {
     let completed = app.world().resource::<CompletedCount>().0;
     assert!(completed > 0, "Expected level completion event");
 
-    // Cleanup env var
-    if let Some(prev) = prev_level_path {
-        std::env::set_var("BK_LEVEL_PATH", prev);
-    } else {
-        std::env::remove_var("BK_LEVEL_PATH");
-    }
-    let _ = fs::remove_file(&path);
+    // _env_guard will clean up environment variable and temp file on drop
 }

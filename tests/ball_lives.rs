@@ -231,7 +231,7 @@ fn life_lost_only_when_all_balls_gone_sequential() {
         .write(bevy_rapier3d::prelude::CollisionEvent::Started(
             ball_a,
             lower_goal,
-            CollisionEventFlags::empty(),
+            CollisionEventFlags::SENSOR,
         ));
     app.update();
     assert_eq!(app.world().resource::<LivesState>().lives_remaining, 3);
@@ -242,7 +242,7 @@ fn life_lost_only_when_all_balls_gone_sequential() {
         .write(bevy_rapier3d::prelude::CollisionEvent::Started(
             ball_b,
             lower_goal,
-            CollisionEventFlags::empty(),
+            CollisionEventFlags::SENSOR,
         ));
     app.update();
     assert_eq!(app.world().resource::<LivesState>().lives_remaining, 2);
@@ -263,12 +263,12 @@ fn life_lost_only_once_when_all_balls_gone_same_frame() {
     collisions.write(bevy_rapier3d::prelude::CollisionEvent::Started(
         ball_a,
         lower_goal,
-        CollisionEventFlags::empty(),
+        CollisionEventFlags::SENSOR,
     ));
     collisions.write(bevy_rapier3d::prelude::CollisionEvent::Started(
         ball_b,
         lower_goal,
-        CollisionEventFlags::empty(),
+        CollisionEventFlags::SENSOR,
     ));
     drop(collisions);
 

@@ -674,12 +674,21 @@ fn try_emit_brick_destroyed(
     context: &str,
 ) -> bool {
     let Some(w) = writer.as_mut() else {
+        warn!(
+            "{} failed to emit BrickDestroyed: message writer unavailable for entity {:?}",
+            context, entity
+        );
         return false;
     };
 
     let mut should_emit = true;
     if let Some(emitted_set) = emitted.as_mut() {
         should_emit = emitted_set.0.insert(entity);
+    } else {
+        warn!(
+            "{} deduplication skipped for entity {:?}: EmittedBrickDestroyed resource missing",
+            context, entity
+        );
     }
 
     if should_emit {
@@ -990,10 +999,14 @@ pub fn despawn_marked_entities(
     for (entity, brick_type) in marked.iter() {
         // Emit BrickDestroyed message for audio/scoring systems
         if let Some(brick_type) = brick_type {
-            let brick_position = transforms
+            let brick_position = global_transforms
                 .get(entity)
-                .map(|transform| transform.translation)
-                .or_else(|_| global_transforms.get(entity).map(|gt| gt.translation()))
+                .map(|gt| gt.translation())
+                .or_else(|_| {
+                    transforms
+                        .get(entity)
+                        .map(|transform| transform.translation)
+                })
                 .unwrap_or(Vec3::ZERO);
             try_emit_brick_destroyed(
                 &mut brick_events,
