@@ -1180,6 +1180,59 @@ pub(crate) fn process_level_switch_requests(
                 requests.clear();
                 return;
             }
+            // Brick 54 (Level Down): use level advance transition with fade for brick source
+            if request.source == crate::systems::LevelSwitchSource::Brick {
+                if let Some(prev) = switch_state.previous_level_before(current_number) {
+                    // Load the previous level definition to prepare for transition
+                    let path = &prev.path;
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let file_content_result = std::fs::read_to_string(path);
+                    #[cfg(target_arch = "wasm32")]
+                    let file_content_result = embedded_level_str(path)
+                        .map(|s| s.to_string())
+                        .ok_or_else(|| {
+                            format!("failed to read level file: embedded asset missing")
+                        });
+
+                    match file_content_result {
+                        Ok(content) => match from_str::<LevelDefinition>(&content) {
+                            Ok(def) => {
+                                info!(
+                                    "Brick 54: Preparing transition to level {} with fade",
+                                    def.number
+                                );
+                                // Use level advance state for fade transition instead of direct switch
+                                ctx.level_advance.timer.reset();
+                                ctx.level_advance.active = true;
+                                ctx.level_advance.growth_spawned = false;
+                                ctx.level_advance.pending = Some(def);
+                                // Despawn paddle, ball, and merkaba to show empty field during fade-out
+                                for p in paddle_q.iter() {
+                                    commands.entity(p).despawn();
+                                }
+                                for b in ball_q.iter() {
+                                    commands.entity(b).despawn();
+                                }
+                                for m in merkaba_q.iter() {
+                                    commands.entity(m).despawn();
+                                }
+                                // Clear pending merkaba spawns
+                                if let Some(mut spawns) = pending_merkaba_spawns {
+                                    spawns.entries.clear();
+                                }
+                                requests.clear();
+                                return;
+                            }
+                            Err(e) => {
+                                warn!("Failed to parse previous level '{}': {e}", path);
+                            }
+                        },
+                        Err(e) => {
+                            warn!("Failed to read previous level file '{}': {e}", path);
+                        }
+                    }
+                }
+            }
         }
     }
 
