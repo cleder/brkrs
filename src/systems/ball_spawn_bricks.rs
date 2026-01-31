@@ -95,7 +95,6 @@ pub enum VelocityModifier {
     YShaped { angle_degrees: f32 },
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct BallVisuals {
     mesh: Option<Mesh3d>,
@@ -103,7 +102,6 @@ struct BallVisuals {
     ball_type: BallTypeId,
 }
 
-#[allow(dead_code)]
 impl BallVisuals {
     fn from_source(
         mesh: Option<&Mesh3d>,
@@ -140,15 +138,59 @@ pub fn ball_spawn_system(
         With<Ball>,
     >,
 ) {
-    for _event in reader.read() {
-        // Red phase: no-op until tests are approved
-        let _ = (
-            &mut commands,
-            &config,
-            &physics,
-            &ball_entities,
-            &ball_sources,
-        );
+    for event in reader.read() {
+        let Some(rule) = config.brick_spawn_rules.get(&event.brick_type) else {
+            continue;
+        };
+        let Some(triggering_ball) = event.destroyed_by else {
+            continue;
+        };
+
+        match rule.velocity_modifier {
+            VelocityModifier::DespawnAll => {
+                for ball in ball_entities.iter() {
+                    if ball != triggering_ball {
+                        commands.entity(ball).despawn();
+                    }
+                }
+            }
+            VelocityModifier::Inverse => {
+                let Ok((velocity, mesh, material, ball_type)) = ball_sources.get(triggering_ball)
+                else {
+                    continue;
+                };
+                let visuals = BallVisuals::from_source(mesh, material, ball_type);
+                spawn_ball(
+                    &mut commands,
+                    &physics,
+                    event.brick_position,
+                    -velocity.linvel,
+                    visuals,
+                );
+            }
+            VelocityModifier::YShaped { angle_degrees } => {
+                let Ok((velocity, mesh, material, ball_type)) = ball_sources.get(triggering_ball)
+                else {
+                    continue;
+                };
+                let visuals = BallVisuals::from_source(mesh, material, ball_type);
+                let (left, right) = y_shaped_velocity(velocity.linvel, angle_degrees);
+                spawn_ball(
+                    &mut commands,
+                    &physics,
+                    event.brick_position,
+                    left,
+                    visuals.clone(),
+                );
+                spawn_ball(
+                    &mut commands,
+                    &physics,
+                    event.brick_position,
+                    right,
+                    visuals,
+                );
+            }
+        }
     }
 }
 
@@ -156,7 +198,6 @@ pub fn ball_spawn_system(
 ///
 /// This helper ensures spawned balls use the same physics tuning as existing
 /// balls and avoids repeated asset loading by cloning handles from the source.
-#[allow(dead_code)]
 fn spawn_ball(
     commands: &mut Commands,
     physics: &BallPhysicsConfig,
@@ -205,7 +246,6 @@ fn spawn_ball(
 ///
 /// For base velocity `v`, returns two vectors at `±angle_degrees` with the same
 /// horizontal speed and original Y component preserved.
-#[allow(dead_code)]
 fn y_shaped_velocity(base: Vec3, angle_degrees: f32) -> (Vec3, Vec3) {
     let horizontal = Vec2::new(base.x, base.z);
     let speed = horizontal.length();

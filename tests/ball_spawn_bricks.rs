@@ -96,7 +96,7 @@ fn red_2_spawns_from_multiple_balls() {
 #[test]
 fn red_2_spawns_at_brick_position() {
     let mut app = setup_test_app();
-    let ball = spawn_test_ball(&mut app, Vec3::ZERO, Vec3::new(1.0, 0.0, 1.0));
+    let ball = spawn_test_ball(&mut app, Vec3::ZERO, Vec3::ZERO);
     let brick_pos = Vec3::new(5.0, 2.0, 3.0);
 
     write_brick_destroyed(&mut app, 38, brick_pos, ball);
