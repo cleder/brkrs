@@ -169,9 +169,9 @@ pub struct GameProgress {
 ///
 /// **Brick Indices**:
 /// - 21: Zero Gravity (0.0, 0.0, 0.0)
-/// - 22: Moon Gravity (0.0, 2.0, 0.0)
-/// - 23: Earth Gravity (0.0, 10.0, 0.0)
-/// - 24: High Gravity (0.0, 20.0, 0.0)
+/// - 22: Moon Gravity (2.0, 0.0, 0.0)
+/// - 23: Earth Gravity (10.0, 0.0, 0.0)
+/// - 24: High Gravity (20.0, 0.0, 0.0)
 /// - 25: Queer Gravity (random X, Y=0.0, random Z)
 #[derive(Component, Clone, Copy, Debug, PartialEq)]
 pub struct GravityBrick {
