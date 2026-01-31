@@ -113,8 +113,8 @@ The `Index` column refers to the brick's identifier in the map file, the ✅️ 
 
 | Index | Image | Name | Score | Description |
 |-------|-------|------|-------|-------------|
-| 50 | ![Level Up](img/bricks/Stonelevelup.gif) | Smiley/Level Up | 300 | Advances to next level |
-| 54 | ![Level Down](img/bricks/Stoneleveldown.gif) | Level Down | - | Returns to previous level |
+| 50 ✅️ | ![Level Up](img/bricks/Stonelevelup.gif) | Smiley/Level Up | 300 | Advances to next level |
+| 54 ✅️ | ![Level Down](img/bricks/Stoneleveldown.gif) | Level Down | - | Returns to previous level |
 | 41 ✅️ | ![Extra](img/bricks/Stoneextra.gif) | Extra Ball | 0 | Grants +1 life (clamped to max 5), plays unique destruction sound |
 
 ### Paddle-Destroyable Brick
