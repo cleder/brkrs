@@ -128,16 +128,18 @@ fn multiple_events_same_frame_decrement_individually() {
     // Set lives to 3
     assert_eq!(app.world().resource::<LivesState>().lives_remaining, 3);
 
-    // Write 2 LifeLostEvent in same frame
+    // Write 2 LifeLostEvent in same frame with different non-LowerGoal causes
+    // (LowerGoal events are aggregated, but other causes like MerkabaCollision and PaddleHazard
+    // should each decrement lives independently)
     let mut messages = app.world_mut().resource_mut::<Messages<LifeLostEvent>>();
     messages.write(LifeLostEvent {
         ball: Entity::PLACEHOLDER,
-        cause: LifeLossCause::LowerGoal,
+        cause: LifeLossCause::MerkabaCollision,
         ball_spawn: SpawnTransform::new(Vec3::ZERO, Quat::IDENTITY),
     });
     messages.write(LifeLostEvent {
         ball: Entity::PLACEHOLDER,
-        cause: LifeLossCause::LowerGoal,
+        cause: LifeLossCause::PaddleHazard,
         ball_spawn: SpawnTransform::new(Vec3::new(1.0, 0.0, 0.0), Quat::IDENTITY),
     });
 

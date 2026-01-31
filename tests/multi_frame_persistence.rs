@@ -94,6 +94,7 @@ fn gravity_change_persists_with_loader_running() {
         msgs.write(BrickDestroyed {
             brick_entity: Entity::from_bits(100),
             brick_type: BRICK_TYPE_GRAVITY_MEDIUM,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }
@@ -157,6 +158,7 @@ fn gravity_change_persists_without_loader() {
         msgs.write(BrickDestroyed {
             brick_entity: Entity::from_bits(100),
             brick_type: BRICK_TYPE_GRAVITY_LOW,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }
@@ -232,6 +234,7 @@ fn sequential_gravity_changes_persist() {
             msgs.write(BrickDestroyed {
                 brick_entity: Entity::from_bits(100 + i as u64),
                 brick_type: *brick_type,
+                brick_position: Vec3::ZERO,
                 destroyed_by: None,
             });
         }
@@ -310,6 +313,7 @@ fn level_transition_resets_gravity_then_persists() {
         msgs.write(BrickDestroyed {
             brick_entity: Entity::from_bits(100),
             brick_type: BRICK_TYPE_GRAVITY_MEDIUM,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }

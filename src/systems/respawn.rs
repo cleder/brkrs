@@ -384,9 +384,6 @@ fn detect_ball_loss(
     mut commands: Commands,
     mut life_lost_events: MessageWriter<LifeLostEvent>,
 ) {
-    let total_balls = balls.iter().count();
-    let mut lost_balls: std::collections::HashMap<Entity, SpawnTransform> =
-        std::collections::HashMap::new();
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
             let e1_is_ball = balls.get(*e1).is_ok();
@@ -396,9 +393,6 @@ fn detect_ball_loss(
 
             if (e1_is_ball && e2_is_lower) || (e2_is_ball && e1_is_lower) {
                 let ball_entity = if e1_is_ball { *e1 } else { *e2 };
-                if lost_balls.contains_key(&ball_entity) {
-                    continue;
-                }
                 let ball_spawn = match ball_handles.get(ball_entity) {
                     Ok(handle) => handle.spawn,
                     Err(_) => {
@@ -411,22 +405,13 @@ fn detect_ball_loss(
                         spawn_points.ball_spawn()
                     }
                 };
-                lost_balls.insert(ball_entity, ball_spawn);
+                life_lost_events.write(LifeLostEvent {
+                    ball: ball_entity,
+                    cause: LifeLossCause::LowerGoal,
+                    ball_spawn,
+                });
                 commands.entity(ball_entity).despawn();
             }
-        }
-    }
-
-    if total_balls == 0 {
-        return;
-    }
-    if lost_balls.len() >= total_balls {
-        if let Some((ball, ball_spawn)) = lost_balls.into_iter().next() {
-            life_lost_events.write(LifeLostEvent {
-                ball,
-                cause: LifeLossCause::LowerGoal,
-                ball_spawn,
-            });
         }
     }
 }
@@ -620,16 +605,34 @@ fn enqueue_respawn_requests(
     mut game_over_events: MessageWriter<GameOverRequested>,
     mut paddles: Query<(Entity, Option<&mut Velocity>), With<Paddle>>,
     paddle_handles: Query<&RespawnHandle, With<Paddle>>,
+    balls: Query<Entity, With<Ball>>,
     mut commands: Commands,
 ) {
     let mut saw_event = false;
     let mut game_over_emitted = false;
+    let mut lower_goal_life_decremented = false;
 
     for event in events.read().copied() {
         saw_event = true;
 
-        // Decrement lives on each LifeLostEvent (strictly event-driven, one per event)
-        lives_state.lives_remaining = lives_state.lives_remaining.saturating_sub(1);
+        // Determine if we should decrement a life for this event
+        let should_decrement_life = if event.cause == LifeLossCause::LowerGoal {
+            // For lower goal losses, only decrement if all balls are gone AND we haven't
+            // already decremented for a lower goal loss this frame (prevents double-decrement
+            // when multiple balls hit lower goal simultaneously)
+            let remaining_balls = balls.iter().count();
+            remaining_balls == 0 && !lower_goal_life_decremented
+        } else {
+            // For other causes (brick 42, brick 91, etc.), always decrement
+            true
+        };
+
+        if should_decrement_life {
+            lives_state.lives_remaining = lives_state.lives_remaining.saturating_sub(1);
+            if event.cause == LifeLossCause::LowerGoal {
+                lower_goal_life_decremented = true;
+            }
+        }
 
         if lives_state.lives_remaining == 0 {
             if !game_over_emitted {

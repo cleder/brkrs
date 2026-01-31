@@ -1,8 +1,6 @@
 # Data Model: Ball Spawn Bricks
 
-**Feature**: 025-ball-spawn-bricks  
-**Date**: 2026-01-31  
-**Scope**: Entity definitions, message schemas, component relationships
+**Feature**: 025-ball-spawn-bricks **Date**: 2026-01-31 **Scope**: Entity definitions, message schemas, component relationships
 
 ## Overview
 
