@@ -3,9 +3,12 @@ use bevy::ecs::message::Messages;
 use bevy::prelude::*;
 use bevy::MinimalPlugins;
 
+use bevy_rapier3d::rapier::prelude::CollisionEventFlags;
 use brkrs::systems::respawn::{
-    GameOverRequested, LifeLossCause, LifeLostEvent, LivesState, RespawnPlugin, SpawnTransform,
+    GameOverRequested, LifeLossCause, LifeLostEvent, LivesState, RespawnEntityKind, RespawnHandle,
+    RespawnPlugin, SpawnTransform,
 };
+use brkrs::{Ball, LowerGoal};
 
 fn test_app() -> App {
     let mut app = App::new();
@@ -18,6 +21,25 @@ fn test_app() -> App {
         .add_message::<bevy_rapier3d::prelude::CollisionEvent>()
         .add_plugins(RespawnPlugin);
     app
+}
+
+fn spawn_ball_with_respawn(app: &mut App, position: Vec3) -> Entity {
+    let spawn = SpawnTransform::new(position, Quat::IDENTITY);
+    app.world_mut()
+        .spawn((
+            Ball,
+            Transform::from_translation(position),
+            GlobalTransform::from_translation(position),
+            RespawnHandle {
+                spawn,
+                kind: RespawnEntityKind::Ball,
+            },
+        ))
+        .id()
+}
+
+fn spawn_lower_goal(app: &mut App) -> Entity {
+    app.world_mut().spawn(LowerGoal).id()
 }
 
 #[test]
@@ -106,16 +128,18 @@ fn multiple_events_same_frame_decrement_individually() {
     // Set lives to 3
     assert_eq!(app.world().resource::<LivesState>().lives_remaining, 3);
 
-    // Write 2 LifeLostEvent in same frame
+    // Write 2 LifeLostEvent in same frame with different non-LowerGoal causes
+    // (LowerGoal events are aggregated, but other causes like MerkabaCollision and PaddleHazard
+    // should each decrement lives independently)
     let mut messages = app.world_mut().resource_mut::<Messages<LifeLostEvent>>();
     messages.write(LifeLostEvent {
         ball: Entity::PLACEHOLDER,
-        cause: LifeLossCause::LowerGoal,
+        cause: LifeLossCause::MerkabaCollision,
         ball_spawn: SpawnTransform::new(Vec3::ZERO, Quat::IDENTITY),
     });
     messages.write(LifeLostEvent {
         ball: Entity::PLACEHOLDER,
-        cause: LifeLossCause::LowerGoal,
+        cause: LifeLossCause::PaddleHazard,
         ball_spawn: SpawnTransform::new(Vec3::new(1.0, 0.0, 0.0), Quat::IDENTITY),
     });
 
@@ -191,4 +215,63 @@ fn lives_can_be_reset_manually() {
     // Reset to 3 (simulating level restart)
     app.world_mut().resource_mut::<LivesState>().lives_remaining = 3;
     assert_eq!(app.world().resource::<LivesState>().lives_remaining, 3);
+}
+
+#[test]
+fn life_lost_only_when_all_balls_gone_sequential() {
+    let mut app = test_app();
+
+    let lower_goal = spawn_lower_goal(&mut app);
+    let ball_a = spawn_ball_with_respawn(&mut app, Vec3::new(0.0, 2.0, 0.0));
+    let ball_b = spawn_ball_with_respawn(&mut app, Vec3::new(1.0, 2.0, 0.0));
+
+    // First ball lost: lives should not decrement because another ball remains
+    app.world_mut()
+        .resource_mut::<Messages<bevy_rapier3d::prelude::CollisionEvent>>()
+        .write(bevy_rapier3d::prelude::CollisionEvent::Started(
+            ball_a,
+            lower_goal,
+            CollisionEventFlags::SENSOR,
+        ));
+    app.update();
+    assert_eq!(app.world().resource::<LivesState>().lives_remaining, 3);
+
+    // Second ball lost: now all balls are gone, life should decrement once
+    app.world_mut()
+        .resource_mut::<Messages<bevy_rapier3d::prelude::CollisionEvent>>()
+        .write(bevy_rapier3d::prelude::CollisionEvent::Started(
+            ball_b,
+            lower_goal,
+            CollisionEventFlags::SENSOR,
+        ));
+    app.update();
+    assert_eq!(app.world().resource::<LivesState>().lives_remaining, 2);
+}
+
+#[test]
+fn life_lost_only_once_when_all_balls_gone_same_frame() {
+    let mut app = test_app();
+
+    let lower_goal = spawn_lower_goal(&mut app);
+    let ball_a = spawn_ball_with_respawn(&mut app, Vec3::new(0.0, 2.0, 0.0));
+    let ball_b = spawn_ball_with_respawn(&mut app, Vec3::new(1.0, 2.0, 0.0));
+
+    // Both balls lost in the same frame
+    let mut collisions = app
+        .world_mut()
+        .resource_mut::<Messages<bevy_rapier3d::prelude::CollisionEvent>>();
+    collisions.write(bevy_rapier3d::prelude::CollisionEvent::Started(
+        ball_a,
+        lower_goal,
+        CollisionEventFlags::SENSOR,
+    ));
+    collisions.write(bevy_rapier3d::prelude::CollisionEvent::Started(
+        ball_b,
+        lower_goal,
+        CollisionEventFlags::SENSOR,
+    ));
+    drop(collisions);
+
+    app.update();
+    assert_eq!(app.world().resource::<LivesState>().lives_remaining, 2);
 }

@@ -45,16 +45,19 @@ fn scoring_accumulates_points_and_question_in_range() {
         msgs.write(brkrs::signals::BrickDestroyed {
             brick_entity: Entity::from_raw_u32(1).expect("entity id should construct"),
             brick_type: 20, // Simple Stone => 25
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
         msgs.write(brkrs::signals::BrickDestroyed {
             brick_entity: Entity::from_raw_u32(2).expect("entity id should construct"),
             brick_type: 10, // Multi-hit => 50
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
         msgs.write(brkrs::signals::BrickDestroyed {
             brick_entity: Entity::from_raw_u32(3).expect("entity id should construct"),
             brick_type: 53, // Question => 25-300
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }
@@ -85,11 +88,13 @@ fn scoring_ignores_zero_value_bricks() {
         msgs.write(brkrs::signals::BrickDestroyed {
             brick_entity: Entity::from_raw_u32(10).expect("entity id should construct"),
             brick_type: 41, // Extra Ball => 0 points
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
         msgs.write(brkrs::signals::BrickDestroyed {
             brick_entity: Entity::from_raw_u32(11).expect("entity id should construct"),
             brick_type: 55, // Magnet enabled => 0 points
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }
@@ -127,6 +132,7 @@ fn milestone_detection_emits_event_at_5000() {
             msgs.write(brkrs::signals::BrickDestroyed {
                 brick_entity: Entity::from_raw_u32(100 + i).expect("entity id should construct"),
                 brick_type: 20, // Simple Stone => 25 points each
+                brick_position: Vec3::ZERO,
                 destroyed_by: None,
             });
         }
@@ -176,6 +182,7 @@ fn milestone_detection_multiple_milestones_one_update() {
             msgs.write(brkrs::signals::BrickDestroyed {
                 brick_entity: Entity::from_raw_u32(200 + i).expect("entity id should construct"),
                 brick_type: 25, // Gravity brick type 25 => 250 points
+                brick_position: Vec3::ZERO,
                 destroyed_by: None,
             });
         }
@@ -223,6 +230,7 @@ fn milestone_detection_no_duplicate_events() {
         msgs.write(brkrs::signals::BrickDestroyed {
             brick_entity: Entity::from_raw_u32(300).expect("entity id should construct"),
             brick_type: 22, // Limestone => 75 points
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }
@@ -261,6 +269,7 @@ fn unified_brick_destroyed_signal_consumed_by_scoring() {
         msgs.write(brkrs::signals::BrickDestroyed {
             brick_entity: Entity::from_raw_u32(999).expect("entity id should construct"),
             brick_type: 20, // Simple Stone => 25 points
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }

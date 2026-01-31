@@ -43,6 +43,7 @@ fn test_duplicate_brick_destroy_emissions_are_deduped() {
         writer.write(BrickDestroyed {
             brick_entity: entity,
             brick_type: 23,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }

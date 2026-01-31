@@ -53,6 +53,7 @@ fn brick_destroyed_is_message_not_event() {
         .write(BrickDestroyed {
             brick_entity: destroyed_entity,
             brick_type: 0, // Normal brick
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
 

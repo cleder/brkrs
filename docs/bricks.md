@@ -76,9 +76,9 @@ The `Index` column refers to the brick's identifier in the map file, the ✅️ 
 
 | Index | Image | Name | Score | Description |
 |-------|-------|------|-------|-------------|
-| 37 | ![Red 1](img/bricks/Stonered1.gif) | Red 1 | 100 | Reduces to 1 ball in play, all other balls are despawned |
-| 38 | ![Red 2](img/bricks/Stonered2.gif) | Red 2 | 100 | Spawns one additional ball with the same velocity and the inverse direction of the current ball |
-| 39 | ![Red 3](img/bricks/Stonered3.gif) | Red 3 | 100 | Spawns two more balls, same velocity, different directions (Y shaped) |
+| 37 ✅️ | ![Red 1](img/bricks/Stonered1.gif) | Red 1 | 100 | Reduces to 1 ball in play, all other balls are despawned |
+| 38 ✅️ | ![Red 2](img/bricks/Stonered2.gif) | Red 2 | 100 | Spawns one additional ball with the same velocity and the inverse direction of the current ball |
+| 39 ✅️ | ![Red 3](img/bricks/Stonered3.gif) | Red 3 | 100 | Spawns two more balls, same velocity, different directions (Y shaped) |
 
 ### Hazard Bricks
 

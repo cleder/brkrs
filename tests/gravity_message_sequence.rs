@@ -32,11 +32,13 @@ fn test_gravity_message_sequence_applies_last() {
         msgs.write(BrickDestroyed {
             brick_entity: Entity::from_bits(1),
             brick_type: 22,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
         msgs.write(BrickDestroyed {
             brick_entity: Entity::from_bits(2),
             brick_type: 23,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }

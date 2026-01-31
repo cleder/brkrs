@@ -69,6 +69,7 @@ fn test_complete_gravity_flow() {
         msgs.write(BrickDestroyed {
             brick_entity,
             brick_type: 23,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }
@@ -154,6 +155,7 @@ fn test_gravity_zero_brick() {
         msgs.write(BrickDestroyed {
             brick_entity,
             brick_type: 21,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }
@@ -239,6 +241,7 @@ fn test_sequential_gravity_changes() {
         msgs.write(BrickDestroyed {
             brick_entity: brick_21,
             brick_type: 21,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }
@@ -253,6 +256,7 @@ fn test_sequential_gravity_changes() {
         msgs.write(BrickDestroyed {
             brick_entity: brick_23,
             brick_type: 23,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }
@@ -267,6 +271,7 @@ fn test_sequential_gravity_changes() {
         msgs.write(BrickDestroyed {
             brick_entity: brick_24,
             brick_type: 24,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
     }

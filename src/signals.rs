@@ -76,6 +76,8 @@ pub struct BrickDestroyed {
     pub brick_entity: Entity,
     /// Brick type identifier (0=normal, 1=indestructible, etc.)
     pub brick_type: u8,
+    /// World position of the destroyed brick center
+    pub brick_position: Vec3,
     /// Entity that caused destruction (ball, paddle, etc.) or None for despawn
     pub destroyed_by: Option<Entity>,
 }

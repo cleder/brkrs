@@ -946,6 +946,7 @@ mod brick41_audio_tests {
         app.world_mut().write_message(BrickDestroyedMsg {
             brick_entity: brick,
             brick_type: crate::level_format::EXTRA_LIFE_BRICK,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
 
@@ -972,6 +973,7 @@ mod brick41_audio_tests {
         app.world_mut().write_message(BrickDestroyedMsg {
             brick_entity: brick,
             brick_type: crate::level_format::EXTRA_LIFE_BRICK,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         });
 
@@ -1294,6 +1296,7 @@ mod tests {
         let event = BrickDestroyedMsg {
             brick_entity: Entity::PLACEHOLDER,
             brick_type: 20,
+            brick_position: Vec3::ZERO,
             destroyed_by: None,
         };
         assert_eq!(event.brick_type, 20);

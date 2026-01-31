@@ -605,16 +605,34 @@ fn enqueue_respawn_requests(
     mut game_over_events: MessageWriter<GameOverRequested>,
     mut paddles: Query<(Entity, Option<&mut Velocity>), With<Paddle>>,
     paddle_handles: Query<&RespawnHandle, With<Paddle>>,
+    balls: Query<Entity, With<Ball>>,
     mut commands: Commands,
 ) {
     let mut saw_event = false;
     let mut game_over_emitted = false;
+    let mut lower_goal_life_decremented = false;
 
     for event in events.read().copied() {
         saw_event = true;
 
-        // Decrement lives on each LifeLostEvent (strictly event-driven, one per event)
-        lives_state.lives_remaining = lives_state.lives_remaining.saturating_sub(1);
+        // Determine if we should decrement a life for this event
+        let should_decrement_life = if event.cause == LifeLossCause::LowerGoal {
+            // For lower goal losses, only decrement if all balls are gone AND we haven't
+            // already decremented for a lower goal loss this frame (prevents double-decrement
+            // when multiple balls hit lower goal simultaneously)
+            let remaining_balls = balls.iter().count();
+            remaining_balls == 0 && !lower_goal_life_decremented
+        } else {
+            // For other causes (brick 42, brick 91, etc.), always decrement
+            true
+        };
+
+        if should_decrement_life {
+            lives_state.lives_remaining = lives_state.lives_remaining.saturating_sub(1);
+            if event.cause == LifeLossCause::LowerGoal {
+                lower_goal_life_decremented = true;
+            }
+        }
 
         if lives_state.lives_remaining == 0 {
             if !game_over_emitted {

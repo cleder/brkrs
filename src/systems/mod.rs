@@ -2,6 +2,7 @@
 ///
 /// Contains all game system implementations organized by functionality
 pub mod audio;
+pub mod ball_spawn_bricks;
 pub mod cheat_mode;
 pub mod gravity;
 pub mod grid_debug;
@@ -17,6 +18,7 @@ pub mod textures;
 
 pub use crate::signals::BallWallHit;
 pub use audio::{AudioConfig, AudioPlugin, LevelCompleted, LevelStarted, SoundType};
+pub use ball_spawn_bricks::BallSpawnBricksPlugin;
 pub use cheat_mode::{CheatModePlugin, CheatModeState, CheatModeToggled};
 pub use gravity::GravityChanged;
 pub use level_switch::{
