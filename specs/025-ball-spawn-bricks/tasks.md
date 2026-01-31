@@ -75,6 +75,7 @@ Single binary Bevy game project: `src/`, `tests/` at repository root
 
 - [ ] T018 [US1] Implement `ball_spawn_system` function in `src/systems/ball_spawn_bricks.rs` that reads `MessageReader<BrickDestroyed>` and dispatches to brick-specific handlers based on `brick_index` (test-proof commit: [HASH from T016])
 - [ ] T019 [US1] Implement `spawn_ball` helper function in `src/systems/ball_spawn_bricks.rs` that creates Ball entity with Transform, Velocity, RigidBody, Collider components at specified position with specified velocity
+  - ACCEPTANCE (Hierarchy Safety - Constitution IX): Verify spawned ball entity uses `commands.spawn()` without parent relationships (query `Query<(Entity, Option<&Parent>), With<Ball>>` after spawn, assert None for Parent component)
 - [ ] T020 [US1] Implement Red 2 brick logic in `ball_spawn_system`: match `brick_index == 38`, query triggering ball's velocity, spawn one ball with `-velocity`, verify no panicking queries (use `.ok()`)
 - [ ] T021 [US1] Verify all T010-T015 tests pass with green status
 - [ ] T022 [US1] Update `src/systems/mod.rs` to export `BallSpawnBricksPlugin` and relevant types
@@ -89,13 +90,14 @@ Single binary Bevy game project: `src/`, `tests/` at repository root
 
 **Goal**: When a player hits Red 3 brick (index 39), spawn two additional balls in Y-shaped spread pattern, creating chaotic multi-ball scenarios
 
-**Independent Test**: Hit single Red 3 brick in level_015, verify exactly three balls exist with Y-shaped velocity vectors (±30-45 degrees from original)
+**Independent Test**: Hit single Red 3 brick in level_015, verify exactly three balls exist with Y-shaped velocity vectors (±37.5 degrees from original)
 
 ### Tests for User Story 2 (REQUIRED) ⚠️
 
 - [ ] T025 [P] [US2] Create `mod red_3_tests` submodule in `tests/ball_spawn_bricks.rs`
 - [ ] T026 [P] [US2] Unit test `red_3_spawns_two_additional_balls` in `tests/ball_spawn_bricks.rs` - verify ball count increases from 1 to 3 after Red 3 brick destruction (Acceptance Scenario 2.1)
-- [ ] T027 [P] [US2] Unit test `red_3_spawns_y_shaped_pattern` in `tests/ball_spawn_bricks.rs` - verify spawned balls have velocities at approximately ±30-45 degrees from triggering ball's direction (Acceptance Scenario 2.1)
+- [ ] T027 [P] [US2] Unit test `red_3_spawns_y_shaped_pattern` in `tests/ball_spawn_bricks.rs` - verify spawned balls have velocities at ±37.5 degrees from triggering ball's direction in XZ plane (Acceptance Scenario 2.1)
+  - EDGE CASE: Test with near-zero velocity (0.01 m/s) to verify spawned balls inherit slow speed (may appear stationary but are distinct entities)
 - [ ] T028 [P] [US2] Unit test `red_3_spawns_from_multiple_balls` in `tests/ball_spawn_bricks.rs` - start with 2 balls, hit Red 3, verify 4 balls total (Acceptance Scenario 2.2)
 - [ ] T029 [P] [US2] Unit test `red_3_spawns_once_per_destruction` in `tests/ball_spawn_bricks.rs` - simulate multiple balls hitting Red 3 simultaneously, verify only 2 balls spawn (brick destroyed once) (Acceptance Scenario 2.3)
 - [ ] T030 [P] [US2] Multi-frame persistence test `red_3_spawned_balls_persist_10_frames` in `tests/ball_spawn_bricks.rs` - verify both spawned balls exist and move independently for 10+ frames (Acceptance Scenario 2.4)
@@ -104,7 +106,8 @@ Single binary Bevy game project: `src/`, `tests/` at repository root
 
 ### Implementation for User Story 2
 
-- [ ] T033 [US2] Implement `y_shaped_velocity` helper function in `src/systems/ball_spawn_bricks.rs` that takes base velocity and angle (default 45.0 degrees), returns tuple of (left_velocity, right_velocity) forming Y-shape in XZ plane (test-proof commit: [HASH from T031])
+- [ ] T033 [US2] Implement `y_shaped_velocity` helper function in `src/systems/ball_spawn_bricks.rs` that takes base velocity and spread angle (default 37.5 degrees), returns tuple of (left_velocity, right_velocity) forming Y-shape in XZ plane (test-proof commit: [HASH from T031])
+  - FORMULA: For velocity `v = (vx, vy, vz)` in XZ plane: (1) Calculate 2D angle `θ = atan2(vz, vx)`, (2) Left angle: `θ_left = θ + spread_angle`, Right angle: `θ_right = θ - spread_angle`, (3) Magnitude: `|v| = sqrt(vx² + vz²)`, (4) Return: `(|v| * cos(θ_left), vy, |v| * sin(θ_left))` for left, `(|v| * cos(θ_right), vy, |v| * sin(θ_right))` for right
 - [ ] T034 [US2] Implement Red 3 brick logic in `ball_spawn_system`: match `brick_index == 39`, query triggering ball's velocity, call `y_shaped_velocity`, spawn two balls with calculated velocities
 - [ ] T035 [US2] Verify all T026-T030 tests pass with green status
 - [ ] T036 [US2] Manual test in level_015: hit Red 3 brick, observe two spawned balls diverging in Y-pattern, verify 100 points awarded
@@ -154,7 +157,8 @@ Single binary Bevy game project: `src/`, `tests/` at repository root
 - [ ] T055 Run full test suite: `cargo test` - verify no regressions in existing tests
 - [ ] T056 Run native build and manual end-to-end test in level_015: hit all three brick types, verify behavior matches spec, check 60 FPS performance
 - [ ] T057 Update `docs/bricks.md` to mark bricks 37, 38, 39 as implemented (change `|` to `✅️` in Status column)
-- [ ] T058 Create pull request with title "feat: implement ball spawn bricks (Red 1/2/3)" and link to spec, plan, and tasks documents
+- [ ] T058 [P] Integration test `ball_spawn_bricks_count_toward_level_completion` in `tests/ball_spawn_bricks.rs` - spawn level with only Red 1/2/3 bricks (indices 37, 38, 39), destroy all, verify level completion event/state transition occurs (verifies FR-009: bricks count toward level completion)
+- [ ] T059 Create pull request with title "feat: implement ball spawn bricks (Red 1/2/3)" and link to spec, plan, and tasks documents
 
 **Final Checkpoint**: All acceptance criteria met, tests passing, documentation updated, ready for code review
 
@@ -288,8 +292,8 @@ Before marking feature complete, verify:
 | US1 (Red 2) | T009-T024 | 3-4 hours |
 | US2 (Red 3) | T025-T037 | 2-3 hours |
 | US3 (Red 1) | T038-T049 | 2-3 hours |
-| Polish | T050-T058 | 2 hours |
-| **Total** | 58 tasks | **10-13 hours** |
+| Polish | T050-T059 | 2 hours |
+| **Total** | 59 tasks | **10-13 hours** |
 
 **Critical Path** (assuming single developer, sequential): ~12 hours
 
@@ -299,9 +303,9 @@ Before marking feature complete, verify:
 
 ## Summary
 
-- **Total Tasks**: 58
+- **Total Tasks**: 59
 - **User Stories**: 3 (US1=P1 MVP, US2=P2, US3=P3)
-- **Tests Required**: 21 test tasks across all user stories
+- **Tests Required**: 22 test tasks across all user stories
 - **Parallel Opportunities**: US1, US2, US3 can be implemented simultaneously after Phase 2
 - **MVP Scope**: User Story 1 only (Red 2 brick spawn mechanic)
 - **Constitution Compliance**: All Bevy 0.17 mandates enforced in test and implementation tasks

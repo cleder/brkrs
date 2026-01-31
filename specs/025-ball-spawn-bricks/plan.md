@@ -59,7 +59,8 @@ Full Bevy 0.17 compliance required.
 **Directional Terminology**:
 
 - "Inverse direction" for Red 2 brick: Negate the velocity vector (if `v = (vx, vy, vz)`, then `-v = (-vx, -vy, -vz)`)
-- "Y-shaped spread" for Red 3 brick: Two spawned balls at approximately ±30-45 degrees left/right from original trajectory in the XZ plane
+- "Y-shaped spread" for Red 3 brick: Two spawned balls at ±37.5 degrees from original trajectory in the XZ plane
+  - Calculation: For velocity `v = (vx, vy, vz)`, compute 2D angle `θ = atan2(vz, vx)`, then left velocity at `θ + 37.5°` and right velocity at `θ - 37.5°` with same magnitude `sqrt(vx² + vz²)`
 - Uses **direct axis manipulation** (`linvel.x`, `linvel.z`) rather than semantic "forward/backward" to avoid Transform API confusion
 
 **Camera Context**: Top-down view (camera at positive Y looking down) means:

@@ -59,7 +59,7 @@ Delivers escalated multi-ball chaos independently of other brick types.
 
 **Acceptance Scenarios**:
 
-1. **Given** one ball in play with velocity (5, 0, -3) and a Red 3 brick at position (7, 0, 5), **When** the ball hits the brick, **Then** the brick is destroyed, two new balls spawn at position (7, 0, 5) with velocities forming a Y-shaped pattern (one angled left, one angled right relative to the original trajectory), 100 points are awarded, and exactly three balls are now in play
+1. **Given** one ball in play with velocity (5, 0, -3) and a Red 3 brick at position (7, 0, 5), **When** the ball hits the brick, **Then** the brick is destroyed, two new balls spawn at position (7, 0, 5) with velocities forming a Y-shaped pattern (one angled 37.5° left, one angled 37.5° right relative to the original trajectory in the XZ plane), 100 points are awarded, and exactly three balls are now in play
 2. **Given** two balls in play and a Red 3 brick, **When** any ball hits the brick, **Then** two additional balls spawn (total of four balls), maintaining the Y-shaped spread relative to the triggering ball's direction
 3. **Given** multiple balls hitting a Red 3 brick simultaneously, **When** collision occurs, **Then** only one set of two balls spawns (brick can only be destroyed once)
 4. **Given** a Red 3 brick just destroyed with two spawned balls, **When** 10 update cycles pass, **Then** both spawned balls persist and move independently according to their velocity vectors (multi-frame persistence check)
@@ -104,7 +104,7 @@ Delivers immediate simplification value independently.
 - **FR-004**: System MUST destroy brick index 37 (Red 1) on ball collision and despawn all balls except the triggering ball
 - **FR-005**: System MUST award 100 points when any of these three bricks (37, 38, 39) are destroyed
 - **FR-006**: Spawned balls from brick 38 MUST inherit the same speed as the triggering ball but with inverse direction vector (negated velocity)
-- **FR-007**: Spawned balls from brick 39 MUST inherit the same speed as the triggering ball but with velocity vectors forming a Y-shaped spread pattern (one angled approximately 30-45 degrees left, one angled 30-45 degrees right from the original trajectory)
+- **FR-007**: Spawned balls from brick 39 MUST inherit the same speed as the triggering ball but with velocity vectors forming a Y-shaped spread pattern (one angled 37.5 degrees left, one angled 37.5 degrees right from the original trajectory in the XZ plane)
 - **FR-008**: Ball despawning from brick 37 MUST remove all ball entities except the one that collided with the brick
 - **FR-009**: System MUST count all three brick types (37, 38, 39) toward level completion requirements (they are destructible bricks in the 10-57 range)
 - **FR-010**: System MUST use the Messages event system (`MessageWriter`) for brick destruction notifications, ensuring ball spawn/despawn logic runs in systems that read `BrickDestroyed` messages after physics collision detection
@@ -147,7 +147,7 @@ Delivers immediate simplification value independently.
 - The game's existing brick destruction system supports sending a message with sufficient context (brick type, triggering ball entity, ball velocity) for the spawn/despawn logic
 - The physics system supports dynamically spawning entities mid-game without disrupting existing ball trajectories
 - The "inverse direction" for Red 2 means negating the velocity vector (if ball travels at velocity V, spawned ball travels at velocity -V)
-- The Y-shaped pattern for Red 3 uses a spread angle of approximately 30-45 degrees from the original trajectory (specific angle can be tuned during implementation)
+- The Y-shaped pattern for Red 3 uses a spread angle of 37.5 degrees from the original trajectory (one ball at +37.5°, one at -37.5° in the XZ plane)
 - There is no maximum limit on the number of balls in play - the system must handle any number of simultaneous balls without artificial caps
 - Ball entities can be safely spawned and despawned at runtime without causing memory leaks or entity reference issues
 - Visual assets (textures) for Red 1, Red 2, and Red 3 bricks already exist in the asset system
