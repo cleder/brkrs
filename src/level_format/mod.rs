@@ -44,6 +44,14 @@ pub const HAZARD_BRICK_42: u8 = 42;
 /// Ball collisions have no effect (no destruction, no points).
 pub const HAZARD_BRICK_91: u8 = 91;
 
+/// Level Up brick index 50: advances to the next level when destroyed by ball.
+/// This is a utility brick that awards 0 points and plays unique destruction sound.
+pub const BRICK_50: u8 = 50;
+
+/// Level Down brick index 54: returns to the previous level when destroyed by ball.
+/// This is a utility brick that awards 0 points and plays unique destruction sound.
+pub const BRICK_54: u8 = 54;
+
 /// Returns `true` if the given type ID represents a multi-hit brick (indices 10-13).
 ///
 /// Multi-hit bricks require multiple ball collisions to destroy. Each hit decrements

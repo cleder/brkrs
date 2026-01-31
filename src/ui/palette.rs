@@ -543,8 +543,8 @@ pub fn place_bricks_on_drag(
         brick_entity.insert(MeshMaterial3d(mat));
     }
 
-    // Indestructible bricks (type 90) should NOT count towards completion
-    if type_id != 90 {
+    // Indestructible bricks (type 90 and up) should NOT count towards completion
+    if type_id < crate::level_format::INDESTRUCTIBLE_BRICK {
         brick_entity.insert(CountsTowardsCompletion);
     }
 

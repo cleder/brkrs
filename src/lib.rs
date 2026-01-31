@@ -160,7 +160,7 @@ impl Default for GravityConfig {
 
 #[derive(Resource, Default)]
 pub struct GameProgress {
-    finished: bool,
+    pub finished: bool,
 }
 ///
 /// When a brick with this component is destroyed, the gravity immediately
@@ -169,9 +169,9 @@ pub struct GameProgress {
 ///
 /// **Brick Indices**:
 /// - 21: Zero Gravity (0.0, 0.0, 0.0)
-/// - 22: Moon Gravity (0.0, 2.0, 0.0)
-/// - 23: Earth Gravity (0.0, 10.0, 0.0)
-/// - 24: High Gravity (0.0, 20.0, 0.0)
+/// - 22: Moon Gravity (2.0, 0.0, 0.0)
+/// - 23: Earth Gravity (10.0, 0.0, 0.0)
+/// - 24: High Gravity (20.0, 0.0, 0.0)
 /// - 25: Queer Gravity (random X, Y=0.0, random Z)
 #[derive(Component, Clone, Copy, Debug, PartialEq)]
 pub struct GravityBrick {
@@ -732,6 +732,7 @@ pub fn mark_brick_on_ball_collision(
     mut spawn_msgs: Option<MessageWriter<crate::signals::SpawnMerkabaMessage>>,
     mut brick_destroyed_msgs: Option<MessageWriter<crate::signals::BrickDestroyed>>,
     mut life_award_msgs: Option<MessageWriter<crate::signals::LifeAwardMessage>>,
+    mut level_switch_msgs: Option<MessageWriter<crate::systems::LevelSwitchRequested>>,
     mut emitted: Option<ResMut<EmittedBrickDestroyed>>,
 ) {
     use crate::level_format::{is_multi_hit_brick, MULTI_HIT_BRICK_1, SIMPLE_BRICK};
@@ -826,6 +827,25 @@ pub fn mark_brick_on_ball_collision(
                     if current_type == crate::level_format::EXTRA_LIFE_BRICK {
                         if let Some(writer) = life_award_msgs.as_mut() {
                             writer.write(crate::signals::LifeAwardMessage { delta: 1 });
+                        }
+                    }
+                    // Brick 50 (Level Up): emit level switch request
+                    if current_type == crate::level_format::BRICK_50 {
+                        if let Some(writer) = level_switch_msgs.as_mut() {
+                            writer.write(crate::systems::LevelSwitchRequested {
+                                source: crate::systems::LevelSwitchSource::Brick,
+                                direction: crate::systems::level_switch::LevelSwitchDirection::Next,
+                            });
+                        }
+                    }
+                    // Brick 54 (Level Down): emit level switch request
+                    if current_type == crate::level_format::BRICK_54 {
+                        if let Some(writer) = level_switch_msgs.as_mut() {
+                            writer.write(crate::systems::LevelSwitchRequested {
+                                source: crate::systems::LevelSwitchSource::Brick,
+                                direction:
+                                    crate::systems::level_switch::LevelSwitchDirection::Previous,
+                            });
                         }
                     }
                     processed_bricks.insert(entity);

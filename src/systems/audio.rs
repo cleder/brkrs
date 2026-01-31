@@ -122,6 +122,10 @@ pub enum SoundType {
     MerkabaLoop,
     /// Brick 41 (Extra Life) unique destruction sound.
     Brick41ExtraLife,
+    /// Brick 50 (Level Up) unique destruction sound.
+    Brick50LevelUp,
+    /// Brick 54 (Level Down) unique destruction sound.
+    Brick54LevelDown,
 }
 
 /// User-adjustable audio settings, persisted across sessions.
@@ -725,6 +729,8 @@ fn consume_brick_destroyed_messages(
     active_sounds: Option<ResMut<ActiveSounds>>,
     active_instances: Option<ResMut<ActiveAudioInstances>>,
     mut brick41_available: Local<Option<bool>>,
+    mut brick50_available: Local<Option<bool>>,
+    mut brick54_available: Local<Option<bool>>,
     mut commands: Commands,
 ) {
     let Some(mut reader) = reader else {
@@ -767,12 +773,42 @@ fn consume_brick_destroyed_messages(
             *brick41_available = Some(available);
         }
 
+        // Brick 50 (Level Up) has unique sound; cache availability to avoid repeated lookups/logs
+        if brick50_available.is_none() {
+            let available = assets.get(SoundType::Brick50LevelUp).is_some();
+            if !available {
+                warn!(
+                    target: "audio",
+                    "Brick 50 unique sound handle missing; falling back to generic BrickDestroy"
+                );
+            }
+            *brick50_available = Some(available);
+        }
+
+        // Brick 54 (Level Down) has unique sound; cache availability to avoid repeated lookups/logs
+        if brick54_available.is_none() {
+            let available = assets.get(SoundType::Brick54LevelDown).is_some();
+            if !available {
+                warn!(
+                    target: "audio",
+                    "Brick 54 unique sound handle missing; falling back to generic BrickDestroy"
+                );
+            }
+            *brick54_available = Some(available);
+        }
+
         let brick41_sound_available = brick41_available.unwrap_or(false);
+        let brick50_sound_available = brick50_available.unwrap_or(false);
+        let brick54_sound_available = brick54_available.unwrap_or(false);
 
         let sound_type = if event.brick_type == crate::level_format::EXTRA_LIFE_BRICK
             && brick41_sound_available
         {
             SoundType::Brick41ExtraLife
+        } else if event.brick_type == crate::level_format::BRICK_50 && brick50_sound_available {
+            SoundType::Brick50LevelUp
+        } else if event.brick_type == crate::level_format::BRICK_54 && brick54_sound_available {
+            SoundType::Brick54LevelDown
         } else {
             SoundType::BrickDestroy
         };

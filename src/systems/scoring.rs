@@ -110,10 +110,10 @@ pub fn brick_points(brick_type: u8, rng: &mut impl Rng) -> u32 {
 
         // Special bricks
         49 => 150,                        // Teleport
-        50 => 300,                        // Level Up
+        50 => 0,                          // Level Up (no score, utility brick like Extra Ball)
         51 => 30,                         // Slow / Hourglass
         53 => rng.random_range(25..=300), // Question brick random score
-        54 => 0,                          // Level Down (no score)
+        54 => 0,                          // Level Down (no score, utility brick)
         55 => 0,                          // Magnet (enabled)
         56 => 0,                          // Magnet (disabled)
         57 => 250,                        // Bat (paddle destroyable)

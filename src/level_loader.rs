@@ -1,6 +1,6 @@
-use crate::level_format::{normalize_matrix_simple, HAZARD_BRICK_91, INDESTRUCTIBLE_BRICK};
+use crate::level_format::{normalize_matrix_simple, INDESTRUCTIBLE_BRICK};
 use crate::systems::level_switch::{LevelSwitchRequested, LevelSwitchState};
-use crate::systems::merkaba::Merkaba;
+use crate::systems::merkaba::{Merkaba, PendingMerkabaSpawns};
 use crate::systems::respawn::{RespawnEntityKind, RespawnHandle, SpawnPoints, SpawnTransform};
 #[cfg(feature = "texture_manifest")]
 use crate::systems::textures::{
@@ -643,7 +643,7 @@ fn spawn_level_entities_impl(
                     ));
                     // Only destructible bricks contribute to level completion.
                     // Type 91 (hazard) bricks do not count toward completion.
-                    if brick_type_id != INDESTRUCTIBLE_BRICK && brick_type_id != HAZARD_BRICK_91 {
+                    if brick_type_id < INDESTRUCTIBLE_BRICK {
                         entity.insert(CountsTowardsCompletion);
                     }
 
@@ -812,7 +812,7 @@ fn spawn_bricks_only(
                 CollidingEntities::default(),
                 ActiveEvents::COLLISION_EVENTS,
             ));
-            if brick_type_id != INDESTRUCTIBLE_BRICK {
+            if brick_type_id < INDESTRUCTIBLE_BRICK {
                 entity.insert(crate::CountsTowardsCompletion);
             }
 
@@ -1110,6 +1110,40 @@ fn destroy_all_bricks_on_key(
     }
 }
 
+/// Helper function to despawn all game entities during level transitions.
+///
+/// This is used by brick-based level navigation (brick 50 and 54) to clean up
+/// the current level state before transitioning.
+fn despawn_all_game_entities(
+    commands: &mut Commands,
+    bricks: &Query<Entity, With<Brick>>,
+    paddle_q: &Query<Entity, With<Paddle>>,
+    ball_q: &Query<Entity, With<Ball>>,
+    merkaba_q: &Query<Entity, With<Merkaba>>,
+    pending_merkaba_spawns: &mut Option<ResMut<PendingMerkabaSpawns>>,
+) {
+    // Despawn all bricks
+    for entity in bricks.iter() {
+        commands.entity(entity).despawn();
+    }
+    // Despawn paddle
+    for p in paddle_q.iter() {
+        commands.entity(p).despawn();
+    }
+    // Despawn balls
+    for b in ball_q.iter() {
+        commands.entity(b).despawn();
+    }
+    // Despawn merkaba rotors
+    for m in merkaba_q.iter() {
+        commands.entity(m).despawn();
+    }
+    // Clear pending merkaba spawns
+    if let Some(ref mut spawns) = pending_merkaba_spawns {
+        spawns.entries.clear();
+    }
+}
+
 pub(crate) fn process_level_switch_requests(
     mut requests: bevy::ecs::message::MessageReader<LevelSwitchRequested>,
     mut switch_state: ResMut<LevelSwitchState>,
@@ -1141,6 +1175,149 @@ pub(crate) fn process_level_switch_requests(
         requests.clear();
         return;
     };
+
+    // Check boundary conditions for navigation bricks
+    match request.direction {
+        crate::systems::level_switch::LevelSwitchDirection::Next => {
+            // Brick 50 (Level Up): if on final level, show victory screen instead of transitioning
+            if request.source == crate::systems::LevelSwitchSource::Brick
+                && switch_state.next_level_after(current_number).is_none()
+            {
+                info!(target: "level_switch", "Brick 50 on final level: showing victory screen");
+                ctx.game_progress.finished = true;
+                // Despawn all game entities
+                despawn_all_game_entities(
+                    &mut commands,
+                    &bricks,
+                    &paddle_q,
+                    &ball_q,
+                    &merkaba_q,
+                    &mut pending_merkaba_spawns,
+                );
+                requests.clear();
+                return;
+            }
+            // Brick 50 (Level Up): use level advance transition with fade for brick source
+            if request.source == crate::systems::LevelSwitchSource::Brick {
+                if let Some(next) = switch_state.next_level_after(current_number) {
+                    // Load the next level definition to prepare for transition
+                    let path = &next.path;
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let file_content_result = std::fs::read_to_string(path);
+                    #[cfg(target_arch = "wasm32")]
+                    let file_content_result = embedded_level_str(path)
+                        .map(|s| s.to_string())
+                        .ok_or_else(|| {
+                            format!("failed to read level file: embedded asset missing")
+                        });
+
+                    match file_content_result {
+                        Ok(content) => match from_str::<LevelDefinition>(&content) {
+                            Ok(def) => {
+                                info!(
+                                    "Brick 50: Preparing transition to level {} with fade",
+                                    def.number
+                                );
+                                // Use level advance state for fade transition instead of direct switch
+                                ctx.level_advance.timer.reset();
+                                ctx.level_advance.active = true;
+                                ctx.level_advance.growth_spawned = false;
+                                ctx.level_advance.pending = Some(def);
+                                // Despawn all game entities before fade-out and next level setup
+                                despawn_all_game_entities(
+                                    &mut commands,
+                                    &bricks,
+                                    &paddle_q,
+                                    &ball_q,
+                                    &merkaba_q,
+                                    &mut pending_merkaba_spawns,
+                                );
+                                requests.clear();
+                                return;
+                            }
+                            Err(e) => {
+                                warn!("Failed to parse next level '{}': {e}", path);
+                                requests.clear();
+                                return;
+                            }
+                        },
+                        Err(e) => {
+                            warn!("Failed to read next level file '{}': {e}", path);
+                            requests.clear();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        crate::systems::level_switch::LevelSwitchDirection::Previous => {
+            // Brick 54 (Level Down): if on level 1, don't transition
+            if current_number
+                == switch_state
+                    .ordered_levels()
+                    .first()
+                    .map(|s| s.number)
+                    .unwrap_or(1)
+                && request.source == crate::systems::LevelSwitchSource::Brick
+            {
+                info!(target: "level_switch", "Brick 54 on level 1: no transition");
+                requests.clear();
+                return;
+            }
+            // Brick 54 (Level Down): use level advance transition with fade for brick source
+            if request.source == crate::systems::LevelSwitchSource::Brick {
+                if let Some(prev) = switch_state.previous_level_before(current_number) {
+                    // Load the previous level definition to prepare for transition
+                    let path = &prev.path;
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let file_content_result = std::fs::read_to_string(path);
+                    #[cfg(target_arch = "wasm32")]
+                    let file_content_result = embedded_level_str(path)
+                        .map(|s| s.to_string())
+                        .ok_or_else(|| {
+                            format!("failed to read level file: embedded asset missing")
+                        });
+
+                    match file_content_result {
+                        Ok(content) => match from_str::<LevelDefinition>(&content) {
+                            Ok(def) => {
+                                info!(
+                                    "Brick 54: Preparing transition to level {} with fade",
+                                    def.number
+                                );
+                                // Use level advance state for fade transition instead of direct switch
+                                ctx.level_advance.timer.reset();
+                                ctx.level_advance.active = true;
+                                ctx.level_advance.growth_spawned = false;
+                                ctx.level_advance.pending = Some(def);
+                                // Despawn all game entities before fade-out and previous level setup
+                                despawn_all_game_entities(
+                                    &mut commands,
+                                    &bricks,
+                                    &paddle_q,
+                                    &ball_q,
+                                    &merkaba_q,
+                                    &mut pending_merkaba_spawns,
+                                );
+                                requests.clear();
+                                return;
+                            }
+                            Err(e) => {
+                                warn!("Failed to parse previous level '{}': {e}", path);
+                                requests.clear();
+                                return;
+                            }
+                        },
+                        Err(e) => {
+                            warn!("Failed to read previous level file '{}': {e}", path);
+                            requests.clear();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     let maybe_slot = match request.direction {
         crate::systems::level_switch::LevelSwitchDirection::Next => {
