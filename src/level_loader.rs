@@ -1142,6 +1142,47 @@ pub(crate) fn process_level_switch_requests(
         return;
     };
 
+    // Check boundary conditions for navigation bricks
+    match request.direction {
+        crate::systems::level_switch::LevelSwitchDirection::Next => {
+            // Brick 50 (Level Up): if on final level, show victory screen instead of transitioning
+            if let Some(next) = switch_state.next_level_after(current_number) {
+                if next.number
+                    == switch_state
+                        .ordered_levels()
+                        .first()
+                        .map(|s| s.number)
+                        .unwrap_or(0)
+                    && next.number <= current_number
+                {
+                    // We're on the final level and would wrap to first level
+                    // Show victory screen instead
+                    if request.source == crate::systems::LevelSwitchSource::Brick {
+                        info!(target: "level_switch", "Brick 50 on final level: showing victory screen");
+                        ctx.game_progress.finished = true;
+                        requests.clear();
+                        return;
+                    }
+                }
+            }
+        }
+        crate::systems::level_switch::LevelSwitchDirection::Previous => {
+            // Brick 54 (Level Down): if on level 1, don't transition
+            if current_number
+                == switch_state
+                    .ordered_levels()
+                    .first()
+                    .map(|s| s.number)
+                    .unwrap_or(1)
+                && request.source == crate::systems::LevelSwitchSource::Brick
+            {
+                info!(target: "level_switch", "Brick 54 on level 1: no transition");
+                requests.clear();
+                return;
+            }
+        }
+    }
+
     let maybe_slot = match request.direction {
         crate::systems::level_switch::LevelSwitchDirection::Next => {
             switch_state.next_level_after(current_number).cloned()

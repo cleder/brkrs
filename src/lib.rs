@@ -732,6 +732,7 @@ pub fn mark_brick_on_ball_collision(
     mut spawn_msgs: Option<MessageWriter<crate::signals::SpawnMerkabaMessage>>,
     mut brick_destroyed_msgs: Option<MessageWriter<crate::signals::BrickDestroyed>>,
     mut life_award_msgs: Option<MessageWriter<crate::signals::LifeAwardMessage>>,
+    mut level_switch_msgs: Option<MessageWriter<crate::systems::LevelSwitchRequested>>,
     mut emitted: Option<ResMut<EmittedBrickDestroyed>>,
 ) {
     use crate::level_format::{is_multi_hit_brick, MULTI_HIT_BRICK_1, SIMPLE_BRICK};
@@ -826,6 +827,25 @@ pub fn mark_brick_on_ball_collision(
                     if current_type == crate::level_format::EXTRA_LIFE_BRICK {
                         if let Some(writer) = life_award_msgs.as_mut() {
                             writer.write(crate::signals::LifeAwardMessage { delta: 1 });
+                        }
+                    }
+                    // Brick 50 (Level Up): emit level switch request
+                    if current_type == crate::level_format::BRICK_50 {
+                        if let Some(writer) = level_switch_msgs.as_mut() {
+                            writer.write(crate::systems::LevelSwitchRequested {
+                                source: crate::systems::LevelSwitchSource::Brick,
+                                direction: crate::systems::level_switch::LevelSwitchDirection::Next,
+                            });
+                        }
+                    }
+                    // Brick 54 (Level Down): emit level switch request
+                    if current_type == crate::level_format::BRICK_54 {
+                        if let Some(writer) = level_switch_msgs.as_mut() {
+                            writer.write(crate::systems::LevelSwitchRequested {
+                                source: crate::systems::LevelSwitchSource::Brick,
+                                direction:
+                                    crate::systems::level_switch::LevelSwitchDirection::Previous,
+                            });
                         }
                     }
                     processed_bricks.insert(entity);
