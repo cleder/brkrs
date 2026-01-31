@@ -1,5 +1,6 @@
-Rename the file to `LICENSE` or `LICENSE.txt` for broader tooling compatibility, while keeping the AGPL-3.0 text.
-Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+# AGPL-3.0
+
+Copyright (C) 2007 Free Software Foundation, Inc. `<https://fsf.org/>`
 
 Everyone is permitted to copy and distribute verbatim copies of this license document, but changing it is not allowed.
 
@@ -38,7 +39,8 @@ The precise terms and conditions for copying, distribution and modification foll
 "Copyright" also means copyright-like laws that apply to other kinds of works, such as semiconductor masks.
 
 "The Program" refers to any copyrightable work licensed under this License.
-Each licensee is addressed as "you". "Licensees" and "recipients" may be individuals or organizations.
+Each licensee is addressed as "you".
+"Licensees" and "recipients" may be individuals or organizations.
 
 To "modify" a work means to copy from or adapt all or part of the work in a fashion requiring copyright permission, other than the making of an exact copy.
 The resulting work is called a "modified version" of the earlier work or a work "based on" the earlier work.
@@ -56,7 +58,8 @@ If the interface presents a list of user commands or options, such as a menu, a 
 
 ### 1. Source Code
 
-The "source code" for a work means the preferred form of the work for making modifications to it. "Object code" means any non-source form of a work.
+The "source code" for a work means the preferred form of the work for making modifications to it.
+"Object code" means any non-source form of a work.
 
 A "Standard Interface" means an interface that either is an official standard defined by a recognized standards body, or, in the case of interfaces specified for a particular programming language, one that is widely used among developers working in that language.
 
@@ -244,7 +247,8 @@ Each contributor grants you a non-exclusive, worldwide, royalty-free patent lice
 In the following three paragraphs, a "patent license" is any express agreement or commitment, however denominated, not to enforce a patent (such as an express permission to practice a patent or covenant not to sue for patent infringement).
 To "grant" such a patent license to a party means to make such an agreement or commitment not to enforce a patent against the party.
 
-If you convey a covered work, knowingly relying on a patent license, and the Corresponding Source of the work is not available for anyone to copy, free of charge and under the terms of this License, through a publicly available network server or other readily accessible means, then you must either (1) cause the Corresponding Source to be so available, or (2) arrange to deprive yourself of the benefit of the patent license for this particular work, or (3) arrange, in a manner consistent with the requirements of this License, to extend the patent license to downstream recipients. "Knowingly relying" means you have actual knowledge that, but for the patent license, your conveying the covered work in a country, or your recipient's use of the covered work in a country, would infringe one or more identifiable patents in that country that you have reason to believe are valid.
+If you convey a covered work, knowingly relying on a patent license, and the Corresponding Source of the work is not available for anyone to copy, free of charge and under the terms of this License, through a publicly available network server or other readily accessible means, then you must either (1) cause the Corresponding Source to be so available, or (2) arrange to deprive yourself of the benefit of the patent license for this particular work, or (3) arrange, in a manner consistent with the requirements of this License, to extend the patent license to downstream recipients.
+"Knowingly relying" means you have actual knowledge that, but for the patent license, your conveying the covered work in a country, or your recipient's use of the covered work in a country, would infringe one or more identifiable patents in that country that you have reason to believe are valid.
 
 If, pursuant to or in connection with a single transaction or arrangement, you convey, or propagate by procuring conveyance of, a covered work, and grant a patent license to some of the parties receiving the covered work authorizing them to use, propagate, modify or convey a specific copy of the covered work, then the patent license you grant is automatically extended to all recipients of the covered work and works based on it.
 
@@ -329,4 +333,3 @@ There are many ways you could offer source, and different solutions will be bett
 
 You should also get your employer (if you work as a programmer) or school, if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see <https://www.gnu.org/licenses/>.
-
