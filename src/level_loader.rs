@@ -1165,6 +1165,63 @@ pub(crate) fn process_level_switch_requests(
                     }
                 }
             }
+            // Brick 50 (Level Up): use level advance transition with fade for brick source
+            if request.source == crate::systems::LevelSwitchSource::Brick {
+                if let Some(next) = switch_state.next_level_after(current_number) {
+                    // Load the next level definition to prepare for transition
+                    let path = &next.path;
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let file_content_result = std::fs::read_to_string(path);
+                    #[cfg(target_arch = "wasm32")]
+                    let file_content_result = embedded_level_str(path)
+                        .map(|s| s.to_string())
+                        .ok_or_else(|| {
+                            format!("failed to read level file: embedded asset missing")
+                        });
+
+                    match file_content_result {
+                        Ok(content) => match from_str::<LevelDefinition>(&content) {
+                            Ok(def) => {
+                                info!(
+                                    "Brick 50: Preparing transition to level {} with fade",
+                                    def.number
+                                );
+                                // Use level advance state for fade transition instead of direct switch
+                                ctx.level_advance.timer.reset();
+                                ctx.level_advance.active = true;
+                                ctx.level_advance.growth_spawned = false;
+                                ctx.level_advance.pending = Some(def);
+                                // Despawn all bricks before fade-out and next level setup
+                                for entity in bricks.iter() {
+                                    commands.entity(entity).despawn();
+                                }
+                                // Despawn paddle, ball, and merkaba to show empty field during fade-out
+                                for p in paddle_q.iter() {
+                                    commands.entity(p).despawn();
+                                }
+                                for b in ball_q.iter() {
+                                    commands.entity(b).despawn();
+                                }
+                                for m in merkaba_q.iter() {
+                                    commands.entity(m).despawn();
+                                }
+                                // Clear pending merkaba spawns
+                                if let Some(mut spawns) = pending_merkaba_spawns {
+                                    spawns.entries.clear();
+                                }
+                                requests.clear();
+                                return;
+                            }
+                            Err(e) => {
+                                warn!("Failed to parse next level '{}': {e}", path);
+                            }
+                        },
+                        Err(e) => {
+                            warn!("Failed to read next level file '{}': {e}", path);
+                        }
+                    }
+                }
+            }
         }
         crate::systems::level_switch::LevelSwitchDirection::Previous => {
             // Brick 54 (Level Down): if on level 1, don't transition
@@ -1206,6 +1263,10 @@ pub(crate) fn process_level_switch_requests(
                                 ctx.level_advance.active = true;
                                 ctx.level_advance.growth_spawned = false;
                                 ctx.level_advance.pending = Some(def);
+                                // Despawn all bricks before fade-out and next level setup
+                                for entity in bricks.iter() {
+                                    commands.entity(entity).despawn();
+                                }
                                 // Despawn paddle, ball, and merkaba to show empty field during fade-out
                                 for p in paddle_q.iter() {
                                     commands.entity(p).despawn();
