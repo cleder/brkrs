@@ -10,19 +10,37 @@
 //! - Final level boundary condition (victory screen + GameProgress.finished = true)
 //! - Multi-frame state persistence (10+ frames without overwrite)
 
-use bevy::{app::App, prelude::*};
+use bevy::{app::App, input::InputPlugin, prelude::*};
 use bevy_rapier3d::prelude::*;
 use brkrs::level_format::BRICK_50;
 use brkrs::level_loader::{CurrentLevel, LevelAdvanceState, LevelDefinition};
 use brkrs::systems::level_switch::{LevelSwitchDirection, LevelSwitchRequested, LevelSwitchSource};
-use brkrs::systems::LevelSwitchState;
-use brkrs::{Brick, BrickTypeId, CountsTowardsCompletion, GameProgress};
+use brkrs::GameProgress;
+
+/// Resource to capture LevelSwitchRequested messages for testing
+#[derive(Resource, Default)]
+struct LevelSwitchMessages(Vec<LevelSwitchRequested>);
+
+/// System to capture LevelSwitchRequested messages into a resource
+fn capture_level_switch_messages(
+    mut reader: MessageReader<LevelSwitchRequested>,
+    mut messages: ResMut<LevelSwitchMessages>,
+) {
+    for msg in reader.read() {
+        messages.0.push(*msg);
+    }
+}
 
 fn test_app_with_brick_50() -> App {
     let mut app = App::new();
 
     // Core plugins
     app.add_plugins((MinimalPlugins, InputPlugin));
+
+    // Message registration
+    app.add_message::<LevelSwitchRequested>();
+    app.init_resource::<LevelSwitchMessages>();
+    app.add_systems(Update, capture_level_switch_messages);
 
     // Physics configuration
     app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
@@ -55,6 +73,10 @@ fn create_test_level_with_brick_50(level_number: u32) -> LevelDefinition {
         number: level_number,
         matrix,
         gravity: None,
+        description: None,
+        author: None,
+        #[cfg(feature = "texture_manifest")]
+        presentation: None,
     }
 }
 
@@ -64,12 +86,9 @@ fn level_switch_message_written(
     expected_direction: LevelSwitchDirection,
     expected_source: LevelSwitchSource,
 ) -> bool {
-    use bevy::ecs::message::MessageReader;
-
-    let mut reader = app
-        .world_mut()
-        .resource_mut::<MessageReader<LevelSwitchRequested>>();
-    reader
+    app.world()
+        .resource::<LevelSwitchMessages>()
+        .0
         .iter()
         .any(|msg| msg.direction == expected_direction && msg.source == expected_source)
 }

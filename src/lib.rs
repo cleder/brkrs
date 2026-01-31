@@ -160,7 +160,7 @@ impl Default for GravityConfig {
 
 #[derive(Resource, Default)]
 pub struct GameProgress {
-    finished: bool,
+    pub finished: bool,
 }
 ///
 /// When a brick with this component is destroyed, the gravity immediately

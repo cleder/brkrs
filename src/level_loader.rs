@@ -1,6 +1,6 @@
 use crate::level_format::{normalize_matrix_simple, INDESTRUCTIBLE_BRICK};
 use crate::systems::level_switch::{LevelSwitchRequested, LevelSwitchState};
-use crate::systems::merkaba::Merkaba;
+use crate::systems::merkaba::{Merkaba, PendingMerkabaSpawns};
 use crate::systems::respawn::{RespawnEntityKind, RespawnHandle, SpawnPoints, SpawnTransform};
 #[cfg(feature = "texture_manifest")]
 use crate::systems::textures::{
@@ -1110,6 +1110,40 @@ fn destroy_all_bricks_on_key(
     }
 }
 
+/// Helper function to despawn all game entities during level transitions.
+///
+/// This is used by brick-based level navigation (brick 50 and 54) to clean up
+/// the current level state before transitioning.
+fn despawn_all_game_entities(
+    commands: &mut Commands,
+    bricks: &Query<Entity, With<Brick>>,
+    paddle_q: &Query<Entity, With<Paddle>>,
+    ball_q: &Query<Entity, With<Ball>>,
+    merkaba_q: &Query<Entity, With<Merkaba>>,
+    pending_merkaba_spawns: &mut Option<ResMut<PendingMerkabaSpawns>>,
+) {
+    // Despawn all bricks
+    for entity in bricks.iter() {
+        commands.entity(entity).despawn();
+    }
+    // Despawn paddle
+    for p in paddle_q.iter() {
+        commands.entity(p).despawn();
+    }
+    // Despawn balls
+    for b in ball_q.iter() {
+        commands.entity(b).despawn();
+    }
+    // Despawn merkaba rotors
+    for m in merkaba_q.iter() {
+        commands.entity(m).despawn();
+    }
+    // Clear pending merkaba spawns
+    if let Some(ref mut spawns) = pending_merkaba_spawns {
+        spawns.entries.clear();
+    }
+}
+
 pub(crate) fn process_level_switch_requests(
     mut requests: bevy::ecs::message::MessageReader<LevelSwitchRequested>,
     mut switch_state: ResMut<LevelSwitchState>,
@@ -1146,24 +1180,22 @@ pub(crate) fn process_level_switch_requests(
     match request.direction {
         crate::systems::level_switch::LevelSwitchDirection::Next => {
             // Brick 50 (Level Up): if on final level, show victory screen instead of transitioning
-            if let Some(next) = switch_state.next_level_after(current_number) {
-                if next.number
-                    == switch_state
-                        .ordered_levels()
-                        .first()
-                        .map(|s| s.number)
-                        .unwrap_or(0)
-                    && next.number <= current_number
-                {
-                    // We're on the final level and would wrap to first level
-                    // Show victory screen instead
-                    if request.source == crate::systems::LevelSwitchSource::Brick {
-                        info!(target: "level_switch", "Brick 50 on final level: showing victory screen");
-                        ctx.game_progress.finished = true;
-                        requests.clear();
-                        return;
-                    }
-                }
+            if request.source == crate::systems::LevelSwitchSource::Brick
+                && switch_state.next_level_after(current_number).is_none()
+            {
+                info!(target: "level_switch", "Brick 50 on final level: showing victory screen");
+                ctx.game_progress.finished = true;
+                // Despawn all game entities
+                despawn_all_game_entities(
+                    &mut commands,
+                    &bricks,
+                    &paddle_q,
+                    &ball_q,
+                    &merkaba_q,
+                    &mut pending_merkaba_spawns,
+                );
+                requests.clear();
+                return;
             }
             // Brick 50 (Level Up): use level advance transition with fade for brick source
             if request.source == crate::systems::LevelSwitchSource::Brick {
@@ -1191,33 +1223,28 @@ pub(crate) fn process_level_switch_requests(
                                 ctx.level_advance.active = true;
                                 ctx.level_advance.growth_spawned = false;
                                 ctx.level_advance.pending = Some(def);
-                                // Despawn all bricks before fade-out and next level setup
-                                for entity in bricks.iter() {
-                                    commands.entity(entity).despawn();
-                                }
-                                // Despawn paddle, ball, and merkaba to show empty field during fade-out
-                                for p in paddle_q.iter() {
-                                    commands.entity(p).despawn();
-                                }
-                                for b in ball_q.iter() {
-                                    commands.entity(b).despawn();
-                                }
-                                for m in merkaba_q.iter() {
-                                    commands.entity(m).despawn();
-                                }
-                                // Clear pending merkaba spawns
-                                if let Some(mut spawns) = pending_merkaba_spawns {
-                                    spawns.entries.clear();
-                                }
+                                // Despawn all game entities before fade-out and next level setup
+                                despawn_all_game_entities(
+                                    &mut commands,
+                                    &bricks,
+                                    &paddle_q,
+                                    &ball_q,
+                                    &merkaba_q,
+                                    &mut pending_merkaba_spawns,
+                                );
                                 requests.clear();
                                 return;
                             }
                             Err(e) => {
                                 warn!("Failed to parse next level '{}': {e}", path);
+                                requests.clear();
+                                return;
                             }
                         },
                         Err(e) => {
                             warn!("Failed to read next level file '{}': {e}", path);
+                            requests.clear();
+                            return;
                         }
                     }
                 }
@@ -1263,33 +1290,28 @@ pub(crate) fn process_level_switch_requests(
                                 ctx.level_advance.active = true;
                                 ctx.level_advance.growth_spawned = false;
                                 ctx.level_advance.pending = Some(def);
-                                // Despawn all bricks before fade-out and next level setup
-                                for entity in bricks.iter() {
-                                    commands.entity(entity).despawn();
-                                }
-                                // Despawn paddle, ball, and merkaba to show empty field during fade-out
-                                for p in paddle_q.iter() {
-                                    commands.entity(p).despawn();
-                                }
-                                for b in ball_q.iter() {
-                                    commands.entity(b).despawn();
-                                }
-                                for m in merkaba_q.iter() {
-                                    commands.entity(m).despawn();
-                                }
-                                // Clear pending merkaba spawns
-                                if let Some(mut spawns) = pending_merkaba_spawns {
-                                    spawns.entries.clear();
-                                }
+                                // Despawn all game entities before fade-out and previous level setup
+                                despawn_all_game_entities(
+                                    &mut commands,
+                                    &bricks,
+                                    &paddle_q,
+                                    &ball_q,
+                                    &merkaba_q,
+                                    &mut pending_merkaba_spawns,
+                                );
                                 requests.clear();
                                 return;
                             }
                             Err(e) => {
                                 warn!("Failed to parse previous level '{}': {e}", path);
+                                requests.clear();
+                                return;
                             }
                         },
                         Err(e) => {
                             warn!("Failed to read previous level file '{}': {e}", path);
+                            requests.clear();
+                            return;
                         }
                     }
                 }
