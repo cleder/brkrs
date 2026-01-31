@@ -20,15 +20,15 @@ Level 014 already exists and should be used for gameplay/manual verification.
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Confirm existing level 014 is used for manual testing (no new level files) in specs/024-level-navigation-bricks/quickstart.md
+- [x] T001 Confirm existing level 014 is used for manual testing (no new level files) in specs/024-level-navigation-bricks/quickstart.md
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-- [ ] T002 Add brick type constants `BRICK_50` and `BRICK_54` in src/level_format/mod.rs
-- [ ] T003 Add `LevelSwitchSource::Brick` variant (if missing) in src/systems/level_switch.rs
-- [ ] T004 Add 0-point mappings for brick types 50 and 54 in src/systems/scoring.rs (function `brick_points`)
+- [x] T002 Add brick type constants `BRICK_50` and `BRICK_54` in src/level_format/mod.rs
+- [x] T003 Add `LevelSwitchSource::Brick` variant (if missing) in src/systems/level_switch.rs
+- [x] T004 Add 0-point mappings for brick types 50 and 54 in src/systems/scoring.rs (function `brick_points`)
 
 ---
 
@@ -41,7 +41,7 @@ Must persist across 10+ frames.
 
 ### Tests for User Story 1 (REQUIRED) ⚠️
 
-- [ ] T005 [P] [US1] Add failing integration tests for brick 50 transitions in tests/brick_50_level_up.rs (record failing-test commit hash: <hash>)
+- [x] T005 [P] [US1] Add failing integration tests for brick 50 transitions in tests/brick_50_level_up.rs (record failing-test commit hash: RED_COMMIT_TBD)
   - Must assert `LevelSwitchRequested { source: Brick, direction: Next }` is emitted (MessageWriter/Reader usage, not observers)
   - Must assert `BrickDestroyed` message emitted with `brick_type = 50` and scoring awards 0 points
   - Must verify boundary: final level → victory screen + `GameProgress.finished = true`, no transition
@@ -66,7 +66,7 @@ Must persist across 10+ frames.
 
 ### Tests for User Story 2 (REQUIRED) ⚠️
 
-- [ ] T008 [P] [US2] Add failing integration tests for brick 54 transitions in tests/brick_54_level_down.rs (record failing-test commit hash: <hash>)
+- [x] T008 [P] [US2] Add failing integration tests for brick 54 transitions in tests/brick_54_level_down.rs (record failing-test commit hash: RED_COMMIT_TBD)
   - Must assert `LevelSwitchRequested { source: Brick, direction: Previous }` is emitted (MessageWriter/Reader usage, not observers)
   - Must assert `BrickDestroyed` message emitted with `brick_type = 54` and scoring awards 0 points
   - Must verify boundary: level 1 → no transition (brick destroyed, level remains 1)
@@ -89,7 +89,7 @@ Must persist across 10+ frames.
 
 ### Tests for User Story 3 (REQUIRED) ⚠️
 
-- [ ] T010 [P] [US3] Add failing audio mapping tests in tests/level_navigation_audio.rs (record failing-test commit hash: <hash>)
+- [x] T010 [P] [US3] Add failing audio mapping tests in tests/level_navigation_audio.rs (record failing-test commit hash: RED_COMMIT_TBD)
   - Must assert brick 50 maps to `SoundType::Brick50LevelUp`
   - Must assert brick 54 maps to `SoundType::Brick54LevelDown`
   - Must assert fallback to `SoundType::BrickDestroy` when audio assets missing

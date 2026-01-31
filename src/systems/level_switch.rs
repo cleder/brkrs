@@ -21,6 +21,7 @@ pub enum LevelSwitchDirection {
 pub enum LevelSwitchSource {
     Keyboard,
     Automation,
+    Brick,
 }
 
 /// Ordered list of playable level files plus bookkeeping for pending transitions.

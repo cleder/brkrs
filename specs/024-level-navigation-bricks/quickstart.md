@@ -37,7 +37,17 @@ This guide provides a quickstart for implementing level navigation bricks (50 an
 
 ## Implementation Checklist
 
-### Phase 0: Constants & Foundation
+### Phase 0: Setup & Constants
+
+**Manual Testing Reference**: Use existing `assets/levels/level_014.ron` for gameplay testing and verification.
+No new level files are needed; level 014 contains brick types needed for testing navigation brick mechanics.
+
+**Assertion**: Verify `assets/levels/level_014.ron` exists before integration testing begins.
+
+- [ ] Confirm `assets/levels/level_014.ron` exists
+- [ ] No new level files created during implementation
+
+### Phase 1: Constants & Foundation
 
 - [ ] Add brick type constants to `src/level_format/mod.rs`:
 
