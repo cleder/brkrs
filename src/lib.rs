@@ -871,6 +871,38 @@ pub fn mark_brick_on_ball_collision(
                             });
                         }
                     }
+                    // Direction bricks (types 43-48, 52): emit DirectionBrickEffect trigger
+                    if matches!(current_type, 43..=48 | 52) {
+                        let ball_velocity = transforms
+                            .get(triggering_ball)
+                            .ok()
+                            .map(|_t| Vec3::ZERO)
+                            .unwrap_or(Vec3::ZERO);
+
+                        // Compute impulse vector based on brick type
+                        let impulse = match current_type {
+                            43 => Vec3::new(-5.0, 0.0, 0.0), // Left
+                            44 => Vec3::new(5.0, 0.0, 0.0),  // Right
+                            45 => Vec3::new(0.0, 5.0, 0.0),  // Up
+                            46 => Vec3::new(0.0, -5.0, 0.0), // Down
+                            47 => Vec3::new(0.0, 0.0, 5.0),  // Forward
+                            48 => Vec3::new(0.0, 0.0, -5.0), // Backward
+                            52 => {
+                                // Random direction brick: implement later
+                                // For now, placeholder (0, 0, 0)
+                                Vec3::ZERO
+                            }
+                            _ => Vec3::ZERO,
+                        };
+
+                        commands.trigger(crate::signals::DirectionBrickEffect {
+                            ball_entity: triggering_ball,
+                            brick_type: current_type,
+                            brick_position: brick_pos,
+                            velocity_before: ball_velocity,
+                            impulse,
+                        });
+                    }
                     processed_bricks.insert(entity);
                     info!(
                         "mark_brick_on_ball_collision: processing brick entity {:?}, type {}",
