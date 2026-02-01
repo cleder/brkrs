@@ -2,6 +2,16 @@
 
 **Feature Branch**: `026-direction-bricks` **Created**: 2026-02-01 **Status**: Draft **Input**: Implement bricks 43-48 and 52 that accelerate ball in specific directions or randomize velocity
 
+## Clarifications
+
+### Session 2026-02-01
+
+- Q: Should direction bricks apply continuous acceleration or instantaneous velocity impulses? → A: Instantaneous impulses (5.0 units/sec change applied once per destruction event, not per-frame acceleration)
+- Q: What observability approach should direction brick events use? → A: Tracing spans via `tracing` crate (structured logging with brick ID, velocity before/after, points awarded)
+- Q: Which event system should apply direction brick effects? → A: Observers + Trigger pattern (reactive per-entity, triggered on brick destruction)
+- Q: Should direction bricks validate or clamp velocity after applying impulses? → A: No validation required; physics system (bevy_rapier3d) owns velocity bounds, direction bricks apply impulses only
+- Q: How should randomized velocity magnitude be generated for brick 52? → A: Generate magnitude directly in 5.0-15.0 range (no clamping needed)
+
 ## User Scenarios & Testing *(mandatory)*
 
 **TDD REQUIREMENT**: For every user story, **tests must be written first** and included in this spec as testable acceptance scenarios.
@@ -17,8 +27,8 @@ The system uses Bevy's standard coordinates:
 - **X-axis**: Horizontal (left = -X, right = +X from player perspective)
 - **Y-axis**: Vertical (down = -Y, up = +Y)
 - **Z-axis**: Horizontal (backward = -Z, forward = +Z from player perspective)
-- Direction bricks apply impulses/velocities to the ball's linear velocity
-- All directional accelerations assume a fixed acceleration magnitude (5.0 units/sec in the specified direction) applied to existing velocity
+- Direction bricks apply **instantaneous velocity impulses** to the ball's linear velocity (not continuous acceleration)
+- All directional impulses apply 5.0 units/sec change to velocity in the specified direction, applied once per brick destruction event
 
 **MULTI-FRAME PERSISTENCE REQUIREMENT**: If the feature involves runtime state changes (gravity, scores, powerup effects, or any resource/component modified during gameplay), acceptance scenarios MUST include multi-frame persistence checks:
 
@@ -48,9 +58,11 @@ Delivers immediate gameplay value independent of diagonal or randomization featu
 
 4. **Given** the ball is moving at any velocity, **When** it destroys brick 46 (Up), **Then** the ball's Y-velocity increases by 5.0 units/sec (accelerates upward)
 
-5. **Given** a ball moving downward at -3.0 Y-velocity, **When** it destroys brick 43 (Down), **Then** the ball's Y-velocity becomes -8.0 (additive acceleration, not replacement)
+5. **Given** a ball moving downward at -3.0 Y-velocity, **When** it destroys brick 43 (Down), **Then** the ball's Y-velocity becomes -8.0 (additive impulse, not replacement)
 
 6. **Given** multiple direction bricks in sequence, **When** the ball destroys consecutive bricks, **Then** velocity modifications stack correctly across frames without being overwritten
+
+7. **Given** direction brick is destroyed, **When** the Observer system processes the destruction event, **Then** a tracing span is emitted with brick ID, velocity before/after, and points awarded
 
 ---
 
@@ -94,7 +106,7 @@ Essential for level design variety and unpredictability.
 
 2. **Given** brick 52 is destroyed multiple times, **When** observing the resulting ball velocities, **Then** each destruction produces a statistically different random velocity (not deterministic)
 
-3. **Given** a randomizer brick is destroyed, **When** the random velocity is applied, **Then** the magnitude is between 5.0 and 15.0 units/sec (velocity length) and direction is uniformly distributed across all 360 degrees
+3. **Given** a randomizer brick is destroyed, **When** the random velocity is applied, **Then** the magnitude is generated directly in the 5.0-15.0 units/sec range and direction is uniformly distributed across all 360 degrees
 
 4. **Given** the ball has velocity (10.0, 0.0, 0.0), **When** it destroys brick 52, **Then** the previous velocity is completely replaced (not modified additively) with the random value
 
@@ -131,11 +143,9 @@ Direction bricks must integrate seamlessly into existing scoring.
 ### Edge Cases
 
 - What happens when a direction brick is destroyed while the ball is stationary (velocity ≈ 0)?
-  The direction acceleration should still apply, moving the ball in that direction.
+  The direction impulse should still apply, moving the ball in that direction.
 - What happens when multiple direction bricks are destroyed in rapid succession (same frame)?
-  Velocity modifications should stack; each brick's modification applies to the ball's current velocity.
-- What happens when brick 52 (Randomizer) generates a zero-magnitude velocity?
-  This should be prevented; randomized velocity should always have a minimum magnitude of 5.0 units/sec.
+  Velocity modifications should stack; each brick's impulse applies to the ball's current velocity.
 - What happens to the ball's Z-velocity (forward/backward movement) when destroying direction bricks?
   Cardinal and diagonal bricks only modify X and Y; Z-velocity is unchanged (only horizontal XZ plane and vertical Y are affected per coordinate system definition).
 
@@ -144,14 +154,16 @@ Direction bricks must integrate seamlessly into existing scoring.
 ### Functional Requirements
 
 - **FR-001**: Direction bricks (43-48, 52) MUST be distinguishable from all other brick types in level files and in-game display
-- **FR-002**: System MUST apply directional velocity modification (5.0 units/sec acceleration) when bricks 43, 44, 45, or 46 are destroyed
-- **FR-003**: System MUST apply simultaneous velocity modification in two axes (both axes at 5.0 units/sec) when bricks 47 or 48 are destroyed
-- **FR-004**: System MUST replace ball velocity with random direction and magnitude (5.0-15.0 units/sec) when brick 52 is destroyed
-- **FR-005**: System MUST prevent zero-magnitude velocity when generating random velocities for brick 52
+- **FR-002**: System MUST apply directional velocity impulse (instantaneous 5.0 units/sec change) when bricks 43, 44, 45, or 46 are destroyed
+- **FR-003**: System MUST apply simultaneous velocity impulses in two axes (both axes at 5.0 units/sec change) when bricks 47 or 48 are destroyed
+- **FR-004**: System MUST replace ball velocity with random direction and magnitude when brick 52 is destroyed, generating magnitude directly in the 5.0-15.0 units/sec range
+- **FR-005**: System MUST distribute randomized direction uniformly across all 360 degrees for brick 52
 - **FR-006**: Direction brick destruction events MUST trigger existing scoring system with correct point values (75 points for 43-46, 100 points for 47-48, 125 points for 52)
 - **FR-007**: Velocity modifications MUST be applied as additive changes to existing velocity (not replacement, except for brick 52 randomization)
-- **FR-008**: Direction bricks MUST integrate with existing brick destruction event system and not bypass any established brick lifecycle behaviors
-- **FR-009**: Randomization (brick 52) MUST use a uniform distribution for direction and use the project's existing RNG mechanism (rand crate)
+- **FR-008**: Direction bricks MUST NOT validate or clamp velocity after applying impulses; physics system (bevy_rapier3d) owns velocity bounds enforcement
+- **FR-009**: Direction bricks MUST integrate with existing brick destruction event system and not bypass any established brick lifecycle behaviors
+- **FR-010**: Randomization (brick 52) MUST use a uniform distribution for direction and use the project's existing RNG mechanism (rand crate)
+- **FR-011**: Direction brick destruction events MUST emit structured tracing spans (via `tracing` crate) including brick ID, velocity before/after modification, and points awarded for observability and test validation
 
 ### Key Entities
 
