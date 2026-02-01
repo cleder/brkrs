@@ -11,11 +11,22 @@
 //! - Systems consume via `MessageReader<T>` parameters
 //! - Systems produce via `MessageWriter<T>` parameters
 //!
-//! # Available Signals
+//! # Observer Events
+//!
+//! Some signals use Bevy 0.17 [`Event`](bevy::ecs::event::Event) with observer pattern for
+//! immediate, synchronous effects within the same frame:
+//! - [`DirectionBrickEffect`]: Ball velocity impulses (triggered via `commands.trigger()`)
+//! - [`BallWallHit`]: Immediate wall collision audio (triggered via `commands.trigger()`)
+//! - [`MerkabaPaddleCollision`]: Paddle penalty effects (triggered via `commands.trigger()`)
+//!
+//! # Message Types (Buffered)
 //!
 //! - [`UiBeep`]: Short audio feedback cue from UI interactions
-//! - [`BrickDestroyed`]: Brick destruction event for scoring and audio
+//! - [`BrickDestroyed`]: Brick destruction signal for scoring and audio
 //! - [`LifeAwardMessage`]: Life increment signal (+1 or other delta) clamped to max
+//! - [`SpawnMerkabaMessage`]: Delayed merkaba spawning
+//! - [`MerkabaWallCollision`]: Merkaba-wall collisions (non-immediate)
+//! - [`MerkabaBrickCollision`]: Merkaba-brick collisions (non-immediate)
 //!
 //! # Usage Example
 //!
@@ -149,4 +160,47 @@ pub struct MerkabaPaddleCollision {
     pub merkaba_entity: Entity,
     /// Entity of the paddle that was hit
     pub paddle_entity: Entity,
+}
+
+/// Direction brick impulse effect for immediate velocity impulses.
+///
+/// Direction bricks (types 43-48, 52) apply instantaneous impulses to the ball
+/// via Bevy 0.17 observer pattern and rapier3d's `ExternalImpulse` component,
+/// triggering immediate (within same frame) physics effects.
+///
+/// **Producers**: Brick collision system (emits via `commands.trigger()` when ball hits direction brick)
+/// **Consumers**: Observer function `apply_direction_brick_effects` (reads `On<DirectionBrickEffect>`,
+/// applies impulse via `ExternalImpulse` component to ball entity)
+/// **Contract**: Fired once per ball-direction-brick collision; impulses applied instantaneously
+/// within the same `app.update()` cycle as collision detection; velocity changes from impulses
+/// persist and compound with other physics effects (gravity, wall bounces).
+///
+/// # Impulse Semantics
+///
+/// - **Coordinate System**: XZ plane is horizontal (gameplay surface); Y is vertical (gravity direction)
+/// - **Direction Bricks 43-48**: Apply 5.0 units/sec impulse to specific axis (additive, compounds with existing forces)
+/// - **Direction Brick 52**: Apply random magnitude (5.0-15.0) and direction (0.0..2π radians) impulse
+/// - **Z-Axis Preservation**: No direction brick applies impulse to Z-component (gameplay constraint)
+///
+/// # Per-Brick Behavior
+///
+/// - **Brick 43 (Left)**: Apply impulse `(-5.0, 0, 0)` units/sec
+/// - **Brick 44 (Right)**: Apply impulse `(+5.0, 0, 0)` units/sec
+/// - **Brick 45 (Up)**: Apply impulse `(0, +5.0, 0)` units/sec
+/// - **Brick 46 (Down)**: Apply impulse `(0, -5.0, 0)` units/sec
+/// - **Brick 47 (Forward)**: Apply impulse `(0, 0, +5.0)` units/sec
+/// - **Brick 48 (Backward)**: Apply impulse `(0, 0, -5.0)` units/sec
+/// - **Brick 52 (Random)**: Apply impulse with magnitude ∈ [5.0, 15.0], direction ∈ [0, 2π) in XY plane only (Z=0)
+#[derive(Event, Debug, Clone, Copy)]
+pub struct DirectionBrickEffect {
+    /// Entity of the ball being affected
+    pub ball_entity: Entity,
+    /// Brick type identifier (43-48 for cardinal directions, 52 for random)
+    pub brick_type: u8,
+    /// World position of the direction brick's center
+    pub brick_position: Vec3,
+    /// Ball velocity before impulse application (for test validation and physics debugging)
+    pub velocity_before: Vec3,
+    /// Impulse vector to apply (units/sec); observer will transfer to ExternalImpulse component
+    pub impulse: Vec3,
 }
