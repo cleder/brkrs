@@ -203,3 +203,78 @@ fn test_ball_component_set() {
     assert!(app.world().get::<ExternalImpulse>(ball).is_some());
     assert!(app.world().get::<Ball>(ball).is_some());
 }
+
+// =============================================================================
+// T022-T025: Diagonal Direction Tests (Phase 4)
+// =============================================================================
+
+/// T022: Brick 47 (Forward) applies +5.0 Z impulse
+#[test]
+fn test_brick_47_forward_impulse() {
+    let mut app = create_test_app();
+    let ball = spawn_ball(
+        &mut app,
+        Vec3::new(0.0, 0.0, -3.0),
+        Vec3::new(0.0, 0.0, -3.0),
+    );
+    apply_impulse_to_ball(&mut app, ball, Vec3::new(0.0, 0.0, 5.0));
+
+    let external_impulse = app.world().get::<ExternalImpulse>(ball).unwrap();
+    assert_eq!(external_impulse.impulse.x, 0.0, "X impulse should be zero");
+    assert_eq!(external_impulse.impulse.y, 0.0, "Y impulse should be zero");
+    assert_eq!(external_impulse.impulse.z, 5.0, "Z impulse should be +5.0");
+}
+
+/// T023: Brick 48 (Backward) applies -5.0 Z impulse
+#[test]
+fn test_brick_48_backward_impulse() {
+    let mut app = create_test_app();
+    let ball = spawn_ball(&mut app, Vec3::new(0.0, 0.0, 3.0), Vec3::new(0.0, 0.0, 3.0));
+    apply_impulse_to_ball(&mut app, ball, Vec3::new(0.0, 0.0, -5.0));
+
+    let external_impulse = app.world().get::<ExternalImpulse>(ball).unwrap();
+    assert_eq!(external_impulse.impulse.x, 0.0, "X impulse should be zero");
+    assert_eq!(external_impulse.impulse.y, 0.0, "Y impulse should be zero");
+    assert_eq!(external_impulse.impulse.z, -5.0, "Z impulse should be -5.0");
+}
+
+/// T024: Z-axis impulse applied independently from X,Y
+#[test]
+fn test_z_axis_independent_impulse() {
+    let mut app = create_test_app();
+    let ball = spawn_ball(&mut app, Vec3::new(2.0, 2.0, 0.0), Vec3::new(2.0, 2.0, 0.0));
+    // Apply forward impulse on ball with existing X,Y velocity
+    apply_impulse_to_ball(&mut app, ball, Vec3::new(0.0, 0.0, 5.0));
+
+    let external_impulse = app.world().get::<ExternalImpulse>(ball).unwrap();
+    assert_eq!(
+        external_impulse.impulse.z, 5.0,
+        "Z impulse should be applied independently"
+    );
+}
+
+/// T025: All six directions (43-48) can be applied in sequence
+#[test]
+fn test_all_six_directions() {
+    let mut app = create_test_app();
+    let ball = spawn_ball(&mut app, Vec3::ZERO, Vec3::ZERO);
+
+    // Test all six cardinal and diagonal directions
+    let directions = vec![
+        (43, Vec3::new(-5.0, 0.0, 0.0)), // Left
+        (44, Vec3::new(5.0, 0.0, 0.0)),  // Right
+        (45, Vec3::new(0.0, 5.0, 0.0)),  // Up
+        (46, Vec3::new(0.0, -5.0, 0.0)), // Down
+        (47, Vec3::new(0.0, 0.0, 5.0)),  // Forward
+        (48, Vec3::new(0.0, 0.0, -5.0)), // Backward
+    ];
+
+    for (_brick_type, impulse) in directions {
+        apply_impulse_to_ball(&mut app, ball, impulse);
+        let external_impulse = app.world().get::<ExternalImpulse>(ball).unwrap();
+        assert_eq!(
+            external_impulse.impulse, impulse,
+            "Impulse vector should match expected value"
+        );
+    }
+}
