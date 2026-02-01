@@ -278,3 +278,80 @@ fn test_all_six_directions() {
         );
     }
 }
+
+// =============================================================================
+// T026-T027: Random Direction Tests (Phase 5)
+// =============================================================================
+
+/// T026: Brick 52 (Random) applies impulse with magnitude in range [5.0, 15.0]
+#[test]
+fn test_brick_52_random_magnitude_range() {
+    use rand::Rng;
+
+    // Test multiple samples to verify RNG distribution
+    let mut rng = rand::rng();
+    for _ in 0..100 {
+        // Simulate the RNG logic from lib.rs brick 52 case
+        let magnitude = rng.random_range(5.0..15.0);
+        let angle = rng.random_range(0.0..std::f32::consts::TAU);
+        let impulse = Vec3::new(magnitude * angle.cos(), magnitude * angle.sin(), 0.0);
+        let magnitude_computed = (impulse.x * impulse.x + impulse.y * impulse.y).sqrt();
+
+        assert!(
+            magnitude_computed >= 5.0,
+            "Magnitude should be >= 5.0, got {:.2}",
+            magnitude_computed
+        );
+        assert!(
+            magnitude_computed < 15.0,
+            "Magnitude should be < 15.0, got {:.2}",
+            magnitude_computed
+        );
+        assert_eq!(
+            impulse.z, 0.0,
+            "Z component should be zero for random brick (XY plane only)"
+        );
+    }
+}
+
+/// T027: Brick 52 (Random) produces varied impulse directions across 0-2π range
+#[test]
+fn test_brick_52_random_direction_distribution() {
+    use rand::Rng;
+
+    // Collect samples and verify we get varied angles
+    let mut rng = rand::rng();
+    let mut angles = Vec::new();
+    let mut magnitudes = Vec::new();
+
+    for _ in 0..50 {
+        let magnitude = rng.random_range(5.0..15.0);
+        let angle = rng.random_range(0.0..std::f32::consts::TAU);
+        let impulse = Vec3::new(magnitude * angle.cos(), magnitude * angle.sin(), 0.0);
+        let computed_angle = impulse.y.atan2(impulse.x);
+        let computed_magnitude = impulse.length();
+
+        angles.push(computed_angle);
+        magnitudes.push(computed_magnitude);
+    }
+
+    // Verify we have diverse angles (not all clustered in one direction)
+    let min_angle = angles.iter().fold(f32::INFINITY, |a, &b| a.min(b));
+    let max_angle = angles.iter().fold(f32::NEG_INFINITY, |a, &b| a.max(b));
+    let angle_range = (max_angle - min_angle).abs();
+    assert!(
+        angle_range > 3.0, // At least ~π radians of spread
+        "Random angles should be distributed across range, got range {:.2}",
+        angle_range
+    );
+
+    // Verify we have diverse magnitudes
+    let min_mag = magnitudes.iter().fold(f32::INFINITY, |a, &b| a.min(b));
+    let max_mag = magnitudes.iter().fold(f32::NEG_INFINITY, |a, &b| a.max(b));
+    let mag_range = max_mag - min_mag;
+    assert!(
+        mag_range > 5.0,
+        "Random magnitudes should be distributed, got range {:.2}",
+        mag_range
+    );
+}

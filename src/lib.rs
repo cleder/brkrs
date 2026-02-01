@@ -889,9 +889,13 @@ pub fn mark_brick_on_ball_collision(
                             47 => Vec3::new(0.0, 0.0, 5.0),  // Forward
                             48 => Vec3::new(0.0, 0.0, -5.0), // Backward
                             52 => {
-                                // Random direction brick: implement later
-                                // For now, placeholder (0, 0, 0)
-                                Vec3::ZERO
+                                // Random direction brick: RNG-based impulse in XY plane
+                                // Magnitude: 5.0-15.0 units/sec, Direction: 0-2π radians
+                                use rand::Rng;
+                                let mut rng = rand::rng();
+                                let magnitude = rng.random_range(5.0..15.0);
+                                let angle = rng.random_range(0.0..std::f32::consts::TAU);
+                                Vec3::new(magnitude * angle.cos(), magnitude * angle.sin(), 0.0)
                             }
                             _ => Vec3::ZERO,
                         };
