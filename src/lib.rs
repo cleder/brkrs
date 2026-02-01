@@ -351,6 +351,7 @@ fn add_core_observers(app: &mut App) {
     app.add_observer(on_paddle_ball_hit);
     app.add_observer(on_brick_hit);
     app.add_observer(start_camera_shake);
+    app.add_observer(systems::brick_effects::apply_direction_brick_effects);
 }
 
 fn add_gravity_feature(app: &mut App) {

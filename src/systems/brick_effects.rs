@@ -110,7 +110,6 @@ pub const IMPULSE_MAGNITUDE_RANDOM_MAX: f32 = 15.0;
 ///
 /// **Trigger**: `On<DirectionBrickEffect>` from collision system
 /// **Schedule**: PhysicsSet::Integration (after collision detection, before physics step)
-/// **Fallible**: Returns `Result<(), String>` per Bevy 0.17 mandate for fallible systems
 ///
 /// **Behavior**:
 /// - For cardinal direction bricks (43-48): Apply impulse in cardinal direction
@@ -123,32 +122,37 @@ pub const IMPULSE_MAGNITUDE_RANDOM_MAX: f32 = 15.0;
 /// * `trigger` - Trigger event containing ball entity, brick type, position, and impulse vector
 /// * `mut query` - Mutable query over ball's ExternalImpulse component
 ///
-/// # Errors
+/// # Error Handling
 ///
-/// Returns `Err(String)` if:
-/// - Ball entity not found in query (already despawned)
-/// - Ball does not have ExternalImpulse component
+/// If the ball entity is not found or missing ExternalImpulse component, the error is logged
+/// and the observer continues without applying the impulse. This is acceptable because:
+/// - The ball may have despawned between collision detection and observer firing (rare)
+/// - The impulse is non-critical for gameplay (physics will handle without it)
 ///
 /// # Examples
 ///
 /// ```ignore
 /// // Registered as observer:
-/// app.observe(apply_direction_brick_effects);
+/// app.add_observer(apply_direction_brick_effects);
 /// ```
 pub fn apply_direction_brick_effects(
     trigger: On<DirectionBrickEffect>,
     mut query: Query<&mut ExternalImpulse>,
-) -> Result<(), String> {
+) {
     let effect = trigger.event();
-    let mut external_impulse = query.get_mut(effect.ball_entity).map_err(|_| {
-        format!(
-            "Ball entity {:?} not found or missing ExternalImpulse",
-            effect.ball_entity
-        )
-    })?;
-
-    // Apply the impulse vector computed by collision system
-    external_impulse.impulse = effect.impulse;
-
-    Ok(())
+    match query.get_mut(effect.ball_entity) {
+        Ok(mut external_impulse) => {
+            // Apply the impulse vector computed by collision system
+            external_impulse.impulse = effect.impulse;
+        }
+        Err(_) => {
+            // Ball entity not found or missing ExternalImpulse
+            // This is a non-critical error that can occur if the ball despawned
+            debug!(
+                ball = ?effect.ball_entity,
+                brick_type = effect.brick_type,
+                "Ball entity not found or missing ExternalImpulse component when applying direction brick effect"
+            );
+        }
+    }
 }
