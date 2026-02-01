@@ -63,7 +63,7 @@ pub fn apply_direction_brick_effects(
 
 ```rust
 /// Observer system for direction brick effects.
-/// 
+///
 /// Applies velocity impulses to balls when direction bricks (43-48, 52) are destroyed.
 /// Emits structured tracing spans for observability.
 pub fn apply_direction_brick_effects(
@@ -72,7 +72,7 @@ pub fn apply_direction_brick_effects(
 )
 
 /// Applies randomized velocity for brick 52.
-/// 
+///
 /// Generates random magnitude (5.0..=15.0) and direction (0..360°).
 /// Internal helper function; may be extracted if reused.
 fn apply_randomizer(velocity: &mut LinearVelocity)

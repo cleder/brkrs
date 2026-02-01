@@ -103,15 +103,20 @@ Full Bevy 0.17 compliance required.
   - Brick 47 (Up-Right): `velocity.x += 5.0; velocity.y += 5.0`
   - Brick 48 (Up-Left): `velocity.x -= 5.0; velocity.y += 5.0`
 - "Randomized velocity" for brick 52: Generate random 2D direction in XZ plane (or full 3D if Z movement is allowed), magnitude 5.0-15.0 units/sec
+  - Direction angle generated in **radians** (0.0..TAU = 0.0..2π), NOT degrees (0.0..360.0)
+  - Implementation: `angle = rng.gen_range(0.0..std::f32::consts::TAU)` (direct radians); convert to cos/sin for X/Y components
 - Uses **direct axis manipulation** (`velocity.x`, `velocity.y`) rather than semantic "forward/backward" to match physics system semantics
 
 **Camera Context**: Top-down view (camera at positive Y looking down) means:
 
-- Gameplay "forward" (toward bricks, away from paddle) = +Z direction
-- Gameplay "backward" (toward paddle) = -Z direction
-- Gameplay "left" = -X direction
-- Gameplay "right" = +X direction
+- Gameplay "forward" (toward bricks, away from paddle) = **+Z direction**
+- Gameplay "backward" (toward paddle) = **-Z direction**
+- Gameplay "left" = **-X direction**
+- Gameplay "right" = **+X direction**
 - Y-axis vertical (up = +Y, down = -Y) in 3D space
+
+**Important**: This gameplay convention (+Z = forward) differs from Bevy's `Transform::forward()` API, which returns -Z per OpenGL convention (per Constitution Principle VIII).
+**Direction brick code uses direct axis manipulation** (`velocity.linvel.x`, `velocity.linvel.y`) rather than Transform methods, so this convention applies directly without confusion.
 
 **Edge Case - Z-Axis Independence**: Direction bricks only modify X and Y velocity.
 Z-velocity persists unchanged.

@@ -104,7 +104,7 @@ Essential for level design variety and unpredictability.
 
 1. **Given** the ball is moving at any velocity, **When** it destroys brick 52 (Randomizer), **Then** the ball's linear velocity is replaced with a random velocity vector
 
-2. **Given** brick 52 is destroyed multiple times, **When** observing the resulting ball velocities, **Then** each destruction produces a statistically different random velocity (not deterministic)
+2. **Given** brick 52 is destroyed 10 times in sequence, **When** observing the resulting ball velocities, **Then** at least 5 destructions produce statistically different random velocities (magnitude and direction pairs differ; not deterministic or clustered)
 
 3. **Given** a randomizer brick is destroyed, **When** the random velocity is applied, **Then** the magnitude is generated directly in the 5.0-15.0 units/sec range and direction is uniformly distributed across all 360 degrees
 
@@ -144,14 +144,19 @@ Direction bricks must integrate seamlessly into existing scoring.
 
 - What happens when a direction brick is destroyed while the ball is stationary (velocity ≈ 0)?
   The direction impulse should still apply, moving the ball in that direction.
-- What happens when multiple direction bricks are destroyed in rapid succession (same frame)?
-  Velocity modifications should stack; each brick's impulse applies to the ball's current velocity.
+- What happens when multiple direction bricks are destroyed in rapid succession (within the same frame)?
+  **Definition**: "Rapid succession" means triggered within the same `app.update()` cycle (same frame).
+  Velocity modifications should stack; each brick's impulse applies to the ball's current velocity at that moment.
+  Example: brick 45 triggers first (X+5), then immediately brick 46 triggers (Y+5) in same frame; final velocity reflects both modifications.
 - What happens to the ball's Z-velocity (forward/backward movement) when destroying direction bricks?
   Cardinal and diagonal bricks only modify X and Y; Z-velocity is unchanged (only horizontal XZ plane and vertical Y are affected per coordinate system definition).
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
+
+**Floating-Point Tolerance**: All velocity comparisons in tests MUST use a tolerance of ±0.01 units/sec to account for floating-point arithmetic precision.
+Exact equality checks (==) are NOT permitted for velocity values.
 
 - **FR-001**: Direction bricks (43-48, 52) MUST be distinguishable from all other brick types in level files and in-game display
 - **FR-002**: System MUST apply directional velocity impulse (instantaneous 5.0 units/sec change) when bricks 43, 44, 45, or 46 are destroyed
