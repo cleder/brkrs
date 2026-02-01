@@ -140,10 +140,27 @@ pub fn apply_direction_brick_effects(
     mut query: Query<&mut ExternalImpulse>,
 ) {
     let effect = trigger.event();
+
+    // Create a tracing span for this direction brick effect
+    let span = debug_span!(
+        "apply_direction_brick_effect",
+        brick_type = effect.brick_type,
+        brick_position = ?effect.brick_position,
+        velocity_before = ?effect.velocity_before,
+        impulse = ?effect.impulse,
+    );
+    let _guard = span.enter();
+
     match query.get_mut(effect.ball_entity) {
         Ok(mut external_impulse) => {
             // Apply the impulse vector computed by collision system
             external_impulse.impulse = effect.impulse;
+
+            debug!(
+                ball_entity = ?effect.ball_entity,
+                impulse_applied = ?effect.impulse,
+                "Direction brick effect applied to ball"
+            );
         }
         Err(_) => {
             // Ball entity not found or missing ExternalImpulse
