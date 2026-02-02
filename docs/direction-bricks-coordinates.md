@@ -1,4 +1,5 @@
 :orphan:
+
 # Direction Brick Coordinate System
 
 ## Overview
