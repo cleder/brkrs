@@ -22,7 +22,9 @@ impl Plugin for BallSpawnBricksPlugin {
         app.init_resource::<BrickSpawnConfig>();
         app.add_systems(
             Update,
-            ball_spawn_system.after(crate::despawn_marked_entities),
+            ball_spawn_system
+                .after(crate::despawn_marked_entities)
+                .before(crate::systems::respawn::RespawnSystems::Detect),
         );
     }
 }

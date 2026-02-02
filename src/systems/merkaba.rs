@@ -521,7 +521,7 @@ fn detect_merkaba_paddle_collision(
 }
 
 /// T033: Despawn all balls and merkabas when a life is lost
-fn despawn_balls_and_merkabas_on_life_loss(
+pub fn despawn_balls_and_merkabas_on_life_loss(
     lives_state: Res<LivesState>,
     balls: Query<Entity, With<Ball>>,
     merkabas: Query<Entity, With<Merkaba>>,

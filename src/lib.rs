@@ -882,19 +882,19 @@ pub fn mark_brick_on_ball_collision(
 
                         // Compute impulse vector based on brick type
                         let impulse = match current_type {
-                            43 => Vec3::new(-5.0, 0.0, 0.0), // Left
-                            44 => Vec3::new(5.0, 0.0, 0.0),  // Right
-                            45 => Vec3::new(0.0, 5.0, 0.0),  // Up
-                            46 => Vec3::new(0.0, -5.0, 0.0), // Down
-                            47 => Vec3::new(0.0, 0.0, 5.0),  // Forward
-                            48 => Vec3::new(0.0, 0.0, -5.0), // Backward
+                            43 => Vec3::new(5.0, 0.0, 0.0),   // down
+                            44 => Vec3::new(0.0, 0.0, 5.0),   // left
+                            45 => Vec3::new(0.0, 0.0, -5.0),  // right
+                            46 => Vec3::new(-5.0, 0.0, 0.0),  // up
+                            47 => Vec3::new(-5.0, 0.0, -5.0), // up-right
+                            48 => Vec3::new(-5.0, 0.0, 5.0),  // up-left
                             52 => {
                                 // Random direction brick: RNG-based impulse in XY plane
                                 // Magnitude: 5.0-15.0 units/sec, Direction: 0-2π radians
                                 use rand::Rng;
                                 let mut rng = rand::rng();
                                 let magnitude = rng.random_range(5.0..15.0);
-                                let angle = rng.random_range(0.0..std::f32::consts::TAU);
+                                let angle: f32 = rng.random_range(0.0..std::f32::consts::TAU);
                                 Vec3::new(magnitude * angle.cos(), magnitude * angle.sin(), 0.0)
                             }
                             _ => Vec3::ZERO,
@@ -953,7 +953,11 @@ pub fn mark_brick_on_ball_collision(
                             "mark_brick_on_ball_collision: mark entity {:?} as MarkedForDespawn, type {}",
                             entity, current_type
                         );
-                        commands.entity(entity).insert(MarkedForDespawn);
+                        commands.entity(entity).queue_silenced(
+                            |mut entity_commands: bevy::ecs::world::EntityWorldMut| {
+                                entity_commands.insert(MarkedForDespawn);
+                            },
+                        );
                     }
                 }
             }
@@ -1203,7 +1207,11 @@ pub fn read_character_controller_collisions(
                             brick = ?brick,
                             brick_type = crate::level_format::PADDLE_DESTROYABLE_BRICK,
                         );
-                        commands.entity(brick).insert(MarkedForDespawn);
+                        commands.entity(brick).queue_silenced(
+                            |mut entity_commands: bevy::ecs::world::EntityWorldMut| {
+                                entity_commands.insert(MarkedForDespawn);
+                            },
+                        );
                     }
                     // Check if this is a hazard brick (type 42 or 91) and emit life loss
                     if crate::level_format::is_hazard_brick(brick_type.0)

@@ -455,6 +455,7 @@ fn life_loss_logging(mut life_lost_events: MessageReader<LifeLostEvent>) {
 /// - Only affects paddles without an active `PaddleGrowing` component
 /// - Works seamlessly with the existing respawn system
 /// - Paddle input remains locked via `InputLocked` component (added by ball loss detection)
+/// - Only triggers shrink animation when it's not the last ball (multiple balls in play)
 ///
 /// # Note on Multiple Paddles
 ///
@@ -464,24 +465,47 @@ fn life_loss_logging(mut life_lost_events: MessageReader<LifeLostEvent>) {
 fn apply_paddle_shrink(
     mut life_lost_events: MessageReader<LifeLostEvent>,
     paddles: Query<(Entity, &Transform), (With<Paddle>, Without<PaddleGrowing>)>,
+    balls: Query<Entity, With<Ball>>,
     respawn_schedule: Res<RespawnSchedule>,
     mut commands: Commands,
+    mut shrink_applied_this_frame: Local<bool>,
 ) {
+    // Reset the flag at the start of each frame
+    *shrink_applied_this_frame = false;
+
     for _event in life_lost_events.read() {
+        // Only shrink if ALL balls are gone (no more balls in play)
+        // This runs BEFORE the life decrement in enqueue_respawn_requests
+        let remaining_balls = balls.iter().count();
+
+        if remaining_balls != 0 {
+            // Other balls still in play, don't shrink
+            continue;
+        }
+
+        // Only apply the shrink once per frame, even if multiple LifeLostEvents trigger
+        if *shrink_applied_this_frame {
+            continue;
+        }
+        *shrink_applied_this_frame = true;
+
         for (entity, transform) in paddles.iter() {
             let shrink_duration = respawn_schedule.timer.duration();
-            commands.entity(entity).insert(PaddleGrowing {
-                timer: Timer::from_seconds(shrink_duration.as_secs_f32(), TimerMode::Once),
-                target_scale: Vec3::splat(0.01),
-                start_scale: transform.scale,
-            });
+            commands.entity(entity).insert((
+                PaddleGrowing {
+                    timer: Timer::from_seconds(shrink_duration.as_secs_f32(), TimerMode::Once),
+                    target_scale: Vec3::splat(0.01),
+                    start_scale: transform.scale,
+                },
+                InputLocked,
+            ));
             info!(
                 target: "respawn",
                 event = "paddle_shrink_started",
                 ?entity,
                 start_scale = ?transform.scale,
                 duration_secs = shrink_duration.as_secs_f32(),
-                "Paddle shrink animation triggered by ball loss"
+                "Paddle shrink animation triggered when last ball is lost"
             );
         }
     }

@@ -158,3 +158,12 @@ When opening an issue, include:
 - Open a new issue with the "question" label
 
 [Contributors](contributors.md)
+
+## License
+
+```{include} LICENSE-agpl-3.0.md
+:start-after: <!-- INCLUSION-MARKER-DO-NOT-REMOVE -->
+:end-before: <!-- INCLUSION-MARKER-END-DO-NOT-REMOVE -->
+:heading-offset: 1
+:relative-images: docs/
+```

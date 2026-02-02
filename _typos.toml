@@ -12,3 +12,4 @@
 # Don't correct the project name
 rumdl = "rumdl"
 brkrs = "brkrs"
+consts = "consts"

@@ -83,6 +83,14 @@ fn paddle_shrinks_on_ball_loss() {
     let mut app = test_app();
     let (lower_goal, ball, paddle) = spawn_respawn_fixture(&mut app);
 
+    // Set lives to 1 so the ball loss will trigger shrink
+    {
+        let mut lives = app
+            .world_mut()
+            .resource_mut::<brkrs::systems::respawn::LivesState>();
+        lives.lives_remaining = 1;
+    }
+
     // Verify paddle starts without PaddleGrowing component
     assert!(
         app.world().entity(paddle).get::<PaddleGrowing>().is_none(),
@@ -118,6 +126,14 @@ fn shrink_reaches_minimum_scale() {
     let mut app = test_app();
     let (lower_goal, ball, paddle) = spawn_respawn_fixture(&mut app);
 
+    // Set lives to 1 so the ball loss will trigger shrink
+    {
+        let mut lives = app
+            .world_mut()
+            .resource_mut::<brkrs::systems::respawn::LivesState>();
+        lives.lives_remaining = 1;
+    }
+
     // Trigger ball loss
     trigger_life_loss(&mut app, ball, lower_goal);
     advance_time(&mut app, 0.016);
@@ -147,6 +163,14 @@ fn shrink_reaches_minimum_scale() {
 fn paddle_remains_visible_during_shrink() {
     let mut app = test_app();
     let (lower_goal, ball, paddle) = spawn_respawn_fixture(&mut app);
+
+    // Set lives to 1 so the ball loss will trigger shrink
+    {
+        let mut lives = app
+            .world_mut()
+            .resource_mut::<brkrs::systems::respawn::LivesState>();
+        lives.lives_remaining = 1;
+    }
 
     // Trigger ball loss
     trigger_life_loss(&mut app, ball, lower_goal);
@@ -183,6 +207,14 @@ fn shrink_duration_matches_respawn_delay() {
     let mut app = test_app();
     let (lower_goal, ball, paddle) = spawn_respawn_fixture(&mut app);
 
+    // Set lives to 1 so the ball loss will trigger shrink
+    {
+        let mut lives = app
+            .world_mut()
+            .resource_mut::<brkrs::systems::respawn::LivesState>();
+        lives.lives_remaining = 1;
+    }
+
     // Get the respawn delay duration
     let respawn_delay = app
         .world()
@@ -218,12 +250,21 @@ fn input_locked_during_shrink() {
     let mut app = test_app();
     let (lower_goal, ball, paddle) = spawn_respawn_fixture(&mut app);
 
+    // Set lives to 1 so the ball loss will trigger shrink
+    {
+        let mut lives = app
+            .world_mut()
+            .resource_mut::<brkrs::systems::respawn::LivesState>();
+        lives.lives_remaining = 1;
+    }
+
     // Trigger ball loss
     trigger_life_loss(&mut app, ball, lower_goal);
     advance_time(&mut app, 0.016);
     app.update();
 
-    // Verify paddle has InputLocked component
+    // Verify paddle has InputLocked component during shrink
+    // InputLocked is added by apply_paddle_shrink when PaddleGrowing is added
     assert!(
         app.world().entity(paddle).get::<InputLocked>().is_some(),
         "Paddle should have InputLocked component during shrink"
@@ -293,6 +334,14 @@ fn rapid_consecutive_losses_handled() {
     let mut app = test_app();
     let lower_goal = app.world_mut().spawn(LowerGoal).id();
 
+    // Set lives to 1 so ball losses will trigger shrink
+    {
+        let mut lives = app
+            .world_mut()
+            .resource_mut::<brkrs::systems::respawn::LivesState>();
+        lives.lives_remaining = 1;
+    }
+
     // Spawn paddle
     let paddle = app
         .world_mut()
@@ -340,6 +389,14 @@ fn rapid_consecutive_losses_handled() {
 fn shrink_component_configuration() {
     let mut app = test_app();
     let (lower_goal, ball, paddle) = spawn_respawn_fixture(&mut app);
+
+    // Set lives to 1 so the ball loss will trigger shrink
+    {
+        let mut lives = app
+            .world_mut()
+            .resource_mut::<brkrs::systems::respawn::LivesState>();
+        lives.lives_remaining = 1;
+    }
 
     // Trigger ball loss
     trigger_life_loss(&mut app, ball, lower_goal);
