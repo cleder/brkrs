@@ -40,7 +40,7 @@ fn ball_handle_at(position: Vec3) -> RespawnHandle {
 
 fn paddle_handle_at(position: Vec3) -> RespawnHandle {
     RespawnHandle {
-        spawn: SpawnTransform::new(position, Quat::from_rotation_x(-std::f32::consts::PI / 2.0)),
+        spawn: SpawnTransform::new(position, Quat::from_rotation_x(-std::f32::constants::PI / 2.0)),
         kind: RespawnEntityKind::Paddle,
     }
 }

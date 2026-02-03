@@ -1,6 +1,6 @@
 use bevy::{post_process::bloom::Bloom, prelude::*, render::view::Hdr};
 use bevy_rapier3d::prelude::*;
-use std::f32::consts::PI;
+use std::f32::constants::PI;
 
 // --- Components ---
 #[derive(Component)]

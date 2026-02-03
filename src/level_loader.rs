@@ -276,7 +276,7 @@ impl Default for LevelAdvanceState {
 struct FadeOverlay;
 
 fn paddle_spawn_transform(position: Vec3) -> SpawnTransform {
-    SpawnTransform::new(position, Quat::from_rotation_x(-std::f32::consts::PI / 2.0))
+    SpawnTransform::new(position, Quat::from_rotation_x(-std::f32::constants::PI / 2.0))
 }
 
 fn ball_spawn_transform(position: Vec3) -> SpawnTransform {
@@ -524,7 +524,7 @@ fn spawn_level_entities_impl(
                                 ),
                                 MeshMaterial3d(paddle_material.clone()),
                                 Transform::from_xyz(x, 2.0, z).with_rotation(
-                                    Quat::from_rotation_x(-std::f32::consts::PI / 2.0),
+                                    Quat::from_rotation_x(-std::f32::constants::PI / 2.0),
                                 ),
                                 Paddle,
                                 RigidBody::KinematicPositionBased,
@@ -667,7 +667,7 @@ fn spawn_level_entities_impl(
                 Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
                 MeshMaterial3d(paddle_material.clone()),
                 Transform::from_xyz(x, 2.0, z)
-                    .with_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 2.0)),
+                    .with_rotation(Quat::from_rotation_x(-std::f32::constants::PI / 2.0)),
                 Paddle,
                 RigidBody::KinematicPositionBased,
                 GravityScale(0.0),
@@ -1489,7 +1489,7 @@ fn handle_level_advance_delay(
                 Mesh3d(meshes.add(Capsule3d::new(PADDLE_RADIUS, PADDLE_HEIGHT).mesh())),
                 MeshMaterial3d(paddle_material.clone()),
                 Transform::from_xyz(paddle_pos.x, paddle_pos.y, paddle_pos.z)
-                    .with_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 2.0))
+                    .with_rotation(Quat::from_rotation_x(-std::f32::constants::PI / 2.0))
                     .with_scale(Vec3::splat(0.01)),
                 Paddle,
                 crate::PaddleGrowing {

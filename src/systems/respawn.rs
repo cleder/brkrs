@@ -1,7 +1,7 @@
 use bevy::ecs::message::{Message, MessageReader, MessageWriter};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use std::{collections::VecDeque, f32::consts::PI, time::Duration};
+use std::{collections::VecDeque, f32::constants::PI, time::Duration};
 use tracing::{info, warn};
 
 use crate::{
@@ -1034,7 +1034,7 @@ mod tests {
     use bevy::MinimalPlugins;
     use bevy_rapier3d::prelude::CollisionEvent;
     use bevy_rapier3d::rapier::prelude::CollisionEventFlags;
-    use std::f32::consts::PI;
+    use std::f32::constants::PI;
     use std::time::Duration;
 
     pub(super) fn test_app() -> App {

@@ -128,7 +128,7 @@ fn spawn_spiky_ball(
                 // Fibonacci sphere distribution for even spike placement
                 let golden_ratio = (1.0 + 5.0_f32.sqrt()) / 2.0;
                 for i in 0..16 {
-                    let theta = 2.0 * std::f32::consts::PI * i as f32 / golden_ratio;
+                    let theta = 2.0 * std::f32::constants::PI * i as f32 / golden_ratio;
                     let phi = ((2 * i + 1) as f32 / 16.0 - 1.0).acos();
 
                     let x = phi.sin() * theta.cos();
