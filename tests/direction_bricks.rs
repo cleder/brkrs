@@ -85,7 +85,7 @@ fn test_brick_43_down_impulse() {
     let external_impulse = app.world().get::<ExternalImpulse>(ball).unwrap();
     assert_eq!(
         external_impulse.impulse.x, 5.0,
-        "Down impulse should be +5.0 X"
+        "Brick 43 impulse should be +5.0 X"
     );
     assert_eq!(external_impulse.impulse.y, 0.0, "Y should be zero");
     assert_eq!(external_impulse.impulse.z, 0.0, "Z should be zero");

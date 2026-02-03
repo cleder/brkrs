@@ -177,20 +177,20 @@ pub struct MerkabaPaddleCollision {
 ///
 /// # Impulse Semantics
 ///
-/// - **Coordinate System**: XZ plane is horizontal (gameplay surface); Y is vertical (gravity direction)
-/// - **Direction Bricks 43-48**: Apply 5.0 units/sec impulse to specific axis (additive, compounds with existing forces)
-/// - **Direction Brick 52**: Apply random magnitude (5.0-15.0) and direction (0.0..2π radians) impulse
-/// - **Z-Axis Preservation**: No direction brick applies impulse to Z-component (gameplay constraint)
+/// - **Coordinate System**: XZ plane is horizontal (gameplay surface); Y is vertical (unused, always 0)
+/// - **Direction Bricks 43-48**: Apply 5.0 units/sec impulse in XZ plane (additive, compounds with existing forces)
+/// - **Direction Brick 52**: Apply random magnitude (5.0-15.0) and direction (0.0..2π radians) impulse in XZ plane
+/// - **Y-Axis Preservation**: No direction brick applies impulse to Y-component (vertical axis unused)
 ///
 /// # Per-Brick Behavior
 ///
-/// - **Brick 43 (Left)**: Apply impulse `(-5.0, 0, 0)` units/sec
-/// - **Brick 44 (Right)**: Apply impulse `(+5.0, 0, 0)` units/sec
-/// - **Brick 45 (Up)**: Apply impulse `(0, +5.0, 0)` units/sec
-/// - **Brick 46 (Down)**: Apply impulse `(0, -5.0, 0)` units/sec
-/// - **Brick 47 (Forward)**: Apply impulse `(0, 0, +5.0)` units/sec
-/// - **Brick 48 (Backward)**: Apply impulse `(0, 0, -5.0)` units/sec
-/// - **Brick 52 (Random)**: Apply impulse with magnitude ∈ [5.0, 15.0], direction ∈ [0, 2π) in XY plane only (Z=0)
+/// - **Brick 43 (Forward)**: Apply impulse `(+5.0, 0, 0)` units/sec (toward far wall)
+/// - **Brick 44 (Left)**: Apply impulse `(0, 0, +5.0)` units/sec
+/// - **Brick 45 (Right)**: Apply impulse `(0, 0, -5.0)` units/sec
+/// - **Brick 46 (Backward)**: Apply impulse `(-5.0, 0, 0)` units/sec (toward paddle)
+/// - **Brick 47 (Backward-Right)**: Apply impulse `(-5.0, 0, -5.0)` units/sec
+/// - **Brick 48 (Backward-Left)**: Apply impulse `(-5.0, 0, +5.0)` units/sec
+/// - **Brick 52 (Random)**: Apply impulse with magnitude ∈ [5.0, 15.0], direction ∈ [0, 2π) in XZ plane only (Y=0)
 #[derive(Event, Debug, Clone, Copy)]
 pub struct DirectionBrickEffect {
     /// Entity of the ball being affected

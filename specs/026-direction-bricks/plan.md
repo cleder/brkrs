@@ -9,15 +9,15 @@ Implement seven new destructible brick types (43-48, 52) that manipulate ball ve
 
 **Directional Impulse Bricks (43-46)**: Apply instantaneous 5.0 units/sec velocity impulse in cardinal directions:
 
-- Brick 43 (Down): Decrease Y-velocity by 5.0 units/sec
-- Brick 44 (Left): Decrease X-velocity by 5.0 units/sec
-- Brick 45 (Right): Increase X-velocity by 5.0 units/sec
-- Brick 46 (Up): Increase Y-velocity by 5.0 units/sec
+- Brick 43 (Forward): Increase X-velocity by 5.0 units/sec (toward far wall)
+- Brick 44 (Left): Increase Z-velocity by 5.0 units/sec
+- Brick 45 (Right): Decrease Z-velocity by 5.0 units/sec
+- Brick 46 (Backward): Decrease X-velocity by 5.0 units/sec (toward paddle)
 
 **Diagonal Impulse Bricks (47-48)**: Apply simultaneous velocity impulses along two axes:
 
-- Brick 47 (Up-Right): Increase X and Y velocity by 5.0 units/sec each
-- Brick 48 (Up-Left): Decrease X and increase Y velocity by 5.0 units/sec each
+- Brick 47 (Backward-Right): Decrease X and Z velocity by 5.0 units/sec each
+- Brick 48 (Backward-Left): Decrease X and increase Z velocity by 5.0 units/sec each
 
 **Randomization Brick (52)**: Replace ball velocity with random direction and magnitude:
 
@@ -95,19 +95,19 @@ Full Bevy 0.17 compliance required.
 
 **Directional Terminology**:
 
-- "Velocity impulse" for bricks 43-48: Instantaneous change to `LinearVelocity` components (addition/subtraction of 5.0 units/sec)
-  - Brick 43 (Down): `velocity.y -= 5.0`
-  - Brick 44 (Left): `velocity.x -= 5.0`
-  - Brick 45 (Right): `velocity.x += 5.0`
-  - Brick 46 (Up): `velocity.y += 5.0`
-  - Brick 47 (Up-Right): `velocity.x += 5.0; velocity.y += 5.0`
-  - Brick 48 (Up-Left): `velocity.x -= 5.0; velocity.y += 5.0`
-- "Randomized velocity" for brick 52: Generate random 2D direction in XZ plane (or full 3D if Z movement is allowed), magnitude 5.0-15.0 units/sec
+- "Velocity impulse" for bricks 43-48: Instantaneous change to `Velocity.linvel` components (addition/subtraction of 5.0 units/sec)
+  - Brick 43 (Forward): `velocity.linvel.x += 5.0`
+  - Brick 44 (Left): `velocity.linvel.z += 5.0`
+  - Brick 45 (Right): `velocity.linvel.z -= 5.0`
+  - Brick 46 (Backward): `velocity.linvel.x -= 5.0`
+  - Brick 47 (Backward-Right): `velocity.linvel.x -= 5.0; velocity.linvel.z -= 5.0`
+  - Brick 48 (Backward-Left): `velocity.linvel.x -= 5.0; velocity.linvel.z += 5.0`
+- "Randomized velocity" for brick 52: Generate random 2D direction in XZ plane (horizontal gameplay), magnitude 5.0-15.0 units/sec
   - Direction angle generated in **radians** (0.0..TAU = 0.0..2π), NOT degrees (0.0..360.0)
-  - Implementation: `angle = rng.gen_range(0.0..std::f32::consts::TAU)` (direct radians); convert to cos/sin for X/Y components
-- Uses **direct axis manipulation** (`velocity.x`, `velocity.y`) rather than semantic "forward/backward" to match physics system semantics
+  - Implementation: `angle = rng.random_range(0.0..std::f32::consts::TAU)`; convert to X/Z components via `Vec3::new(mag * cos(angle), 0.0, mag * sin(angle))`
+- Uses **XZ plane only** (Y always 0) to match horizontal gameplay surface; vertical axis unused
 
-**Camera Context**: Top-down view (camera at positive Y looking down) means:
+**Camera Context**: Angled view (camera above and behind paddle looking forward) means:
 
 - Gameplay "forward" (toward bricks, away from paddle) = **+Z direction**
 - Gameplay "backward" (toward paddle) = **-Z direction**

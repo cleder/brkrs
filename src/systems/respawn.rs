@@ -475,11 +475,12 @@ fn apply_paddle_shrink(
 
     for _event in life_lost_events.read() {
         // Only shrink if ALL balls are gone (no more balls in play)
-        // This runs BEFORE the life decrement in enqueue_respawn_requests
+        // Note: The ball in the event is being despawned (deferred), so we need to account for it
+        // by subtracting 1 from the count to check if it's the last ball
         let remaining_balls = balls.iter().count();
 
-        if remaining_balls != 0 {
-            // Other balls still in play, don't shrink
+        // If there are other balls besides the one being lost, don't shrink
+        if remaining_balls > 1 {
             continue;
         }
 

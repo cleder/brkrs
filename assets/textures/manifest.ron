@@ -1376,7 +1376,7 @@
         ),
         (
             object_class: Brick,
-            type_id: 39,
+            type_id: 38,
             profile_id: "brick/balls_2",
             emissive_color: None,
             animation: None,

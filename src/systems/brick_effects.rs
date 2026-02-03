@@ -80,18 +80,18 @@ use bevy_rapier3d::prelude::*;
 // DIRECTION BRICK CONSTANTS
 // =============================================================================
 
-/// Brick type ID for Left direction brick.
-pub const BRICK_TYPE_DIRECTION_LEFT: u8 = 43;
-/// Brick type ID for Right direction brick.
-pub const BRICK_TYPE_DIRECTION_RIGHT: u8 = 44;
-/// Brick type ID for Up direction brick.
-pub const BRICK_TYPE_DIRECTION_UP: u8 = 45;
-/// Brick type ID for Down direction brick.
-pub const BRICK_TYPE_DIRECTION_DOWN: u8 = 46;
-/// Brick type ID for Forward direction brick.
-pub const BRICK_TYPE_DIRECTION_FORWARD: u8 = 47;
-/// Brick type ID for Backward direction brick.
-pub const BRICK_TYPE_DIRECTION_BACKWARD: u8 = 48;
+/// Brick type ID for Forward direction brick (toward far wall, +X).
+pub const BRICK_TYPE_DIRECTION_FORWARD: u8 = 43;
+/// Brick type ID for Left direction brick (+Z).
+pub const BRICK_TYPE_DIRECTION_LEFT: u8 = 44;
+/// Brick type ID for Right direction brick (-Z).
+pub const BRICK_TYPE_DIRECTION_RIGHT: u8 = 45;
+/// Brick type ID for Backward direction brick (toward paddle, -X).
+pub const BRICK_TYPE_DIRECTION_BACKWARD: u8 = 46;
+/// Brick type ID for Backward-Right diagonal direction brick (-X, -Z).
+pub const BRICK_TYPE_DIRECTION_BACKWARD_RIGHT: u8 = 47;
+/// Brick type ID for Backward-Left diagonal direction brick (-X, +Z).
+pub const BRICK_TYPE_DIRECTION_BACKWARD_LEFT: u8 = 48;
 /// Brick type ID for Random direction brick.
 pub const BRICK_TYPE_DIRECTION_RANDOM: u8 = 52;
 
@@ -153,8 +153,8 @@ pub fn apply_direction_brick_effects(
 
     match query.get_mut(effect.ball_entity) {
         Ok(mut external_impulse) => {
-            // Apply the impulse vector computed by collision system
-            external_impulse.impulse = effect.impulse;
+            // Accumulate impulses instead of overwriting to preserve collision response
+            external_impulse.impulse += effect.impulse;
 
             debug!(
                 ball_entity = ?effect.ball_entity,
@@ -164,8 +164,8 @@ pub fn apply_direction_brick_effects(
         }
         Err(_) => {
             // Ball entity not found or missing ExternalImpulse
-            // This is a non-critical error that can occur if the ball despawned
-            debug!(
+            // This can occur if the ball despawned between trigger and observer execution
+            warn!(
                 ball = ?effect.ball_entity,
                 brick_type = effect.brick_type,
                 "Ball entity not found or missing ExternalImpulse component when applying direction brick effect"
