@@ -24,19 +24,22 @@ The system must freeze gameplay during paused states, manage life loss with fade
 
 ✅ **Tests First**: All acceptance scenarios from spec.md will be converted to failing tests before implementation ✅ **Red Phase Required**: Tests must fail initially (confirm state transitions don't exist yet) ✅ **Approval Gate**: Tests will be committed and reviewed before implementation begins ✅ **Coverage**: Integration tests for each user story + unit tests for state validation logic ✅ **Multi-Frame Persistence**: State changes (paused physics, level state, lives) will be tested across 10+ frames
 
-### Bevy 0.17 Event System Compliance
+### Bevy 0.17 States System Compliance
 
-✅ **Message System Choice**: Using `MessageWriter<StateTransition>` / `MessageReader<StateTransition>` for state transitions
+✅ **States System**: Using Bevy's built-in `States` derive with `NextState<GameState>` for transitions
 
-- **Rationale**: State transitions are sequential, critical game logic that benefits from explicit, buffered message passing.
-  Messages provide predictable scheduling (read in next frame), better testability (can verify messages were sent), and clear separation between state change requests and state machine logic.
-- **NOT using Observers**: Observers are better for immediate reactions (particle effects, sound triggers).
-  State transitions need controlled, sequential processing that Messages provide.
+- **Rationale**: Bevy 0.17 provides a dedicated States system specifically designed for app state management.
+  The `States` trait with `NextState` resource is the idiomatic way to handle state transitions.
+  It integrates seamlessly with schedules (`OnEnter`, `OnExit`) and run conditions (`in_state`).
+- **NOT using custom Messages**: While MessageWriter is appropriate for data streams (telemetry, events), state transitions are better handled by Bevy's States system which is purpose-built for this use case.
 
-✅ **Message-Event Separation**:
+✅ **States Integration**:
 
-- State transition requests use `#[derive(Message)]` with `MessageWriter`
-- No mixing with `#[derive(Event)]` or observer systems
+- GameState derives `States` trait
+- Registered with `.init_state::<GameState>()`
+- Transitions via `NextState<GameState>`
+- Uses `OnEnter`/`OnExit` schedules for setup/cleanup
+- Uses `in_state()` run conditions for conditional systems
 
 ### Bevy 0.17 ECS Architecture Compliance
 
@@ -53,7 +56,7 @@ The system must freeze gameplay during paused states, manage life loss with fade
 ### Gates Status
 
 - [x] TDD workflow defined
-- [x] Message system rationale documented  
+- [x] States system rationale documented  
 - [x] No constitutional violations
 - [x] Multi-frame persistence tests planned
 - [x] State cleanup strategy defined
@@ -107,19 +110,20 @@ Tests follow TDD workflow with integration tests in `tests/` directory.
 
 **Key Decisions**:
 
-- State storage: Resource-based enum (avoids archetype thrashing)
-- State transitions: MessageWriter/MessageReader (buffered, testable)
+- State storage: States derive (Bevy's idiomatic state system)
+- State transitions: NextState<GameState> (immediate, built-in)
+- State schedules: OnEnter/OnExit for setup/cleanup
 - Pause mechanism: `run_if` system conditions (clean, automatic state preservation)
 - Fade animations: Timer + opacity manipulation (simple, performant)
 - UI framework: Bevy UI (built-in, minimal dependencies)
 
 **Technical Unknowns Resolved**:
 
-1. Bevy state machine pattern → Resource enum with message-driven transitions
+1. Bevy state machine pattern → States derive with NextState transitions
 2. Fade animation approach → Timer with BackgroundColor alpha channel
 3. Physics freeze → run_if conditions on physics systems
-4. Lives check timing → After fade completion in dedicated system
-5. Invalid transition logging → tracing::warn! with early return
+4. Lives check timing → In OnExit(GameState::FadeOut) schedule
+5. Invalid transition logging → tracing::warn! in validation helper function
 6. Main menu UI → Bevy UI with button entities
 
 ## Phase 1: Design & Contracts
@@ -143,14 +147,14 @@ Tests follow TDD workflow with integration tests in `tests/` directory.
 - `FadeDirection` - In or Out
 - Marker components for button queries
 
+**States**:
+
+- `GameState` - State enum with States derive (7 variants)
+
 **Resources**:
 
-- `GameState` - Current state enum (7 variants)
 - `GameSession` - Persistent data (level, lives, score)
-
-**Messages**:
-
-- `StateTransitionRequest` - Triggers state changes with optional context
+- `StateTransitionContext` - Optional context for branching logic
 
 **State Transition Matrix**: 7 states with defined valid transitions and triggers
 
@@ -158,24 +162,24 @@ Tests follow TDD workflow with integration tests in `tests/` directory.
 
 **Document**: [contracts/state-transitions.md](contracts/state-transitions.md)
 
-**Message API**:
+**State Transition API**:
 
-- `StateTransitionRequest` - Buffered message for all state changes
-- `StateTransitionContext` - Enum providing context (LifeLoss, LevelComplete, etc.)
+- `NextState<GameState>` - Bevy built-in state transitions
+- `StateTransitionContext` - Optional resource for branching logic
 
 **System Contracts**:
 
-- `process_state_transitions` - Validates and applies state changes
-- `check_fade_out_completion` - Branches based on lives after fade
+- `validate_state_transition` - Helper function for validation
+- `check_fade_out_completion` - OnExit system that branches based on lives
 - `update_fade_overlay` - Animates fade transparency
 - `handle_main_menu_buttons` - Processes button clicks
 
 **Guarantees**:
 
-- Atomicity: State changes within 1 frame
+- Atomicity: State changes at end of frame
 - Idempotence: Multiple identical requests = single transition
 - Consistency: Invalid transitions logged and rejected
-- Ordering: FIFO message processing
+- OnEnter/OnExit: Automatic setup/cleanup via schedules
 
 ### Implementation Guide
 
@@ -204,11 +208,11 @@ The specification is clarified, research complete, and design documented.
 All technical unknowns resolved.
 The next phase will generate implementation tasks based on:
 
-1. **Data Model**: 5 entities, 3 custom components, 2 resources, 1 message type
-2. **Systems**: 4 core systems plus UI interaction systems
+1. **Data Model**: 5 entities, 3 custom components, 1 state, 2 resources
+2. **Systems**: 3 core systems (validation helper, fade completion, main menu buttons) plus UI/fade animation systems
 3. **Tests**: 4 test suites covering all user stories
 4. **Integration**: GameStatesPlugin for app registration
 
-**Estimated Complexity**: Medium (7 states, message-based architecture, fade animations)
+**Estimated Complexity**: Medium (7 states, States-based architecture, fade animations, OnEnter/OnExit schedules)
 
-**Critical Path**: TDD tests → State machine → Fade animations → UI integration
+**Critical Path**: TDD tests → State machine with States → Fade animations → UI integration

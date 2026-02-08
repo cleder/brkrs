@@ -1,23 +1,32 @@
 # State Transition Contracts
 
-**Feature**: 027-game-states **Date**: 2026-02-08 **Purpose**: Define message contracts and state transition API
+**Feature**: 027-game-states **Date**: 2026-02-08 **Purpose**: Define state transition API and system contracts
 
-## Message API
+## State Transition API
 
-### StateTransitionRequest
+### NextState Resource
 
-**Message Type**: Buffered message (MessageWriter/MessageReader)
+**Type**: Bevy built-in state transition mechanism
 
 **Definition**:
 
 ```rust
-#[derive(Message, Debug, Clone, Copy)]
-pub struct StateTransitionRequest {
-    pub target_state: GameState,
-    pub context: Option<StateTransitionContext>,
+use bevy::prelude::*;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, States)]
+pub enum GameState {
+    #[default]
+    MainMenu,
+    Playing,
+    Paused,
+    FadeOut,
+    FadeIn,
+    LevelTransition,
+    GameOver,
 }
 
-#[derive(Debug, Clone, Copy)]
+// Optional context resource
+#[derive(Resource, Debug, Clone, Copy)]
 pub enum StateTransitionContext {
     LifeLoss,
     LevelComplete { next_level: u32 },
@@ -26,15 +35,13 @@ pub enum StateTransitionContext {
 }
 ```
 
-**Sent By**:
+**Triggered By**:
 
-- UI button handlers
+- UI button handlers (using `ResMut<NextState<GameState>>`)
 - Gameplay event systems (ball lost, level complete)
 - Input handlers (pause/resume)
 
-**Consumed By**: `process_state_transitions` system in Update schedule
-
-**Timing**: Read in the frame after sending (buffered)
+**Timing**: State transitions occur immediately at the end of the current frame
 
 **Example Usage**:
 
@@ -42,14 +49,13 @@ pub enum StateTransitionContext {
 // From button click handler
 fn handle_new_game_button(
     query: Query<&Interaction, (Changed<Interaction>, With<NewGameButtonMarker>)>,
-    mut writer: MessageWriter<StateTransitionRequest>,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut commands: Commands,
 ) {
     for interaction in query.iter() {
         if *interaction == Interaction::Pressed {
-            writer.write(StateTransitionRequest {
-                target_state: GameState::Playing,
-                context: Some(StateTransitionContext::NewGame),
-            });
+            commands.insert_resource(StateTransitionContext::NewGame);
+            next_state.set(GameState::Playing);
         }
     }
 }
@@ -110,51 +116,74 @@ fn handle_new_game_button(
 
 ## System Contracts
 
-### process_state_transitions
+### validate_state_transition (helper function)
 
-**Schedule**: Update **Runs**: Every frame **Reads**:
+**Schedule**: Called by systems before using `NextState` **Runs**: On-demand **Reads**:
 
-- `MessageReader<StateTransitionRequest>`
-- `GameState` resource (current state)
-- `GameSession` resource (for validation)
+- `State<GameState>` (current state)
+- Target state parameter
 
-**Writes**:
-
-- `GameState` resource (new state)
-- Logging (warnings for invalid transitions)
+**Returns**: `bool` (whether transition is valid)
 
 **Guarantees**:
 
-- Processes all messages buffered in current frame
-- Validates each transition before applying
+- Validates transition against allowed transitions matrix
 - Logs invalid transitions as warnings
-- Updates GameState atomically
+- Returns false for invalid transitions
 
-**Preconditions**: GameState resource must exist (initialized at startup) **Postconditions**: GameState reflects last valid transition request
+**Example**:
+
+```rust
+fn validate_state_transition(
+    current: &GameState,
+    target: &GameState,
+) -> bool {
+    use GameState::*;
+    let valid = matches!(
+        (current, target),
+        (MainMenu, Playing)
+            | (Playing, Paused)
+            | (Playing, FadeOut)
+            | (Paused, Playing)
+            | (FadeOut, FadeIn)
+            | (FadeOut, GameOver)
+            | (FadeIn, Playing)
+            | (GameOver, MainMenu)
+    );
+
+    if !valid {
+        warn!("Invalid transition: {:?} -> {:?}", current, target);
+    }
+    valid
+}
+```
+
+**Preconditions**: None **Postconditions**: Logs warning if invalid
 
 ---
 
 ### check_fade_out_completion
 
-**Schedule**: Update **Runs**: Only when GameState == FadeOut **Reads**:
+**Schedule**: OnExit(GameState::FadeOut) **Runs**: When exiting FadeOut state (after fade animation completes) **Reads**:
 
-- `Query<&FadeTimer>` (fade overlay timer)
-- `GameState` resource
-- `GameSession` resource (lives count)
+- `Option<Res<StateTransitionContext>>` (transition context)
+- `Res<GameSession>` (lives count)
 
 **Writes**:
 
-- `MessageWriter<StateTransitionRequest>` (next transition)
+- `ResMut<NextState<GameState>>` (next state)
+- `Commands` (to remove context resource)
 
 **Guarantees**:
 
-- Checks if fade timer has completed
-- If complete and context is LifeLoss:
-  - If lives > 0: sends FadeIn transition
-  - If lives == 0: sends GameOver transition
-- If complete and context is LevelComplete: sends FadeIn transition
+- Checks transition context to determine next state
+- If context is LifeLoss:
+  - If lives > 0: transitions to FadeIn
+  - If lives == 0: transitions to GameOver
+- If context is LevelComplete: transitions to FadeIn
+- Removes context resource after consuming
 
-**Preconditions**: FadeOverlay entity with FadeTimer must exist in FadeOut state **Postconditions**: Transition message sent when timer completes
+**Preconditions**: Called automatically by Bevy when exiting FadeOut state **Postconditions**: NextState set appropriately, context resource removed
 
 ---
 
@@ -182,22 +211,24 @@ fn handle_new_game_button(
 
 ### handle_main_menu_buttons
 
-**Schedule**: Update **Runs**: When GameState == MainMenu **Reads**:
+**Schedule**: Update **Runs**: When GameState == MainMenu (using `run_if(in_state(GameState::MainMenu))`) **Reads**:
 
 - `Query<&Interaction, (Changed<Interaction>, With<NewGameButtonMarker>)>`
 - `Query<&Interaction, (Changed<Interaction>, With<QuitButtonMarker>)>`
 
 **Writes**:
 
-- `MessageWriter<StateTransitionRequest>` (for New Game)
+- `ResMut<NextState<GameState>>` (for New Game)
 - `EventWriter<AppExit>` (for Quit)
+- `Commands` (to set context resource)
 
 **Guarantees**:
 
 - Detects button click (Interaction::Pressed)
-- Sends appropriate message or event
+- Sets NextState or sends AppExit event
+- Sets transition context for New Game
 
-**Preconditions**: Button entities exist in MainMenu state **Postconditions**: Transition message sent on click
+**Preconditions**: Button entities exist in MainMenu state **Postconditions**: State transition initiated on click
 
 ---
 

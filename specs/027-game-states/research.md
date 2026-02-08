@@ -15,10 +15,11 @@
 - **State-scoped Systems**: Use `run_if(in_state(GameState::Playing))` predicates to conditionally run systems
 - **Entity Cleanup**: Use `DespawnOnExit(state)` component for automatic entity cleanup on state transitions
 
-**Decision**: Implement `GameState` as a `Resource` enum with message-driven transitions and conditional system execution based on current state.
+**Decision**: Implement `GameState` using Bevy's built-in `States` derive with `NextState<GameState>` for transitions and `OnEnter`/`OnExit` schedules for state-specific setup/cleanup.
 
-**Rationale**: This pattern is idiomatic Bevy 0.17, provides clear state machine semantics, and integrates well with Bevy's scheduling system.
-Resource-based state avoids archetype thrashing from component insertion/removal.
+**Rationale**: Bevy's States system is the idiomatic way to handle app state in 0.17.
+It provides built-in transition management, schedule integration (`OnEnter`, `OnExit`), and run conditions (`in_state`).
+This eliminates need for custom message handling and integrates seamlessly with Bevy's scheduling.
 
 ---
 
@@ -134,11 +135,14 @@ Minimal external dependencies.
 
 ## Best Practices Summary
 
-### Message-Based State Machine
+### Bevy States-Based State Machine
 
 ```rust
-#[derive(Resource, Debug, Clone, Copy, PartialEq, Eq)]
+use bevy::prelude::*;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, States)]
 pub enum GameState {
+    #[default]
     MainMenu,
     Playing,
     Paused,
@@ -148,33 +152,34 @@ pub enum GameState {
     GameOver,
 }
 
-#[derive(Message)]
-pub struct StateTransitionRequest {
-    pub target_state: GameState,
-}
-
-fn process_state_transitions(
-    mut state: ResMut<GameState>,
-    mut transitions: MessageReader<StateTransitionRequest>,
+// Transition using NextState resource
+fn request_state_transition(
+    mut next_state: ResMut<NextState<GameState>>,
+    current_state: Res<State<GameState>>,
+    target: GameState,
 ) {
-    for transition in transitions.read() {
-        if is_valid_transition(&state, &transition.target_state) {
-            *state = transition.target_state;
-        } else {
-            warn!("Invalid transition: {:?} -> {:?}", *state, transition.target_state);
-        }
+    if is_valid_transition(current_state.get(), &target) {
+        next_state.set(target);
+    } else {
+        warn!("Invalid transition: {:?} -> {:?}", current_state.get(), target);
     }
 }
 ```
 
-### Conditional System Execution
+### Conditional System Execution & State Schedules
 
 ```rust
+// Using run_if conditions
 app.add_systems(Update, (
     physics_update_system.run_if(in_state(GameState::Playing)),
     input_system.run_if(in_state(GameState::Playing).or(in_state(GameState::Paused))),
-    ui_update_system.run_if(resource_changed::<GameState>),
 ));
+
+// Using OnEnter/OnExit schedules for state transitions
+app.add_systems(OnEnter(GameState::FadeOut), spawn_fade_overlay);
+app.add_systems(OnExit(GameState::FadeOut), check_lives_and_transition);
+app.add_systems(OnEnter(GameState::MainMenu), spawn_main_menu);
+app.add_systems(OnExit(GameState::MainMenu), despawn_main_menu);
 ```
 
 ### Fade Animation Pattern

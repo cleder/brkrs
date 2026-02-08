@@ -66,14 +66,14 @@ touch tests/main_menu.rs
 
 ## Core Implementation (30 minutes)
 
-### Step 1: Define GameState Resource
+### Step 1: Define GameState using States
 
 **File**: `src/game_state.rs`
 
 ```rust
 use bevy::prelude::*;
 
-#[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, States)]
 pub enum GameState {
     #[default]
     MainMenu,
@@ -103,20 +103,12 @@ impl Default for GameSession {
 }
 ```
 
-### Step 2: Define State Transition Message
+### Step 2: Define Optional Transition Context
 
 **File**: `src/game_state.rs` (continued)
 
 ```rust
-use bevy::ecs::event::Message;
-
-#[derive(Message, Debug, Clone, Copy)]
-pub struct StateTransitionRequest {
-    pub target_state: GameState,
-    pub context: Option<StateTransitionContext>,
-}
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Resource, Debug, Clone, Copy)]
 pub enum StateTransitionContext {
     LifeLoss,
     LevelComplete { next_level: u32 },
@@ -125,34 +117,18 @@ pub enum StateTransitionContext {
 }
 ```
 
-### Step 3: Implement State Transition System
+### Step 3: Implement State Transition Helpers
 
 **File**: `src/systems/game_state_transitions.rs`
 
 ```rust
 use bevy::prelude::*;
-use crate::game_state::{GameState, StateTransitionRequest};
+use crate::game_state::{GameState, StateTransitionContext, GameSession};
 
-pub fn process_state_transitions(
-    mut state: ResMut<GameState>,
-    mut reader: MessageReader<StateTransitionRequest>,
-) {
-    for request in reader.read() {
-        if is_valid_transition(&state, &request.target_state) {
-            info!("State transition: {:?} -> {:?}", *state, request.target_state);
-            *state = request.target_state;
-        } else {
-            warn!(
-                "Invalid state transition: {:?} -> {:?}",
-                *state, request.target_state
-            );
-        }
-    }
-}
-
-fn is_valid_transition(current: &GameState, target: &GameState) -> bool {
+// Validation helper (call before setting NextState)
+pub fn is_valid_transition(current: &GameState, target: &GameState) -> bool {
     use GameState::*;
-    matches!(
+    let valid = matches!(
         (current, target),
         (MainMenu, Playing)
             | (Playing, Paused)
@@ -162,7 +138,37 @@ fn is_valid_transition(current: &GameState, target: &GameState) -> bool {
             | (FadeOut, GameOver)
             | (FadeIn, Playing)
             | (GameOver, MainMenu)
-    )
+    );
+
+    if !valid {
+        warn!("Invalid transition: {:?} -> {:?}", current, target);
+    }
+    valid
+}
+
+// System that runs on exiting FadeOut to determine next state
+pub fn check_fade_out_completion(
+    context: Option<Res<StateTransitionContext>>,
+    session: Res<GameSession>,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut commands: Commands,
+) {
+    if let Some(ctx) = context {
+        match *ctx {
+            StateTransitionContext::LifeLoss => {
+                if session.lives_remaining > 0 {
+                    next_state.set(GameState::FadeIn);
+                } else {
+                    next_state.set(GameState::GameOver);
+                }
+            }
+            StateTransitionContext::LevelComplete { .. } => {
+                next_state.set(GameState::FadeIn);
+            }
+            _ => {}
+        }
+        commands.remove_resource::<StateTransitionContext>();
+    }
 }
 ```
 
@@ -176,11 +182,17 @@ pub struct GameStatesPlugin;
 impl Plugin for GameStatesPlugin {
     fn build(&self, app: &mut App) {
         app
-            .init_resource::<GameState>()
+            .init_state::<GameState>()  // Use init_state for States
             .init_resource::<GameSession>()
-            .add_message::<StateTransitionRequest>()
+            // OnExit schedule for fade-out completion check
+            .add_systems(OnExit(GameState::FadeOut), 
+                systems::game_state_transitions::check_fade_out_completion)
+            // OnEnter/OnExit for UI spawning/despawning
+            .add_systems(OnEnter(GameState::MainMenu), spawn_main_menu)
+            .add_systems(OnExit(GameState::MainMenu), despawn_main_menu)
+            // Conditional systems during gameplay
             .add_systems(Update, (
-                systems::game_state_transitions::process_state_transitions,
+                handle_main_menu_buttons.run_if(in_state(GameState::MainMenu)),
                 // More systems added incrementally
             ));
     }
@@ -197,54 +209,43 @@ impl Plugin for GameStatesPlugin {
 
 ```rust
 use bevy::prelude::*;
-use brkrs::{GameState, StateTransitionRequest};
+use brkrs::GameState;
 
 #[test]
 fn test_main_menu_to_playing_transition() {
     let mut app = App::new();
     app.add_plugins(MinimalPlugins)
-        .init_resource::<GameState>()
-        .add_message::<StateTransitionRequest>()
-        .add_systems(Update, process_state_transitions);
+        .init_state::<GameState>();
 
-    // Send transition request
-    let mut writer = app.world_mut().resource_mut::<MessageWriter<StateTransitionRequest>>();
-    writer.write(StateTransitionRequest {
-        target_state: GameState::Playing,
-        context: None,
-    });
+    // Verify initial state
+    let state = app.world().resource::<State<GameState>>();
+    assert_eq!(*state.get(), GameState::MainMenu);
 
-    // Update to process message
+    // Request transition
+    app.world_mut().resource_mut::<NextState<GameState>>().set(GameState::Playing);
+
+    // Update to apply transition
     app.update();
 
     // Verify state changed
-    let state = app.world().resource::<GameState>();
-    assert_eq!(*state, GameState::Playing);
+    let state = app.world().resource::<State<GameState>>();
+    assert_eq!(*state.get(), GameState::Playing);
 }
 
 #[test]
-fn test_invalid_transition_rejected() {
+fn test_state_with_validation() {
     let mut app = App::new();
-    // ... setup ...
+    app.add_plugins(MinimalPlugins)
+        .init_state::<GameState>();
 
-    // Try invalid transition (Pause from MainMenu)
-    let mut writer = app.world_mut().resource_mut::<MessageWriter<StateTransitionRequest>>();
-    writer.write(StateTransitionRequest {
-        target_state: GameState::Paused,
-        context: None,
-    });
+    // Attempt invalid transition (should be validated by game logic)
+    let current = app.world().resource::<State<GameState>>();
+    let is_valid = is_valid_transition(current.get(), &GameState::Paused);
 
-    app.update();
+    // Verify validation rejects it
+    assert!(!is_valid);
 
-    // Verify state unchanged
-    let state = app.world().resource::<GameState>();
-    assert_eq!(*state, GameState::MainMenu);
-}
 ```
-
-### Test 2: Multi-Frame Persistence
-
-**File**: `tests/pause_state.rs`
 
 ```rust
 #[test]

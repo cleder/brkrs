@@ -106,6 +106,30 @@
 
 ---
 
+## States
+
+### GameState
+
+```rust
+use bevy::prelude::*;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, States)]
+pub enum GameState {
+    #[default]
+    MainMenu,
+    Playing,
+    Paused,
+    FadeOut,
+    FadeIn,
+    LevelTransition,
+    GameOver,
+}
+```
+
+**Purpose**: Tracks current game state using Bevy's States system **Validation**: Must be one of 7 valid states **State Transitions**: Changed via `NextState<GameState>` resource **Lifecycle**: Initialized at app startup with `.init_state::<GameState>()`, persists throughout runtime
+
+---
+
 ## Components
 
 ### FadeTimer
@@ -172,31 +196,6 @@ pub struct QuitButtonMarker;
 
 ## Resources
 
-### GameState
-
-```rust
-#[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum GameState {
-    MainMenu,
-    Playing,
-    Paused,
-    FadeOut,
-    FadeIn,
-    LevelTransition,
-    GameOver,
-}
-
-impl Default for GameState {
-    fn default() -> Self {
-        Self::MainMenu
-    }
-}
-```
-
-**Purpose**: Tracks current game state **Validation**: Must be one of 7 valid states **State Transitions**: Changed via state transition messages **Lifecycle**: Initialized at app startup, persists throughout runtime
-
----
-
 ### GameSession
 
 ```rust
@@ -230,18 +229,12 @@ impl Default for GameSession {
 
 ---
 
-## Messages
+## State Transition Context (Optional Resource)
 
-### StateTransitionRequest
+### StateTransitionContext
 
 ```rust
-#[derive(Message, Debug, Clone, Copy)]
-pub struct StateTransitionRequest {
-    pub target_state: GameState,
-    pub context: Option<StateTransitionContext>,
-}
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Resource, Debug, Clone, Copy)]
 pub enum StateTransitionContext {
     LifeLoss,
     LevelComplete { next_level: u32 },
@@ -250,13 +243,12 @@ pub enum StateTransitionContext {
 }
 ```
 
-**Purpose**: Request state transition from any system **Validation**: Target state must be reachable from current state (validated in transition system) **Sent By**:
+**Purpose**: Optional context for state transitions (used when branching logic needs context) **Validation**: Set before transition, consumed/cleared after use **Set By**:
 
-- Button click handlers (MainMenu → Playing, GameOver → MainMenu)
-- Ball lost handler (Playing → FadeOut with LifeLoss context)
-- Level complete handler (Playing → FadeOut with LevelComplete context)
-- Pause/resume input handler (Playing ↔ Paused)
-**Read By**: `process_state_transitions` system
+- Ball lost handler (sets LifeLoss before FadeOut transition)
+- Level complete handler (sets LevelComplete before FadeOut transition)
+
+**Consumed By**: Systems running in `OnExit` schedules that need context (e.g., `check_lives_and_transition`)
 
 ---
 
