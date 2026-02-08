@@ -29,7 +29,7 @@ pub enum GameState {
 #[derive(Resource, Debug, Clone, Copy)]
 pub enum StateTransitionContext {
     LifeLoss,
-    LevelComplete { next_level: u32 },
+    LevelChange { target_level: u32 },
     NewGame,
     ReturnToMenu,
 }
@@ -72,10 +72,11 @@ fn handle_new_game_button(
 | MainMenu | Playing | NewGame | Initialize GameSession, spawn level |
 | Playing | Paused | None | Freeze physics, show pause UI |
 | Paused | Playing | None | Resume physics, hide pause UI |
-| Playing | FadeOut | LifeLoss or LevelComplete | Spawn FadeOverlay, start timer |
-| FadeOut | FadeIn | None (automatic) | Check lives, respawn ball if lives>0, despawn old level if level complete |
+| Playing | FadeOut | LifeLoss or LevelChange | Spawn FadeOverlay, start timer, despawn merkabas and remaining balls |
+| FadeOut | FadeIn | None (automatic) | Check lives, respawn ball if lives>0 (life loss flow) |
 | FadeOut | GameOver | None (automatic) | Only if lives==0 after check |
-| FadeOut | FadeIn | None (automatic) | Only for level complete flow |
+| FadeOut | LevelTransition | None (automatic) | Load target level (next/previous per context) |
+| LevelTransition | FadeIn | None (automatic) | Fade in after next level is loaded |
 | FadeIn | Playing | None (automatic) | Despawn FadeOverlay, enable gameplay |
 | GameOver | MainMenu | ReturnToMenu | Reset GameSession |
 
@@ -83,7 +84,8 @@ fn handle_new_game_button(
 
 - Pause from any state except Playing
 - Any transition to FadeOut except from Playing
-- Any transition to FadeIn except from FadeOut completion
+- Any transition to LevelTransition except from FadeOut completion
+- Any transition to FadeIn except from LevelTransition completion
 - Direct Playing→GameOver (must go through FadeOut)
 - Direct GameOver→Playing (must go through MainMenu)
 
@@ -93,7 +95,7 @@ fn handle_new_game_button(
 
 ### Atomicity
 
-- State changes occur within 1 frame of message processing
+- State changes occur within 1 frame of NextState request
 - No partial state transitions (state changes are atomic)
 
 ### Idempotence
@@ -109,8 +111,8 @@ fn handle_new_game_button(
 
 ### Ordering
 
-- Messages processed in FIFO order within a frame
-- Later messages override earlier ones if both valid
+- State transition requests processed in FIFO order within a frame
+- Later requests override earlier ones if both valid
 
 ---
 
@@ -146,7 +148,9 @@ fn validate_state_transition(
             | (Playing, FadeOut)
             | (Paused, Playing)
             | (FadeOut, FadeIn)
+            | (FadeOut, LevelTransition)
             | (FadeOut, GameOver)
+            | (LevelTransition, FadeIn)
             | (FadeIn, Playing)
             | (GameOver, MainMenu)
     );
@@ -180,7 +184,7 @@ fn validate_state_transition(
 - If context is LifeLoss:
   - If lives > 0: transitions to FadeIn
   - If lives == 0: transitions to GameOver
-- If context is LevelComplete: transitions to FadeIn
+- If context is LevelChange: transitions to LevelTransition
 - Removes context resource after consuming
 
 **Preconditions**: Called automatically by Bevy when exiting FadeOut state **Postconditions**: NextState set appropriately, context resource removed
@@ -270,13 +274,13 @@ fn check_fade_out_completion(
 
 ## Testing Contracts
 
-### Message Delivery
+### State Transition Request
 
-**Test**: Send StateTransitionRequest, verify received in next frame **Assertion**: `reader.read().count() == 1`
+**Test**: Set NextState, verify transition in next frame **Assertion**: Current state matches requested state after one update()
 
 ### Transition Validation
 
-**Test**: Send invalid transition (e.g., Pause from MainMenu) **Assertion**: `state.0 == GameState::MainMenu` (unchanged) + warning logged
+**Test**: Request invalid transition (e.g., Pause from MainMenu) **Assertion**: `state.0 == GameState::MainMenu` (unchanged) + warning logged
 
 ### Side Effect Synchronization
 
@@ -288,21 +292,21 @@ fn check_fade_out_completion(
 
 ### Life Loss Branching
 
-**Test 1**: lives=2, FadeOut complete → verify FadeIn message sent **Test 2**: lives=0, FadeOut complete → verify GameOver message sent
+**Test 1**: lives=N (N>0), FadeOut complete → verify FadeIn transition **Test 2**: lives=0, FadeOut complete → verify GameOver transition
 
 ---
 
 ## Performance Contracts
 
-- State transition processing: O(N) where N = number of transition messages in frame (typically 0-2)
+- State transition processing: O(1) state enum update (automatic via States system)
 - Fade animation: O(M) where M = number of fade overlay entities (always 0 or 1)
 - Button interaction: O(B) where B = number of buttons (typically 2 in MainMenu)
 - Entity cleanup: O(E) where E = number of DespawnOnExit entities (handled by Bevy automatically)
 
-**Frame Budget**: All state transition systems combined must complete within 1ms to maintain 60 FPS **Memory**: StateTransitionRequest messages buffered until read (typically <10 per frame)
+**Frame Budget**: All state transition systems combined must complete within 1ms to maintain 60 FPS **Memory**: StateTransitionContext resource overhead minimal (<100 bytes)
 
 ---
 
 ## Versioning
 
-**Version 1.0**: Initial implementation **Breaking Changes**: Any change to StateTransitionRequest message structure or transition matrix **Backwards Compatibility**: Not applicable (internal game systems)
+**Version 1.0**: Initial implementation **Breaking Changes**: Any change to StateTransitionContext or GameState enum structure **Backwards Compatibility**: Not applicable (internal game systems)

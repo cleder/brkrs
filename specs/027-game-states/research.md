@@ -11,7 +11,7 @@
 **Answer**:
 
 - **Resource-based State**: Use a `Resource` enum to represent the current game state
-- **Message-driven Transitions**: State changes triggered by `MessageWriter<StateTransitionRequest>`
+- **States derive**: Use Bevy's built-in States system with `NextState<GameState>` for transitions
 - **State-scoped Systems**: Use `run_if(in_state(GameState::Playing))` predicates to conditionally run systems
 - **Entity Cleanup**: Use `DespawnOnExit(state)` component for automatic entity cleanup on state transitions
 
@@ -19,7 +19,7 @@
 
 **Rationale**: Bevy's States system is the idiomatic way to handle app state in 0.17.
 It provides built-in transition management, schedule integration (`OnEnter`, `OnExit`), and run conditions (`in_state`).
-This eliminates need for custom message handling and integrates seamlessly with Bevy's scheduling.
+This eliminates need for custom transition handling and integrates seamlessly with Bevy's scheduling.
 
 ---
 
@@ -31,16 +31,12 @@ This eliminates need for custom message handling and integrates seamlessly with 
 
 - **Timer Resource**: Use `Timer` component or resource to track fade animation progress
 - **Opacity Manipulation**: Modify UI overlay entity's `BackgroundColor` alpha channel
-- **State Transition on Complete**: Send state transition message when timer completes
+- **State Transition on Complete**: Set `NextState` when timer completes
 - **Non-blocking**: Animation runs in parallel with state machine checks (timer just tracks progress)
 
 **Decision**: Create a `FadeOverlay` entity with `Timer` component.
 Update alpha channel each frame.
-When timer completes, send next state transition message.
-
-**Rationale**: Timers are idiomatic Bevy for time-based animations.
-Opacity manipulation is performant and visually clear.
-Non-blocking approach maintains frame rate.
+When timer completes, set the next state via `NextState<GameState>`.
 
 ---
 
@@ -55,10 +51,6 @@ Non-blocking approach maintains frame rate.
 - **Option C**: Use Bevy's `run_if` system conditions to skip physics systems when paused
 
 **Decision**: Option C - Use `run_if(in_state(GameState::Playing))` condition on physics update systems.
-
-**Rationale**: This is the cleanest Bevy-idiomatic approach.
-No manual state saving/restoration required.
-Physics systems simply don't run when not in Playing state.
 Maintains all entity state automatically.
 
 **Alternative Considered**: Option B was considered but requires Rapier-specific configuration and couples state management to physics engine internals.
@@ -68,18 +60,14 @@ Maintains all entity state automatically.
 ### 4. Lives Check Timing & State Branching
 
 **Question**: How should the Fade Out state branch to either Game Over or Fade In based on lives?
-
 **Answer**:
 
 - **Timer Completion System**: System that reads fade timer and checks lives when timer completes
-- **Conditional Message**: If lives > 0, send `FadeIn` transition message; if lives == 0, send `GameOver` transition message
+- **Conditional NextState**: If lives > 0, set `NextState(FadeIn)`; if lives == 0, set `NextState(GameOver)`
 - **Single Branching Point**: One system handles the lives check logic after fade animation completes
-
-**Decision**: Create `check_fade_out_completion` system that runs when `GameState == FadeOut`, checks timer completion, reads lives resource, and sends appropriate transition message.
-
 **Rationale**: Centralizes branching logic in one place.
 Clear separation of concerns (timer tracking vs. decision logic).
-Follows message-based architecture.
+Follows States-based architecture.
 
 ---
 
@@ -90,10 +78,6 @@ Follows message-based architecture.
 **Answer**:
 
 - **Match Pattern**: Use match on `(current_state, requested_transition)` tuple
-- **Valid Transitions Table**: Define valid transitions as const or static data structure
-- **Logging**: Use `warn!()` macro from `tracing` crate for invalid transitions
-- **Early Return**: Return early after logging (don't change state)
-
 **Decision**: Implement `is_valid_transition(current: &GameState, next: &GameState) -> bool` helper function that returns validity.
 Log warning and skip transition if invalid.
 
@@ -111,11 +95,11 @@ Early return pattern is idiomatic Rust.
 
 - **Bevy UI**: Use Bevy's built-in UI system with `Node`, `Button`, `Text` components
 - **Interaction System**: System that queries `Interaction` component changes on buttons
-- **Message Sending**: Button click handlers send state transition messages
+- **NextState Setting**: Button click handlers set `NextState` for transitions
 - **Entity Hierarchy**: Root `Node` with two child `Button` entities (New Game, Quit)
 
 **Decision**: Use Bevy UI with two button entities.
-System detects `Changed<Interaction>` and sends `StateTransitionRequest::ToPlaying` or `AppExit` event.
+System detects `Changed<Interaction>` and sets `NextState(GameState::Playing)` or sends `AppExit` event.
 
 **Rationale**: Bevy UI is built-in, well-tested, and sufficient for simple menus.
 `Interaction` component provides button state tracking.
@@ -127,8 +111,8 @@ Minimal external dependencies.
 
 | Component | Choice | Alternatives Considered | Rationale |
 |-----------|--------|------------------------|-----------|
-| State Storage | Resource enum | Component-based, States plugin | Resource avoids archetype thrashing; enum provides type safety |
-| State Transitions | MessageWriter/MessageReader | Observers, direct mutation | Messages provide buffering and testability; spec requires messages |
+| State Storage | States derive | Resource enum, component-based | Built-in state machine, integrates with schedules and run conditions |
+| State Transitions | NextState<GameState> | Observers, direct mutation | Idiomatic Bevy approach for app state changes |
 | Pause Mechanism | run_if conditions | Manual velocity storage, time scaling | Cleanest Bevy-idiomatic approach; automatic state preservation |
 | Fade Animation | Timer + opacity | Custom shader, external animation lib | Simple, performant, built-in Bevy features |
 | UI Framework | Bevy UI | egui, custom rendering | Built-in, sufficient for minimal menu, fewer dependencies |
@@ -185,9 +169,6 @@ app.add_systems(OnExit(GameState::MainMenu), despawn_main_menu);
 ### Fade Animation Pattern
 
 ```rust
-fn update_fade_overlay(
-    time: Res<Time>,
-    mut query: Query<(&mut BackgroundColor, &mut FadeTimer)>,
 ) {
     for (mut color, mut timer) in query.iter_mut() {
         timer.tick(time.delta());
@@ -206,5 +187,5 @@ All technical unknowns resolved.
 
 - Bevy 0.17 documentation: <https://docs.rs/bevy/0.17.3>
 - Bevy UI guide: <https://bevyengine.org/learn/book/getting-started/ui/>
-- Message system RFC: (Bevy 0.17 changelog)
+- Bevy states system docs: <https://docs.rs/bevy/0.17.3/bevy/ecs/schedule/trait.States.html>
 - Constitution: `.specify/memory/constitution.md`

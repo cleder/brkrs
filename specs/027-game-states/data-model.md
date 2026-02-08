@@ -237,7 +237,7 @@ impl Default for GameSession {
 #[derive(Resource, Debug, Clone, Copy)]
 pub enum StateTransitionContext {
     LifeLoss,
-    LevelComplete { next_level: u32 },
+  LevelChange { target_level: u32 },
     NewGame,
     ReturnToMenu,
 }
@@ -246,7 +246,10 @@ pub enum StateTransitionContext {
 **Purpose**: Optional context for state transitions (used when branching logic needs context) **Validation**: Set before transition, consumed/cleared after use **Set By**:
 
 - Ball lost handler (sets LifeLoss before FadeOut transition)
-- Level complete handler (sets LevelComplete before FadeOut transition)
+- Paddle-brick collision handler for hazard bricks 42/91 (sets LifeLoss before FadeOut transition)
+- Paddle-merkaba collision handler (sets LifeLoss before FadeOut transition)
+- Level complete handler (sets LevelChange before FadeOut transition)
+- Level navigation handler (brick 50/54) sets LevelChange with target level
 
 **Consumed By**: Systems running in `OnExit` schedules that need context (e.g., `check_lives_and_transition`)
 
@@ -263,7 +266,7 @@ pub enum StateTransitionContext {
 | Paused | Playing | Resume input |
 | FadeOut | FadeIn | Timer complete + lives > 0 + LifeLoss context |
 | FadeOut | GameOver | Timer complete + lives == 0 + LifeLoss context |
-| FadeOut | FadeIn | Timer complete + LevelComplete context |
+| FadeOut | LevelTransition | Timer complete + LevelChange context |
 | FadeIn | Playing | Timer complete |
 | GameOver | MainMenu | Return to menu / New game button |
 
@@ -280,25 +283,27 @@ pub enum StateTransitionContext {
 ### Life Loss Flow
 
 ```text
-Playing State (lives=2)
-  ↓ (ball lost message)
+Playing State (lives=N, where N >= 2)
+  ↓ (life loss event: ball lost, paddle-brick 42/91, or paddle-merkaba)
 FadeOut State
+  ↓ (OnEnter: despawn all merkabas and remaining balls)
   ↓ (fade timer updates, alpha 0→1)
 Timer Complete
-  ↓ (check lives: 2 > 0)
-FadeIn State (lives=1, ball respawned)
+  ↓ (check lives: N-1 > 0)
+FadeIn State (lives=N-1, ball respawned)
   ↓ (fade timer updates, alpha 1→0)
 Timer Complete
   ↓
-Playing State (lives=1)
+Playing State (lives=N-1)
 ```
 
 ### Game Over Flow
 
 ```text
 Playing State (lives=1)
-  ↓ (ball lost message)
+  ↓ (life loss event: ball lost, paddle-brick 42/91, or paddle-merkaba)
 FadeOut State
+  ↓ (OnEnter: despawn all merkabas and remaining balls)
   ↓ (fade timer updates)
 Timer Complete
   ↓ (check lives: 0 == 0)
@@ -330,7 +335,7 @@ Playing State (level=N+1)
 3. **Entity Cleanup**: All entities with `DespawnOnExit(state)` must be removed when exiting that state
 4. **Timer Duration**: Fade timers must be 0.5-1.0 seconds
 5. **UI Spawning**: Main menu and game over UI entities only spawned in corresponding states
-6. **Message Idempotence**: Receiving same transition message twice has no effect (already in target state)
+6. **Transition Idempotence**: Requesting same state transition twice has no effect (already in target state)
 
 ---
 
@@ -339,7 +344,7 @@ Playing State (level=N+1)
 - **State checks**: O(1) enum comparison
 - **Entity queries**: Minimal with marker components (`With<NewGameButtonMarker>`)
 - **UI updates**: Only on `Changed<GameState>`, not every frame
-- **Message buffering**: MessageReader handles batching automatically
+- **State transitions**: Handled automatically by Bevy's States system within one frame
 - **Entity cleanup**: Automatic via DespawnOnExit, no manual iteration
 
 ---
@@ -350,5 +355,5 @@ Playing State (level=N+1)
 - **Multi-Frame Persistence**: Verify GameState persists across 10+ frames without unwanted changes
 - **Life Loss**: Test both lives>0 (FadeIn) and lives==0 (GameOver) branches
 - **Entity Lifecycle**: Verify entities spawn/despawn correctly with state changes
-- **UI Interaction**: Test button clicks send correct messages
+- **UI Interaction**: Test button clicks trigger correct state transitions
 - **Timer Accuracy**: Verify fade animations complete within spec'd duration

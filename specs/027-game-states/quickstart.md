@@ -4,7 +4,7 @@
 
 ## Overview
 
-This feature implements a comprehensive game state management system with 7 states (Main Menu, Playing, Paused, Fade Out, Fade In, Level Transition, Game Over) controlled by message-based transitions.
+This feature implements a comprehensive game state management system with 7 states (Main Menu, Playing, Paused, Fade Out, Fade In, Level Transition, Game Over) controlled by Bevy's States system.
 It handles game flow, pause/resume, life loss with fade animations, level transitions, and main menu navigation.
 
 ---
@@ -13,7 +13,7 @@ It handles game flow, pause/resume, life loss with fade animations, level transi
 
 - Rust 1.81+ with cargo
 - Bevy 0.17.3 workspace already set up
-- Familiarity with Bevy ECS and message systems
+- Familiarity with Bevy ECS and the States system
 - TDD workflow: tests must be written and approved before implementation
 
 ---
@@ -111,7 +111,7 @@ impl Default for GameSession {
 #[derive(Resource, Debug, Clone, Copy)]
 pub enum StateTransitionContext {
     LifeLoss,
-    LevelComplete { next_level: u32 },
+    LevelChange { target_level: u32 },
     NewGame,
     ReturnToMenu,
 }
@@ -135,7 +135,9 @@ pub fn is_valid_transition(current: &GameState, target: &GameState) -> bool {
             | (Playing, FadeOut)
             | (Paused, Playing)
             | (FadeOut, FadeIn)
+            | (FadeOut, LevelTransition)
             | (FadeOut, GameOver)
+            | (LevelTransition, FadeIn)
             | (FadeIn, Playing)
             | (GameOver, MainMenu)
     );
@@ -162,7 +164,7 @@ pub fn check_fade_out_completion(
                     next_state.set(GameState::GameOver);
                 }
             }
-            StateTransitionContext::LevelComplete { .. } => {
+            StateTransitionContext::LevelChange { .. } => {
                 next_state.set(GameState::FadeIn);
             }
             _ => {}
@@ -185,7 +187,7 @@ impl Plugin for GameStatesPlugin {
             .init_state::<GameState>()  // Use init_state for States
             .init_resource::<GameSession>()
             // OnExit schedule for fade-out completion check
-            .add_systems(OnExit(GameState::FadeOut), 
+            .add_systems(OnExit(GameState::FadeOut),
                 systems::game_state_transitions::check_fade_out_completion)
             // OnEnter/OnExit for UI spawning/despawning
             .add_systems(OnEnter(GameState::MainMenu), spawn_main_menu)
@@ -254,7 +256,7 @@ fn test_pause_state_persists_across_frames() {
     // ... setup ...
 
     // Transition to Paused
-    // ... send message ...
+    // ... set NextState ...
     app.update();
 
     // Run 10 more frames
@@ -308,7 +310,7 @@ RUST_LOG=brkrs::systems::game_state_transitions=trace cargo run
 
 1. Add variant to `GameState` enum
 2. Update `is_valid_transition()` function
-3. Add transition messages for new state
+3. Add NextState transitions for new state
 4. Create systems that run conditionally in new state
 5. Write tests for new state transitions
 
@@ -332,11 +334,11 @@ app.add_systems(Update, (
 
 ### "Invalid state transition" warnings
 
-**Cause**: Sending transition request from invalid current state **Solution**: Check transition matrix in data-model.md, ensure current state allows target state
+**Cause**: Requesting transition from invalid current state **Solution**: Check transition matrix in data-model.md, ensure current state allows target state
 
 ### State not changing
 
-**Cause**: Message not being read (schedule ordering issue) **Solution**: Ensure `process_state_transitions` system is in Update schedule and MessageReader exists
+**Cause**: State transition schedule ordering issue **Solution**: Ensure state transition logic is in the correct schedule (OnEnter/OnExit or Update)
 
 ### Entities not despawning on state exit
 
@@ -372,12 +374,11 @@ app.add_systems(Update, (
 ```rust
 fn transition_to_next_level(
     // ... params ...
-    mut writer: MessageWriter<StateTransitionRequest>,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut commands: Commands,
 ) {
-    writer.write(StateTransitionRequest {
-        target_state: GameState::FadeOut,
-        context: Some(StateTransitionContext::LevelComplete { next_level: 5 }),
-    });
+    commands.insert_resource(StateTransitionContext::LevelChange { target_level: 5 });
+    next_state.set(GameState::FadeOut);
 }
 ```
 
@@ -386,7 +387,7 @@ fn transition_to_next_level(
 ## Performance Notes
 
 - State transitions: O(1) enum assignment
-- Message reading: O(N) where N = messages per frame (typically 0-2)
+- State transitions: O(1) enum update via NextState
 - UI updates: Only on state change (use `Changed<GameState>` filter)
 - Entity cleanup: Automatic via Bevy's DespawnOnExit
 
@@ -400,7 +401,7 @@ fn transition_to_next_level(
 - [Data Model](data-model.md)
 - [State Transition Contracts](contracts/state-transitions.md)
 - [Research Notes](research.md)
-- Bevy Messages Documentation: <https://docs.rs/bevy/0.17.3/bevy/ecs/event/struct.MessageWriter.html>
+- Bevy States Documentation: <https://docs.rs/bevy/0.17.3/bevy/ecs/schedule/trait.States.html>
 - Constitution: `.specify/memory/constitution.md`
 
 ---

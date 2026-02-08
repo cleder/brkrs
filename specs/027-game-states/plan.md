@@ -8,12 +8,12 @@ See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-Implement a comprehensive game state management system with 7 distinct states (Main Menu, Playing, Paused, Fade Out, Fade In, Level Transition, Game Over) that controls game flow using message-based transitions.
+Implement a comprehensive game state management system with 7 distinct states (Main Menu, Playing, Paused, Fade Out, Fade In, Level Transition, Game Over) that controls game flow using Bevy's States system.
 The system must freeze gameplay during paused states, manage life loss with fade animations and lives checking, support minimal main menu navigation, and provide robust state transition validation with warning logging.
 
 ## Technical Context
 
-**Language/Version**: Rust 1.81 (edition 2021) **Primary Dependencies**: Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1 **Storage**: N/A (in-memory ECS state only) **Testing**: cargo test (integration tests following TDD workflow) **Target Platform**: Native (Linux/Windows/macOS) and WASM **Project Type**: Single project (Bevy game) **Performance Goals**: 60 FPS maintained during all state transitions and fade animations **Constraints**: State transitions within 1 frame, fade animations 0.5-1.0s, no entity orphaning **Scale/Scope**: 7 game states, ~10 state transition messages, minimal UI (2 menu buttons)
+**Language/Version**: Rust 1.81 (edition 2021) **Primary Dependencies**: Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1 **Storage**: N/A (in-memory ECS state only) **Testing**: cargo test (integration tests following TDD workflow) **Target Platform**: Native (Linux/Windows/macOS) and WASM **Project Type**: Single project (Bevy game) **Performance Goals**: 60 FPS maintained during all state transitions and fade animations **Constraints**: State transitions within 1 frame, fade animations 0.5-1.0s, no entity orphaning **Scale/Scope**: 7 game states, ~10 state transitions, minimal UI (2 menu buttons)
 
 ## Constitution Check
 
@@ -31,7 +31,7 @@ The system must freeze gameplay during paused states, manage life loss with fade
 - **Rationale**: Bevy 0.17 provides a dedicated States system specifically designed for app state management.
   The `States` trait with `NextState` resource is the idiomatic way to handle state transitions.
   It integrates seamlessly with schedules (`OnEnter`, `OnExit`) and run conditions (`in_state`).
-- **NOT using custom Messages**: While MessageWriter is appropriate for data streams (telemetry, events), state transitions are better handled by Bevy's States system which is purpose-built for this use case.
+- **NOT using custom transition events for state changes**: State transitions are handled by Bevy's States system, which is purpose-built for this use case.
 
 ✅ **States Integration**:
 
@@ -47,7 +47,7 @@ The system must freeze gameplay during paused states, manage life loss with fade
 
 ### Bevy 0.17 Prohibitions Compliance
 
-✅ **NO Panicking Queries**: All queries use `?` operator and return Results ✅ **NO Unconditional State Overwrites**: State machine only writes to GameState resource when transition messages are received (not every frame) ✅ **NO Message/Event Confusion**: Only using `#[derive(Message)]` with `MessageWriter`, no Event mixing ✅ **NO Universal Updates**: UI updates use `Changed<GameState>` filter ✅ **NO Static Mutable State**: All state stored in Resources/Components
+✅ **NO Panicking Queries**: All queries use `?` operator and return Results ✅ **NO Unconditional State Overwrites**: State machine only writes to NextState when transitions are requested (not every frame) ✅ **NO Universal Updates**: UI updates use `Changed<GameState>` filter ✅ **NO Static Mutable State**: All state stored in Resources/Components
 
 ### Additional Compliance
 
@@ -56,7 +56,7 @@ The system must freeze gameplay during paused states, manage life loss with fade
 ### Gates Status
 
 - [x] TDD workflow defined
-- [x] States system rationale documented  
+- [x] States system rationale documented
 - [x] No constitutional violations
 - [x] Multi-frame persistence tests planned
 - [x] State cleanup strategy defined
@@ -74,7 +74,7 @@ specs/027-game-states/
 ├── data-model.md        # Phase 1 output (/speckit.plan command)
 ├── quickstart.md        # Phase 1 output (/speckit.plan command)
 ├── contracts/           # Phase 1 output (/speckit.plan command)
-│   └── state-transitions.md  # State transition message contracts
+│   └── state-transitions.md  # State transition contracts and validation
 └── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
