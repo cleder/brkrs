@@ -20,17 +20,19 @@ Acceptance scenarios SHOULD include checks that:
 
 Players launch the game and must see a main menu where they can start a new game.
 This is the critical entry point for all gameplay.
+The main menu provides two options: "New Game" (transitions to Playing) and "Quit" (exits the application).
 
 **Why this priority**: This is the foundational entry state.
 Without it, players cannot enter the game world.
 
-**Independent Test**: Can be tested by launching the game, verifying main menu renders, and simulating a "start game" action that transitions to the Playing state.
+**Independent Test**: Can be tested by launching the game, verifying main menu renders with New Game and Quit buttons, and simulating a "New Game" action that transitions to the Playing state.
 
 **Acceptance Scenarios**:
 
 1. **Given** the game is launched, **When** the application initializes, **Then** the Main Menu state is active
 2. **Given** the Main Menu state is active, **When** player selects "New Game", **Then** a state transition message is sent and the Playing state becomes active
 3. **Given** the Main Menu state is active, **When** player selects "New Game", **Then** gameplay systems are enabled and the first level is loaded
+4. **Given** the Main Menu state is active, **When** player selects "Quit", **Then** the application cleanly shuts down
 
 ---
 
@@ -55,13 +57,15 @@ Without active gameplay working, the feature has no value.
 
 ### User Story 3 - Pause/Resume Gameplay (Priority: P1)
 
-Players can pause the game mid-level, freezing all gameplay mechanics, then resume from the same point.
+Players can pause the game mid-level from the Playing state, freezing all gameplay mechanics, then resume from the same point.
 Physics, animations, and input must all freeze when paused.
+Pause is only valid from the Playing state; pause requests from other states (e.g., Main Menu, Fade Out) are invalid and logged as warnings.
 
 **Why this priority**: Pause is essential for accessibility and player control.
 Players need to step away from the game without losing progress.
 
-**Independent Test**: Can be tested by transitioning to Paused state and verifying that physics, animations, and input no longer process, then resuming and confirming state restoration.
+**Independent Test**: Can be tested by transitioning to Playing state, pausing, and verifying that physics, animations, and input no longer process, then resuming and confirming state restoration.
+Also test that pause from other states is rejected.
 
 **Acceptance Scenarios**:
 
@@ -70,6 +74,7 @@ Players need to step away from the game without losing progress.
 3. **Given** the Paused state is active, **When** player provides input, **Then** paddle does NOT respond
 4. **Given** the Paused state is active, **When** resume message is sent, **Then** the Playing state becomes active with all previous state intact
 5. **Given** the game was paused for multiple frames, **When** the game resumes, **Then** entity positions and velocities reflect the state before the pause message
+6. **Given** the Main Menu state is active, **When** pause message is sent, **Then** the state remains Main Menu and a warning is logged
 
 ---
 
@@ -93,20 +98,22 @@ Players must be able to advance to subsequent levels with a smooth transition.
 
 ### User Story 5 - Life Loss Handling (Priority: P1)
 
-When the player loses a life but has lives remaining, the game enters Fade Out state, respawns the ball, and fades back in.
-If no lives remain, the game enters Game Over state.
+When the player loses a life, the game **always** enters Fade Out state.
+During the Fade Out animation, no decision is made.
+After the fade-out animation completes, a lives check determines the next transition: if lives remain, the ball respawns and Fade In plays; if no lives remain, the Game Over state activates.
 
 **Why this priority**: Life loss is a core game mechanic that players encounter frequently.
 Proper handling is essential for game feel and progression.
 
-**Independent Test**: Can be tested by triggering a life loss with lives remaining, verifying fade-out → respawn → fade-in, then testing with zero lives to verify Game Over state.
+**Independent Test**: Can be tested by triggering a life loss with lives remaining, verifying fade-out → respawn → fade-in, then testing with zero lives to verify Game Over state after fade completes.
 
 **Acceptance Scenarios**:
 
-1. **Given** the Playing state is active with 1+ lives remaining, **When** ball-lost message is sent, **Then** the Fade Out state becomes active
-2. **Given** the Fade Out state is active after life loss, **When** fade-out completes, **Then** ball is respawned, the Fade In state becomes active, and lives count decreases by 1
-3. **Given** the Fade In state is active after life loss, **When** fade-in completes, **Then** the Playing state becomes active with the same level
-4. **Given** the Playing state is active with 0 lives remaining, **When** ball-lost message is sent, **Then** the Game Over state becomes active directly (no respawn)
+1. **Given** the Playing state is active with 1+ lives remaining, **When** ball-lost message is sent, **Then** the Fade Out state becomes active immediately
+2. **Given** the Fade Out state is active after life loss, **When** fade-out animation completes, **Then** a lives check occurs
+3. **Given** the Fade Out state's animation completes with 1+ lives remaining, **When** the lives check concludes, **Then** the ball is respawned and the Fade In state becomes active
+4. **Given** the Fade In state is active after life loss, **When** fade-in completes, **Then** the Playing state becomes active with the same level and lives count decreased by 1
+5. **Given** the Fade Out state's animation completes with 0 lives remaining, **When** the lives check concludes, **Then** the Game Over state becomes active (no respawn, no Fade In)
 
 ---
 
@@ -149,13 +156,15 @@ The player has already lost, so this state is reached less frequently than Playi
 - **FR-006**: System MUST support a Level Transition state sequence: Fade Out → load next level → Fade In → Playing
 - **FR-007**: System MUST support a Game Over state that is active when lives reach zero
 - **FR-008**: System MUST define state transitions triggered by game events/messages, including: "start-game", "pause-game", "resume-game", "level-complete", "ball-lost", "return-to-menu", "new-game"
-- **FR-009**: System MUST use message-based architecture to trigger state transitions (Messages or Observers as appropriate)
-- **FR-010**: System MUST prevent state transitions that are invalid (e.g., cannot pause from Main Menu)
+- **FR-009**: System MUST use `MessageWriter`/`MessageReader` for state transition messages (explicit message passing for critical state changes)
+- **FR-010**: System MUST prevent state transitions that are invalid (e.g., cannot pause from Main Menu), log them as warnings, and maintain the current state
 - **FR-011**: System MUST ensure state transitions are idempotent (sending the same transition message twice must not cause unexpected behavior)
 - **FR-012**: System MUST properly disable/enable relevant systems when entering/exiting states (e.g., input processing only active in Playing/Paused, physics only active in Playing)
 - **FR-013**: System MUST preserve game state when transitioning from Playing → Paused and back to Playing
 - **FR-014**: System MUST preserve level state when transitioning from Playing → Level Transition → Playing with the next level (entities from previous level cleaned up)
 - **FR-015**: System MUST support resuming from Paused state at the exact same game state without player-initiated movement or physics changes
+- **FR-016**: System MUST perform lives check **after** the Fade Out animation completes and branch based on remaining lives: if lives remain → respawn ball and transition to Fade In; if no lives remain → transition to Game Over
+- **FR-017**: System MUST only allow pause requests from the Playing state; pause requests from other states (Main Menu, Paused, Fade Out, Fade In, Level Transition, Game Over) are invalid and logged as warnings
 
 ### Key Entities
 
@@ -178,8 +187,18 @@ The player has already lost, so this state is reached less frequently than Playi
 
 ## Assumptions
 
-- State transitions use Bevy's message system (MessageWriter/MessageReader) or Observers (TBD: clarified below)
+- State transitions use Bevy's `MessageWriter`/`MessageReader` system for explicit message passing (decided during clarification)
 - Fade Out/Fade In animations take approximately 0.5-1.0 seconds
 - All state-related entity spawning/despawning is idempotent (spawning the same entity twice does not cause duplicates)
 - Level loading includes automatic despawn of all level-specific entities from the previous level
 - The pause state preserves physics bodies and queries such that resumption requires no re-initialization
+
+## Clarifications
+
+### Session 2026-02-08
+
+- Q: Which event system for state transitions? → A: `MessageWriter`/`MessageReader` for explicit message passing
+- Q: When does lives check occur during life loss flow? → A: After fade-out animation completes (during Fade Out state exit)
+- Q: What should the Main Menu support? → A: Minimal (New Game, Quit buttons only)
+- Q: How to handle invalid state transitions? → A: Log as warning and ignore (no state change)
+- Q: Should pause be accessible from states other than Playing? → A: No, pause is only valid from Playing state
