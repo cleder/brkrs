@@ -14,6 +14,7 @@ pub fn is_valid_transition(current: &GameState, target: &GameState) -> bool {
     let valid = matches!(
         (current, target),
         (MainMenu, Playing)
+            | (MainMenu, FadeOut)
             | (Playing, Paused)
             | (Playing, FadeOut)
             | (Paused, Playing)
@@ -402,6 +403,7 @@ pub fn is_valid_transition_idempotent(current: &GameState, target: &GameState) -
     let valid = matches!(
         (current, target),
         (MainMenu, Playing)
+            | (MainMenu, FadeOut)
             | (Playing, Paused)
             | (Playing, FadeOut)
             | (Paused, Playing)
@@ -416,7 +418,7 @@ pub fn is_valid_transition_idempotent(current: &GameState, target: &GameState) -
     if !valid {
         error!(
             target: "game_state",
-            "Invalid state transition: {:?} -> {:?}. Valid transitions from {:?}: MainMenu→Playing, Playing→Paused/FadeOut, Paused→Playing, FadeOut→FadeIn/LevelTransition/GameOver, LevelTransition→FadeIn, FadeIn→Playing, GameOver→MainMenu",
+            "Invalid state transition: {:?} -> {:?}. Valid transitions from {:?}: MainMenu→Playing/FadeOut, Playing→Paused/FadeOut, Paused→Playing, FadeOut→FadeIn/LevelTransition/GameOver, LevelTransition→FadeIn, FadeIn→Playing, GameOver→MainMenu",
             current, target, current
         );
     }

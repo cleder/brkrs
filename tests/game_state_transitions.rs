@@ -415,19 +415,19 @@ fn ec005_invalid_transition_from_main_menu_to_fade_out() {
     let state = app.world().resource::<State<GameState>>();
     assert_eq!(*state.get(), GameState::MainMenu);
 
-    // Try to transition to FadeOut directly (invalid path)
+    // Transition to FadeOut (valid path for level loading on restart)
     app.world_mut()
         .resource_mut::<NextState<GameState>>()
         .set(GameState::FadeOut);
 
     app.update();
 
-    // Should still be in MainMenu (transition rejected)
+    // Should transition to FadeOut (level loading sequence)
     let state = app.world().resource::<State<GameState>>();
     assert_eq!(
         *state.get(),
-        GameState::MainMenu,
-        "Invalid transition from MainMenu to FadeOut should be rejected"
+        GameState::FadeOut,
+        "MainMenu → FadeOut transition should succeed for level loading"
     );
 }
 

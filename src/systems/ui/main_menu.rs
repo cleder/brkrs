@@ -2,7 +2,7 @@ use bevy::app::AppExit;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 
-use crate::game_state::{GameState, StateTransitionContext};
+use crate::game_state::{GameSession, GameState, StateTransitionContext};
 use crate::systems::game_state_transitions::is_valid_transition;
 
 #[derive(Component)]
@@ -116,6 +116,7 @@ pub fn despawn_main_menu(mut commands: Commands, query: Query<Entity, With<MainM
 pub fn handle_main_menu_buttons(
     current_state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
+    session: Res<GameSession>,
     mut commands: Commands,
     mut exit: MessageWriter<AppExit>,
     keyboard: Option<Res<ButtonInput<KeyCode>>>,
@@ -151,7 +152,10 @@ pub fn handle_main_menu_buttons(
     }
 
     if start_requested && is_valid_transition(current_state.get(), &GameState::Playing) {
-        commands.insert_resource(StateTransitionContext::NewGame);
-        next_state.set(GameState::Playing);
+        // When starting a new game, ensure we load from GameSession.current_level
+        // and go through proper level load states
+        let target_level = session.current_level;
+        commands.insert_resource(StateTransitionContext::LevelChange { target_level });
+        next_state.set(GameState::FadeOut);
     }
 }
