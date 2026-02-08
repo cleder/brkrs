@@ -91,13 +91,13 @@ The `Index` column refers to the brick's identifier in the map file, the ✅️ 
 
 | Index | Image | Name | Score | Description |
 |-------|-------|------|-------|-------------|
-| 43 | ![Down](img/bricks/Stonedown.gif) | Down | 125 | Accelerates ball downward |
-| 44 | ![Left](img/bricks/Stonelleft.gif) | Left | 125 | Accelerates ball leftward |
-| 45 | ![Right](img/bricks/Stoneright.gif) | Right | 125 | Accelerates ball rightward |
-| 46 | ![Up](img/bricks/Stoneup.gif) | Up | 125 | Accelerates ball upward |
-| 47 | | Up-Right | 125 | Accelerates ball up and right |
-| 48 | | Up-Left | 125 | Accelerates ball up and left |
-| 52 | ![Phone](img/bricks/Stonephone.gif) | Phone | 40 | Randomizes ball velocity and direction |
+| 43 ✅️ | ![Down](img/bricks/Stonedown.gif) | Down | 125 | Accelerates ball downward |
+| 44 ✅️ | ![Left](img/bricks/Stonelleft.gif) | Left | 125 | Accelerates ball leftward |
+| 45 ✅️ | ![Right](img/bricks/Stoneright.gif) | Right | 125 | Accelerates ball rightward |
+| 46 ✅️ | ![Up](img/bricks/Stoneup.gif) | Up | 125 | Accelerates ball upward |
+| 47 ✅️ | | Up-Right | 125 | Accelerates ball up and right |
+| 48 ✅️ | | Up-Left | 125 | Accelerates ball up and left |
+| 52 ✅️ | ![Phone](img/bricks/Stonephone.gif) | Phone | 40 | Randomizes ball velocity and direction |
 
 ### Special Bricks
 

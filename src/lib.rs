@@ -351,6 +351,7 @@ fn add_core_observers(app: &mut App) {
     app.add_observer(on_paddle_ball_hit);
     app.add_observer(on_brick_hit);
     app.add_observer(start_camera_shake);
+    app.add_observer(systems::brick_effects::apply_direction_brick_effects);
 }
 
 fn add_gravity_feature(app: &mut App) {
@@ -740,6 +741,7 @@ pub fn mark_brick_on_ball_collision(
         Query<(Entity, &mut BrickTypeId), With<Brick>>,
     )>,
     transforms: Query<&Transform>,
+    velocities: Query<&Velocity, With<Ball>>,
     mut commands: Commands,
     mut processed_bricks: Local<std::collections::HashSet<Entity>>,
     mut spawn_msgs: Option<MessageWriter<crate::signals::SpawnMerkabaMessage>>,
@@ -871,6 +873,41 @@ pub fn mark_brick_on_ball_collision(
                             });
                         }
                     }
+                    // Direction bricks (types 43-48, 52): emit DirectionBrickEffect trigger
+                    if matches!(current_type, 43..=48 | 52) {
+                        let ball_velocity = velocities
+                            .get(triggering_ball)
+                            .map(|v| v.linvel)
+                            .unwrap_or(Vec3::ZERO);
+
+                        // Compute impulse vector based on brick type
+                        let impulse = match current_type {
+                            43 => Vec3::new(5.0, 0.0, 0.0),   // forward (toward far wall)
+                            44 => Vec3::new(0.0, 0.0, 5.0),   // left
+                            45 => Vec3::new(0.0, 0.0, -5.0),  // right
+                            46 => Vec3::new(-5.0, 0.0, 0.0),  // backward (toward paddle)
+                            47 => Vec3::new(-5.0, 0.0, -5.0), // backward-right
+                            48 => Vec3::new(-5.0, 0.0, 5.0),  // backward-left
+                            52 => {
+                                // Random direction brick: RNG-based impulse in XZ plane (horizontal)
+                                // Magnitude: 5.0-15.0 units/sec, Direction: 0-2π radians
+                                use rand::Rng;
+                                let mut rng = rand::rng();
+                                let magnitude = rng.random_range(5.0..15.0);
+                                let angle: f32 = rng.random_range(0.0..std::f32::consts::TAU);
+                                Vec3::new(magnitude * angle.cos(), 0.0, magnitude * angle.sin())
+                            }
+                            _ => Vec3::ZERO,
+                        };
+
+                        commands.trigger(crate::signals::DirectionBrickEffect {
+                            ball_entity: triggering_ball,
+                            brick_type: current_type,
+                            brick_position: brick_pos,
+                            velocity_before: ball_velocity,
+                            impulse,
+                        });
+                    }
                     processed_bricks.insert(entity);
                     info!(
                         "mark_brick_on_ball_collision: processing brick entity {:?}, type {}",
@@ -916,7 +953,11 @@ pub fn mark_brick_on_ball_collision(
                             "mark_brick_on_ball_collision: mark entity {:?} as MarkedForDespawn, type {}",
                             entity, current_type
                         );
-                        commands.entity(entity).insert(MarkedForDespawn);
+                        commands.entity(entity).queue_silenced(
+                            |mut entity_commands: bevy::ecs::world::EntityWorldMut| {
+                                entity_commands.insert(MarkedForDespawn);
+                            },
+                        );
                     }
                 }
             }
@@ -1166,7 +1207,11 @@ pub fn read_character_controller_collisions(
                             brick = ?brick,
                             brick_type = crate::level_format::PADDLE_DESTROYABLE_BRICK,
                         );
-                        commands.entity(brick).insert(MarkedForDespawn);
+                        commands.entity(brick).queue_silenced(
+                            |mut entity_commands: bevy::ecs::world::EntityWorldMut| {
+                                entity_commands.insert(MarkedForDespawn);
+                            },
+                        );
                     }
                     // Check if this is a hazard brick (type 42 or 91) and emit life loss
                     if crate::level_format::is_hazard_brick(brick_type.0)

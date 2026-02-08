@@ -1,8 +1,11 @@
+:orphan:
+
 # AGPL-3.0
 
 Copyright (C) 2007 Free Software Foundation, Inc. `<https://fsf.org/>`
 
 Everyone is permitted to copy and distribute verbatim copies of this license document, but changing it is not allowed.
+<!-- INCLUSION-MARKER-DO-NOT-REMOVE -->
 
 ## Preamble
 
@@ -333,3 +336,4 @@ There are many ways you could offer source, and different solutions will be bett
 
 You should also get your employer (if you work as a programmer) or school, if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see <https://www.gnu.org/licenses/>.
+<!-- INCLUSION-MARKER-END-DO-NOT-REMOVE -->

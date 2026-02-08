@@ -18,7 +18,7 @@ This inverts the normal brick-ball destruction mechanic by making the paddle the
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research.*
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               *Re-check after Phase 1 design.*
+*Re-check after Phase 1 design.*
 
 ### Test-Driven Development (TDD) Compliance
 
@@ -30,26 +30,32 @@ This inverts the normal brick-ball destruction mechanic by making the paddle the
 ### Bevy 0.17 ECS Compliance
 
 **Message-Event Separation** (Constitution IX):
+
 - ✅ **Decision**: Use **Messages** (`MessageWriter<BrickDestroyed>`) for paddle-brick collision/destruction
   - **Justification**: Matches existing brick destruction pattern (see `src/lib.rs:despawn_marked_entities`), enables frame-agnostic score integration, consistent with scoring system architecture
   - **NOT using Observers**: No immediate reactive logic needed; destruction flows through existing message-based brick destruction pipeline
 
 **Hierarchy Safety** (Constitution IX):
+
 - ✅ **Despawn pattern**: Use `commands.entity(brick).despawn_recursive()` for brick removal
   - **Rationale**: Handles potential nested entity structures (see spec AS 1.6, edge case 5)
 
 **Fallible Systems** (Constitution IX):
+
 - ✅ **Error handling**: Collision detection uses early returns for missing entities (`let Some(entity) = query.get() else { return; }`)
   - **No panicking queries**: Avoids `.unwrap()` on query results
 
 **Multi-Frame Persistence** (Constitution IX):
+
 - ✅ **No unconditional overwrites**: Brick destruction is one-way (despawn); scoring system uses saturating addition
   - **Guard**: Tests verify score persists across 10 frames (AS 1.4)
 
 **Change Detection** (Constitution IX):
+
 - N/A - No UI updates in this feature (score display handled by existing system)
 
 **Logging** (Clarification: FR-014):
+
 - ✅ **DEBUG-level logging**: Paddle-brick collisions logged via `debug!()` macro from tracing framework
 
 ### Coordinate System
@@ -60,6 +66,7 @@ Ball bounce physics are handled entirely by bevy_rapier3d collision system.
 ### Gate Status
 
 **✅ PASS** - All constitution requirements satisfied:
+
 - TDD workflow defined
 - Messages chosen over Observers (justified)
 - Hierarchy safety via `despawn_recursive()`
@@ -123,6 +130,7 @@ This section remains empty as no complexity violations were introduced by the de
 **Output**: [research.md](research.md)
 
 **Key Decisions**:
+
 1. **Paddle collision detection**: Extend existing `read_character_controller_collisions` system (reuses infrastructure)
 2. **Scoring integration**: Leverage existing `BrickDestroyed` message flow (zero scoring system changes)
 3. **Ball bounce prevention**: Add `is_paddle_destroyable_brick()` guard in ball collision handler
@@ -140,6 +148,7 @@ No blocking questions remain.
 **Status**: ✅ COMPLETE
 
 **Output**:
+
 - [data-model.md](data-model.md) - Components, messages, systems, relationships
 - [contracts/events.md](contracts/events.md) - `BrickDestroyed` message contract (reused)
 - [quickstart.md](quickstart.md) - Build, test, and verification instructions
@@ -147,6 +156,7 @@ No blocking questions remain.
 ### Data Model Summary
 
 **Components** (all existing - zero new types):
+
 - `BrickTypeId(57)` - Type identifier
 - `Brick` - Marker for brick entities
 - `CountsTowardsCompletion` - Level completion flag
@@ -154,19 +164,23 @@ No blocking questions remain.
 - `Transform`, `Collider`, `Mesh3d`, `MeshMaterial3d` - Standard brick components
 
 **Messages** (existing - zero new types):
+
 - `BrickDestroyed` - Emitted for both ball-triggered AND paddle-triggered destruction
   - `brick_type: 57` identifies paddle-destroyable bricks
   - `destroyed_by: None` for paddle destruction
 
 **Functions**:
+
 - `is_paddle_destroyable_brick(u8) -> bool` - Type 57 identifier helper
 - `brick_points(57, _) -> 250` - Already implemented in scoring system
 
 **Systems Modified**:
+
 - `read_character_controller_collisions` - Add type 57 check + `MarkedForDespawn` insertion
 - `handle_collision_events` - Add `is_paddle_destroyable_brick()` guard to skip destruction
 
 **Systems Unchanged**:
+
 - `despawn_marked_entities` - Handles despawn + message emission (no changes)
 - `award_points_system` - Reads `BrickDestroyed`, awards 250 points (no changes)
 - Level loader - Spawns type 57 bricks with existing pattern (no changes)
@@ -174,6 +188,7 @@ No blocking questions remain.
 ### Constitution Re-Check (Post-Design)
 
 **✅ ALL REQUIREMENTS MAINTAINED**:
+
 - Messages used for destruction (not Observers) - [data-model.md systems section]
 - `despawn_recursive()` for hierarchy safety - [data-model.md despawn system]
 - Fallible queries with early returns - [contracts/events.md code examples]
