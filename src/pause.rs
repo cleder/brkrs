@@ -14,7 +14,9 @@ use bevy::window::{CursorOptions, PrimaryWindow};
 use bevy::window::{Window, WindowMode};
 use bevy_rapier3d::prelude::*;
 
+use crate::game_state::GameState;
 use crate::level_loader::LevelAdvanceState;
+use crate::systems::game_state_transitions::is_valid_transition;
 use crate::ui::pause_overlay::{despawn_pause_overlay, spawn_pause_overlay};
 
 /// Global pause state resource.
@@ -54,7 +56,12 @@ impl Plugin for PausePlugin {
             Update,
             (
                 // Input handling systems (can run in parallel)
-                (handle_pause_input, handle_resume_input),
+                (
+                    handle_pause_input,
+                    handle_resume_input,
+                    handle_pause_input_game_state.run_if(in_state(GameState::Playing)),
+                    handle_resume_input_game_state.run_if(in_state(GameState::Paused)),
+                ),
                 // State-dependent systems (run after input, before UI)
                 // Physics control runs after LevelAdvanceSystems to avoid race conditions
                 apply_pause_to_physics.after(crate::level_loader::LevelAdvanceSystems),
@@ -65,6 +72,36 @@ impl Plugin for PausePlugin {
             )
                 .chain(),
         );
+    }
+}
+
+/// GameState-based pause input handler.
+///
+/// Sets NextState(GameState::Paused) when ESC is pressed and current state is Playing.
+fn handle_pause_input_game_state(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    current_state: Res<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    if keyboard.just_pressed(KeyCode::Escape)
+        && is_valid_transition(current_state.get(), &GameState::Paused)
+    {
+        next_state.set(GameState::Paused);
+    }
+}
+
+/// GameState-based resume input handler.
+///
+/// Sets NextState(GameState::Playing) on left-click when current state is Paused.
+fn handle_resume_input_game_state(
+    mouse: Res<ButtonInput<MouseButton>>,
+    current_state: Res<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    if mouse.just_pressed(MouseButton::Left)
+        && is_valid_transition(current_state.get(), &GameState::Playing)
+    {
+        next_state.set(GameState::Playing);
     }
 }
 

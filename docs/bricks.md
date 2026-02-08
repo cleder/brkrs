@@ -85,7 +85,15 @@ The `Index` column refers to the brick's identifier in the map file, the ✅️ 
 | Index | Image | Name | Score | Description |
 |-------|-------|------|-------|-------------|
 | 40 | ![Bomb](img/bricks/Stonebomb.gif) | Bomb | 100 | Explodes, spawns fragments, if the paddle is in the 'blast radius' the player "dies" |
-| 42 ✅️ | ![Killer](img/bricks/Stonekill.gif) | Killer | 90 | **Deadly** - Touching with paddle kills you |
+| 42 ✅️ | ![Killer](img/bricks/Stonekill.gif) | Killer | 90 | **Deadly** - Paddle contact triggers immediate life loss (regardless of balls in play) |
+| 91 ✅️ | | Killer (variant) | 90 | **Deadly** - Paddle contact triggers immediate life loss (same behavior as type 42) |
+
+**Hazard Brick Behavior:**
+
+- When the paddle touches a hazard brick (types 42 or 91), it **immediately triggers a life loss**
+- This occurs **regardless of how many balls are currently in play**
+- Unlike normal ball losses (LowerGoal), hazard bricks always cause life loss
+- Only one life loss per frame even if multiple hazard bricks are contacted simultaneously
 
 ### Direction Bricks
 

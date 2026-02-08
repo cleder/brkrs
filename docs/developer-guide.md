@@ -150,7 +150,7 @@ The main application (`src/lib.rs::run()`) registers these plugins:
 
 ### How to Create a New Plugin
 
-**Example: Simple feature plugin**
+### Example: Simple feature plugin
 
 ```rust
 pub struct MyFeaturePlugin;
@@ -372,9 +372,73 @@ Key systems:
 | Physics (Rapier3D) | Collision detection, physics simulation |
 | Level Loader | Parse RON files, spawn entities |
 | Pause System | Game state management |
-| Respawn | Ball respawn after falling |
+| Respawn | Ball loss detection, life management, respawn sequencing |
 | Multi-Hit | Brick damage states, material transitions |
 | Textures | Asset loading and material management |
+
+### Respawn System Architecture
+
+The respawn system uses a **two-stage event architecture** to separate ball loss detection from life determination:
+
+#### Stage 1: Ball Loss Detection
+
+```rust
+// Emitted when a ball physically leaves play
+#[derive(Message)]
+pub struct BallLostEvent {
+    pub ball: Entity,
+    pub cause: LifeLossCause,  // LowerGoal | MerkabaCollision | PaddleHazard
+    pub ball_spawn: SpawnTransform,
+}
+```
+
+Sources:
+
+- Ball hits LowerGoal (bottom boundary) → `detect_ball_loss()` in respawn.rs
+- Paddle collides with Merkaba → `on_merkaba_paddle_collision_life_loss()` in merkaba.rs
+- Paddle touches hazard brick (42/91) → `read_character_controller_collisions()` in lib.rs
+
+#### Stage 2: Life Loss Determination
+
+```rust
+// Only emitted when a life is actually lost
+#[derive(Message)]
+pub struct LifeLostEvent {
+    pub ball: Entity,
+    pub cause: LifeLossCause,
+    pub ball_spawn: SpawnTransform,
+}
+```
+
+The `determine_life_loss()` system reads `BallLostEvent` and applies these rules:
+
+- **LowerGoal**: Only emits `LifeLostEvent` if `remaining_balls == 0` (last ball)
+- **Merkaba/PaddleHazard**: Always emits `LifeLostEvent` (instant death)
+
+**Multi-Ball Behavior:**
+
+- When multiple balls are in play, losing one to LowerGoal does NOT trigger life loss
+- Only when the LAST ball falls does it trigger FadeOut and respawn
+- Merkaba and hazard bricks always cause immediate life loss, even with multiple balls
+
+**Lives Counter Synchronization:**
+
+Two separate counters must stay synchronized:
+
+- `LivesState.lives_remaining` (u8) — **Source of truth** (respawn system)
+- `GameSession.lives_remaining` (u32) — Game state tracking (synced during transitions)
+
+The `check_fade_out_completion()` system syncs them:
+
+```rust
+let current_lives = lives_state.map(|ls| ls.lives_remaining).unwrap_or(0);
+if current_lives > 0 {
+    session.lives_remaining = current_lives as u32;  // Sync
+    next_state.set(GameState::FadeIn);
+} else {
+    next_state.set(GameState::GameOver);
+}
+```
 
 ### Physics Configuration System
 

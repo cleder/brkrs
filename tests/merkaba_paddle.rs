@@ -11,7 +11,7 @@ use bevy_rapier3d::rapier::prelude::CollisionEventFlags;
 
 use brkrs::signals::MerkabaPaddleCollision;
 use brkrs::systems::merkaba::Merkaba;
-use brkrs::systems::respawn::{LifeLostEvent, LivesState, SpawnPoints};
+use brkrs::systems::respawn::{LifeLostEvent, LivesState, RespawnPlugin, SpawnPoints};
 use brkrs::systems::textures::TypeVariantRegistry;
 use brkrs::{Ball, Paddle};
 
@@ -47,6 +47,9 @@ fn mock_despawn_on_life_loss(
 
 fn test_app() -> App {
     let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
     app.add_plugins(MinimalPlugins)
         .init_resource::<TypeVariantRegistry>()
         .init_resource::<SpawnPoints>()
@@ -57,10 +60,10 @@ fn test_app() -> App {
             lives_remaining: 3,
             on_last_life: false,
         })
-        .add_event::<CollisionEvent>() // Rapier uses Events, not Messages in Bevy 0.17+ context usually, but earlier errors suggested MessageReader. Let's stick to what worked or check lib.rs
+        .add_message::<CollisionEvent>()
         .add_message::<brkrs::signals::SpawnMerkabaMessage>()
-        .add_message::<LifeLostEvent>() // LifeLostEvent is a Message in respawn.rs
         // .add_message::<brkrs::signals::MerkabaPaddleCollision>() // REMOVED
+        .add_plugins(RespawnPlugin)
         .add_plugins(brkrs::systems::merkaba::MerkabaPlugin)
         .add_systems(Update, mock_despawn_on_life_loss);
 
@@ -71,12 +74,13 @@ fn test_app() -> App {
 }
 
 fn trigger_collision(app: &mut App, e1: Entity, e2: Entity) {
-    // If sys uses EventReader<CollisionEvent>, we must write to Events<CollisionEvent>
-    app.world_mut().send_event(CollisionEvent::Started(
-        e1,
-        e2,
-        CollisionEventFlags::empty(),
-    ));
+    app.world_mut()
+        .resource_mut::<Messages<CollisionEvent>>()
+        .write(CollisionEvent::Started(
+            e1,
+            e2,
+            CollisionEventFlags::empty(),
+        ));
 }
 
 /// T029: Paddle contact → life -1 + distinct paddle collision sound.
