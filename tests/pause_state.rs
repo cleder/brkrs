@@ -49,7 +49,7 @@ fn pause_blocks_systems_and_resume_restores() {
 
 #[test]
 fn pause_invalid_from_main_menu() {
-    let mut app = make_test_app();
+    let app = make_test_app();
 
     let state = app.world().resource::<State<GameState>>();
     assert!(!is_valid_transition(state.get(), &GameState::Paused));

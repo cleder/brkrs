@@ -199,7 +199,7 @@ pub fn brick_destruction_gravity_handler(
     mut destroyed_bricks: MessageReader<crate::signals::BrickDestroyed>,
     mut gravity_writer: MessageWriter<GravityChanged>,
 ) {
-    use rand::Rng;
+    use rand::RngExt;
 
     for destroyed in destroyed_bricks.read() {
         // Map brick type to gravity using constants for easy tuning

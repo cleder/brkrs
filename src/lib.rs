@@ -896,7 +896,7 @@ pub fn mark_brick_on_ball_collision(
                             52 => {
                                 // Random direction brick: RNG-based impulse in XZ plane (horizontal)
                                 // Magnitude: 5.0-15.0 units/sec, Direction: 0-2π radians
-                                use rand::Rng;
+                                use rand::RngExt;
                                 let mut rng = rand::rng();
                                 let magnitude = rng.random_range(5.0..15.0);
                                 let angle: f32 = rng.random_range(0.0..std::f32::consts::TAU);
