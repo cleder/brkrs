@@ -51,3 +51,4 @@ jobs:
             cargo update --verbose
             cargo build --verbose
             cargo test --verbose
+            cargo check --verbose
