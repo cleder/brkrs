@@ -72,6 +72,7 @@ pub struct RespawnBallVisuals {
 }
 
 pub fn spawn_fade_out_overlay(mut commands: Commands) {
+    info!(target: "game_state", "Spawning FadeOut overlay");
     commands.spawn((
         Node::default(),
         BackgroundColor(Color::BLACK),
@@ -81,6 +82,7 @@ pub fn spawn_fade_out_overlay(mut commands: Commands) {
 }
 
 pub fn spawn_fade_in_overlay(mut commands: Commands) {
+    info!(target: "game_state", "Spawning FadeIn overlay");
     commands.spawn((
         Node::default(),
         BackgroundColor(Color::BLACK),
@@ -118,8 +120,11 @@ pub fn check_fade_out_completion(
     }
 
     let Some(ctx) = context else {
+        warn!(target: "game_state", "FadeOut complete but no StateTransitionContext");
         return;
     };
+
+    info!(target: "game_state", "FadeOut complete with context: {:?}", *ctx);
 
     match *ctx {
         StateTransitionContext::LifeLoss => {
@@ -137,20 +142,28 @@ pub fn check_fade_out_completion(
                 session.lives_remaining = 0;
                 next_state.set(GameState::GameOver);
             }
+            // Remove context after using it for LifeLoss
+            commands.remove_resource::<StateTransitionContext>();
         }
-        StateTransitionContext::LevelChange { .. } => {
+        StateTransitionContext::LevelChange { target_level } => {
+            info!(
+                target: "game_state",
+                "FadeOut->LevelTransition for level {}",
+                target_level
+            );
             next_state.set(GameState::LevelTransition);
         }
         _ => {}
     }
 
-    commands.remove_resource::<StateTransitionContext>();
+    // Don't remove StateTransitionContext here - enter_level_transition needs it
 }
 
 pub fn check_fade_in_completion(
     mut next_state: ResMut<NextState<GameState>>,
     query: Query<&FadeTimer>,
     balls: Query<Entity, With<Ball>>,
+    paddles: Query<Entity, With<Paddle>>,
     spawn_points: Option<Res<SpawnPoints>>,
     ball_config: Option<Res<crate::physics_config::BallPhysicsConfig>>,
     meshes: Option<ResMut<Assets<Mesh>>>,
@@ -167,6 +180,13 @@ pub fn check_fade_in_completion(
     for entity in overlay_entities.iter() {
         commands.entity(entity).despawn();
     }
+
+    info!(
+        target: "game_state",
+        "FadeIn complete: balls={}, paddles={}",
+        balls.iter().count(),
+        paddles.iter().count()
+    );
 
     if balls.is_empty() {
         let Some(spawn_points) = spawn_points else {
@@ -243,6 +263,10 @@ pub fn check_fade_in_completion(
         ));
     }
 
+    info!(
+        target: "game_state",
+        "FadeIn complete, transitioning to Playing"
+    );
     next_state.set(GameState::Playing);
 }
 
@@ -263,21 +287,29 @@ pub fn enter_level_transition(
     brick_config_res: Option<Res<crate::physics_config::BrickPhysicsConfig>>,
     switch_state: Option<Res<LevelSwitchState>>,
 ) {
+    info!(target: "game_state", "enter_level_transition called");
+
     let Some(context) = context else {
+        warn!(target: "game_state", "enter_level_transition: No StateTransitionContext");
         return;
     };
 
     let Some(mut ctx) = ctx else {
+        warn!(target: "game_state", "enter_level_transition: No LevelContext");
         return;
     };
 
     let StateTransitionContext::LevelChange { target_level } = *context else {
+        warn!(target: "game_state", "enter_level_transition: StateTransitionContext is not LevelChange");
         return;
     };
 
     let Some(brick_config_res) = brick_config_res else {
+        warn!(target: "game_state", "enter_level_transition: No BrickPhysicsConfig");
         return;
     };
+
+    info!(target: "game_state", "enter_level_transition: Loading level {}", target_level);
 
     let result = crate::level_loader::load_level_for_state_transition(
         target_level,
@@ -298,6 +330,11 @@ pub fn enter_level_transition(
     match result {
         Ok(def) => {
             session.current_level = def.number;
+            info!(
+                target: "game_state",
+                "Level {} loaded during state transition, setting FadeIn",
+                def.number
+            );
             next_state.set(GameState::FadeIn);
         }
         Err(err) => {
@@ -418,7 +455,7 @@ pub fn is_valid_transition_idempotent(current: &GameState, target: &GameState) -
     if !valid {
         error!(
             target: "game_state",
-            "Invalid state transition: {:?} -> {:?}. Valid transitions from {:?}: MainMenu→Playing/FadeOut, Playing→Paused/FadeOut, Paused→Playing, FadeOut→FadeIn/LevelTransition/GameOver, LevelTransition→FadeIn, FadeIn→Playing, GameOver→MainMenu",
+            "Invalid state transition: {:?} -> {:?}. Valid transitions from {:?}: MainMenu->Playing/FadeOut, Playing->Paused/FadeOut, Paused->Playing, FadeOut->FadeIn/LevelTransition/GameOver, LevelTransition->FadeIn, FadeIn->Playing, GameOver->MainMenu",
             current, target, current
         );
     }

@@ -432,7 +432,11 @@ fn spawn_level_entities_impl(
     #[cfg(feature = "texture_manifest")] type_registry: Option<&TypeVariantRegistry>,
     brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
-    debug!("Spawning entities for level {}", def.number);
+    info!(
+        target: "level_loader",
+        "Spawning entities for level {}",
+        def.number
+    );
     // Shared material
     let debug_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.8, 0.2, 0.2),
@@ -547,6 +551,12 @@ fn spawn_level_entities_impl(
                                 },
                             ))
                             .insert(paddle_respawn_handle(position));
+                        info!(
+                            target: "level_loader",
+                            "Spawned paddle at position {:?} for level {}",
+                            position,
+                            def.number
+                        );
                     }
                 }
                 1 => {
@@ -728,6 +738,12 @@ fn spawn_level_entities_impl(
                 GravityScale(1.0),
             ))
             .insert(ball_respawn_handle(position));
+        info!(
+            target: "level_loader",
+            "Spawned ball at position {:?} for level {}",
+            position,
+            def.number
+        );
     }
 }
 
@@ -1125,6 +1141,20 @@ fn despawn_all_game_entities(
     merkaba_q: &Query<Entity, With<Merkaba>>,
     pending_merkaba_spawns: &mut Option<ResMut<PendingMerkabaSpawns>>,
 ) {
+    let brick_count = bricks.iter().count();
+    let paddle_count = paddle_q.iter().count();
+    let ball_count = ball_q.iter().count();
+    let merkaba_count = merkaba_q.iter().count();
+
+    info!(
+        target: "level_loader",
+        "Despawning game entities: bricks={}, paddles={}, balls={}, merkabas={}",
+        brick_count,
+        paddle_count,
+        ball_count,
+        merkaba_count
+    );
+
     // Despawn all bricks
     for entity in bricks.iter() {
         commands.entity(entity).despawn();

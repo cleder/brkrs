@@ -155,6 +155,11 @@ pub fn handle_main_menu_buttons(
         // When starting a new game, ensure we load from GameSession.current_level
         // and go through proper level load states
         let target_level = session.current_level;
+        info!(
+            target: "game_state",
+            "Starting new game: transitioning from MainMenu to FadeOut, target_level={}",
+            target_level
+        );
         commands.insert_resource(StateTransitionContext::LevelChange { target_level });
         next_state.set(GameState::FadeOut);
     }

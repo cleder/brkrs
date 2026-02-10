@@ -2,9 +2,9 @@ use bevy::prelude::*;
 
 use crate::systems::game_state_transitions::{
     capture_deferred_level_change, check_fade_in_completion, check_fade_out_completion,
-    cleanup_level_entities_on_transition, despawn_hazards_on_fade_out, enter_level_transition,
-    guard_invalid_state_transitions, handle_deferred_level_change, handle_life_loss_events,
-    spawn_fade_in_overlay, spawn_fade_out_overlay, update_fade_overlay, DeferredLevelChange,
+    despawn_hazards_on_fade_out, enter_level_transition, guard_invalid_state_transitions,
+    handle_deferred_level_change, handle_life_loss_events, spawn_fade_in_overlay,
+    spawn_fade_out_overlay, update_fade_overlay, DeferredLevelChange,
 };
 use crate::systems::ui::game_over::{despawn_game_over, handle_game_over_buttons, spawn_game_over};
 use crate::systems::ui::main_menu::{despawn_main_menu, handle_main_menu_buttons, spawn_main_menu};
@@ -98,11 +98,6 @@ impl Plugin for GameStatesPlugin {
             .add_systems(
                 Update,
                 handle_deferred_level_change.run_if(in_state(GameState::Playing)),
-            )
-            // EC-004: Clean up level entities during level transition
-            .add_systems(
-                OnExit(GameState::LevelTransition),
-                cleanup_level_entities_on_transition,
             )
             .add_systems(OnEnter(GameState::LevelTransition), enter_level_transition);
     }

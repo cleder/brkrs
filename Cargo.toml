@@ -41,7 +41,7 @@ bevy = { version = "0.17.3", features = ["file_watcher"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3", features = ["Window", "Storage"] }
-getrandom = { version = "0", features = ["js"] }
+getrandom = { version = "0.4", features = ["wasm_js"] }
 
 # These lints may be important signals about code quality, but normal Bevy code
 # commonly triggers them and the CI workflow treats them as errors, so we've

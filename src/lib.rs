@@ -570,17 +570,13 @@ fn move_paddle(
     mut controllers: Query<&mut KinematicCharacterController, (With<Paddle>, Without<InputLocked>)>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     accumulated_mouse_scroll: Res<AccumulatedMouseScroll>,
-    window: Single<&Window, With<PrimaryWindow>>,
+    _window: Single<&Window, With<PrimaryWindow>>,
     growing: Query<&PaddleGrowing>,
 ) {
-    if !window.focused {
-        return;
-    }
     // If paddle is currently growing, ignore input and movement entirely.
     if !growing.is_empty() {
         return;
     }
-    let _sensitivity = 100.0 / window.height().min(window.width());
     if query.is_empty() {
         return;
     }
@@ -1116,15 +1112,12 @@ fn toggle_wireframe(
 }
 
 fn grab_mouse(
-    window: Single<&Window, With<PrimaryWindow>>,
+    _window: Single<&Window, With<PrimaryWindow>>,
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
     mouse: Res<ButtonInput<MouseButton>>,
     key: Res<ButtonInput<KeyCode>>,
     mut app_exit: MessageWriter<AppExit>,
 ) {
-    if !window.focused {
-        return;
-    }
     if mouse.just_pressed(MouseButton::Left) {
         cursor_options.visible = false;
         cursor_options.grab_mode = CursorGrabMode::Locked;
