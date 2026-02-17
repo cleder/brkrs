@@ -146,12 +146,13 @@ pub fn handle_main_menu_buttons(
         }
     }
 
+    // Prioritize quit over start to avoid ambiguous state when both are requested
     if quit_requested {
         exit.write(AppExit::Success);
         return;
     }
 
-    if start_requested && is_valid_transition(current_state.get(), &GameState::Playing) {
+    if start_requested && is_valid_transition(current_state.get(), &GameState::FadeOut) {
         // When starting a new game, ensure we load from GameSession.current_level
         // and go through proper level load states
         let target_level = session.current_level;

@@ -52,12 +52,16 @@ impl Plugin for PausePlugin {
         app.add_systems(
             Update,
             (
-                // Input handling systems (can run in parallel)
+                // Input handling systems: prioritize GameState-based handlers
+                // to avoid conflicts with legacy PauseState handlers
                 (
-                    handle_pause_input,
-                    handle_resume_input,
                     handle_pause_input_game_state.run_if(in_state(GameState::Playing)),
                     handle_resume_input_game_state.run_if(in_state(GameState::Paused)),
+                ),
+                // Legacy pause input handlers (kept for backward compatibility)
+                (
+                    handle_pause_input.run_if(in_state(GameState::Playing)),
+                    handle_resume_input.run_if(in_state(GameState::Paused)),
                 ),
                 // State-dependent systems (run after input, before UI)
                 // Physics control runs after LevelAdvanceSystems to avoid race conditions

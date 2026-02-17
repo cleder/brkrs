@@ -190,14 +190,26 @@ pub fn check_fade_in_completion(
 
     if balls.is_empty() {
         let Some(spawn_points) = spawn_points else {
+            error!(
+                target: "game_state",
+                "Ball respawn failed: missing SpawnPoints resource. Proceeding to Playing without ball."
+            );
             next_state.set(GameState::Playing);
             return;
         };
         let Some(mut meshes) = meshes else {
+            error!(
+                target: "game_state",
+                "Ball respawn failed: missing Assets<Mesh> resource. Proceeding to Playing without ball."
+            );
             next_state.set(GameState::Playing);
             return;
         };
         let Some(mut materials) = materials else {
+            error!(
+                target: "game_state",
+                "Ball respawn failed: missing Assets<StandardMaterial> resource. Proceeding to Playing without ball."
+            );
             next_state.set(GameState::Playing);
             return;
         };
@@ -385,6 +397,12 @@ pub fn guard_invalid_state_transitions(
     }
 
     if !validate_transition_with_logging(&current, &target) {
+        warn!(
+            target: "game_state",
+            "Rejecting invalid state transition: {:?} -> {:?}",
+            current,
+            target
+        );
         next_state.reset();
     }
 }
@@ -554,6 +572,11 @@ pub fn cleanup_level_entities_on_transition(
     balls: Query<Entity, With<Ball>>,
     merkabas: Query<Entity, With<Merkaba>>,
 ) {
+    // Capture entity counts BEFORE despawning for accurate logging
+    let brick_count = bricks.iter().count();
+    let ball_count = balls.iter().count();
+    let merkaba_count = merkabas.iter().count();
+
     // Despawn all bricks from the previous level
     for entity in bricks.iter() {
         commands.entity(entity).despawn();
@@ -572,9 +595,9 @@ pub fn cleanup_level_entities_on_transition(
     info!(
         target: "game_state",
         "Cleaned up {} bricks, {} balls, {} merkabas during level transition",
-        bricks.iter().count(),
-        balls.iter().count(),
-        merkabas.iter().count()
+        brick_count,
+        ball_count,
+        merkaba_count
     );
 }
 

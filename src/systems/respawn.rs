@@ -444,7 +444,11 @@ fn determine_life_loss(
     mut ball_lost_reader: MessageReader<BallLostEvent>,
     balls: Query<Entity, With<Ball>>,
     mut life_lost_writer: MessageWriter<LifeLostEvent>,
+    mut lower_goal_triggered_this_frame: Local<bool>,
 ) {
+    // Reset per-frame flag at the start of each execution
+    *lower_goal_triggered_this_frame = false;
+
     for event in ball_lost_reader.read() {
         // Merkaba and paddle hazard collisions always trigger life loss
         if event.cause != LifeLossCause::LowerGoal {
@@ -457,6 +461,16 @@ fn determine_life_loss(
         }
 
         // LowerGoal: only trigger life loss if this was the last ball
+        // Guard against multiple ball losses in the same frame by ensuring
+        // we only emit one LifeLostEvent per frame for LowerGoal causes.
+        if *lower_goal_triggered_this_frame {
+            warn!(
+                target: "respawn",
+                "Multiple balls lost to LowerGoal in same frame; skipping additional LifeLostEvent"
+            );
+            continue;
+        }
+
         // Account for deferred despawn by excluding the lost ball if it still exists.
         let remaining_balls = balls.iter().count();
         let lost_ball_still_present = balls.get(event.ball).is_ok();
@@ -468,6 +482,7 @@ fn determine_life_loss(
                 cause: event.cause,
                 ball_spawn: event.ball_spawn,
             });
+            *lower_goal_triggered_this_frame = true;
         }
     }
 }
