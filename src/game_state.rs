@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 
 use crate::systems::game_state_transitions::{
     capture_deferred_level_change, check_fade_in_completion, check_fade_out_completion,
@@ -48,13 +49,29 @@ pub enum StateTransitionContext {
 
 pub struct GameStatesPlugin;
 
+fn show_cursor_on_main_menu(mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>) {
+    for mut cursor_options in cursor_q.iter_mut() {
+        cursor_options.visible = true;
+        cursor_options.grab_mode = CursorGrabMode::None;
+    }
+}
+
+fn hide_cursor_on_playing(mut cursor_q: Query<&mut CursorOptions, With<PrimaryWindow>>) {
+    for mut cursor_options in cursor_q.iter_mut() {
+        cursor_options.visible = false;
+        cursor_options.grab_mode = CursorGrabMode::None;
+    }
+}
+
 impl Plugin for GameStatesPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<GameState>()
             .init_resource::<GameSession>()
             .init_resource::<DeferredLevelChange>()
+            .add_systems(OnEnter(GameState::MainMenu), show_cursor_on_main_menu)
             .add_systems(OnEnter(GameState::MainMenu), spawn_main_menu)
             .add_systems(OnExit(GameState::MainMenu), despawn_main_menu)
+            .add_systems(OnEnter(GameState::Playing), hide_cursor_on_playing)
             .add_systems(
                 StateTransition,
                 guard_invalid_state_transitions
@@ -64,6 +81,7 @@ impl Plugin for GameStatesPlugin {
                 Update,
                 handle_main_menu_buttons.run_if(in_state(GameState::MainMenu)),
             )
+            .add_systems(OnEnter(GameState::GameOver), show_cursor_on_main_menu)
             .add_systems(OnEnter(GameState::GameOver), spawn_game_over)
             .add_systems(OnExit(GameState::GameOver), despawn_game_over)
             .add_systems(

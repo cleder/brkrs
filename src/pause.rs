@@ -46,9 +46,6 @@ impl Plugin for PausePlugin {
         // Register pause state resource
         app.init_resource::<PauseState>();
 
-        // Hide cursor on startup
-        app.add_systems(Startup, hide_cursor_on_startup);
-
         // Register pause/resume systems with explicit ordering
         // Execution order: input handling → state effects (physics, window, cursor) → UI updates
         // Physics control runs after level loader systems to ensure pause state takes precedence
@@ -243,10 +240,19 @@ fn apply_pause_to_window_mode(_pause_state: Res<PauseState>) {
 /// System that controls cursor visibility based on pause state.
 ///
 /// Hides cursor during active gameplay, shows cursor when paused.
+/// Only applies during gameplay (not in menus).
 fn apply_pause_to_cursor(
     pause_state: Res<PauseState>,
+    game_state: Res<State<crate::game_state::GameState>>,
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
+    use crate::game_state::GameState;
+
+    // Only control cursor during gameplay
+    if !matches!(game_state.get(), GameState::Playing | GameState::Paused) {
+        return;
+    }
+
     // Only run when pause state changes
     if !pause_state.is_changed() {
         return;
@@ -262,11 +268,6 @@ fn apply_pause_to_cursor(
             cursor_options.visible = true;
         }
     }
-}
-
-/// Startup system to hide cursor when game launches.
-fn hide_cursor_on_startup(mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>) {
-    cursor_options.visible = false;
 }
 
 /// Run condition that returns true when the game is not paused.
