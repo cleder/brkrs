@@ -493,15 +493,14 @@ Maps gameplay type IDs to visual profiles.
 
 Per-level material overrides for environmental objects.
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `level_number` | u32 | *required* | Level number to override |
-| `ground_profile` | `Option<String>` |`None`| Ground plane texture profile |
-|`background_profile`| `Option<String>` |`None`| Background plane texture profile |
-
-|`sidewall_profile`| `Option<String>` |`None`| Border wall texture profile |
-|`tint`| `Option<Color>` |`None`| RGBA color multiplier for level mood |
-|`notes`| `Option<String>` |`None` | Designer notes/description |
+| Field                | Type             | Default    | Description                          |
+| -------------------- | ---------------- | ---------- | ------------------------------------ |
+| `level_number`       | u32              | *required* | Level number to override             |
+| `ground_profile`     | `Option<String>` | `None`     | Ground plane texture profile         |
+| `background_profile` | `Option<String>` | `None`     | Background plane texture profile     |
+| `sidewall_profile`   | `Option<String>` | `None`     | Border wall texture profile          |
+| `tint`               | `Option<Color>`  | `None`     | RGBA color multiplier for level mood |
+| `notes`              | `Option<String>` | `None`     | Designer notes/description           |
 
 ## Common Workflows
 
