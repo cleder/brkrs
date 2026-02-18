@@ -274,7 +274,7 @@ fn paddle_hazard_collision_integration_setup() {
 
     use brkrs::level_format::{is_hazard_brick, HAZARD_BRICK_42};
 
-    let mut app = test_app();
+    let app = test_app();
 
     // Verify hazard brick types are properly identified
     assert!(

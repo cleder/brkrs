@@ -1,6 +1,7 @@
 pub mod physics_config;
 // brkrs: see README.md for usage and controls.
 
+pub mod game_state;
 pub mod level_format;
 pub mod level_loader;
 pub mod pause;
@@ -8,8 +9,10 @@ pub mod signals;
 pub mod systems;
 pub mod ui;
 
+pub use game_state::GameStatesPlugin;
 pub use level_loader::extract_author_name;
 
+use crate::game_state::GameState;
 #[cfg(feature = "texture_manifest")]
 use crate::systems::TextureManifestPlugin;
 use crate::systems::{
@@ -256,6 +259,7 @@ pub fn run() {
     app.add_plugins(RapierPhysicsPlugin::<NoUserData>::default());
     app.add_plugins(LevelSwitchPlugin);
     app.add_plugins(crate::level_loader::LevelLoaderPlugin);
+    app.add_plugins(GameStatesPlugin);
     // app.add_plugins(RapierDebugRenderPlugin::default());
     app.add_plugins(RespawnPlugin);
     app.add_plugins(crate::pause::PausePlugin);
@@ -317,7 +321,8 @@ pub fn run() {
                 crate::systems::respawn::apply_life_awards,
             )
                 .chain(),
-        ),
+        )
+            .run_if(in_state(GameState::Playing)),
     );
 
     add_scoring_systems(&mut app);
@@ -565,17 +570,13 @@ fn move_paddle(
     mut controllers: Query<&mut KinematicCharacterController, (With<Paddle>, Without<InputLocked>)>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     accumulated_mouse_scroll: Res<AccumulatedMouseScroll>,
-    window: Single<&Window, With<PrimaryWindow>>,
+    _window: Single<&Window, With<PrimaryWindow>>,
     growing: Query<&PaddleGrowing>,
 ) {
-    if !window.focused {
-        return;
-    }
     // If paddle is currently growing, ignore input and movement entirely.
     if !growing.is_empty() {
         return;
     }
-    let _sensitivity = 100.0 / window.height().min(window.width());
     if query.is_empty() {
         return;
     }
@@ -891,7 +892,7 @@ pub fn mark_brick_on_ball_collision(
                             52 => {
                                 // Random direction brick: RNG-based impulse in XZ plane (horizontal)
                                 // Magnitude: 5.0-15.0 units/sec, Direction: 0-2π radians
-                                use rand::Rng;
+                                use rand::RngExt;
                                 let mut rng = rand::rng();
                                 let magnitude = rng.random_range(5.0..15.0);
                                 let angle: f32 = rng.random_range(0.0..std::f32::consts::TAU);
@@ -1111,15 +1112,12 @@ fn toggle_wireframe(
 }
 
 fn grab_mouse(
-    window: Single<&Window, With<PrimaryWindow>>,
+    _window: Single<&Window, With<PrimaryWindow>>,
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
     mouse: Res<ButtonInput<MouseButton>>,
     key: Res<ButtonInput<KeyCode>>,
     mut app_exit: MessageWriter<AppExit>,
 ) {
-    if !window.focused {
-        return;
-    }
     if mouse.just_pressed(MouseButton::Left) {
         cursor_options.visible = false;
         cursor_options.grab_mode = CursorGrabMode::Locked;
@@ -1177,7 +1175,7 @@ pub fn read_character_controller_collisions(
     mut commands: Commands,
     spawn_points: Res<crate::systems::respawn::SpawnPoints>,
     mut frame_loss_state: ResMut<crate::systems::respawn::FrameLossState>,
-    mut life_lost_writer: MessageWriter<crate::systems::respawn::LifeLostEvent>,
+    mut ball_lost_writer: Option<MessageWriter<crate::systems::respawn::BallLostEvent>>,
 ) {
     let output = match paddle_outputs.single() {
         Ok(controller) => controller,
@@ -1213,19 +1211,21 @@ pub fn read_character_controller_collisions(
                             },
                         );
                     }
-                    // Check if this is a hazard brick (type 42 or 91) and emit life loss
+                    // Check if this is a hazard brick (type 42 or 91) and emit ball loss
                     if crate::level_format::is_hazard_brick(brick_type.0)
                         && !frame_loss_state.hazard_loss_emitted
                     {
-                        // Only emit one life loss per frame even if multiple hazards contacted
+                        // Only emit one ball loss per frame even if multiple hazards contacted
                         if let Some(ball) = balls.iter().next() {
-                            let ball_spawn = spawn_points.ball_spawn();
-                            life_lost_writer.write(crate::systems::respawn::LifeLostEvent {
-                                ball,
-                                cause: crate::systems::respawn::LifeLossCause::PaddleHazard,
-                                ball_spawn,
-                            });
-                            frame_loss_state.hazard_loss_emitted = true;
+                            if let Some(ref mut writer) = ball_lost_writer {
+                                let ball_spawn = spawn_points.ball_spawn();
+                                writer.write(crate::systems::respawn::BallLostEvent {
+                                    ball,
+                                    cause: crate::systems::respawn::LifeLossCause::PaddleHazard,
+                                    ball_spawn,
+                                });
+                                frame_loss_state.hazard_loss_emitted = true;
+                            }
                         }
                     }
                 }

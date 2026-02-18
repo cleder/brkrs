@@ -85,7 +85,24 @@ The crate is organized into the following modules:
 | `level_loader` | Level loading, entity spawning, and grid management |
 | `pause` | Pause system state machine and UI overlay |
 | `systems` | Game systems (respawn, spawning, textures, level switching, debug) |
+| `systems::respawn` | Ball loss detection, life management, and respawn sequencing |
 | `ui` | User interface components and palette definitions |
+
+### Respawn System Messages
+
+The respawn system exposes these message types for ball loss and life management:
+
+| Message | Purpose |
+|---------|---------|
+| `BallLostEvent` | Emitted when a ball physically leaves play (LowerGoal, Merkaba, or PaddleHazard) |
+| `LifeLostEvent` | Emitted when a life is actually lost (after ball count check for LowerGoal) |
+| `RespawnScheduled` | Emitted when a respawn is queued with a timestamp |
+| `RespawnCompleted` | Emitted when a ball respawn completes |
+| `GameOverRequested` | Emitted when lives reach zero |
+
+**Event Flow:** `BallLostEvent` → `determine_life_loss()` → `LifeLostEvent` (conditional) → respawn sequence
+
+See {doc}`architecture` and {doc}`developer-guide` for detailed flow diagrams.
 
 ### UI Module Subcomponents
 

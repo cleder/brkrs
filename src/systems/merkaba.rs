@@ -15,9 +15,7 @@ use bevy_rapier3d::prelude::{
 use crate::signals::{
     MerkabaBrickCollision, MerkabaPaddleCollision, MerkabaWallCollision, SpawnMerkabaMessage,
 };
-use crate::systems::respawn::{
-    LifeLossCause, LifeLostEvent, LivesState, RespawnHandle, SpawnPoints,
-};
+use crate::systems::respawn::{LivesState, RespawnHandle, SpawnPoints};
 use crate::systems::textures::{ObjectClass, TypeVariantRegistry};
 use crate::{Ball, Border, Brick, LowerGoal, Paddle};
 
@@ -489,11 +487,15 @@ fn detect_merkaba_brick_collision(
 }
 /// T032: Detect merkaba-paddle collision and trigger penalty
 fn detect_merkaba_paddle_collision(
-    mut collision_events: MessageReader<CollisionEvent>,
+    collision_events: Option<MessageReader<CollisionEvent>>,
     merkabas: Query<Entity, With<Merkaba>>,
     paddles: Query<Entity, With<Paddle>>,
     mut commands: Commands,
 ) {
+    let Some(mut collision_events) = collision_events else {
+        return;
+    };
+
     for event in collision_events.read() {
         // debug!("Collision event: {:?}", event);
         if let CollisionEvent::Started(e1, e2, _) = event {
@@ -552,15 +554,15 @@ pub fn despawn_balls_and_merkabas_on_life_loss(
     *local_state = Some(current_lives);
 }
 /// T032: Handle life loss on merkaba-paddle collision (Observer)
-/// Triggers standard life loss flow via LifeLostEvent to ensure visual feedback/respawn sequence runs.
+/// Triggers standard life loss flow via BallLostEvent to ensure visual feedback/respawn sequence runs.
 fn on_merkaba_paddle_collision_life_loss(
     _trigger: On<MerkabaPaddleCollision>,
-    mut life_lost_writer: MessageWriter<LifeLostEvent>,
+    mut ball_lost_writer: MessageWriter<crate::systems::respawn::BallLostEvent>,
     balls: Query<Entity, With<Ball>>,
     ball_handles: Query<&RespawnHandle, With<Ball>>,
     spawn_points: Res<SpawnPoints>,
 ) {
-    // Pick a ball to attribute the loss to (needed for LifeLostEvent contract).
+    // Pick a ball to attribute the loss to (needed for BallLostEvent contract).
     // In multiball, any ball will do as they all get cleared on life loss.
     // If no ball exists, we can't trigger the standard respawn flow easily,
     // but that state shouldn't happen during active gameplay.
@@ -570,12 +572,12 @@ fn on_merkaba_paddle_collision_life_loss(
             .map(|h| h.spawn)
             .unwrap_or_else(|_| spawn_points.ball_spawn());
 
-        life_lost_writer.write(LifeLostEvent {
+        ball_lost_writer.write(crate::systems::respawn::BallLostEvent {
             ball: ball_entity,
-            cause: LifeLossCause::MerkabaCollision,
+            cause: crate::systems::respawn::LifeLossCause::MerkabaCollision,
             ball_spawn,
         });
     } else {
-        warn!("Merkaba collision with paddle, but no balls found to trigger LifeLostEvent");
+        warn!("Merkaba collision with paddle, but no balls found to trigger BallLostEvent");
     }
 }

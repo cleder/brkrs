@@ -14,7 +14,9 @@ use bevy::window::{CursorOptions, PrimaryWindow};
 use bevy::window::{Window, WindowMode};
 use bevy_rapier3d::prelude::*;
 
+use crate::game_state::GameState;
 use crate::level_loader::LevelAdvanceState;
+use crate::systems::game_state_transitions::is_valid_transition;
 use crate::ui::pause_overlay::{despawn_pause_overlay, spawn_pause_overlay};
 
 /// Global pause state resource.
@@ -44,17 +46,23 @@ impl Plugin for PausePlugin {
         // Register pause state resource
         app.init_resource::<PauseState>();
 
-        // Hide cursor on startup
-        app.add_systems(Startup, hide_cursor_on_startup);
-
         // Register pause/resume systems with explicit ordering
         // Execution order: input handling → state effects (physics, window, cursor) → UI updates
         // Physics control runs after level loader systems to ensure pause state takes precedence
         app.add_systems(
             Update,
             (
-                // Input handling systems (can run in parallel)
-                (handle_pause_input, handle_resume_input),
+                // Input handling systems: prioritize GameState-based handlers
+                // to avoid conflicts with legacy PauseState handlers
+                (
+                    handle_pause_input_game_state.run_if(in_state(GameState::Playing)),
+                    handle_resume_input_game_state.run_if(in_state(GameState::Paused)),
+                ),
+                // Legacy pause input handlers (kept for backward compatibility)
+                (
+                    handle_pause_input.run_if(in_state(GameState::Playing)),
+                    handle_resume_input.run_if(in_state(GameState::Paused)),
+                ),
                 // State-dependent systems (run after input, before UI)
                 // Physics control runs after LevelAdvanceSystems to avoid race conditions
                 apply_pause_to_physics.after(crate::level_loader::LevelAdvanceSystems),
@@ -65,6 +73,36 @@ impl Plugin for PausePlugin {
             )
                 .chain(),
         );
+    }
+}
+
+/// GameState-based pause input handler.
+///
+/// Sets NextState(GameState::Paused) when ESC is pressed and current state is Playing.
+fn handle_pause_input_game_state(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    current_state: Res<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    if keyboard.just_pressed(KeyCode::Escape)
+        && is_valid_transition(current_state.get(), &GameState::Paused)
+    {
+        next_state.set(GameState::Paused);
+    }
+}
+
+/// GameState-based resume input handler.
+///
+/// Sets NextState(GameState::Playing) on left-click when current state is Paused.
+fn handle_resume_input_game_state(
+    mouse: Res<ButtonInput<MouseButton>>,
+    current_state: Res<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    if mouse.just_pressed(MouseButton::Left)
+        && is_valid_transition(current_state.get(), &GameState::Playing)
+    {
+        next_state.set(GameState::Playing);
     }
 }
 
@@ -206,10 +244,19 @@ fn apply_pause_to_window_mode(_pause_state: Res<PauseState>) {
 /// System that controls cursor visibility based on pause state.
 ///
 /// Hides cursor during active gameplay, shows cursor when paused.
+/// Only applies during gameplay (not in menus).
 fn apply_pause_to_cursor(
     pause_state: Res<PauseState>,
+    game_state: Res<State<crate::game_state::GameState>>,
     mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
+    use crate::game_state::GameState;
+
+    // Only control cursor during gameplay
+    if !matches!(game_state.get(), GameState::Playing | GameState::Paused) {
+        return;
+    }
+
     // Only run when pause state changes
     if !pause_state.is_changed() {
         return;
@@ -225,11 +272,6 @@ fn apply_pause_to_cursor(
             cursor_options.visible = true;
         }
     }
-}
-
-/// Startup system to hide cursor when game launches.
-fn hide_cursor_on_startup(mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>) {
-    cursor_options.visible = false;
 }
 
 /// Run condition that returns true when the game is not paused.

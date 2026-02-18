@@ -287,6 +287,23 @@ jobs:
           tag: ${{ github.ref }}
           overwrite: true
 
+  release-crate:
+    runs-on: ubuntu-latest
+    needs:
+      - release-wasm
+      - release-linux
+    steps:
+      - uses: olegtarasov/get-tag@v2.1.2
+        id: get_version
+      - uses: actions/checkout@v4
+        with:
+          lfs: ${{ env.use_git_lfs }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: katyo/publish-crates@v2
+        with:
+          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          ignore-unpublished-changes: true
+
   check-if-upload-to-itch-is-configured:
     runs-on: ubuntu-latest
     outputs:

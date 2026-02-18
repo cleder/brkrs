@@ -9,7 +9,7 @@
 use crate::signals::BrickDestroyed;
 use bevy::ecs::message::{Message, MessageReader, MessageWriter};
 use bevy::prelude::*;
-use rand::{rng, Rng};
+use rand::{rng, Rng, RngExt};
 
 const MILESTONE_STEP: u32 = 5_000;
 

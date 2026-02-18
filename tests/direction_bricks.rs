@@ -301,7 +301,7 @@ fn test_all_six_directions() {
 /// T026: Brick 52 (Random) applies impulse with magnitude in range [5.0, 15.0]
 #[test]
 fn test_brick_52_random_magnitude_range() {
-    use rand::Rng;
+    use rand::RngExt;
 
     // Test multiple samples to verify RNG distribution
     let mut rng = rand::rng();
@@ -332,7 +332,7 @@ fn test_brick_52_random_magnitude_range() {
 /// T027: Brick 52 (Random) produces varied impulse directions across 0-2π range
 #[test]
 fn test_brick_52_random_direction_distribution() {
-    use rand::Rng;
+    use rand::RngExt;
 
     // Collect samples and verify we get varied angles
     let mut rng = rand::rng();
