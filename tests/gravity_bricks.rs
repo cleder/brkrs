@@ -607,7 +607,7 @@ mod tests {
     #[test]
     fn test_gravity_brick_25_queer_gravity_random() {
         // T042: Verify Queer Gravity generates random values within specified ranges
-        use rand::Rng;
+        use rand::RngExt;
         let mut rng = rand::rng();
 
         // Generate 10 random gravity values and verify ranges
@@ -638,7 +638,7 @@ mod tests {
     #[test]
     fn test_queer_gravity_x_range() {
         // T043: Test X range for Queer Gravity
-        use rand::Rng;
+        use rand::RngExt;
         let mut rng = rand::rng();
 
         for _ in 0..50 {
@@ -665,7 +665,7 @@ mod tests {
     #[test]
     fn test_queer_gravity_z_range() {
         // T045: Test Z range for Queer Gravity
-        use rand::Rng;
+        use rand::RngExt;
         let mut rng = rand::rng();
 
         for _ in 0..50 {
@@ -678,7 +678,7 @@ mod tests {
     #[test]
     fn test_queer_gravity_no_correlation() {
         // T046: Verify RNG independence (no obvious bias or correlation)
-        use rand::Rng;
+        use rand::RngExt;
         let mut rng = rand::rng();
 
         let mut x_values = Vec::new();

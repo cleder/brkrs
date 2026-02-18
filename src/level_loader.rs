@@ -432,7 +432,11 @@ fn spawn_level_entities_impl(
     #[cfg(feature = "texture_manifest")] type_registry: Option<&TypeVariantRegistry>,
     brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
 ) {
-    debug!("Spawning entities for level {}", def.number);
+    info!(
+        target: "level_loader",
+        "Spawning entities for level {}",
+        def.number
+    );
     // Shared material
     let debug_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.8, 0.2, 0.2),
@@ -547,6 +551,12 @@ fn spawn_level_entities_impl(
                                 },
                             ))
                             .insert(paddle_respawn_handle(position));
+                        info!(
+                            target: "level_loader",
+                            "Spawned paddle at position {:?} for level {}",
+                            position,
+                            def.number
+                        );
                     }
                 }
                 1 => {
@@ -728,6 +738,12 @@ fn spawn_level_entities_impl(
                 GravityScale(1.0),
             ))
             .insert(ball_respawn_handle(position));
+        info!(
+            target: "level_loader",
+            "Spawned ball at position {:?} for level {}",
+            position,
+            def.number
+        );
     }
 }
 
@@ -1125,6 +1141,20 @@ fn despawn_all_game_entities(
     merkaba_q: &Query<Entity, With<Merkaba>>,
     pending_merkaba_spawns: &mut Option<ResMut<PendingMerkabaSpawns>>,
 ) {
+    let brick_count = bricks.iter().count();
+    let paddle_count = paddle_q.iter().count();
+    let ball_count = ball_q.iter().count();
+    let merkaba_count = merkaba_q.iter().count();
+
+    info!(
+        target: "level_loader",
+        "Despawning game entities: bricks={}, paddles={}, balls={}, merkabas={}",
+        brick_count,
+        paddle_count,
+        ball_count,
+        merkaba_count
+    );
+
     // Despawn all bricks
     for entity in bricks.iter() {
         commands.entity(entity).despawn();
@@ -1145,6 +1175,64 @@ fn despawn_all_game_entities(
     if let Some(ref mut spawns) = pending_merkaba_spawns {
         spawns.entries.clear();
     }
+}
+
+pub(crate) fn load_level_for_state_transition(
+    target_level: u32,
+    commands: &mut Commands,
+    ctx: &mut LevelContext,
+    rapier_config: &mut Query<&mut RapierConfiguration>,
+    bricks: &Query<Entity, With<Brick>>,
+    paddle_q: &Query<Entity, With<Paddle>>,
+    ball_q: &Query<Entity, With<Ball>>,
+    merkaba_q: &Query<Entity, With<Merkaba>>,
+    pending_merkaba_spawns: &mut Option<ResMut<PendingMerkabaSpawns>>,
+    #[cfg(feature = "texture_manifest")] tex_res: &mut TextureResources,
+    brick_config_res: Res<crate::physics_config::BrickPhysicsConfig>,
+    switch_state: Option<&LevelSwitchState>,
+) -> Result<LevelDefinition, String> {
+    let path = switch_state
+        .and_then(|state| {
+            state
+                .ordered_levels()
+                .iter()
+                .find(|slot| slot.number == target_level)
+                .map(|slot| slot.path.clone())
+        })
+        .unwrap_or_else(|| format!("assets/levels/level_{:03}.ron", target_level));
+
+    despawn_all_game_entities(
+        commands,
+        bricks,
+        paddle_q,
+        ball_q,
+        merkaba_q,
+        pending_merkaba_spawns,
+    );
+
+    force_load_level_from_path(
+        &path,
+        commands,
+        &mut ctx.meshes,
+        &mut ctx.materials,
+        &mut ctx.spawn_points,
+        &mut ctx.gravity_cfg,
+        rapier_config,
+        bricks,
+        paddle_q,
+        ball_q,
+        merkaba_q,
+        &mut ctx.game_progress,
+        &mut ctx.level_advance,
+        pending_merkaba_spawns.as_mut(),
+        #[cfg(feature = "texture_manifest")]
+        tex_res.canonical.as_deref(),
+        #[cfg(feature = "texture_manifest")]
+        tex_res.fallback.as_deref_mut(),
+        #[cfg(feature = "texture_manifest")]
+        tex_res.type_registry.as_deref(),
+        brick_config_res,
+    )
 }
 
 pub(crate) fn process_level_switch_requests(

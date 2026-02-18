@@ -428,7 +428,7 @@ fn rapid_consecutive_triggers() {
 fn ignores_brick_destroyed_without_triggering_ball() {
     // Negative test: BrickDestroyed with None destroyed_by should not spawn/despawn
     let mut app = setup_test_app();
-    let ball = spawn_test_ball(&mut app, Vec3::ZERO, Vec3::new(1.0, 0.0, 0.5));
+    let _ball = spawn_test_ball(&mut app, Vec3::ZERO, Vec3::new(1.0, 0.0, 0.5));
 
     // Write brick destroyed event WITHOUT triggering ball
     let mut msgs = app.world_mut().resource_mut::<Messages<BrickDestroyed>>();

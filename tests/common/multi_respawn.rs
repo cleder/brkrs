@@ -39,7 +39,7 @@ fn sequential_life_losses_complete_in_order() {
     {
         let schedule = app.world().resource::<RespawnSchedule>();
         assert_eq!(schedule.queue.len(), 0);
-        assert_eq!(schedule.pending.as_ref().unwrap().lost_ball, ball_a);
+        assert!(schedule.pending.is_none());
     }
 
     {
@@ -56,7 +56,9 @@ fn sequential_life_losses_complete_in_order() {
 
     {
         let schedule = app.world().resource::<RespawnSchedule>();
-        assert_eq!(schedule.queue.len(), 1);
+        assert_eq!(schedule.queue.len(), 0);
+        assert!(schedule.pending.is_some());
+        assert_eq!(schedule.pending.as_ref().unwrap().lost_ball, ball_b);
     }
 
     {
@@ -67,16 +69,10 @@ fn sequential_life_losses_complete_in_order() {
     app.update();
     {
         let schedule = app.world().resource::<RespawnSchedule>();
-        assert_eq!(schedule.queue.len(), 1);
+        assert_eq!(schedule.queue.len(), 0);
         assert!(schedule.pending.is_none());
     }
     app.update();
-
-    {
-        let schedule = app.world().resource::<RespawnSchedule>();
-        assert_eq!(schedule.queue.len(), 0);
-        assert_eq!(schedule.pending.as_ref().unwrap().lost_ball, ball_b);
-    }
 
     let completions = app.world().resource::<Messages<RespawnCompleted>>();
     assert!(
@@ -153,8 +149,7 @@ fn game_over_halts_additional_respawns() {
     {
         let schedule = app.world().resource::<RespawnSchedule>();
         assert_eq!(schedule.queue.len(), 0);
-        assert!(schedule.pending.is_some());
-        assert_eq!(schedule.pending.as_ref().unwrap().lost_ball, ball_a);
+        assert!(schedule.pending.is_none());
     }
 
     let game_over_events = app.world().resource::<Messages<GameOverRequested>>();

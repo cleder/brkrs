@@ -231,6 +231,18 @@ pub struct RespawnHandle {
 /// Plugin wiring the respawn flow through ordered system sets.
 pub struct RespawnPlugin;
 
+/// Emitted when a ball physically leaves play (hits lower goal, merkaba, paddle hazard).
+/// Does not directly cause life loss—only a single ball per frame per entity counts.
+/// Life loss is determined by the `determine_life_loss()` system based on remaining ball count.
+#[derive(Message, Debug, Clone, Copy)]
+pub struct BallLostEvent {
+    pub ball: Entity,
+    pub cause: LifeLossCause,
+    pub ball_spawn: SpawnTransform,
+}
+
+/// Emitted when a life is actually lost (i.e., no more balls remain in play).
+/// Only emitted after `determine_life_loss()` verifies that this is the last ball.
 #[derive(Message, Debug, Clone, Copy)]
 pub struct LifeLostEvent {
     pub ball: Entity,
@@ -291,6 +303,7 @@ impl Plugin for RespawnPlugin {
             .init_resource::<crate::physics_config::BallPhysicsConfig>()
             .init_resource::<crate::physics_config::PaddlePhysicsConfig>()
             .init_resource::<crate::physics_config::BrickPhysicsConfig>()
+            .add_message::<BallLostEvent>()
             .add_message::<LifeLostEvent>()
             .add_message::<RespawnScheduled>()
             .add_message::<RespawnCompleted>()
@@ -311,15 +324,21 @@ impl Plugin for RespawnPlugin {
         app.add_systems(Update, detect_ball_loss.in_set(RespawnSystems::Detect));
         app.add_systems(
             Update,
-            life_loss_logging
+            determine_life_loss
                 .in_set(RespawnSystems::Detect)
                 .after(detect_ball_loss),
         );
         app.add_systems(
             Update,
+            life_loss_logging
+                .in_set(RespawnSystems::Detect)
+                .after(determine_life_loss),
+        );
+        app.add_systems(
+            Update,
             apply_paddle_shrink
                 .in_set(RespawnSystems::Detect)
-                .after(detect_ball_loss),
+                .after(determine_life_loss),
         );
 
         // Schedule phase systems
@@ -382,7 +401,7 @@ fn detect_ball_loss(
     lower_goals: Query<Entity, With<LowerGoal>>,
     spawn_points: Res<SpawnPoints>,
     mut commands: Commands,
-    mut life_lost_events: MessageWriter<LifeLostEvent>,
+    mut ball_lost_events: MessageWriter<BallLostEvent>,
 ) {
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
@@ -405,13 +424,65 @@ fn detect_ball_loss(
                         spawn_points.ball_spawn()
                     }
                 };
-                life_lost_events.write(LifeLostEvent {
+                ball_lost_events.write(BallLostEvent {
                     ball: ball_entity,
                     cause: LifeLossCause::LowerGoal,
                     ball_spawn,
                 });
                 commands.entity(ball_entity).despawn();
             }
+        }
+    }
+}
+
+/// Determines if a life should actually be lost based on cause and ball count.
+/// - LowerGoal: Only emit LifeLostEvent when no balls remain (last ball was just lost)
+/// - Merkaba/PaddleHazard: Always emit LifeLostEvent regardless of ball count
+///
+/// This decouples ball detection from life-loss determination.
+fn determine_life_loss(
+    mut ball_lost_reader: MessageReader<BallLostEvent>,
+    balls: Query<Entity, With<Ball>>,
+    mut life_lost_writer: MessageWriter<LifeLostEvent>,
+    mut lower_goal_triggered_this_frame: Local<bool>,
+) {
+    // Reset per-frame flag at the start of each execution
+    *lower_goal_triggered_this_frame = false;
+
+    for event in ball_lost_reader.read() {
+        // Merkaba and paddle hazard collisions always trigger life loss
+        if event.cause != LifeLossCause::LowerGoal {
+            life_lost_writer.write(LifeLostEvent {
+                ball: event.ball,
+                cause: event.cause,
+                ball_spawn: event.ball_spawn,
+            });
+            continue;
+        }
+
+        // LowerGoal: only trigger life loss if this was the last ball
+        // Guard against multiple ball losses in the same frame by ensuring
+        // we only emit one LifeLostEvent per frame for LowerGoal causes.
+        if *lower_goal_triggered_this_frame {
+            warn!(
+                target: "respawn",
+                "Multiple balls lost to LowerGoal in same frame; skipping additional LifeLostEvent"
+            );
+            continue;
+        }
+
+        // Account for deferred despawn by excluding the lost ball if it still exists.
+        let remaining_balls = balls.iter().count();
+        let lost_ball_still_present = balls.get(event.ball).is_ok();
+        let effective_remaining =
+            remaining_balls.saturating_sub(if lost_ball_still_present { 1 } else { 0 });
+        if effective_remaining == 0 {
+            life_lost_writer.write(LifeLostEvent {
+                ball: event.ball,
+                cause: event.cause,
+                ball_spawn: event.ball_spawn,
+            });
+            *lower_goal_triggered_this_frame = true;
         }
     }
 }
@@ -1322,7 +1393,6 @@ mod tests {
             spawn_points.paddle = Some(Vec3::new(0.0, 2.0, 0.0));
         }
 
-        let lower_goal = app.world_mut().spawn(LowerGoal).id();
         let ball_a = app
             .world_mut()
             .spawn((Ball, ball_handle_at(Vec3::new(0.0, 2.0, 0.0))))
@@ -1338,12 +1408,12 @@ mod tests {
         ));
 
         app.world_mut()
-            .resource_mut::<Messages<CollisionEvent>>()
-            .write(CollisionEvent::Started(
-                ball_a,
-                lower_goal,
-                CollisionEventFlags::SENSOR,
-            ));
+            .resource_mut::<Messages<BallLostEvent>>()
+            .write(BallLostEvent {
+                ball: ball_a,
+                cause: LifeLossCause::PaddleHazard,
+                ball_spawn: SpawnTransform::new(Vec3::new(0.0, 2.0, 0.0), Quat::IDENTITY),
+            });
 
         advance_time(&mut app, 0.016);
         app.update();
@@ -1355,12 +1425,12 @@ mod tests {
         }
 
         app.world_mut()
-            .resource_mut::<Messages<CollisionEvent>>()
-            .write(CollisionEvent::Started(
-                ball_b,
-                lower_goal,
-                CollisionEventFlags::SENSOR,
-            ));
+            .resource_mut::<Messages<BallLostEvent>>()
+            .write(BallLostEvent {
+                ball: ball_b,
+                cause: LifeLossCause::PaddleHazard,
+                ball_spawn: SpawnTransform::new(Vec3::new(0.0, 2.0, 0.0), Quat::IDENTITY),
+            });
 
         advance_time(&mut app, 0.016);
         app.update();

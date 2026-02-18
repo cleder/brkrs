@@ -204,6 +204,51 @@ assets/levels/level_001.ron
 
 ## Game State Resources
 
+### Life Loss System
+
+The life loss system uses a two-stage event architecture to decouple ball detection from life determination:
+
+```text
+Ball Lost Event Sources:
+  - Ball hits LowerGoal (bottom boundary)
+  - Paddle collides with Merkaba (hazard enemy)
+  - Paddle touches Hazard Brick (types 42/91)
+         |
+         v
+  detect_ball_loss / collision handlers
+         |
+         v
+   BallLostEvent (message)
+    - ball: Entity
+    - cause: LifeLossCause (LowerGoal | MerkabaCollision | PaddleHazard)
+    - ball_spawn: SpawnTransform
+         |
+         v
+   determine_life_loss (system)
+         |
+         +---> Check cause:
+         |       - LowerGoal: Only if remaining_balls == 0
+         |       - Merkaba/PaddleHazard: Always
+         |
+         v (conditionally)
+   LifeLostEvent (message)
+         |
+         +---> handle_life_loss_events (game state)
+         |       - Triggers FadeOut transition
+         |
+         +---> enqueue_respawn_requests
+               - Decrements LivesState.lives_remaining
+               - Queues respawn sequence
+               - Emits GameOverRequested if lives == 0
+```
+
+**Key Rules:**
+
+- **LowerGoal losses**: Only trigger life loss when the **last ball** is lost (multi-ball support)
+- **Merkaba/PaddleHazard**: **Always** trigger life loss, regardless of remaining balls
+- **Source of Truth**: `LivesState.lives_remaining` (u8) maintained by respawn system
+- **Game State Sync**: `GameSession.lives_remaining` (u32) synced from LivesState during state transitions
+
 ### Scoring System
 
 The scoring system tracks cumulative points throughout a game session:
@@ -247,7 +292,7 @@ LivesState.lives_remaining += 1
 
 **Persistence**: Score accumulates across level transitions, resets on game restart
 
-**Messages vs Observers (Bevy 0.17+)**
+### Messages vs Observers (Bevy 0.17+)
 
 See the constitution's "Bevy 0.17 Event, Message, and Observer Clarification" for authoritative guidance.
 
@@ -274,6 +319,41 @@ The pause overlay is a separate UI layer that:
 - Freezes physics simulation
 - Shows resume instruction
 - Dismisses on mouse click
+
+### Respawn System
+
+The respawn system manages ball loss detection, life management, and respawn sequencing through ordered system sets:
+
+**System Sets (executed in order):**
+
+1. **Detect** — Ball loss detection and life determination
+   - `detect_ball_loss`: Detects ball collisions with LowerGoal, emits BallLostEvent
+   - `determine_life_loss`: Checks remaining balls, emits LifeLostEvent conditionally
+   - `life_loss_logging`: Logs life loss events
+   - `apply_paddle_shrink`: Applies visual feedback (paddle shrink animation)
+
+2. **Schedule** — Respawn scheduling and queue management
+   - `enqueue_respawn_requests`: Decrements lives, queues respawn
+   - `process_respawn_queue`: Schedules timed respawn
+   - `log_respawn_scheduled`: Logs respawn events
+
+3. **Execute** — Respawn execution
+   - `respawn_executor`: Spawns new ball at scheduled time
+
+4. **Visual** — Visual effects
+   - `respawn_visual_trigger`: Triggers respawn overlay
+   - `animate_respawn_visual`: Animates fadeout overlay
+
+5. **Control** — Input control restoration
+   - `restore_paddle_control`: Unlocks paddle input after respawn
+
+**Lives Management:**
+
+- `LivesState.lives_remaining` (u8) — Authoritative life counter
+- `GameSession.lives_remaining` (u32) — Synced during game state transitions
+- Starting lives: 3
+- Maximum lives: 5 (clamped)
+- Milestone bonuses: +1 life every 5000 points
 
 ### State Handling
 

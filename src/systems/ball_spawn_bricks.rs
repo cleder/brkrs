@@ -173,10 +173,18 @@ pub fn ball_spawn_system(
                 }
             }
             VelocityModifier::Inverse => {
+                // Verify ball still exists before accessing it
+                if ball_entities.get(triggering_ball).is_err() {
+                    warn!(
+                        "Triggering ball {:?} not found for Red 2 (inverse) spawn (entity despawned or doesn't exist)",
+                        triggering_ball
+                    );
+                    continue;
+                }
                 let Ok((velocity, mesh, material, ball_type)) = ball_sources.get(triggering_ball)
                 else {
                     warn!(
-                        "Triggering ball {:?} not found for Red 2 (inverse) spawn",
+                        "Triggering ball {:?} not found for Red 2 (inverse) spawn (missing required components)",
                         triggering_ball
                     );
                     continue;
@@ -192,10 +200,18 @@ pub fn ball_spawn_system(
                 spawned_this_frame.push(spawned);
             }
             VelocityModifier::YShaped { angle_degrees } => {
+                // Verify ball still exists before accessing it
+                if ball_entities.get(triggering_ball).is_err() {
+                    warn!(
+                        "Triggering ball {:?} not found for Red 3 (Y-shaped) spawn (entity despawned or doesn't exist)",
+                        triggering_ball
+                    );
+                    continue;
+                }
                 let Ok((velocity, mesh, material, ball_type)) = ball_sources.get(triggering_ball)
                 else {
                     warn!(
-                        "Triggering ball {:?} not found for Red 3 (Y-shaped) spawn",
+                        "Triggering ball {:?} not found for Red 3 (Y-shaped) spawn (missing required components)",
                         triggering_ball
                     );
                     continue;

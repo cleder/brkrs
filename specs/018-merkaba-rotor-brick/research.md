@@ -24,7 +24,7 @@
 
 ## Event System Architecture
 
-- Messages (Buffered) for spawn requests: `SpawnMerkabaMessage` carries brick world position and initial direction seed; processed by a spawn system that applies a 0.5s timer before entity creation.
+- Events (Buffered) for spawn requests: `SpawnMerkabaEvent` carries brick world position and initial direction seed; processed by a spawn system that applies a 0.5s timer before entity creation.
 - Observers/Events (Immediate) for:
   - Collision-triggered audio (wall/brick/paddle): distinct SFX per surface.
   - Paddle contact → life loss: triggers ball and merkaba despawn; stops helicopter loop.
@@ -39,7 +39,7 @@
 
 ## Testing Strategy (TDD)
 
-- Failing tests first for message emission, delayed spawn timing, min z-speed (forward motion), bounce responses, goal despawn, paddle contact consequences, audio triggers and loop lifecycle.
+- Failing tests first for event emission, delayed spawn timing, min z-speed (forward motion), bounce responses, goal despawn, paddle contact consequences, audio triggers and loop lifecycle.
 - Integration tests in `tests/` exercising ECS flows and resources.
 
 ## Assets & Resources

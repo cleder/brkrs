@@ -5,6 +5,7 @@ pub mod audio;
 pub mod ball_spawn_bricks;
 pub mod brick_effects;
 pub mod cheat_mode;
+pub mod game_state_transitions;
 pub mod gravity;
 pub mod grid_debug;
 pub mod level_switch;
@@ -16,6 +17,10 @@ pub mod scoring;
 pub mod sets;
 pub mod spawning;
 pub mod textures;
+pub mod ui {
+    pub mod game_over;
+    pub mod main_menu;
+}
 
 pub use crate::signals::BallWallHit;
 pub use audio::{AudioConfig, AudioPlugin, LevelCompleted, LevelStarted, SoundType};
