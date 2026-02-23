@@ -54,8 +54,7 @@ Tests MUST be written and committed first, verified to FAIL (red), and then appr
 
 ### Tests for User Story 1 (REQUIRED) ⚠️
 
-> **NOTE: Write these tests FIRST, ensure they FAIL before implementation; include failing-test commit hash in task**
-> **COMPLETED**: Commit 6ecb938 - test(US1,US2,US3): add paddle-destroyable brick acceptance tests (red)
+> **NOTE: Write these tests FIRST, ensure they FAIL before implementation; include failing-test commit hash in task** **COMPLETED**: Commit 6ecb938 - test(US1,US2,US3): add paddle-destroyable brick acceptance tests (red)
 
 - [X] T005 [P] [US1] Create integration test file tests/paddle_destroyable_brick.rs with test module structure
 - [X] T006 [P] [US1] Acceptance test AS 1.1: Paddle collision despawns brick within 1 frame in tests/paddle_destroyable_brick.rs
@@ -103,8 +102,7 @@ Tests MUST be written and committed first, verified to FAIL (red), and then appr
 
 ### Tests for User Story 2 (REQUIRED) ⚠️
 
-> **NOTE: Write these tests FIRST, ensure they FAIL before implementation; include failing-test commit hash in task**
-> **COMPLETED**: Commit 6ecb938 - test(US1,US2,US3): add paddle-destroyable brick acceptance tests (red)
+> **NOTE: Write these tests FIRST, ensure they FAIL before implementation; include failing-test commit hash in task** **COMPLETED**: Commit 6ecb938 - test(US1,US2,US3): add paddle-destroyable brick acceptance tests (red)
 
 - [X] T020 [P] [US2] Acceptance test AS 2.1: Ball reflects at correct angle (physics-based) in tests/paddle_destroyable_brick.rs
 - [X] T021 [P] [US2] Acceptance test AS 2.2: Brick entity NOT despawned after ball collision in tests/paddle_destroyable_brick.rs
@@ -146,8 +144,7 @@ Tests MUST be written and committed first, verified to FAIL (red), and then appr
 
 ### Tests for User Story 3 (REQUIRED) ⚠️
 
-> **NOTE: Write these tests FIRST, ensure they FAIL before implementation; include failing-test commit hash in task**
-> **COMPLETED**: Commit 6ecb938 - test(US1,US2,US3): add paddle-destroyable brick acceptance tests (red)
+> **NOTE: Write these tests FIRST, ensure they FAIL before implementation; include failing-test commit hash in task** **COMPLETED**: Commit 6ecb938 - test(US1,US2,US3): add paddle-destroyable brick acceptance tests (red)
 
 - [X] T031 [P] [US3] Acceptance test AS 3.1: RON file with `{ brick_type: 57 }` spawns paddle-destroyable brick in tests/paddle_destroyable_brick.rs
 - [X] T032 [P] [US3] Acceptance test AS 3.2: Spawned brick has all required components (Transform, BrickTypeId(57), Collider, CountsTowardsCompletion) in tests/paddle_destroyable_brick.rs

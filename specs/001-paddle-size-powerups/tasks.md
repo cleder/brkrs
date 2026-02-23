@@ -25,7 +25,8 @@ US3 (visual/audio) can follow in polish phase.
 
 ## Phase 1: Setup & Foundational Infrastructure
 
-> **Goal**: Prepare codebase for paddle size feature. This phase is prerequisite to all user stories.
+> **Goal**: Prepare codebase for paddle size feature.
+> This phase is prerequisite to all user stories.
 
 ### 1.1 Component Definition & Event Setup
 
@@ -65,7 +66,8 @@ US3 (visual/audio) can follow in polish phase.
 
 ## Phase 2: Core Collision & Effect Creation (US1 + US2 Foundational)
 
-> **Goal**: Implement brick collision detection and paddle size effect creation. This is the blocking prerequisite for both US1 and US2.
+> **Goal**: Implement brick collision detection and paddle size effect creation.
+> This is the blocking prerequisite for both US1 and US2.
 
 ### 2.1 Collision Detection System
 
@@ -115,7 +117,8 @@ US3 (visual/audio) can follow in polish phase.
 
 ## Phase 3: User Story 1 - Paddle Shrink on Brick 30 Hit
 
-> **Goal**: Implement shrink mechanic. Player's paddle shrinks to 70% when hitting brick 30, persists for 10s, then returns to normal.
+> **Goal**: Implement shrink mechanic.
+> Player's paddle shrinks to 70% when hitting brick 30, persists for 10s, then returns to normal.
 
 ### 3.1 Shrink Effect Behavior Verification
 
@@ -153,7 +156,8 @@ US3 (visual/audio) can follow in polish phase.
 
 ## Phase 4: User Story 2 - Paddle Enlarge on Brick 32 Hit
 
-> **Goal**: Implement enlarge mechanic. Player's paddle enlarges to 150% when hitting brick 32, persists for 10s, then returns to normal.
+> **Goal**: Implement enlarge mechanic.
+> Player's paddle enlarges to 150% when hitting brick 32, persists for 10s, then returns to normal.
 
 ### 4.1 Enlarge Effect Behavior Verification
 
@@ -191,7 +195,9 @@ US3 (visual/audio) can follow in polish phase.
 
 ## Phase 5: User Story 3 - Visual Feedback for Size Changes
 
-> **Goal**: Implement visual and audio feedback. Red glow for shrink, green glow for enlarge. Distinct sound cues.
+> **Goal**: Implement visual and audio feedback.
+> Red glow for shrink, green glow for enlarge.
+> Distinct sound cues.
 
 ### 5.1 Visual Feedback System
 
@@ -235,7 +241,8 @@ US3 (visual/audio) can follow in polish phase.
 
 ## Phase 6: Integration & Cross-Level Testing
 
-> **Goal**: Validate feature across multiple levels and edge cases. Ensure no regressions.
+> **Goal**: Validate feature across multiple levels and edge cases.
+> Ensure no regressions.
 
 ### 6.1 Multi-Level Integration Tests
 

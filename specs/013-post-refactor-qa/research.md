@@ -44,8 +44,8 @@
     );
     ```
 
-    Or better, explicit ordering if dependencies exist.
-    Since they are independent spawners, `.chain()` is sufficient to ensure a consistent order (even if the specific order doesn't matter for logic, it matters for determinism).
+  Or better, explicit ordering if dependencies exist.
+  Since they are independent spawners, `.chain()` is sufficient to ensure a consistent order (even if the specific order doesn't matter for logic, it matters for determinism).
 
 ## Unknowns & Clarifications
 

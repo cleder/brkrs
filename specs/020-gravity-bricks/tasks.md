@@ -46,7 +46,8 @@
 
 ### Tests for US1 (REQUIRED) ⚠️
 
-> **NOTE: Write these tests FIRST, verify they FAIL (red), record failing-test commit hash, then implement. Tests must pass before moving to next US.**
+> **NOTE: Write these tests FIRST, verify they FAIL (red), record failing-test commit hash, then implement.**
+> **Tests must pass before moving to next US.**
 
 - [X] T010 [P] [US1] Write unit tests for gravity brick destruction detection in `tests/gravity_bricks.rs::test_gravity_brick_21_zero_gravity()` - assert brick 21 destruction sends `GravityChanged { gravity: (0.0, 0.0, 0.0) }`
 - [X] T011 [P] [US1] Write unit tests for gravity brick 22 (2G) in `tests/gravity_bricks.rs::test_gravity_brick_22_moon_gravity()` - assert sends message with `(0.0, 2.0, 0.0)`
