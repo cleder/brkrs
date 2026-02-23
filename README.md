@@ -43,7 +43,8 @@ Every feature starts as a spec, flows through an issue (recommended) or directly
 You can **play the game, explore the code, and learn modern Rust/Bevy workflows all at the same time**.
 Play, tweak, and learn — modify levels, bricks, or mechanics to see specs turn into features.
 
-> Linus Torvalds said: **“Talk is cheap. Show me the code.”**
+> Linus Torvalds said: **“Talk is cheap.**
+> **Show me the code.”**
 
 brkrs lets you play, tinker, and see the specs come alive in a real game.
 

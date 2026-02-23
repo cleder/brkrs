@@ -36,8 +36,8 @@
 - [x] CHK018 Does the spec cover the primary flow: start session → see 3 lives → lose lives → see count update? [Resolved, Spec §Primary Flow, Spec §User Story 1]
 - [x] CHK019 Does the spec cover the terminal flow: last life loss → count reaches 0 → game over message appears and remains? [Resolved, Spec §User Story 2, Spec §FR-005–FR-007]
 - [x] CHK020 Does the spec address what happens after game over (e.g., input handling, ability to restart, ability to continue watching)?
-  If intentionally excluded, is that exclusion explicit?
-  [Resolved, Spec §FR-009]
+If intentionally excluded, is that exclusion explicit?
+[Resolved, Spec §FR-009]
 
 ## Edge Case Coverage
 
