@@ -6,7 +6,7 @@ authors:
   - christian
 ---
 
-# Retrospective — 006-audio-system
+## Retrospective — 006-audio-system
 
 Summary
 
