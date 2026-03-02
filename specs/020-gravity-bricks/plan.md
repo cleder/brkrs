@@ -243,25 +243,12 @@ Deliverables:
 - `gravity_application_system`: Rapier `PhysicsSet` (read messages, update gravity config)
   - `gravity_reset_on_life_loss_system`: `PostUpdate`, **before** ball respawn system (reset gravity before next ball spawns)
 
-   **Critical Ordering Constraint**:
+    **Critical Ordering Constraint**:
 
-   ```text
-   Update Schedule
-       ↓
-   [brick_destruction_gravity_handler sends GravityChanged messages]
-       ↓
-   PhysicsSet (runs in PostUpdate by default)
-        ↓
-   [gravity_application_system reads messages, updates GravityConfiguration::current]
-            ↓
-   PostUpdate Schedule
-           ↓
-   [gravity_reset_on_life_loss_system resets to level_default (from level gravity) on ball loss]
-          ↓
-   [Ball respawn occurs with reset gravity]
-   ```
+    ```text
+Update Schedule        ↓    [brick_destruction_gravity_handler sends GravityChanged messages]        ↓    PhysicsSet (runs in PostUpdate by default) ↓    [gravity_application_system reads messages, updates GravityConfiguration::current] ↓    PostUpdate Schedule            ↓    [gravity_reset_on_life_loss_system resets to level_default (from level gravity) on ball loss] ↓    [Ball respawn occurs with reset gravity] ```
 
-   This ensures gravity messages are processed before physics simulation, and gravity is reset before next ball spawn.
+    This ensures gravity messages are processed before physics simulation, and gravity is reset before next ball spawn.
 
 ### Phase 2: Task Breakdown (PENDING)
 
