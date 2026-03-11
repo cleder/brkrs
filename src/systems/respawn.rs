@@ -307,6 +307,8 @@ impl Plugin for RespawnPlugin {
             .add_message::<LifeLostEvent>()
             .add_message::<RespawnScheduled>()
             .add_message::<RespawnCompleted>()
+            // Keep GameOverRequested as buffered Message (not observer trigger)
+            // to preserve message-event separation guarantees.
             .add_message::<GameOverRequested>()
             .configure_sets(
                 Update,

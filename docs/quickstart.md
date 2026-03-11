@@ -70,6 +70,13 @@ xcode-select --install
 | Destroy all bricks | `K` (requires Cheat Mode) |
 | Toggle wireframe | `Space` (requires Cheat Mode) |
 
+### New Game Behavior
+
+- Selecting **New Game** from the Game Over screen resets the run to a clean state:
+  - Level resets to 1
+  - Lives reset to 3
+  - Score resets to 0
+
 ## Playing a specific level
 
 To start on a different level, modify the level number in the source or use the level switcher (if available).

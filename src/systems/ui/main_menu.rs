@@ -116,7 +116,9 @@ pub fn despawn_main_menu(mut commands: Commands, query: Query<Entity, With<MainM
 pub fn handle_main_menu_buttons(
     current_state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
-    session: Res<GameSession>,
+    mut session: ResMut<GameSession>,
+    lives_state: Option<ResMut<crate::systems::respawn::LivesState>>,
+    score_state: Option<ResMut<crate::systems::scoring::ScoreState>>,
     mut commands: Commands,
     mut exit: MessageWriter<AppExit>,
     keyboard: Option<Res<ButtonInput<KeyCode>>>,
@@ -153,8 +155,20 @@ pub fn handle_main_menu_buttons(
     }
 
     if start_requested && is_valid_transition(current_state.get(), &GameState::FadeOut) {
-        // When starting a new game, ensure we load from GameSession.current_level
-        // and go through proper level load states
+        // Starting a new game must reset canonical gameplay resources before transitioning.
+        session.current_level = 1;
+        session.lives_remaining = 3;
+        session.score = 0;
+
+        if let Some(mut lives_state) = lives_state {
+            lives_state.lives_remaining = 3;
+            lives_state.on_last_life = false;
+        }
+
+        if let Some(mut score_state) = score_state {
+            crate::systems::scoring::reset_score(&mut score_state);
+        }
+
         let target_level = session.current_level;
         info!(
             target: "game_state",

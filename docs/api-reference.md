@@ -112,7 +112,7 @@ The `ui` module is further organized into specialized submodules:
 |-----------|---------|
 | `ui::score_display` | Score HUD element showing cumulative player score (top-right) |
 | `ui::lives_counter` | Lives remaining counter display (top-right, below score) |
-| `ui::game_over_overlay` | Centered full-screen "Game Over" message when player exhausts all lives |
+| `ui::game_over_overlay` | Legacy gameplay overlay module (retired; no longer spawned in active gameplay) |
 | `ui::level_label` | Current level display HUD element |
 | `ui::cheat_indicator` | Visual indicator showing when cheat mode is active (lower-right corner) |
 | `ui::pause_overlay` | Pause menu and overlay displayed when ESC is pressed |

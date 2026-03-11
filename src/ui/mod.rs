@@ -47,7 +47,6 @@ impl std::error::Error for UiSystemError {}
 
 pub mod cheat_indicator;
 pub mod fonts;
-pub mod game_over_overlay;
 pub mod gravity_indicator;
 pub mod level_label;
 pub mod lives_counter;
@@ -147,7 +146,6 @@ impl Plugin for UiPlugin {
             Update,
             (
                 lives_counter::update_lives_counter,
-                game_over_overlay::spawn_game_over_overlay,
                 cheat_indicator::handle_cheat_indicator,
                 level_label::sync_with_current_level,
                 gravity_indicator::update_gravity_indicator,
