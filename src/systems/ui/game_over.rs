@@ -147,9 +147,7 @@ pub fn handle_game_over_buttons(
     };
 
     for interaction in return_query.iter() {
-        if *interaction == Interaction::Pressed
-            && is_valid_transition(current_state.get(), &GameState::MainMenu)
-        {
+        if *interaction == Interaction::Pressed {
             return_requested = true;
         }
     }
@@ -167,37 +165,25 @@ pub fn handle_game_over_buttons(
     }
 
     if new_game_requested {
+        if !is_valid_transition(current_state.get(), &GameState::MainMenu) {
+            return;
+        }
+
+        let (Some(mut lives_state), Some(mut score_state)) = (lives_state, score_state) else {
+            error!(
+                target: "game_state",
+                "Required gameplay resources missing when starting new game from GameOver"
+            );
+            return;
+        };
+
         session.current_level = 1;
         session.lives_remaining = 3;
         session.score = 0;
+        crate::systems::respawn::reset_lives(lives_state.as_mut());
+        crate::systems::scoring::reset_score(&mut score_state);
 
-        match lives_state {
-            Some(mut lives_state) => {
-                crate::systems::respawn::reset_lives(lives_state.as_mut());
-            }
-            None => {
-                error!(
-                    target: "game_state",
-                    "LivesState resource missing when starting new game from GameOver"
-                );
-            }
-        }
-
-        match score_state {
-            Some(mut score_state) => {
-                crate::systems::scoring::reset_score(&mut score_state);
-            }
-            None => {
-                error!(
-                    target: "game_state",
-                    "ScoreState resource missing when starting new game from GameOver"
-                );
-            }
-        }
-
-        if is_valid_transition(current_state.get(), &GameState::MainMenu) {
-            commands.insert_resource(StateTransitionContext::NewGame);
-            next_state.set(GameState::MainMenu);
-        }
+        commands.insert_resource(StateTransitionContext::NewGame);
+        next_state.set(GameState::MainMenu);
     }
 }

@@ -34,7 +34,16 @@ fn minimal_ui_test_app() -> App {
 fn legacy_overlay_test_app() -> App {
     let mut app = App::new();
     app.add_plugins(MinimalPlugins);
-    app.add_message::<GameOverRequested>();
+    app.add_message::<bevy_rapier3d::prelude::CollisionEvent>();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
+    app.insert_resource(Assets::<StandardMaterial>::default());
+    app.insert_resource(Assets::<Mesh>::default());
+    app.insert_resource(ButtonInput::<MouseButton>::default());
+    app.init_resource::<brkrs::systems::scoring::ScoreState>();
+    app.add_plugins(brkrs::systems::RespawnPlugin);
+    app.add_plugins(brkrs::ui::UiPlugin);
     app.insert_resource(LivesState {
         lives_remaining: 0,
         on_last_life: true,
