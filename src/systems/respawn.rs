@@ -134,6 +134,11 @@ impl Default for LivesState {
     }
 }
 
+/// Helper to reset lives state to initial values for a fresh run.
+pub fn reset_lives(lives_state: &mut LivesState) {
+    *lives_state = LivesState::default();
+}
+
 /// Tracks pending respawn operations and their timer state.
 #[derive(Resource)]
 pub struct RespawnSchedule {

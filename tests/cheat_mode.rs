@@ -1,8 +1,9 @@
+use bevy::ecs::message::Messages;
 use bevy::prelude::*;
 use bevy::MinimalPlugins;
 
 use brkrs::signals::UiBeep;
-use brkrs::systems::cheat_mode::CheatModeState;
+use brkrs::systems::cheat_mode::{CheatModeState, CheatModeToggled};
 use brkrs::systems::level_switch::{LevelSwitchPlugin, LevelSwitchRequested};
 
 use brkrs::level_loader::LevelLoaderPlugin;
@@ -84,6 +85,9 @@ fn toggling_cheat_resets_lives_without_overlay_dependency() {
             lives_remaining: 0,
             on_last_life: true,
         });
+        world
+            .resource_mut::<brkrs::systems::scoring::ScoreState>()
+            .current_score = 123;
         let lives = world.resource::<brkrs::systems::respawn::LivesState>();
         assert_eq!(
             lives.lives_remaining, 0,
@@ -107,6 +111,18 @@ fn toggling_cheat_resets_lives_without_overlay_dependency() {
         assert_eq!(
             lives.lives_remaining, 3,
             "Lives should be reset to 3 when toggling cheat mode"
+        );
+
+        let score = world.resource::<brkrs::systems::scoring::ScoreState>();
+        assert_eq!(
+            score.current_score, 0,
+            "Score should be reset to 0 when toggling cheat mode"
+        );
+
+        let toggles = world.resource::<Messages<CheatModeToggled>>();
+        assert!(
+            !toggles.is_empty(),
+            "Cheat toggle should emit CheatModeToggled message"
         );
     }
 }

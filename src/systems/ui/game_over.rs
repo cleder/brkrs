@@ -128,6 +128,8 @@ pub fn handle_game_over_buttons(
     current_state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
     mut session: ResMut<GameSession>,
+    lives_state: Option<ResMut<crate::systems::respawn::LivesState>>,
+    score_state: Option<ResMut<crate::systems::scoring::ScoreState>>,
     mut commands: Commands,
     keyboard: Option<Res<ButtonInput<KeyCode>>>,
     return_query: Query<&Interaction, (Changed<Interaction>, With<ReturnToMenuButtonMarker>)>,
@@ -168,6 +170,31 @@ pub fn handle_game_over_buttons(
         session.current_level = 1;
         session.lives_remaining = 3;
         session.score = 0;
+
+        match lives_state {
+            Some(mut lives_state) => {
+                crate::systems::respawn::reset_lives(lives_state.as_mut());
+            }
+            None => {
+                error!(
+                    target: "game_state",
+                    "LivesState resource missing when starting new game from GameOver"
+                );
+            }
+        }
+
+        match score_state {
+            Some(mut score_state) => {
+                crate::systems::scoring::reset_score(&mut score_state);
+            }
+            None => {
+                error!(
+                    target: "game_state",
+                    "ScoreState resource missing when starting new game from GameOver"
+                );
+            }
+        }
+
         if is_valid_transition(current_state.get(), &GameState::MainMenu) {
             commands.insert_resource(StateTransitionContext::NewGame);
             next_state.set(GameState::MainMenu);

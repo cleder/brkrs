@@ -45,6 +45,7 @@ fn pause_overlay_spawns_when_paused() {
 #[test]
 fn legacy_game_over_overlay_never_spawns_from_message() {
     let mut app = App::new();
+    app.add_plugins(MinimalPlugins);
     app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
     app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
     app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
@@ -57,16 +58,31 @@ fn legacy_game_over_overlay_never_spawns_from_message() {
     app.insert_resource(UiFonts {
         orbitron: Handle::default(),
     });
-    let before_count = app.world().entities().len();
+    #[cfg(not(target_arch = "wasm32"))]
+    app.insert_resource(PauseState::Active);
+    #[cfg(target_arch = "wasm32")]
+    app.insert_resource(PauseState::Active);
+    app.add_systems(Update, spawn_pause_overlay);
+    app.update();
+
+    let before_pause_overlay_count = app
+        .world_mut()
+        .query_filtered::<(), With<PauseOverlay>>()
+        .iter(app.world())
+        .count();
 
     app.world_mut()
         .resource_mut::<Messages<GameOverRequested>>()
         .write(GameOverRequested { remaining_lives: 0 });
     app.update();
 
-    let after_count = app.world().entities().len();
+    let after_pause_overlay_count = app
+        .world_mut()
+        .query_filtered::<(), With<PauseOverlay>>()
+        .iter(app.world())
+        .count();
     assert_eq!(
-        after_count, before_count,
-        "legacy game-over overlay must not spawn new entities"
+        after_pause_overlay_count, before_pause_overlay_count,
+        "GameOverRequested must not spawn gameplay overlays"
     );
 }

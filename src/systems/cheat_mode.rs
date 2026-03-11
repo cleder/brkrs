@@ -73,9 +73,13 @@ fn toggle_cheat_mode_input(
         // On activation, reset lives and remove any game-over overlay so player can resume
         if cheat.is_active() {
             if let Some(lives) = lives_state.as_mut() {
-                lives.lives_remaining = 3;
-                lives.on_last_life = false;
+                crate::systems::respawn::reset_lives(lives.as_mut());
                 tracing::info!("Lives reset to 3 due to cheat activation");
+            } else {
+                tracing::warn!(
+                    target: "game_state",
+                    "LivesState resource missing during cheat activation"
+                );
             }
         }
     }

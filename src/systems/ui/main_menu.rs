@@ -160,13 +160,28 @@ pub fn handle_main_menu_buttons(
         session.lives_remaining = 3;
         session.score = 0;
 
-        if let Some(mut lives_state) = lives_state {
-            lives_state.lives_remaining = 3;
-            lives_state.on_last_life = false;
+        match lives_state {
+            Some(mut lives_state) => {
+                crate::systems::respawn::reset_lives(lives_state.as_mut());
+            }
+            None => {
+                error!(
+                    target: "game_state",
+                    "LivesState resource missing when starting new game from MainMenu"
+                );
+            }
         }
 
-        if let Some(mut score_state) = score_state {
-            crate::systems::scoring::reset_score(&mut score_state);
+        match score_state {
+            Some(mut score_state) => {
+                crate::systems::scoring::reset_score(&mut score_state);
+            }
+            None => {
+                error!(
+                    target: "game_state",
+                    "ScoreState resource missing when starting new game from MainMenu"
+                );
+            }
         }
 
         let target_level = session.current_level;

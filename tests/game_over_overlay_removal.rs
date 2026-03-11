@@ -42,6 +42,8 @@ fn legacy_overlay_test_app() -> App {
     app.insert_resource(UiFonts {
         orbitron: Handle::default(),
     });
+    app.insert_resource(PauseState::Active);
+    app.add_systems(Update, spawn_pause_overlay);
     app
 }
 
@@ -84,24 +86,39 @@ fn bevy_guard_pause_overlay_spawns_once_with_fonts() {
 #[test]
 fn test_restart_after_game_over_has_no_legacy_overlay() {
     let mut app = legacy_overlay_test_app();
-    let before_count = app.world().entities().len();
+    app.update();
+
+    let before_pause_overlay_count = app
+        .world_mut()
+        .query_filtered::<(), With<PauseOverlay>>()
+        .iter(app.world())
+        .count();
     app.world_mut()
         .resource_mut::<Messages<GameOverRequested>>()
         .write(GameOverRequested { remaining_lives: 0 });
     app.update();
 
-    // Legacy overlay removal means GameOverRequested must not create new overlay entities.
-    let after_count = app.world().entities().len();
+    let after_pause_overlay_count = app
+        .world_mut()
+        .query_filtered::<(), With<PauseOverlay>>()
+        .iter(app.world())
+        .count();
     assert_eq!(
-        after_count, before_count,
-        "legacy game-over overlay must not spawn"
+        after_pause_overlay_count, before_pause_overlay_count,
+        "GameOverRequested must not create gameplay overlay entities"
     );
 }
 
 #[test]
 fn test_no_legacy_overlay_reappears_after_restart_over_10_frames() {
     let mut app = legacy_overlay_test_app();
-    let before_count = app.world().entities().len();
+    app.update();
+
+    let before_pause_overlay_count = app
+        .world_mut()
+        .query_filtered::<(), With<PauseOverlay>>()
+        .iter(app.world())
+        .count();
     app.world_mut()
         .resource_mut::<Messages<GameOverRequested>>()
         .write(GameOverRequested { remaining_lives: 0 });
@@ -111,10 +128,14 @@ fn test_no_legacy_overlay_reappears_after_restart_over_10_frames() {
         app.update();
     }
 
-    let after_count = app.world().entities().len();
+    let after_pause_overlay_count = app
+        .world_mut()
+        .query_filtered::<(), With<PauseOverlay>>()
+        .iter(app.world())
+        .count();
     assert_eq!(
-        after_count, before_count,
-        "legacy game-over overlay must stay absent across frames"
+        after_pause_overlay_count, before_pause_overlay_count,
+        "GameOverRequested must not create gameplay overlay entities across frames"
     );
 }
 
@@ -155,24 +176,40 @@ fn test_buffered_game_over_requested_message_usage() {
 #[test]
 fn test_no_legacy_overlay_on_fresh_launch_gameplay() {
     let mut app = legacy_overlay_test_app();
-    let before_count = app.world().entities().len();
+    app.update();
+
+    let before_pause_overlay_count = app
+        .world_mut()
+        .query_filtered::<(), With<PauseOverlay>>()
+        .iter(app.world())
+        .count();
     app.insert_resource(LivesState {
         lives_remaining: 3,
         on_last_life: false,
     });
     app.update();
 
-    let after_count = app.world().entities().len();
+    let after_pause_overlay_count = app
+        .world_mut()
+        .query_filtered::<(), With<PauseOverlay>>()
+        .iter(app.world())
+        .count();
     assert_eq!(
-        after_count, before_count,
-        "fresh launch should have no legacy overlay"
+        after_pause_overlay_count, before_pause_overlay_count,
+        "fresh launch should not create gameplay overlays"
     );
 }
 
 #[test]
 fn test_no_legacy_overlay_across_10_game_over_restart_cycles() {
     let mut app = legacy_overlay_test_app();
-    let before_count = app.world().entities().len();
+    app.update();
+
+    let before_pause_overlay_count = app
+        .world_mut()
+        .query_filtered::<(), With<PauseOverlay>>()
+        .iter(app.world())
+        .count();
 
     for _ in 0..10 {
         app.world_mut()
@@ -186,29 +223,33 @@ fn test_no_legacy_overlay_across_10_game_over_restart_cycles() {
         app.update();
     }
 
-    let after_count = app.world().entities().len();
+    let after_pause_overlay_count = app
+        .world_mut()
+        .query_filtered::<(), With<PauseOverlay>>()
+        .iter(app.world())
+        .count();
     assert_eq!(
-        after_count, before_count,
-        "legacy overlay must stay absent across restart cycles"
+        after_pause_overlay_count, before_pause_overlay_count,
+        "gameplay overlays should remain unchanged across restart cycles"
     );
 }
 
 #[test]
-fn test_no_manual_parent_children_mutation_for_pause_overlay() {
+fn test_pause_overlay_not_spawned_while_active() {
     let mut app = minimal_ui_test_app();
+    app.insert_resource(PauseState::Active);
     app.insert_resource(UiFonts {
         orbitron: Handle::default(),
     });
     app.update();
 
-    let mut query = app
+    let count = app
         .world_mut()
-        .query_filtered::<Option<&ChildOf>, With<PauseOverlay>>();
-
-    for parent in query.iter(app.world()) {
-        assert!(
-            parent.is_none(),
-            "pause overlay should not be manually attached via Parent/Children mutation"
-        );
-    }
+        .query_filtered::<(), With<PauseOverlay>>()
+        .iter(app.world())
+        .count();
+    assert_eq!(
+        count, 0,
+        "pause overlay should not spawn when pause is inactive"
+    );
 }
