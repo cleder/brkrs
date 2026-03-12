@@ -16,11 +16,8 @@
 //!   respawn logic before rendering.
 //!
 //! Relationship to game over
-//! - Both the lives counter and the game-over overlay observe the same `LivesState`.
-//! - When lives reach zero, `ui::game_over_overlay::spawn_game_over_overlay` (scheduled after
-//!   `RespawnSystems::Schedule`) handles presenting the game-over UI. The lives counter can
-//!   coexist; the overlay typically becomes the primary focus. Any future hide/remove behavior can
-//!   be handled by that overlay system if desired.
+//! - The lives counter continues to reflect `LivesState` changes when lives reach zero.
+//! - Legacy gameplay game-over overlay behavior has been removed.
 //!
 //! Scheduling summary
 //! - Spawn attempt: every Update, idempotent, waits for `UiFonts`.

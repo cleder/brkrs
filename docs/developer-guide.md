@@ -428,6 +428,14 @@ Two separate counters must stay synchronized:
 - `LivesState.lives_remaining` (u8) — **Source of truth** (respawn system)
 - `GameSession.lives_remaining` (u32) — Game state tracking (synced during transitions)
 
+When New Game is selected from the Game Over screen, the run is reset explicitly:
+
+- `GameSession.current_level = 1`
+- `GameSession.lives_remaining = 3`
+- `GameSession.score = 0`
+- `LivesState.lives_remaining = 3`
+- `ScoreState.current_score = 0` and milestone tracking reset
+
 The `check_fade_out_completion()` system syncs them:
 
 ```rust

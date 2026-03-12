@@ -248,6 +248,7 @@ Ball Lost Event Sources:
 - **Merkaba/PaddleHazard**: **Always** trigger life loss, regardless of remaining balls
 - **Source of Truth**: `LivesState.lives_remaining` (u8) maintained by respawn system
 - **Game State Sync**: `GameSession.lives_remaining` (u32) synced from LivesState during state transitions
+- **New Game Reset**: Starting New Game from Game Over resets `GameSession`, `LivesState`, and `ScoreState` to baseline values (level 1, 3 lives, score 0)
 
 ### Scoring System
 
@@ -290,7 +291,7 @@ LivesState.lives_remaining += 1
 - Extra Ball brick (41): 0 points (grants life via separate mechanism)
 - Magnet bricks (55-56): 0 points (effect-only)
 
-**Persistence**: Score accumulates across level transitions, resets on game restart
+**Persistence**: Score accumulates across level transitions, resets when starting a New Game
 
 ### Messages vs Observers (Bevy 0.17+)
 

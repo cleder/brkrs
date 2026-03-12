@@ -1,11 +1,10 @@
+use bevy::ecs::message::Messages;
 use bevy::prelude::*;
 use bevy::MinimalPlugins;
 
-use bevy::ecs::entity::Entity;
 use brkrs::signals::UiBeep;
-use brkrs::systems::cheat_mode::CheatModeState;
+use brkrs::systems::cheat_mode::{CheatModeState, CheatModeToggled};
 use brkrs::systems::level_switch::{LevelSwitchPlugin, LevelSwitchRequested};
-use brkrs::ui::game_over_overlay::GameOverOverlay;
 
 use brkrs::level_loader::LevelLoaderPlugin;
 use brkrs::systems::audio::AudioPlugin;
@@ -75,23 +74,20 @@ fn test_app() -> App {
 }
 
 #[test]
-fn toggling_cheat_removes_game_over_overlay() {
+fn toggling_cheat_resets_lives_without_overlay_dependency() {
     let mut app = test_app();
 
-    // Spawn game-over overlay entity, set lives to 0, and assert initial state
+    // Set lives to 0 and assert initial state
     {
         let world = app.world_mut();
-        world.spawn((GameOverOverlay,));
         // Simulate player has no lives left
         world.insert_resource(brkrs::systems::respawn::LivesState {
             lives_remaining: 0,
             on_last_life: true,
         });
-        let mut q = world.query_filtered::<Entity, With<GameOverOverlay>>();
-        assert!(
-            q.iter(world).next().is_some(),
-            "GameOverOverlay should exist before toggle"
-        );
+        world
+            .resource_mut::<brkrs::systems::scoring::ScoreState>()
+            .current_score = 123;
         let lives = world.resource::<brkrs::systems::respawn::LivesState>();
         assert_eq!(
             lives.lives_remaining, 0,
@@ -108,18 +104,25 @@ fn toggling_cheat_removes_game_over_overlay() {
     // Run one update to process toggle
     app.update();
 
-    // GameOverOverlay should be removed and lives reset to 3
+    // Lives should be reset to 3.
     {
         let world = app.world_mut();
-        let mut q = world.query_filtered::<Entity, With<GameOverOverlay>>();
-        assert!(
-            q.iter(world).next().is_none(),
-            "GameOverOverlay should be removed when toggling cheat mode"
-        );
         let lives = world.resource::<brkrs::systems::respawn::LivesState>();
         assert_eq!(
             lives.lives_remaining, 3,
             "Lives should be reset to 3 when toggling cheat mode"
+        );
+
+        let score = world.resource::<brkrs::systems::scoring::ScoreState>();
+        assert_eq!(
+            score.current_score, 0,
+            "Score should be reset to 0 when toggling cheat mode"
+        );
+
+        let toggles = world.resource::<Messages<CheatModeToggled>>();
+        assert!(
+            !toggles.is_empty(),
+            "Cheat toggle should emit CheatModeToggled message"
         );
     }
 }

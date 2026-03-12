@@ -4,12 +4,11 @@ This guide explains the three main UI systems in Brkrs and how they interact.
 
 ## Overview
 
-The UI is split into four independent but coordinated systems:
+The UI is split into three independent but coordinated systems:
 
 1. **Score Display** — Shows cumulative score in the top-right corner.
 2. **Lives Counter** — Tracks remaining lives below the score display.
-3. **Game-Over Overlay** — Displays a "Game over" message when the player runs out of lives.
-4. **Designer Palette** — Allows designers to select and place bricks on the grid during gameplay (developer feature).
+3. **Designer Palette** — Allows designers to select and place bricks on the grid during gameplay (developer feature).
 
 ## Score Display
 
@@ -30,6 +29,7 @@ The UI is split into four independent but coordinated systems:
 
 - Points awarded based on brick type (see `docs/bricks.md`)
 - Score persists across level transitions
+- Score resets to 0 when a New Game is started from the Game Over screen
 - Every 5000 points triggers a milestone bonus (extra life)
 - Special cases: Question brick (53) awards random 25-300 points; Extra Ball (41) and Magnet bricks (55-56) award 0 points
 
@@ -54,29 +54,13 @@ If missing, the system logs a warning and defers spawning until fonts become ava
 **Dependency**: Requires `UiFonts` resource.
 If missing (WASM startup), the system logs a warning and defers spawning until fonts become available.
 
-## Game-Over Overlay
+## Legacy Overlay Removal Note
 
-**Module**: `src/ui/game_over_overlay.rs`
+Legacy gameplay game-over overlay behavior has been retired for this project state.
 
-**Purpose**: Display a centered "Game over" message when the player exhausts all lives.
-
-**How it works**:
-
-- `spawn_game_over_overlay()` listens for the `GameOverRequested` event and spawns the overlay once when:
-  - The event is received, and
-  - `LivesState.lives_remaining == 0`, and
-  - No existing `GameOverOverlay` entity is present (idempotent), and
-  - `UiFonts` is available (logs a warning and defers otherwise).
-- Scheduled in Update after `RespawnSystems::Schedule` to ensure lives logic has finalized.
-
-**Display**: Centered full-screen text (80pt Orbitron, white) covering the entire viewport.
-
-**Coexistence with Lives Counter**: Both can exist simultaneously.
-The overlay becomes the primary focus, and the counter remains visible in the background.
-Future logic can hide the counter if desired.
-
-**Cheat mode interaction**: Toggling cheat mode (pressing `G`) will remove any active *Game Over* overlay so gameplay can resume; this behavior is covered by a unit test (`tests/cheat_mode.rs::toggling_cheat_removes_game_over_overlay`).
-**Note:** This does not reload or reset the current level — the level state remains unchanged and gameplay resumes in-place.
+- `GameOverRequested` remains a buffered message in respawn/life-loss flow.
+- No gameplay UI system now spawns a legacy `GameOverOverlay` entity.
+- Pause and cheat systems no longer depend on legacy overlay marker presence.
 
 ## Designer Palette
 
@@ -111,7 +95,7 @@ Falls back to gray if unavailable.
 
 ## Resource Dependencies
 
-All three systems depend on platform-specific font availability:
+All UI systems depend on platform-specific font availability:
 
 - **Desktop**: `UiFonts` is inserted at Startup by `load_ui_fonts()` in `FontsPlugin`, so all systems can spawn immediately.
 - **WASM**: `UiFonts` is inserted asynchronously in Update by `ensure_ui_fonts_loaded()` in `FontsPlugin`.
@@ -125,7 +109,6 @@ All UI systems run in the **Update** schedule:
 |--------|-----------|-------|
 | `spawn_lives_counter` | Every frame, idempotent | Before `update_lives_counter` |
 | `update_lives_counter` | Only if `LivesState` changed | After `RespawnSystems::Schedule` |
-| `spawn_game_over_overlay` | Only if `GameOverRequested` event received | After `RespawnSystems::Schedule` |
 | `toggle_palette` | Every frame | Early (no explicit ordering) |
 | `ensure_palette_ui` | Only if `PaletteState` changed | After `toggle_palette` |
 | `handle_palette_selection` | Only if button interaction changed | During standard interaction phase |

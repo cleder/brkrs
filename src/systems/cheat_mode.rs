@@ -58,8 +58,6 @@ fn toggle_cheat_mode_input(
     mut cheat: ResMut<CheatModeState>,
     mut toggle_events: MessageWriter<CheatModeToggled>,
     mut score_state: ResMut<crate::systems::scoring::ScoreState>,
-    mut commands: Commands,
-    overlays: Query<Entity, With<crate::ui::game_over_overlay::GameOverOverlay>>,
     mut lives_state: Option<ResMut<crate::systems::respawn::LivesState>>,
 ) {
     if keyboard.just_pressed(KeyCode::KeyG) {
@@ -75,13 +73,13 @@ fn toggle_cheat_mode_input(
         // On activation, reset lives and remove any game-over overlay so player can resume
         if cheat.is_active() {
             if let Some(lives) = lives_state.as_mut() {
-                lives.lives_remaining = 3;
-                lives.on_last_life = false;
+                crate::systems::respawn::reset_lives(lives.as_mut());
                 tracing::info!("Lives reset to 3 due to cheat activation");
-            }
-            for ent in overlays.iter() {
-                commands.entity(ent).despawn();
-                tracing::info!("Removed GameOverOverlay due to cheat activation");
+            } else {
+                tracing::warn!(
+                    target: "game_state",
+                    "LivesState resource missing during cheat activation"
+                );
             }
         }
     }

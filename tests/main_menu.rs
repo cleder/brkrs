@@ -5,7 +5,7 @@ use brkrs::game_state::StateTransitionContext;
 use brkrs::game_state::{GameState, GameStatesPlugin};
 use brkrs::systems::respawn::LifeLostEvent;
 use brkrs::systems::ui::game_over::GameOverRoot;
-use brkrs::systems::ui::main_menu::{MainMenuRoot, QuitButtonMarker};
+use brkrs::systems::ui::main_menu::{MainMenuRoot, NewGameButtonMarker, QuitButtonMarker};
 use std::time::Duration;
 
 fn test_app() -> App {
@@ -117,4 +117,137 @@ fn game_over_ui_spawns_on_enter() {
         .iter(app.world())
         .count();
     assert!(count > 0, "GameOver root should spawn on GameOver state");
+}
+
+#[test]
+fn main_menu_new_game_resets_lives_and_score_resources() {
+    let mut app = test_app();
+    app.update();
+
+    app.world_mut()
+        .resource_mut::<brkrs::game_state::GameSession>()
+        .current_level = 7;
+    app.world_mut()
+        .resource_mut::<brkrs::game_state::GameSession>()
+        .lives_remaining = 0;
+    app.world_mut()
+        .resource_mut::<brkrs::game_state::GameSession>()
+        .score = 9_999;
+
+    app.world_mut()
+        .insert_resource(brkrs::systems::respawn::LivesState {
+            lives_remaining: 0,
+            on_last_life: true,
+        });
+    app.world_mut()
+        .insert_resource(brkrs::systems::scoring::ScoreState {
+            current_score: 4_321,
+            last_milestone_reached: 3,
+        });
+
+    app.world_mut()
+        .spawn((NewGameButtonMarker, Interaction::Pressed, Button));
+
+    app.update();
+
+    let session = app.world().resource::<brkrs::game_state::GameSession>();
+    assert_eq!(session.current_level, 1, "New Game should reset level to 1");
+    assert_eq!(
+        session.lives_remaining, 3,
+        "New Game should reset lives to 3"
+    );
+    assert_eq!(session.score, 0, "New Game should reset session score to 0");
+
+    let lives = app
+        .world()
+        .resource::<brkrs::systems::respawn::LivesState>();
+    assert_eq!(lives.lives_remaining, 3, "New Game should reset LivesState");
+    assert!(!lives.on_last_life, "New Game should clear last-life flag");
+
+    let score = app
+        .world()
+        .resource::<brkrs::systems::scoring::ScoreState>();
+    assert_eq!(score.current_score, 0, "New Game should reset score to 0");
+    assert_eq!(
+        score.last_milestone_reached, 0,
+        "New Game should reset milestone tracking"
+    );
+}
+
+#[test]
+fn game_over_new_game_resets_lives_and_score_resources() {
+    let mut app = test_app();
+    app.update();
+
+    app.world_mut()
+        .resource_mut::<NextState<GameState>>()
+        .set(GameState::GameOver);
+    app.update();
+
+    app.world_mut()
+        .resource_mut::<brkrs::game_state::GameSession>()
+        .current_level = 7;
+    app.world_mut()
+        .resource_mut::<brkrs::game_state::GameSession>()
+        .lives_remaining = 0;
+    app.world_mut()
+        .resource_mut::<brkrs::game_state::GameSession>()
+        .score = 9_999;
+
+    app.world_mut()
+        .insert_resource(brkrs::systems::respawn::LivesState {
+            lives_remaining: 0,
+            on_last_life: true,
+        });
+    app.world_mut()
+        .insert_resource(brkrs::systems::scoring::ScoreState {
+            current_score: 4_321,
+            last_milestone_reached: 3,
+        });
+
+    app.world_mut()
+        .insert_resource(ButtonInput::<KeyCode>::default());
+    app.world_mut()
+        .resource_mut::<ButtonInput<KeyCode>>()
+        .press(KeyCode::Enter);
+
+    app.update();
+
+    let session = app.world().resource::<brkrs::game_state::GameSession>();
+    assert_eq!(
+        session.current_level, 1,
+        "GameOver New Game should reset level to 1"
+    );
+    assert_eq!(
+        session.lives_remaining, 3,
+        "GameOver New Game should reset lives to 3"
+    );
+    assert_eq!(
+        session.score, 0,
+        "GameOver New Game should reset session score to 0"
+    );
+
+    let lives = app
+        .world()
+        .resource::<brkrs::systems::respawn::LivesState>();
+    assert_eq!(
+        lives.lives_remaining, 3,
+        "GameOver New Game should reset LivesState"
+    );
+    assert!(
+        !lives.on_last_life,
+        "GameOver New Game should clear last-life flag"
+    );
+
+    let score = app
+        .world()
+        .resource::<brkrs::systems::scoring::ScoreState>();
+    assert_eq!(
+        score.current_score, 0,
+        "GameOver New Game should reset score to 0"
+    );
+    assert_eq!(
+        score.last_milestone_reached, 0,
+        "GameOver New Game should reset milestone tracking"
+    );
 }
