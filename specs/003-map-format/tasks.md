@@ -63,7 +63,8 @@
 - [x] T015 [P] [US1] Update level_002.ron matrix from 22x22 to 20x20 (remove last 2 rows, remove last 2 cols from each row) in assets/levels/level_002.ron
 - [x] T016 [US1] Verify level_001.ron has exactly 20 rows with 20 columns each (manual verification or script)
 - [x] T017 [US1] Verify level_002.ron has exactly 20 rows with 20 columns each (manual verification or script)
-- [x] T018 [US1] Update embedded_level_str() documentation to reflect 20x20 format in src/level_loader.rs (no code changes - include_str! auto-updates)
+- [x] T018 [US1] Update embedded_level_str() documentation to reflect 20x20 format in src/level_loader.rs (no code changes - include_str!
+      auto-updates)
 - [x] T019 [US1] Build WASM target to verify embedded strings compile: cargo build --target wasm32-unknown-unknown --release
 - [x] T020 [US1] Run cargo test to verify no existing tests break with new dimensions (fixed tests/respawn_spawn_points.rs: GRID_DIM 22→20)
 - [x] T021 [US1] Run cargo run and manually load level_001 to verify entities spawn correctly

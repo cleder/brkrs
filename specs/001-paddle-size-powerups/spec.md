@@ -6,11 +6,16 @@
 
 ### Session 2025-12-12
 
-- Q: What type of visual feedback should be provided for paddle size changes? → A: Color change + subtle glow/outline effect
-- Q: What happens to active size effects when advancing to the next level? → A: Clear all effects (paddle returns to normal size at level start)
-- Q: How should overlapping size effects be handled when multiple brick types are hit? → A: Only one effect active at a time (new effect replaces old, timer resets)
-- Q: What happens when hitting powerup bricks when already at min/max size limits? → A: Effect still applies, timer resets, but size clamped to limit
-- Q: Should audio feedback be provided for paddle size changes? → A: Play distinct sound effect on brick hit (different for shrink vs enlarge)
+- Q: What type of visual feedback should be provided for paddle size changes?
+  → A: Color change + subtle glow/outline effect
+- Q: What happens to active size effects when advancing to the next level?
+  → A: Clear all effects (paddle returns to normal size at level start)
+- Q: How should overlapping size effects be handled when multiple brick types are hit?
+  → A: Only one effect active at a time (new effect replaces old, timer resets)
+- Q: What happens when hitting powerup bricks when already at min/max size limits?
+  → A: Effect still applies, timer resets, but size clamped to limit
+- Q: Should audio feedback be provided for paddle size changes?
+  → A: Play distinct sound effect on brick hit (different for shrink vs enlarge)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -69,11 +74,16 @@ This enhances user experience but the core mechanic works without it.
 
 ### Edge Cases
 
-- What happens when the paddle hits brick 30 while already at minimum playable size? (Resolved: Effect activates, timer resets, size stays at 10 units)
-- What happens when the paddle hits brick 32 while already at maximum playable size? (Resolved: Effect activates, timer resets, size stays at 30 units)
-- How does the system handle rapid alternating hits between brick 30 and brick 32? (Resolved: Each new hit replaces previous effect)
-- What happens to active size effects when the player loses a life? (Resolved: All effects cleared)
-- What happens to active size effects when advancing to the next level? (Resolved: All effects cleared, paddle returns to normal)
+- What happens when the paddle hits brick 30 while already at minimum playable size?
+  (Resolved: Effect activates, timer resets, size stays at 10 units)
+- What happens when the paddle hits brick 32 while already at maximum playable size?
+  (Resolved: Effect activates, timer resets, size stays at 30 units)
+- How does the system handle rapid alternating hits between brick 30 and brick 32?
+  (Resolved: Each new hit replaces previous effect)
+- What happens to active size effects when the player loses a life?
+  (Resolved: All effects cleared)
+- What happens to active size effects when advancing to the next level?
+  (Resolved: All effects cleared, paddle returns to normal)
 
 ## Requirements *(mandatory)*
 

@@ -18,11 +18,16 @@ The implementation directly manipulates physics velocity (`linvel.z`), making +Z
 
 ### Session 2026-01-07
 
-- Q: What specific spawn delay should be used for merkaba spawning after rotor brick is hit? → A: 0.5 seconds
-- Q: What minimum forward (z-direction) speed should the merkaba maintain? → A: 3.0 units/second
-- Q: Where should the merkaba spawn? → A: At the brick's position when destroyed
-- Q: How should the rotor brick be visually distinguished? → A: Unique texture pattern
-- Q: How should the required audio assets be sourced? → A: Use placeholder/synthesized sounds
+- Q: What specific spawn delay should be used for merkaba spawning after rotor brick is hit?
+  → A: 0.5 seconds
+- Q: What minimum forward (z-direction) speed should the merkaba maintain?
+  → A: 3.0 units/second
+- Q: Where should the merkaba spawn?
+  → A: At the brick's position when destroyed
+- Q: How should the rotor brick be visually distinguished?
+  → A: Unique texture pattern
+- Q: How should the required audio assets be sourced?
+  → A: Use placeholder/synthesized sounds
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -100,16 +105,26 @@ While important for game balance, the feature is still valuable without this if 
 
 ### Edge Cases
 
-- What happens when multiple rotor bricks (index 36) are hit in rapid succession? (Multiple merkabas should spawn with independent delays)
-- How does the system handle merkaba spawning when the game is paused? (Spawn delay should pause with game time)
-- What happens if a merkaba spawns at a brick location already occupied by another entity? (Should spawn at the brick's last position with collision resolution handled by physics)
-- What happens when a merkaba bounces off a multi-hit brick? (Brick should not take damage from merkaba collision)
-- What happens if the goal area is blocked when a merkaba tries to despawn there? (Despawn should occur regardless of physical obstacles)
-- How does minimum z-speed maintenance work when bouncing off angled surfaces? (Speed boost should be applied in the z-direction component specifically)
-- What happens to queued merkaba spawn timers when the level changes? (All pending spawns should be cancelled)
-- What happens to the helicopter blade sound when the game is paused? (Sound should pause with game state)
-- What happens if multiple merkabas collide with surfaces simultaneously? (Each collision produces its own sound, potentially overlapping)
-- What happens to merkaba collision sounds when audio is muted? (Sounds should respect global audio settings)
+- What happens when multiple rotor bricks (index 36) are hit in rapid succession?
+  (Multiple merkabas should spawn with independent delays)
+- How does the system handle merkaba spawning when the game is paused?
+  (Spawn delay should pause with game time)
+- What happens if a merkaba spawns at a brick location already occupied by another entity?
+  (Should spawn at the brick's last position with collision resolution handled by physics)
+- What happens when a merkaba bounces off a multi-hit brick?
+  (Brick should not take damage from merkaba collision)
+- What happens if the goal area is blocked when a merkaba tries to despawn there?
+  (Despawn should occur regardless of physical obstacles)
+- How does minimum z-speed maintenance work when bouncing off angled surfaces?
+  (Speed boost should be applied in the z-direction component specifically)
+- What happens to queued merkaba spawn timers when the level changes?
+  (All pending spawns should be cancelled)
+- What happens to the helicopter blade sound when the game is paused?
+  (Sound should pause with game state)
+- What happens if multiple merkabas collide with surfaces simultaneously?
+  (Each collision produces its own sound, potentially overlapping)
+- What happens to merkaba collision sounds when audio is muted?
+  (Sounds should respect global audio settings)
 
 ## Requirements *(mandatory)*
 

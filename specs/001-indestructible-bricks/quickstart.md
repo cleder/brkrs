@@ -37,7 +37,8 @@ cargo test --test migration_parity
 
 1. Validate behavior manually in the game:
 
-   - Load a level with `20` tiles (simple bricks) and `90` tiles (indestructible). Confirm:
+   - Load a level with `20` tiles (simple bricks) and `90` tiles (indestructible).
+     Confirm:
 
    - Simple bricks break and decrement the level completion counter.
    - Indestructible bricks remain and do not count toward completion.

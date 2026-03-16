@@ -8,15 +8,20 @@
 
 ### Session 2025-11-29
 
-- Q: Where should the published documentation be hosted? → A: Read the Docs (preferred)
+- Q: Where should the published documentation be hosted?
+  → A: Read the Docs (preferred)
 
-- Q: Should the site embed the project's full rustdoc output (not just link to docs.rs)? → A: Yes — full rustdoc embedding requested by the maintainer
+- Q: Should the site embed the project's full rustdoc output (not just link to docs.rs)?
+  → A: Yes — full rustdoc embedding requested by the maintainer
 
-- Q: How should rustdoc artifacts be produced & integrated into the site? → A: Pre-generate rustdoc artifacts in CI and copy them into the Sphinx build step
+- Q: How should rustdoc artifacts be produced & integrated into the site?
+  → A: Pre-generate rustdoc artifacts in CI and copy them into the Sphinx build step
 
-- Q: How should docs be validated and published? → A: Both — CI validates docs on PRs and Read the Docs publishes the versioned site
+- Q: How should docs be validated and published?
+  → A: Both — CI validates docs on PRs and Read the Docs publishes the versioned site
 
-- Q: What is the fast docs build / validation target for CI? → B:3 minutes — CI/docs build target
+- Q: What is the fast docs build / validation target for CI?
+  → B:3 minutes — CI/docs build target
 
 ## User Scenarios & Testing *(mandatory)*
 

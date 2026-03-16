@@ -10,12 +10,17 @@ The cheatmode is activated by pressing 'g'"
 
 ### Session 2025-12-17
 
-- Q: Which specific keyboard keys are the "level control keys" that should be disabled during normal gameplay? → A: Letter keys - R=respawn, N=next level, P=previous level (Note: P currently invokes texture picker UI which will be removed)
-- Q: What visual style should the cheat mode indicator use? → A: An image asset (`assets/textures/default/cheat-mode-128.png`) displayed as a small icon in the corner (recommended display size ~48×48 px).
+- Q: Which specific keyboard keys are the "level control keys" that should be disabled during normal gameplay?
+  → A: Letter keys - R=respawn, N=next level, P=previous level (Note: P currently invokes texture picker UI which will be removed)
+- Q: What visual style should the cheat mode indicator use?
+  → A: An image asset (`assets/textures/default/cheat-mode-128.png`) displayed as a small icon in the corner (recommended display size ~48×48 px).
   If the asset or `AssetServer` is unavailable (e.g., early WASM frames), the system will log a warning and skip spawning the indicator (no text fallback is guaranteed).
-- Q: Should the cheat mode indicator position be fixed or user-configurable? → A: Fixed to lower right corner
-- Q: What audio feedback should play when level control keys are pressed without cheat mode active? → A: Short soft beep
-- Q: When pressing 'g' during pause/transition, how should toggle behave? → A: Ignore 'g' during pause/transition (no toggle)
+- Q: Should the cheat mode indicator position be fixed or user-configurable?
+  → A: Fixed to lower right corner
+- Q: What audio feedback should play when level control keys are pressed without cheat mode active?
+  → A: Short soft beep
+- Q: When pressing 'g' during pause/transition, how should toggle behave?
+  → A: Ignore 'g' during pause/transition (no toggle)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -78,11 +83,16 @@ A player who has activated cheat mode needs to clearly see that cheat mode is cu
 
 - What happens when player presses 'g' during a pause menu or transition screen?
   Input is ignored; no toggle occurs
-- How does system handle rapid repeated presses of the 'g' key? cheatmode toggles
-- What happens to the cheat mode status when player completes a level or dies? cheatmode stays active
-- How does the cheat mode indicator behave on different screen resolutions or aspect ratios? scaled to screen height/width
-- What visual or audio feedback should players receive when pressing level control keys without cheat mode active? short soft beep
-- Can players earn achievements or progress while in cheat mode even though score resets to 0? yes
+- How does system handle rapid repeated presses of the 'g' key?
+  cheatmode toggles
+- What happens to the cheat mode status when player completes a level or dies?
+  cheatmode stays active
+- How does the cheat mode indicator behave on different screen resolutions or aspect ratios?
+  scaled to screen height/width
+- What visual or audio feedback should players receive when pressing level control keys without cheat mode active?
+  short soft beep
+- Can players earn achievements or progress while in cheat mode even though score resets to 0?
+  yes
 
 ## Requirements *(mandatory)*
 

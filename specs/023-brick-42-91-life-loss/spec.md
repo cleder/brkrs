@@ -102,4 +102,5 @@ Type 91 bricks are indestructible: they remain in play when hit by the ball and 
 
 ### Session 2026-01-13
 
-- Q: For multiple concurrent paddle-brick contacts, should the system lose only one life per frame, or one life per unique hazardous brick contact? → A: One life lost per frame
+- Q: For multiple concurrent paddle-brick contacts, should the system lose only one life per frame, or one life per unique hazardous brick contact?
+  → A: One life lost per frame

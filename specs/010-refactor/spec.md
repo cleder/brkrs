@@ -17,8 +17,10 @@ The audit and plan artifacts are review deliverables independent from code chang
 
 ### Session 2025-12-19
 
-- Q: When a `src/ui` compliance fix requires changes outside `src/ui`, what scope is allowed? → A: Primary scope is `src/ui`, but allow minimal supporting edits outside it when required for compliance.
-- Q: Which Constitution rules are in-scope for the compliance audit? → A: Bevy 0.17 Mandates & Prohibitions (Section VIII) plus other applicable Constitution rules expressed as MUST/NEVER (e.g., Rustdoc for public APIs, code quality rules).
+- Q: When a `src/ui` compliance fix requires changes outside `src/ui`, what scope is allowed?
+  → A: Primary scope is `src/ui`, but allow minimal supporting edits outside it when required for compliance.
+- Q: Which Constitution rules are in-scope for the compliance audit?
+  → A: Bevy 0.17 Mandates & Prohibitions (Section VIII) plus other applicable Constitution rules expressed as MUST/NEVER (e.g., Rustdoc for public APIs, code quality rules).
 
 ## User Scenarios & Testing *(mandatory)*
 

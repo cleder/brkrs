@@ -171,8 +171,7 @@ Terminology is consistent.
 
 ### Finding B2: Message vs. Observer Contract Clarity (Underspecification, MEDIUM)
 
-**Locations**: plan.md § "Audio triggers: Use Messages for brick destruction sounds" vs.
-"Victory screen: Use observer or command-based approach"
+**Locations**: plan.md § "Audio triggers: Use Messages for brick destruction sounds" vs. "Victory screen: Use observer or command-based approach"
 
 **Issue**: Plan specifies two different patterns for two different outcomes (level transition vs. victory screen), but `contracts/` directory only documents `LevelSwitchRequested` message.
 No explicit Observer contract for victory screen.

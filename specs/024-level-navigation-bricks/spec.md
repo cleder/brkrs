@@ -90,7 +90,8 @@ Players want distinct audio feedback when navigation bricks (50 and 54) are dest
 
 ### Session 2026-01-31
 
-- Q: What should the score values be for navigation bricks 50 and 54? → A: Award 0 points (utility bricks similar to Extra Ball brick 41)
+- Q: What should the score values be for navigation bricks 50 and 54?
+  → A: Award 0 points (utility bricks similar to Extra Ball brick 41)
 
 ### Edge Cases
 

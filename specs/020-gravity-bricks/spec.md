@@ -27,11 +27,16 @@ This ensures proper separation of concerns and deterministic gravity application
 
 ### Session 2026-01-10
 
-- Q: What is the documented fallback if a level doesn't specify default gravity? → A: Use zero gravity (0.0, 0.0, 0.0) as a neutral fallback
-- Q: Which RNG system should be used for Queer Gravity randomization? → A: Use the `rand` crate already in project dependencies
-- Q: What is the frame timing precision for gravity reset on ball loss? → A: Reset timing is not critical; any delay during the ball respawn sequence is acceptable
-- Q: Should gravity apply to ball, paddle, and enemies or only the ball? → A: Apply gravity ONLY to the ball; paddle and enemies maintain standard physics
-- Q: How should existing levels without gravity metadata be handled? → A: All existing levels automatically receive zero gravity (0.0, 0.0, 0.0) as default (no migration needed)
+- Q: What is the documented fallback if a level doesn't specify default gravity?
+  → A: Use zero gravity (0.0, 0.0, 0.0) as a neutral fallback
+- Q: Which RNG system should be used for Queer Gravity randomization?
+  → A: Use the `rand` crate already in project dependencies
+- Q: What is the frame timing precision for gravity reset on ball loss?
+  → A: Reset timing is not critical; any delay during the ball respawn sequence is acceptable
+- Q: Should gravity apply to ball, paddle, and enemies or only the ball?
+  → A: Apply gravity ONLY to the ball; paddle and enemies maintain standard physics
+- Q: How should existing levels without gravity metadata be handled?
+  → A: All existing levels automatically receive zero gravity (0.0, 0.0, 0.0) as default (no migration needed)
 
 ### User Story 1 - Player Experiences Gravity Change When Destroying Gravity Brick (Priority: P1)
 
@@ -125,11 +130,16 @@ Lower priority because single gravity brick destruction works first.
 
 ### Edge Cases
 
-- What happens if a gravity brick is destroyed while a ball is mid-flight? (Gravity applies immediately, ball trajectory updates smoothly)
-- What happens if zero gravity is active and the player loses a ball? (Gravity resets to default before ball respawns)
-- Can a gravity brick be destroyed by a paddle hit (brick 57 can only be destroyed by paddle)? (No - gravity bricks are only destroyed by ball)
-- What happens if the level's default gravity is never explicitly set? (System uses Bevy's standard gravity configuration or documented fallback)
-- What if Queer Gravity generates contradictory values on random calculation? (RNG is independently seeded and pure; edge cases like exact zero are permissible per specification)
+- What happens if a gravity brick is destroyed while a ball is mid-flight?
+  (Gravity applies immediately, ball trajectory updates smoothly)
+- What happens if zero gravity is active and the player loses a ball?
+  (Gravity resets to default before ball respawns)
+- Can a gravity brick be destroyed by a paddle hit (brick 57 can only be destroyed by paddle)?
+  (No - gravity bricks are only destroyed by ball)
+- What happens if the level's default gravity is never explicitly set?
+  (System uses Bevy's standard gravity configuration or documented fallback)
+- What if Queer Gravity generates contradictory values on random calculation?
+  (RNG is independently seeded and pure; edge cases like exact zero are permissible per specification)
 
 ## Requirements *(mandatory)*
 

@@ -123,7 +123,8 @@ Tests follow TDD workflow with integration tests in `tests/` directory.
 2. Fade animation approach → Timer with BackgroundColor alpha channel
 3. Physics freeze → run_if conditions on physics systems
 4. Lives check timing → In OnExit(GameState::FadeOut) schedule
-5. Invalid transition logging → tracing::warn! in validation helper function
+5. Invalid transition logging → tracing::warn!
+   in validation helper function
 6. Main menu UI → Bevy UI with button entities
 
 ## Phase 1: Design & Contracts

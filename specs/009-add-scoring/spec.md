@@ -10,11 +10,16 @@ Every 5000 points the player gets an extra ball. scores get displayed"
 
 ### Session 2025-12-16
 
-- Q: Should the scoring system implement score multiplier bricks (26-29) in this feature? → A: Defer multiplier bricks to a future feature (Option B)
-- Q: Does score persist between levels or reset at each level? → A: Score persists between levels - cumulative throughout the game session (Option A)
-- Q: What should the range of random points be for the Question brick (index 53)? → A: Uniform random range 25-300 points (Option B)
-- Q: When bricks have both points and special effects, do both always occur? → A: Points and effects always happen together when a brick is destroyed (Option A)
-- Q: Should score changes be logged or tracked for observability? → A: No logging for MVP - display only (Option B)
+- Q: Should the scoring system implement score multiplier bricks (26-29) in this feature?
+  → A: Defer multiplier bricks to a future feature (Option B)
+- Q: Does score persist between levels or reset at each level?
+  → A: Score persists between levels - cumulative throughout the game session (Option A)
+- Q: What should the range of random points be for the Question brick (index 53)?
+  → A: Uniform random range 25-300 points (Option B)
+- Q: When bricks have both points and special effects, do both always occur?
+  → A: Points and effects always happen together when a brick is destroyed (Option A)
+- Q: Should score changes be logged or tracked for observability?
+  → A: No logging for MVP - display only (Option B)
 
 ## User Scenarios & Testing
 

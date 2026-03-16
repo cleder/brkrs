@@ -16,11 +16,14 @@ The game area is divided into a 22x22 grid, the stones are placed into this grid
 
 - Q: What should happen when the ball hits a multi-hit brick?
   The spec mentions "durability" but doesn't specify the reflection behavior. → A: Ball always reflects normally; only durability changes
-- Q: How many lives should the player start with, and where should the ball respawn after being lost? → A: 3 lives; ball respawns at position designated by "2" in level matrix; paddle respawns at position designated by "1" in level matrix
+- Q: How many lives should the player start with, and where should the ball respawn after being lost?
+  → A: 3 lives; ball respawns at position designated by "2" in level matrix; paddle respawns at position designated by "1" in level matrix
 - Q: What brick types should count toward level completion?
   The spec mentions 37 brick types but doesn't clarify which must be destroyed to advance. → A: Only destructible bricks count; indestructible bricks can remain
-- Q: How should mouse movement speed affect paddle movement? → A: Velocity-based (current implementation: mouse delta * 0.0004 / delta_time creates proportional velocity)
-- Q: What maximum ball velocity should be enforced? → A: Ball-type dependent; smaller balls (golf ball) can reach higher speeds, larger balls (beach ball) have lower max speed
+- Q: How should mouse movement speed affect paddle movement?
+  → A: Velocity-based (current implementation: mouse delta * 0.0004 / delta_time creates proportional velocity)
+- Q: What maximum ball velocity should be enforced?
+  → A: Ball-type dependent; smaller balls (golf ball) can reach higher speeds, larger balls (beach ball) have lower max speed
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -138,7 +141,8 @@ Delivers polished visual presentation.
   A speed limit should be enforced depending on the ball type: small balls (golf ball) can reach higher maximum speeds, while large balls (beach ball) have lower maximum speeds to maintain physics stability and gameplay balance.
 - How does the game handle window resize or focus loss during gameplay?
   Pause the game.
-- What happens when mouse input is lost or disconnected during gameplay? pause the game.
+- What happens when mouse input is lost or disconnected during gameplay?
+  pause the game.
 - How does the paddle rotation affect ball collision angles at extreme rotation values?
   Rotation angles should be limited to 45 degrees. when the paddle is rotated an angular force should be applied that nudges the paddle back into a horizontal position.
 - What happens when multiple bricks are destroyed simultaneously?

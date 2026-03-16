@@ -68,11 +68,16 @@ Indicator should remain consistent through pausing and gravity reset on life los
 
 ### Session 2026-01-11
 
-- Q: When should the gravity indicator first appear on screen? → A: At the start of the first frame with valid GravityConfiguration
-- Q: Should the icon swap instantly or use a visual transition effect? → A: Instant swap to new icon (no transition animation)
-- Q: How should the indicator handle multiple gravity changes within a single frame? → A: Display the last applied gravity value from that frame
-- Q: What should happen to the indicator during level transitions? → A: Update to new level's default gravity automatically
-- Q: What should happen if GravityConfiguration exists but indicator textures aren't loaded yet? → A: Defer spawn until both GravityConfiguration and textures are loaded
+- Q: When should the gravity indicator first appear on screen?
+  → A: At the start of the first frame with valid GravityConfiguration
+- Q: Should the icon swap instantly or use a visual transition effect?
+  → A: Instant swap to new icon (no transition animation)
+- Q: How should the indicator handle multiple gravity changes within a single frame?
+  → A: Display the last applied gravity value from that frame
+- Q: What should happen to the indicator during level transitions?
+  → A: Update to new level's default gravity automatically
+- Q: What should happen if GravityConfiguration exists but indicator textures aren't loaded yet?
+  → A: Defer spawn until both GravityConfiguration and textures are loaded
 
 ## Requirements *(mandatory)*
 
