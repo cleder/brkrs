@@ -17,11 +17,16 @@
 
 ### Session 2026-01-04
 
-- Q: Should occlusion maps (ambient occlusion) be added to the feature scope? → A: Include occlusion maps as a fourth texture type with P1.5 priority (after roughness, before emissive) - adds `occlusion_path` field and maps to StandardMaterial's `occlusion_texture`
-- Q: How should roughness and occlusion maps be stored and loaded? → A: Packed texture - single `orm_path` (Occlusion-Roughness-Metallic) texture where red=occlusion, green=roughness, blue=metallic (glTF 2.0 standard)
-- Q: Should the ORM texture be assigned to both `metallic_roughness_texture` and `occlusion_texture` fields, or split into separate textures? → A: Use the same ORM texture for both fields - assign `orm_path` texture to both `metallic_roughness_texture` and `occlusion_texture` (shader extracts correct channels)
-- Q: What color space settings should be used when loading the ORM and depth textures? → A: Linear (non-sRGB) for ORM and depth, sRGB for emissive (matches normal map pattern, correct PBR)
-- Q: How should UV transforms (scale and offset) be applied to the new texture maps? → A: All new textures use the same UV transform as existing albedo/normal (single `uv_scale` and `uv_offset` per profile, applied to all maps)
+- Q: Should occlusion maps (ambient occlusion) be added to the feature scope?
+  → A: Include occlusion maps as a fourth texture type with P1.5 priority (after roughness, before emissive) - adds `occlusion_path` field and maps to StandardMaterial's `occlusion_texture`
+- Q: How should roughness and occlusion maps be stored and loaded?
+  → A: Packed texture - single `orm_path` (Occlusion-Roughness-Metallic) texture where red=occlusion, green=roughness, blue=metallic (glTF 2.0 standard)
+- Q: Should the ORM texture be assigned to both `metallic_roughness_texture` and `occlusion_texture` fields, or split into separate textures?
+  → A: Use the same ORM texture for both fields - assign `orm_path` texture to both `metallic_roughness_texture` and `occlusion_texture` (shader extracts correct channels)
+- Q: What color space settings should be used when loading the ORM and depth textures?
+  → A: Linear (non-sRGB) for ORM and depth, sRGB for emissive (matches normal map pattern, correct PBR)
+- Q: How should UV transforms (scale and offset) be applied to the new texture maps?
+  → A: All new textures use the same UV transform as existing albedo/normal (single `uv_scale` and `uv_offset` per profile, applied to all maps)
 
 ## User Scenarios & Testing *(mandatory)*
 

@@ -6,11 +6,16 @@
 
 ### Session 2025-11-25
 
-- Q: After the 1 second respawn delay, does the ball auto-launch or stay inert until the player acts? → A: Ball is stationary at spawn
-- Q: Should the respawn feature decrement lives internally or emit an event for the lives system? → A: Emit LifeLost event
-- Q: During the 1 second respawn delay, should paddle controls stay active? → A: Disable controls during delay
-- Q: Can levels override respawn positions independently from the level matrix? → A: Always use matrix positions
-- Q: What timing mechanism enforces the 1 second respawn delay? → A: Use global Time resource
+- Q: After the 1 second respawn delay, does the ball auto-launch or stay inert until the player acts?
+  → A: Ball is stationary at spawn
+- Q: Should the respawn feature decrement lives internally or emit an event for the lives system?
+  → A: Emit LifeLost event
+- Q: During the 1 second respawn delay, should paddle controls stay active?
+  → A: Disable controls during delay
+- Q: Can levels override respawn positions independently from the level matrix?
+  → A: Always use matrix positions
+- Q: What timing mechanism enforces the 1 second respawn delay?
+  → A: Use global Time resource
 
 ## User Scenarios & Testing *(mandatory)*
 

@@ -33,8 +33,10 @@ As a developer, I want the entity spawning logic to be modular so that I can eas
 
 ### Session 2025-12-20
 
-- Q: Where should the extracted functions be located? → A: Move to a new module (e.g., `src/systems/spawning.rs`) for better separation.
-- Q: How should the new functions be invoked? → A: Register as individual startup systems (e.g., `.add_systems(Startup, (spawn_camera, ...))`).
+- Q: Where should the extracted functions be located?
+  → A: Move to a new module (e.g., `src/systems/spawning.rs`) for better separation.
+- Q: How should the new functions be invoked?
+  → A: Register as individual startup systems (e.g., `.add_systems(Startup, (spawn_camera, ...))`).
 
 ## Requirements *(mandatory)*
 

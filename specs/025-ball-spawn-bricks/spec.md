@@ -88,11 +88,16 @@ Delivers immediate simplification value independently.
 
 ### Edge Cases
 
-- What happens when a ball hits a Red 2 or Red 3 brick in a corner position? (Spawned balls appear at brick center; may immediately collide with walls and bounce)
-- What happens when many balls are already in play and a Red 2/Red 3 brick is hit? (No maximum ball limit exists; new balls are always spawned when these bricks are destroyed, regardless of current ball count)
-- What happens when a Red 1 brick is hit by multiple balls in the same frame? (Only one ball survives - the first one processed by the collision system)
-- What happens when spawned balls immediately collide with the paddle or other bricks? (Normal collision physics apply; they may trigger additional brick effects)
-- What happens when a Red 2 or Red 3 brick is hit while the ball is very slow or near zero velocity? (Spawned balls inherit the slow velocity/inverse direction, may appear stationary or move very slowly)
+- What happens when a ball hits a Red 2 or Red 3 brick in a corner position?
+  (Spawned balls appear at brick center; may immediately collide with walls and bounce)
+- What happens when many balls are already in play and a Red 2/Red 3 brick is hit?
+  (No maximum ball limit exists; new balls are always spawned when these bricks are destroyed, regardless of current ball count)
+- What happens when a Red 1 brick is hit by multiple balls in the same frame?
+  (Only one ball survives - the first one processed by the collision system)
+- What happens when spawned balls immediately collide with the paddle or other bricks?
+  (Normal collision physics apply; they may trigger additional brick effects)
+- What happens when a Red 2 or Red 3 brick is hit while the ball is very slow or near zero velocity?
+  (Spawned balls inherit the slow velocity/inverse direction, may appear stationary or move very slowly)
 
 ## Requirements *(mandatory)*
 

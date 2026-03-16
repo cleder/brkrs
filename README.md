@@ -11,7 +11,8 @@
 
 The **documentation** is available at **[brkrs.readthedocs.io](https://brkrs.readthedocs.io/)**:
 
-- 🎮 [Play the web version](https://cleder.github.io/brkrs/) — Try it now! 👾
+- 🎮 [Play the web version](https://cleder.github.io/brkrs/) — Try it now!
+  👾
 - 📖 [Quickstart Guide](https://brkrs.readthedocs.io/en/latest/quickstart.html) — Get running in 10 minutes 🏁
 - 🛠️ [Developer Guide](https://brkrs.readthedocs.io/en/latest/developer-guide.html) — Contribute to the project 🤗
 - 📑 [API Reference](https://brkrs.readthedocs.io/en/latest/api-reference.html) — Rust API documentation ⚙️

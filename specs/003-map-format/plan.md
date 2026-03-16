@@ -47,13 +47,15 @@ Must verify 60 FPS maintained on both native and WASM after changes.
 
 ### V. Cross-Platform Compatibility
 
-**Status**: ⚠️ VERIFY **Analysis**: Changes affect WASM embedded level strings (include_str! for level_001.ron, level_002.ron).
+**Status**: ⚠️ VERIFY **Analysis**: Changes affect WASM embedded level strings (include_str!
+for level_001.ron, level_002.ron).
 Must update embedded_level_str() function and test WASM build.
 Conditional compilation already in place, just needs data updates.
 
 **Action Items**:
 
-- Update embedded level RON strings for WASM (include_str! paths)
+- Update embedded level RON strings for WASM (include_str!
+  paths)
 - Test WASM build after grid dimension changes
 - Verify 60 FPS on both platforms with new grid size
 

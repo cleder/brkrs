@@ -6,11 +6,16 @@
 
 ### Session 2026-02-01
 
-- Q: Should direction bricks apply continuous acceleration or instantaneous velocity impulses? → A: Instantaneous impulses (5.0 units/sec change applied once per destruction event, not per-frame acceleration)
-- Q: What observability approach should direction brick events use? → A: Tracing spans via `tracing` crate (structured logging with brick ID, velocity before/after, points awarded)
-- Q: Which event system should apply direction brick effects? → A: Observers + Trigger pattern (reactive per-entity, triggered on brick destruction)
-- Q: Should direction bricks validate or clamp velocity after applying impulses? → A: No validation required; physics system (bevy_rapier3d) owns velocity bounds, direction bricks apply impulses only
-- Q: How should randomized velocity magnitude be generated for brick 52? → A: Generate magnitude directly in 5.0-15.0 range (no clamping needed)
+- Q: Should direction bricks apply continuous acceleration or instantaneous velocity impulses?
+  → A: Instantaneous impulses (5.0 units/sec change applied once per destruction event, not per-frame acceleration)
+- Q: What observability approach should direction brick events use?
+  → A: Tracing spans via `tracing` crate (structured logging with brick ID, velocity before/after, points awarded)
+- Q: Which event system should apply direction brick effects?
+  → A: Observers + Trigger pattern (reactive per-entity, triggered on brick destruction)
+- Q: Should direction bricks validate or clamp velocity after applying impulses?
+  → A: No validation required; physics system (bevy_rapier3d) owns velocity bounds, direction bricks apply impulses only
+- Q: How should randomized velocity magnitude be generated for brick 52?
+  → A: Generate magnitude directly in 5.0-15.0 range (no clamping needed)
 
 ## User Scenarios & Testing *(mandatory)*
 

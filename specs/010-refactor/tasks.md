@@ -96,7 +96,8 @@ Because commit hashes do not exist yet at task-generation time, each story’s f
 
 ### Implementation for User Story 2
 
-- [X] T013 [US2] Establish Result-returning system wrapper pattern in lib.rs via result_system! macro or wrapper functions; document pattern for future systems (Constitution VIII: Fallible Systems)
+- [X] T013 [US2] Establish Result-returning system wrapper pattern in lib.rs via result_system!
+      macro or wrapper functions; document pattern for future systems (Constitution VIII: Fallible Systems)
   - **Deliverable**: Wrapper pattern supports Result-returning systems without breaking Bevy 0.17 app build
   - **Files**: src/ui/mod.rs (documented pattern + example)
   - **Pattern**: Systems return Result; wrappers handle errors (log + reschedule or early return)

@@ -427,4 +427,5 @@ WARN texture_loader: Failed to load ORM texture: brick_orm.png (file not found)
 
 ---
 
-**Happy texturing!** 🎨
+**Happy texturing!**
+🎨

@@ -149,9 +149,13 @@ As a player, I want smooth gameplay at target frame rates so interactions feel r
 
 ### Session 2025-12-19
 
-- Q: What concrete error type should fallible systems return? → A: Use anyhow::Result<()>.
-- Q: Where should `BrickDestroyed` live and by which mechanism? → A: Centralize as `#[derive(Message)]` in `crate::signals`; remove duplicates in `audio` and `scoring` and update all producers/consumers to the shared type.
-- Q: How should `AssetEvent<Image>` be handled? → A: Treat as Event consumed via observers; remove MessageReader usage and related guards.
-- Q: Should texture/material updates use periodic fallbacks? → A: No.
-  Use strict change-driven triggers only (`Changed<T>`, `RemovedComponents<T>`, `OnAdd`).
-- Q: Apply `#[require(Transform, Visibility)]` now and to which markers? → A: Apply now to `Paddle`, `Ball`, `GridOverlay`, `Border`, `GroundPlane`.
+- Q: What concrete error type should fallible systems return?
+  → A: Use anyhow::Result<()>.
+- Q: Where should `BrickDestroyed` live and by which mechanism?
+  → A: Centralize as `#[derive(Message)]` in `crate::signals`; remove duplicates in `audio` and `scoring` and update all producers/consumers to the shared type.
+- Q: How should `AssetEvent<Image>` be handled?
+  → A: Treat as Event consumed via observers; remove MessageReader usage and related guards.
+- Q: Should texture/material updates use periodic fallbacks?
+  → A: No. Use strict change-driven triggers only (`Changed<T>`, `RemovedComponents<T>`, `OnAdd`).
+- Q: Apply `#[require(Transform, Visibility)]` now and to which markers?
+  → A: Apply now to `Paddle`, `Ball`, `GridOverlay`, `Border`, `GroundPlane`.

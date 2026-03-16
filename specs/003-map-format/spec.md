@@ -7,12 +7,18 @@
 ### Session 2025-11-27
 
 - Q: Current behavior when level finishes - ball spawns and starts moving under gravity before level loads, creating empty-field motion.
-  Should level load first and be displayed before ball physics begin? → A: Yes - level (including bricks) should load and be fully visible first, ball remains frozen until paddle growth animation completes, then gameplay begins
-- Q: Level Transition Visual Feedback - Should there be a visual transition effect when switching levels? → A: Players see a brief fade-to-black transition (current behavior) then bricks appear before fade-out completes
-- Q: Paddle Growth Animation Duration - How long should the paddle growth animation take during level transitions? → A: Keep current 1-second duration
-- Q: Cell Size Adjustment Impact - How should brick visual size change when moving from 22x22 to 20x20 grid? → A: Keep exact mathematical cell size (PLANE_H/20 × PLANE_W/20) even if bricks appear slightly different
-- Q: Grid Overlay Color/Style - Should the debug grid overlay visual style change? → A: Keep current wireframe style
-- Q: Error Handling for Malformed Grids - How should system handle level files with incorrect dimensions? → A: Log warning and attempt to load with padding/truncation (fill missing cells with empty/0, ignore excess)
+  Should level load first and be displayed before ball physics begin?
+  → A: Yes - level (including bricks) should load and be fully visible first, ball remains frozen until paddle growth animation completes, then gameplay begins
+- Q: Level Transition Visual Feedback - Should there be a visual transition effect when switching levels?
+  → A: Players see a brief fade-to-black transition (current behavior) then bricks appear before fade-out completes
+- Q: Paddle Growth Animation Duration - How long should the paddle growth animation take during level transitions?
+  → A: Keep current 1-second duration
+- Q: Cell Size Adjustment Impact - How should brick visual size change when moving from 22x22 to 20x20 grid?
+  → A: Keep exact mathematical cell size (PLANE_H/20 × PLANE_W/20) even if bricks appear slightly different
+- Q: Grid Overlay Color/Style - Should the debug grid overlay visual style change?
+  → A: Keep current wireframe style
+- Q: Error Handling for Malformed Grids - How should system handle level files with incorrect dimensions?
+  → A: Log warning and attempt to load with padding/truncation (fill missing cells with empty/0, ignore excess)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -85,14 +91,22 @@ Users can manually update their level files based on clear error messages.
 
 ### Edge Cases
 
-- What happens when a level file has rows of inconsistent length (e.g., first row has 20 cells, second has 18)? → Pad short rows with 0 (empty cells)
-- How does the system handle empty matrix (0x0)? → Log warning, load as empty level with fallback paddle/ball spawns
-- What if a level file has correct row count (20) but wrong column count? → Apply padding/truncation per FR-024/FR-025
-- How are entity positions recalculated for different grid dimensions to maintain proper spacing? → Use exact mathematical cell size (PLANE_H/20, PLANE_W/20)
-- What happens to hardcoded references to "22x22" in documentation, comments, and error messages? → Must be updated to "20x20" per FR-009
-- What if paddle growth animation is interrupted or canceled during level transition? → Ball remains frozen until animation completes or times out
-- How does the system handle level loading failures during the transition sequence (e.g., corrupted level file)? → Apply padding/truncation recovery per FR-024/FR-025/FR-026
-- What happens if a player exits the game during the level transition sequence? → Standard game exit, no special handling needed
+- What happens when a level file has rows of inconsistent length (e.g., first row has 20 cells, second has 18)?
+  → Pad short rows with 0 (empty cells)
+- How does the system handle empty matrix (0x0)?
+  → Log warning, load as empty level with fallback paddle/ball spawns
+- What if a level file has correct row count (20) but wrong column count?
+  → Apply padding/truncation per FR-024/FR-025
+- How are entity positions recalculated for different grid dimensions to maintain proper spacing?
+  → Use exact mathematical cell size (PLANE_H/20, PLANE_W/20)
+- What happens to hardcoded references to "22x22" in documentation, comments, and error messages?
+  → Must be updated to "20x20" per FR-009
+- What if paddle growth animation is interrupted or canceled during level transition?
+  → Ball remains frozen until animation completes or times out
+- How does the system handle level loading failures during the transition sequence (e.g., corrupted level file)?
+  → Apply padding/truncation recovery per FR-024/FR-025/FR-026
+- What happens if a player exits the game during the level transition sequence?
+  → Standard game exit, no special handling needed
 
 ## Requirements *(mandatory)*
 

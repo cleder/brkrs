@@ -154,8 +154,10 @@ As a developer or player on a minimal setup, I want the game to run without erro
 
 ### Session 2025-11-29
 
-- Q: How should concurrent sounds of the same type be handled? → A: Limit concurrent sounds (max 3-4 of same type, drop excess)
-- Q: Are gravity bricks (index 21-25) in scope? → A: No, gravity brick audio is out of scope
+- Q: How should concurrent sounds of the same type be handled?
+  → A: Limit concurrent sounds (max 3-4 of same type, drop excess)
+- Q: Are gravity bricks (index 21-25) in scope?
+  → A: No, gravity brick audio is out of scope
 
 ## Out of Scope
 

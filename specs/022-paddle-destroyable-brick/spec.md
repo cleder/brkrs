@@ -9,9 +9,12 @@ The brick (countsTowardsCompletion), this brick contributes to level completion 
 
 ### Session 2026-01-13
 
-- Q: What is the maximum number of paddle-destroyable bricks allowed in a single level? → A: No hard limit - as many as level designer places
-- Q: Should paddle-brick collision events be logged for debugging purposes? → A: Include collision event logging at DEBUG level
-- Q: What should happen if a paddle-destroyable brick spawns overlapping the paddle at level start? → A: Brick immediately destroyed on first frame, 250 points awarded
+- Q: What is the maximum number of paddle-destroyable bricks allowed in a single level?
+  → A: No hard limit - as many as level designer places
+- Q: Should paddle-brick collision events be logged for debugging purposes?
+  → A: Include collision event logging at DEBUG level
+- Q: What should happen if a paddle-destroyable brick spawns overlapping the paddle at level start?
+  → A: Brick immediately destroyed on first frame, 250 points awarded
 
 ## User Scenarios & Testing *(mandatory)*
 

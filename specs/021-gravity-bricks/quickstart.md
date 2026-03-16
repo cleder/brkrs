@@ -25,7 +25,8 @@ This guide helps developers understand, test, and extend the gravity indicator U
 
 2. **Expected Behavior**:
    - Icon appears at (12px, 12px) from bottom-left
-   - Displays appropriate weight (0/2/10/20) or "?" if unknown
+   - Displays appropriate weight (0/2/10/20) or "?"
+     if unknown
    - Updates immediately when gravity changes (e.g., hitting gravity brick)
 
 ## Architecture Overview
@@ -319,7 +320,8 @@ Y-axis is reserved for default downward gravity (not visualized).
 Example: 2.1 → valid (0.1 away), 2.6 → invalid (0.6 away).
 
 **Q**: What happens with gravity outside known levels?
-**A**: Displays "?" (unknown/question mark icon) until recognized level detected.
+**A**: Displays "?"
+(unknown/question mark icon) until recognized level detected.
 
 **Q**: How to test multi-frame persistence?
 **A**: Integration test `test_gravity_indicator_multi_frame_persistence` runs 10-frame simulation and verifies icon unchanged.

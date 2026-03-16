@@ -67,11 +67,16 @@ Delivers value by improving desktop workflow during pauses.
 
 ### Edge Cases
 
-- What happens when the player pauses during a level transition or respawn sequence? (System should either prevent pause during critical state transitions or queue the pause to activate after transition completes)
-- How does the system handle rapid ESC key presses (spam)? (System should debounce or ignore subsequent ESC presses while already paused)
-- What happens if the player closes the pause overlay window (in windowed mode) without clicking resume? (System should treat window closure as a resume action or prevent window closure while paused)
-- How does the system handle window mode switching if the display does not support fullscreen? (System should gracefully handle fullscreen toggle failures and remain in windowed mode)
-- What happens when alternative input methods (gamepad, touch) are used? (Out of scope for this feature - keyboard and mouse only; future enhancement may add gamepad/touch support)
+- What happens when the player pauses during a level transition or respawn sequence?
+  (System should either prevent pause during critical state transitions or queue the pause to activate after transition completes)
+- How does the system handle rapid ESC key presses (spam)?
+  (System should debounce or ignore subsequent ESC presses while already paused)
+- What happens if the player closes the pause overlay window (in windowed mode) without clicking resume?
+  (System should treat window closure as a resume action or prevent window closure while paused)
+- How does the system handle window mode switching if the display does not support fullscreen?
+  (System should gracefully handle fullscreen toggle failures and remain in windowed mode)
+- What happens when alternative input methods (gamepad, touch) are used?
+  (Out of scope for this feature - keyboard and mouse only; future enhancement may add gamepad/touch support)
 
 ## Requirements *(mandatory)*
 

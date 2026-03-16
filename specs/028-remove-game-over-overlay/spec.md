@@ -7,8 +7,10 @@ The overlay is a legacy UI and can be removed entirely"
 
 ### Session 2026-03-10
 
-- Q: How far should overlay removal scope go? -> A: Remove the legacy game-over overlay behavior entirely in all flows; keep non-overlay game-over state handling unchanged.
-- Q: Should this feature add a replacement game-over UI? -> A: Do not add any replacement game-over UI in this feature; only remove the legacy overlay.
+- Q: How far should overlay removal scope go?
+  -> A: Remove the legacy game-over overlay behavior entirely in all flows; keep non-overlay game-over state handling unchanged.
+- Q: Should this feature add a replacement game-over UI?
+  -> A: Do not add any replacement game-over UI in this feature; only remove the legacy overlay.
 
 ## User Scenarios & Testing *(mandatory)*
 

@@ -266,8 +266,13 @@ The system logs an error with details and maintains the current state.
 
 ### Session 2026-02-08
 
-- Q: Which system for state transitions? → A: Bevy's States derive with NextState<GameState> (idiomatic Bevy 0.17)
-- Q: When does lives check occur during life loss flow? → A: After fade-out animation completes (during Fade Out state exit)
-- Q: What should the Main Menu support? → A: Minimal (New Game, Quit buttons only)
-- Q: How to handle invalid state transitions? → A: Log as warning and ignore (no state change)
-- Q: Should pause be accessible from states other than Playing? → A: No, pause is only valid from Playing state
+- Q: Which system for state transitions?
+  → A: Bevy's States derive with NextState<GameState> (idiomatic Bevy 0.17)
+- Q: When does lives check occur during life loss flow?
+  → A: After fade-out animation completes (during Fade Out state exit)
+- Q: What should the Main Menu support?
+  → A: Minimal (New Game, Quit buttons only)
+- Q: How to handle invalid state transitions?
+  → A: Log as warning and ignore (no state change)
+- Q: Should pause be accessible from states other than Playing?
+  → A: No, pause is only valid from Playing state

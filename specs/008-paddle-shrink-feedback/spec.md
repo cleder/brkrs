@@ -6,9 +6,12 @@
 
 ### Session 2025-12-12
 
-- Q: What is the primary reason for choosing 0.5 seconds as the shrink duration? → A: Match the existing fadeout timing
-- Q: Should the paddle shrink animation run concurrently with the respawn delay or sequentially before it? → A: Concurrent - Shrink happens during the 1-second respawn delay (like fadeout)
-- Q: Should the paddle remain visible throughout the shrink animation, or should it use a different visual treatment? → A: Remain visible
+- Q: What is the primary reason for choosing 0.5 seconds as the shrink duration?
+  → A: Match the existing fadeout timing
+- Q: Should the paddle shrink animation run concurrently with the respawn delay or sequentially before it?
+  → A: Concurrent - Shrink happens during the 1-second respawn delay (like fadeout)
+- Q: Should the paddle remain visible throughout the shrink animation, or should it use a different visual treatment?
+  → A: Remain visible
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -68,11 +71,16 @@ In multi-ball gameplay scenarios (planned for future iteration), the paddle shri
 
 ### Edge Cases
 
-- What happens when a ball is lost while the paddle is already in a growth animation (during level transition)? → Animation is interrupted, paddle immediately begins shrinking from current scale
-- How does the system handle rapid consecutive ball losses (queued respawns)? → Each loss triggers a full shrink animation cycle before the queued respawn processes
-- What happens to the paddle shrink if the player runs out of lives (game over)? → Shrink animation plays normally, but game over sequence takes over after shrink completes
-- How does paddle shrink interact with the paddle growing component already used in respawn? → Reuse the existing `PaddleGrowing` component architecture but with reverse direction (shrink to minimum scale)
-- What if collision detection sends multiple ball-loss events in quick succession? → The respawn queue system already handles this; shrink animation plays for the first event
+- What happens when a ball is lost while the paddle is already in a growth animation (during level transition)?
+  → Animation is interrupted, paddle immediately begins shrinking from current scale
+- How does the system handle rapid consecutive ball losses (queued respawns)?
+  → Each loss triggers a full shrink animation cycle before the queued respawn processes
+- What happens to the paddle shrink if the player runs out of lives (game over)?
+  → Shrink animation plays normally, but game over sequence takes over after shrink completes
+- How does paddle shrink interact with the paddle growing component already used in respawn?
+  → Reuse the existing `PaddleGrowing` component architecture but with reverse direction (shrink to minimum scale)
+- What if collision detection sends multiple ball-loss events in quick succession?
+  → The respawn queue system already handles this; shrink animation plays for the first event
 
 ## Requirements *(mandatory)*
 
