@@ -19,11 +19,11 @@ repos:
     - --
     - --check
 - repo: https://github.com/nim65s/pre-commit-sort
-  rev: v0.4.0
+  rev: v1.0.0
   hooks:
   - id: pre-commit-sort
 - repo: https://github.com/rvben/rumdl-pre-commit
-  rev: v0.1.62
+  rev: v0.1.67
   hooks:
   - id: rumdl-fmt
     exclude: (^\.specify/templates/|^\.github/prompts/).*
