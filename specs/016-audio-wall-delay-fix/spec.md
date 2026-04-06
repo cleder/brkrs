@@ -48,7 +48,7 @@ A: Play audio for each collision, subject to the concurrency limit (if reached, 
 ### Session 2025-12-28
 
 - Q: Is only wall collision audio in scope, or should paddle/brick/other collision audio also be included?
-    → A: Only wall collision audio is in scope; paddle/brick/other collision audio is out of scope for this feature.
+  → A: Only wall collision audio is in scope; paddle/brick/other collision audio is out of scope for this feature.
 
 ### Key Entities
 
