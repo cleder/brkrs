@@ -18,10 +18,10 @@ It does not introduce new gameplay features.
     Ensure all tests pass and no "fake tests" (comment-only) remain.
 
 2. **Check Visibility**:
-    Verify that `BALL_RADIUS` and other constants in `src/lib.rs` are `pub(crate)` instead of `pub`.
+   Verify that `BALL_RADIUS` and other constants in `src/lib.rs` are `pub(crate)` instead of `pub`.
 
 3. **Check Startup Order**:
-    Inspect `src/lib.rs` to verify that startup systems are chained or explicitly ordered.
+   Inspect `src/lib.rs` to verify that startup systems are chained or explicitly ordered.
 
 ## Troubleshooting
 

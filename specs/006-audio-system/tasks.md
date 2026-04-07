@@ -160,7 +160,7 @@ To avoid intermittent failures in CI we recommend one of the following:
 
 - Run tests single-threaded in CI: set `RUST_TEST_THREADS=1` in the CI job environment.
 - Prefer test-local temporary files/directories (e.g., `tempfile`/`tempdir`) for any tests that
-    write to shared paths like `assets/levels/`.
+  write to shared paths like `assets/levels/`.
 
 Either option will make the test runs more deterministic; using both (temp files + single-threaded CI) is the most robust approach.
 

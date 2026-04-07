@@ -8,84 +8,84 @@
 ## Requirement Completeness
 
 - [x] CHK001 Are all seven states explicitly defined with entry/exit expectations (MainMenu, Playing, Paused, FadeOut, FadeIn, LevelTransition, GameOver)?
-      [Completeness, Spec §FR-001–FR-007]
+  [Completeness, Spec §FR-001–FR-007]
 - [x] CHK002 Are all state transition triggers enumerated (start-game, pause-game, resume-game, level-complete, ball-lost, return-to-menu, new-game)?
-      [Completeness, Spec §FR-008]
+  [Completeness, Spec §FR-008]
 - [x] CHK003 Are requirements present for both forward and backward level changes (e.g., brick 50 and brick 54) in the LevelTransition flow?
-      [Gap, Spec §FR-006]
+  [Gap, Spec §FR-006]
 - [x] CHK004 Are state-dependent system enable/disable requirements fully specified (physics, input, collisions, animations)?
-      [Completeness, Spec §FR-002, Spec §FR-003, Spec §FR-004, Spec §FR-012]
+  [Completeness, Spec §FR-002, Spec §FR-003, Spec §FR-004, Spec §FR-012]
 - [x] CHK005 Is level state cleanup during level transitions explicitly required (no orphaned entities)?
-      [Completeness, Spec §FR-014, Spec §SC-005]
+  [Completeness, Spec §FR-014, Spec §SC-005]
 
 ## Requirement Clarity
 
 - [x] CHK006 Is the timing of state transitions quantified (e.g., “within 1 frame”) and tied to a specific transition point?
-      [Clarity, Spec §SC-001]
+  [Clarity, Spec §SC-001]
 - [x] CHK007 Are fade durations explicitly bounded and tied to FadeOut/FadeIn requirements?
-      [Clarity, Spec §SC-004]
+  [Clarity, Spec §SC-004]
 - [x] CHK008 Is “blocks normal gameplay” in FadeOut clearly defined in terms of which systems must be disabled?
-      [Ambiguity, Spec §FR-004, Spec §FR-012]
+  [Ambiguity, Spec §FR-004, Spec §FR-012]
 - [x] CHK009 Is the exact moment of “load next/previous level” specified within the FadeOut → LevelTransition → FadeIn sequence?
-      [Ambiguity, Spec §FR-006]
+  [Ambiguity, Spec §FR-006]
 - [x] CHK010 Is “idempotent transitions” defined with observable outcomes (e.g., which logs, state unchanged)?
-      [Clarity, Spec §FR-011]
+  [Clarity, Spec §FR-011]
 
 ## Requirement Consistency
 
 - [x] CHK011 Are state transition mechanisms consistent across the spec (States system with NextState throughout)?
-      [Consistency, Spec §FR-009, Spec §Assumptions]
+  [Consistency, Spec §FR-009, Spec §Assumptions]
 - [x] CHK012 Are pause constraints consistent between requirements and scenarios (pause only from Playing)?
-      [Consistency, Spec §FR-017, Spec §User Story 3]
+  [Consistency, Spec §FR-017, Spec §User Story 3]
 - [x] CHK013 Do level transition requirements align between user story, FR-006, and success criteria?
-      [Consistency, Spec §User Story 4, Spec §FR-006, Spec §SC-005]
+  [Consistency, Spec §User Story 4, Spec §FR-006, Spec §SC-005]
 
 ## Acceptance Criteria Quality
 
 - [x] CHK014 Are success criteria measurable for pause persistence (≥10 frames) with unambiguous pass/fail criteria?
-      [Acceptance Criteria, Spec §SC-002, Spec §SC-003]
+  [Acceptance Criteria, Spec §SC-002, Spec §SC-003]
 - [x] CHK015 Is the fade duration requirement testable with clear thresholds and tolerance?
-      [Acceptance Criteria, Spec §SC-004]
+  [Acceptance Criteria, Spec §SC-004]
 - [x] CHK016 Is the “no orphaned entities” criterion defined with a concrete measurement method (e.g., entity counts before/after)?
-      [Acceptance Criteria, Spec §SC-005]
+  [Acceptance Criteria, Spec §SC-005]
 - [x] CHK017 Are invalid-transition behaviors specified with required log level/wording?
-      [Measurability, Spec §FR-010, Spec §SC-006]
+  [Measurability, Spec §FR-010, Spec §SC-006]
 
 ## Scenario Coverage
 
 - [x] CHK018 Are primary flows covered end-to-end (MainMenu → Playing, Playing → Paused → Playing, Playing → FadeOut → FadeIn → Playing)?
-      [Coverage, Spec §User Story 1–5]
+  [Coverage, Spec §User Story 1–5]
 - [x] CHK019 Are alternate flows covered for GameOver (return-to-menu, new game)?
-      [Coverage, Spec §User Story 6]
+  [Coverage, Spec §User Story 6]
 - [x] CHK020 Are level navigation scenarios for both next and previous level explicitly included?
-      [Gap, Spec §User Story 4]
+  [Gap, Spec §User Story 4]
 
 ## Edge Case Coverage
 
 - [x] CHK021 Does the spec define behavior for transitions requested during FadeOut/FadeIn?
-      [Coverage, Spec §Edge Cases]
+  [Coverage, Spec §Edge Cases]
 - [x] CHK022 Does the spec define behavior for rapid pause/resume toggles?
-      [Coverage, Spec §Edge Cases]
+  [Coverage, Spec §Edge Cases]
 - [x] CHK023 Does the spec define behavior when level-complete occurs while Paused?
-      [Coverage, Spec §Edge Cases]
+  [Coverage, Spec §Edge Cases]
 - [x] CHK024 Are invalid or unknown transition targets handled in requirements (log and no state change)?
-      [Coverage, Spec §Edge Cases, Spec §FR-010]
+  [Coverage, Spec §Edge Cases, Spec §FR-010]
 
 ## Non-Functional Requirements
 
 - [x] CHK025 Are performance constraints for state transitions and fade animations explicitly stated in the spec (e.g., frame budget)?
-      [Gap]
+  [Gap]
 
 ## Dependencies & Assumptions
 
 - [x] CHK026 Are assumptions about the event system explicitly validated and not contradicted elsewhere?
-      [Assumption, Spec §Assumptions]
+  [Assumption, Spec §Assumptions]
 - [x] CHK027 Are assumptions about level cleanup and despawn order tied to explicit requirements or acceptance criteria?
-      [Assumption, Spec §Assumptions, Spec §FR-014]
+  [Assumption, Spec §Assumptions, Spec §FR-014]
 
 ## Ambiguities & Conflicts
 
 - [x] CHK028 Is “Level Transition” defined to include both next and previous level navigation, or is it limited to “next level” only?
-      [Ambiguity, Spec §FR-006]
+  [Ambiguity, Spec §FR-006]
 - [x] CHK029 Is there a conflict between States system requirements and other documented state mechanisms?
-      [Conflict, Spec §FR-009, Spec §Assumptions, Plan §Constitution]
+  [Conflict, Spec §FR-009, Spec §Assumptions, Plan §Constitution]
