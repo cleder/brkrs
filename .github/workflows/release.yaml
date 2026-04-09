@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - '*'
+      - '[0-9]*.[0-9]*.[0-9]*' # Matches semantic version tags like 1.2.3
 
 env:
   # update with the name of the main binary
@@ -42,7 +42,7 @@ jobs:
           testing: false
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           lfs: ${{ env.use_git_lfs }}
       - uses: dtolnay/rust-toolchain@stable
@@ -103,7 +103,7 @@ jobs:
           testing: false
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           lfs: ${{ env.use_git_lfs }}
       - uses: dtolnay/rust-toolchain@stable
@@ -156,7 +156,7 @@ jobs:
     steps:
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           lfs: ${{ env.use_git_lfs }}
       - uses: dtolnay/rust-toolchain@stable
@@ -202,7 +202,7 @@ jobs:
     steps:
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           lfs: ${{ env.use_git_lfs }}
       - uses: dtolnay/rust-toolchain@stable
@@ -248,7 +248,7 @@ jobs:
     steps:
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           lfs: ${{ env.use_git_lfs }}
       - uses: dtolnay/rust-toolchain@stable
@@ -292,17 +292,21 @@ jobs:
     needs:
       - release-wasm
       - release-linux
+    environment: release-crate
+    permissions:
+      id-token: write
     steps:
       - uses: olegtarasov/get-tag@v2.1.2
         id: get_version
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           lfs: ${{ env.use_git_lfs }}
       - uses: dtolnay/rust-toolchain@stable
-      - uses: katyo/publish-crates@v2
-        with:
-          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-          ignore-unpublished-changes: true
+      - uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+      - run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
   check-if-upload-to-itch-is-configured:
     runs-on: ubuntu-latest
