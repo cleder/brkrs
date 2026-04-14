@@ -8,4 +8,4 @@ bevy = { version = "0.17.3" }
 bevy_rapier3d = { version = "0.32.0", features = [
     "debug-render-3d",
 ] }
-rand = "0.9.2"
+rand = "0.9.3"
