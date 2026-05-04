@@ -34,7 +34,6 @@
 - [ ] T022 [NF] Write test: no audio artifacts or overlapping issues in rapid collision scenarios
 - [ ] T023 [NF] Manual test: concurrency limit is enforced and logged
 - [ ] T024 [NF] Review and update rustdoc documentation for all public APIs affected by BallWallHit event and audio system
-
 - [ ] T020 [P] Manual playtest: verify concurrency limit and logging in overload scenarios
 
 ## Dependencies

@@ -141,7 +141,7 @@ All texture types share the same UV coordinate transformation parameters:
   - Useful for pattern shifting or animation
   - Applied uniformly to all textures
 
-**Example: Tiled Pattern**
+## Example: Tiled Pattern
 
 ```ron
 (

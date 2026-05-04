@@ -64,7 +64,6 @@ As a developer, I want the ball physics config to be documented and easy to upda
 ### Functional Requirements
 
 - **FR-008**: The physics configuration MUST NOT be hot-reloadable; it MUST be encoded in source code and only changeable via code updates.
-
 - **FR-001**: System MUST provide a single, centralized configuration for ball physics properties (restitution, friction, damping, etc.).
 - **FR-002**: All ball entities MUST use the centralized config for their physics properties when spawned.
 - **FR-003**: No hardcoded restitution, friction, or damping values MAY exist in ball spawn logic.

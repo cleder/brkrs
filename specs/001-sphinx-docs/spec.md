@@ -91,7 +91,6 @@ As a release manager or maintainer, I want documentation to be published automat
 - **FR-007**: At least one sample page MUST demonstrate a MyST feature (e.g., code-blocks, admonitions, cross-references) and include images from `assets/` or `textures/` for visual examples.
 - **FR-008**: The docs MUST embed the project's full rustdoc output in the documentation site (not only link to external rustdoc/docs.rs).
   The spec requires a reproducible build step that generates rustdoc artifacts and integrates them into the Sphinx build so the API reference is searchable, versioned, and visible within the site.
-
 - **FR-009**: Documentation CI MUST pre-generate rustdoc artifacts (e.g., `cargo doc --no-deps`) and stage those artifacts so they are included in the Sphinx build output.
   The CI integration must ensure the embedded API docs are discoverable and included in Read the Docs publishing.
 
@@ -101,7 +100,6 @@ As a release manager or maintainer, I want documentation to be published automat
   This job should avoid heavy work (full rustdoc generation) where possible and instead run incremental, cached checks to provide fast feedback.
 - **NFR-002**: The published docs page MUST be accessible and render correctly on mobile and desktop screen widths.
 - **NFR-003**: Docs content MUST be kept up to date in the repository and clearly indicate the version of the project it documents.
-
 - **NFR-004**: The full docs build that runs on `main` (including rustdoc generation and Sphinx integration) MAY take longer than PR validation — up to 3 minutes is acceptable for `main` builds, but CI should prefer caching and incremental builds to keep overall runtime reasonable.
 
 ### Key Entities *(include if feature involves data)*

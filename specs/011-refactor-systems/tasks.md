@@ -70,7 +70,6 @@ Tests MUST be written and committed first, verified to FAIL (red), and then appr
 - Use early returns for missing optional resources
 - Log errors instead of propagating them
 - Internal helper functions can return `Result` and use `?`
-
 - [X] T015 [P] [US1] Update `load_audio_config` in `src/systems/audio.rs` to handle errors gracefully with early returns
 - [X] T016 [P] [US1] Update `load_audio_assets` in `src/systems/audio.rs` to use early-return pattern for missing `AssetServer`
 - [X] T017 [P] [US1] Update `respawn_executor` in `src/systems/respawn.rs` to use early-return pattern for missing pending request
