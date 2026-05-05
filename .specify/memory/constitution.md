@@ -222,21 +222,21 @@ Physics-based games manipulating velocity directly need clear axis references, n
 
 #### Bevy 0.17 Event, Message, and Observer Clarification
 
-**Messages (Buffered Events)**
+## Messages (Buffered Events)
 
 - **Purpose:** Communication between systems, typically across frames for predictable scheduling and batching.
 - **Mechanism:** Buffered in a queue (resource), read by `MessageReader` in later schedule steps, using a cursor to track progress.
 - **Pros:** Efficient for high-volume events, allows parallel reading, decouples sender/receiver timing.
 - **Cons:** Inherent delay (read in next/later frame), less direct reactivity than Observers for immediate actions.
 
-**Observers**
+## Observers
 
 - **Purpose:** Immediate (or next-frame) reactive behavior to component changes (add, remove, insert) or custom events.
 - **Mechanism:** Special systems triggered by `World::trigger` or `Commands::trigger`, running immediately or at command flush, can call Commands and World APIs, can self-trigger.
 - **Pros:** Real-time reaction (less delay), full system access (queries, commands), recursive potential, powerful bookkeeping.
 - **Cons:** Triggered via commands (not direct system calls), can have arbitrary order for same-event observers unless systems are ordered.
 
-**Key Differences & When to Use Which**
+## Key Differences & When to Use Which
 
 - **Timing:** Use Messages for work that can wait until the next schedule step (e.g., updating a UI based on score changes).
   Use Observers for instant reactions (e.g., spawning a particle effect when a component is added).
@@ -257,7 +257,7 @@ This distinction ensures correct, predictable, and performant event handling in 
 Buffered messages are ideal for high-volume, order-agnostic, or batchable work.
 Observers provide fine-grained, immediate reactivity and are essential for modern ECS workflows that require instant feedback or complex system orchestration.
 
-#### Bevy 0.17 ECS Architecture Mandates
+### Bevy 0.17 ECS Architecture Mandates
 
 - **Fallible Systems:** Systems MUST return `()` (Bevy requirement).
   Handle errors gracefully using early returns and logging.

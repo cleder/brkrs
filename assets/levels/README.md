@@ -182,7 +182,6 @@ The runtime uses numeric tile values to determine what to spawn at each grid cel
   If they are absent, the runtime spawns reasonable defaults.
 - **The loader will convert input matrices to the expected 20×20 shape**; but editing a properly sized matrix makes human editing and visual reasoning easier.
 - When adding custom brick types (4-89, 91-255), confirm textures are available (when `texture_manifest` is enabled) or the default debug material will be used.
-
 - When adding custom brick types (4-89, 91-255), confirm textures are available (when `texture_manifest` is enabled) or the default debug material will be used.
 
 ## Example: Complete Level

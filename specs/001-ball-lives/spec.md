@@ -35,7 +35,6 @@ As a player, I want to see how many lives I have left so I can understand my rem
 2. **Given** the remaining lives count is 3, **When** one LifeLostEvent occurs, **Then** the remaining lives count becomes exactly 2 and the screen updates to show 2 within the same frame.
 3. **Given** the remaining lives count is N (>0), **When** exactly one LifeLostEvent occurs, **Then** the remaining lives count becomes N-1 (one decrement per event; event-driven, not time- or frame-based).
 4. **Given** gameplay continues across a level transition within the same session, **When** the next level becomes playable, **Then** the remaining lives count persists (no reset) and the HUD reflects the same value as before the transition.
-
 5. **Given** gameplay is active, **When** the HUD is visible, **Then** the remaining lives count is displayed on-screen in a readable font and placement (Orbitron font is defined in the plan/tasks; styling specifics are out of scope here) [covers FR-004].
 
 ---
@@ -51,6 +50,7 @@ As a player, I want a clear "Game over" message when I run out of lives so I imm
 **Acceptance Scenarios**:
 
 1. **Given** the remaining lives count is 1, **When** a LifeLostEvent occurs, **Then** the remaining lives count becomes 0 and a "Game over" message is displayed.
+
 2. **Given** the "Game over" message is displayed, **When** additional LifeLostEvent events occur (if any), **Then** the remaining lives count stays at 0 and the "Game over" message remains displayed.
 
 3. **Given** the "Game over" message is displayed, **When** the player attempts to pause or perform gameplay input, **Then** pause/input is disabled and the modal "Game over" message remains above overlays [covers FR-008, FR-009].

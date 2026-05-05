@@ -130,7 +130,6 @@ trait BrickBehavior {
 
 - Native Rust serialization format
 - Integrates seamlessly with serde
-
 - **JSON** (rejected): Less Rust-native, verbose for nested data
 
 **Level File Structure**: // assets/levels/level_001.ron Level( bricks: [ Brick(pos: (0, 0), type: Standard), Brick(pos: (1, 0), type: MultiHit(durability: 2)), // ...
