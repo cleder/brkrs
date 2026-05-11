@@ -10,7 +10,7 @@ Before you start developing, ensure you have:
 - **Git** for version control
 - **A code editor** (VS Code with rust-analyzer recommended)
 
-```{note}
+```text {note}
 See {doc}`quickstart` for platform-specific dependencies like build-essential on Linux
 or Xcode Command Line Tools on macOS.
 ```
@@ -91,7 +91,7 @@ BK_LEVEL=997 cargo run --release
 
 ### Coordinate System & Level Grid
 
-```{seealso}
+```text {seealso}
 See {doc}`architecture` (Physics Architecture → Coordinate System) for the complete coordinate system reference, including Bevy's conventions vs. gameplay directions.
 ```
 
@@ -213,7 +213,7 @@ cargo test -- --nocapture
 cargo test -- --test-threads=1
 ```
 
-```{note}
+```text {note}
 Tests that use environment variables (like `BK_LEVEL`) can conflict when run
 in parallel. Use `--test-threads=1` if you see flaky test failures.
 ```
@@ -271,7 +271,7 @@ These require:
 
 Before submitting a PR, run all quality checks:
 
-```{warning}
+```text {warning}
 All checks must pass before your PR can be merged. The CI will run these
 automatically, but running them locally saves time.
 ```
@@ -623,7 +623,7 @@ See {doc}`contributing` for the full contribution workflow.
 
 ### Debugging physics
 
-```{tip}
+```text {tip}
 Physics debug rendering is invaluable for understanding collision issues.
 Enable it when ball behavior seems unexpected.
 ```
@@ -649,7 +649,7 @@ fn debug_system(query: Query<(Entity, &Transform), With<Brick>>) {
 
 ### Hot reloading assets
 
-```{important}
+```text {important}
 Hot reloading only works in debug builds. Release builds bake assets
 at compile time for performance.
 ```
@@ -659,7 +659,7 @@ Edit a level file and see changes immediately.
 
 ### Writing doctests
 
-```{note}
+```text {note}
 Bevy-dependent doctests often fail in CI due to shared library loading issues.
 Use `no_run` to compile-check without executing:
 
@@ -708,7 +708,7 @@ See the multi-hit brick system for a complete example.
 
 ## Building for WASM
 
-```{warning}
+```text {warning}
 WASM builds have different asset loading requirements than desktop builds.
 Assets should be embedded at compile time.
 ```
@@ -738,7 +738,7 @@ wasm-bindgen --out-dir wasm --target web \
 
 ### Debugging WASM builds
 
-```{tip}
+```text {tip}
 Use browser DevTools (F12) to inspect console errors.
 ```
 
