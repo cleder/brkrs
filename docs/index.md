@@ -11,7 +11,7 @@
 
 ## Getting Started
 
-```{toctree}
+```text {toctree}
 :maxdepth: 2
 :caption: For Players
 
@@ -22,7 +22,7 @@ faq
 
 ## Developer Resources
 
-```{toctree}
+```text {toctree}
 :maxdepth: 2
 :caption: For Developers
 
@@ -37,7 +37,7 @@ ui-systems
 
 ## API Reference
 
-```{toctree}
+```text {toctree}
 :maxdepth: 1
 :caption: API
 

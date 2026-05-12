@@ -134,7 +134,7 @@ Without this, the character controller's internal shape cast will detect the obj
 
 ### Textures don't load in WASM build
 
-```{important}
+```text {important}
 This is the most common WASM issue. Bevy's WASM asset loader requires explicit
 metadata files for all assets loaded via HTTP.
 ```
