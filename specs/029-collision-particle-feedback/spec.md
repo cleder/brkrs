@@ -1,6 +1,6 @@
 # Feature Specification: Collision Particle Feedback
 
-**Feature Branch**: `065-next-feature-branch` **Created**: 2026-05-24 **Status**: Draft **Input**: User description: "when a ball hits a wall, the paddle or a brick i want to have some visual feedback, particles flying away, a sparkly effect"
+**Feature Branch**: `029-collision-particle-feedback` **Created**: 2026-05-24 **Status**: Draft **Input**: User description: "when a ball hits a wall, the paddle or a brick i want to have some visual feedback, particles flying away, a sparkly effect"
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -91,7 +91,7 @@ As a player, I want hit feedback to feel consistent across walls, paddle, and br
 - **FR-001**: The system must generate a visible sparkly particle feedback effect whenever the ball collides with a wall.
 - **FR-002**: The system must generate a visible sparkly particle feedback effect whenever the ball collides with the paddle.
 - **FR-003**: The system must generate a visible sparkly particle feedback effect whenever the ball collides with a brick.
-- **FR-004**: The system must place the feedback effect at or near the collision point so the visual origin matches player expectations.
+- **FR-004**: The system must place the feedback effect at the exact collision contact point so the visual origin matches player expectations.
 - **FR-005**: The system must render feedback effects quickly enough that players perceive them as immediate impact response.
 - **FR-006**: The system must keep each feedback effect temporary and automatically remove it after its short display window.
 - **FR-007**: The system must maintain visual consistency of feedback across wall, paddle, and brick collisions while allowing controlled variation.
