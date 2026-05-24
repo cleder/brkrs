@@ -1,0 +1,9 @@
+{
+  "integration": "speckit",
+  "version": "0.8.13",
+  "installed_at": "2026-05-24T15:10:17.715775+00:00",
+  "files": {
+    ".specify/scripts/bash/setup-tasks.sh": "e8d050c63c5afb664a8b671b0b0155513fb9cab0567b335e16b9eb035482aad2",
+    ".specify/templates/constitution-template.md": "ce7549540fa45543cca797a150201d868e64495fdff39dc38246fb17bd4024b3"
+  }
+}
