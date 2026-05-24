@@ -258,6 +258,27 @@ fn ball_wall_collision_emits_event() {
 }
 ```
 
+## Collision Feedback Notes
+
+Collision particle feedback is implemented as an observer-driven, same-frame reaction:
+
+- Trigger type: `CollisionFeedbackTriggered` in `src/signals.rs`
+- Consumer: `spawn_collision_feedback_effect` in `src/systems/collision_feedback.rs`
+- Lifetime cleanup: `update_feedback_effect_lifetimes` in `src/systems/collision_feedback.rs`
+
+Behavior contracts:
+
+- One effect is spawned per qualifying collision (wall, paddle, brick)
+- Effects spawn at resolved contact point with finite fallback
+- Particle count is constrained to 8-16 and lifetime to 0.20-0.35 seconds
+- New effects are suppressed while game state is not `Playing`
+- Suppressed effects are dropped (no pause backlog replay)
+
+Implementation guardrails:
+
+- Do not mutate `Parent`/`Children` components manually for VFX entities
+- If hierarchy links are needed, use relationship APIs (`add_child`/`set_parent`)
+
 **Integration testing:**
 
 Use `tests/integration/` for full physics simulation tests.

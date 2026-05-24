@@ -57,3 +57,21 @@ bevy lint
 3. Pause game and confirm no new effects appear while paused.
 4. Resume and confirm suppressed effects were not replayed.
 5. Destroy bricks on impact and confirm effect still appears at contact point.
+
+## 6. Implementation Validation Notes (2026-05-24)
+
+- `cargo check --lib`: PASS
+- `cargo fmt --all`: PASS
+- `cargo clippy --all-targets --all-features --no-deps`: FAIL (workspace-level test diagnostics)
+  - New `tests/collision_particle_feedback.rs` API issues were reported and fixed:
+    - `World::query` generic usage corrected to `query_filtered` where filters are required.
+    - Helper now accepts `&mut World` for query state construction.
+  - Remaining clippy output includes pre-existing warnings in unrelated test files.
+- `cargo test collision_particle_feedback -- --nocapture`: BLOCKED by environment linker instability during full test-target build (`ld.lld` undefined hidden symbol errors while linking unrelated test binaries).
+- `bevy lint`: BLOCKED by concurrent background cargo lock contention during this session.
+
+Follow-up for full green validation:
+
+1. Re-run `cargo test --test collision_particle_feedback -- --nocapture` in a clean terminal session with no concurrent cargo tasks.
+2. Re-run `bevy lint` after cargo lock contention is clear.
+3. Run full suite (`cargo test`, `cargo clippy --all-targets --all-features`) once linker issue is resolved.
