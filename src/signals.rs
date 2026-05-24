@@ -76,6 +76,31 @@ pub struct BallWallHit {
     pub wall_entity: Entity,
 }
 
+/// Collision target classification for visual feedback.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CollisionFeedbackTargetKind {
+    Wall,
+    Paddle,
+    Brick,
+}
+
+/// Immediate collision feedback trigger consumed by the collision feedback observer.
+#[derive(Event, Debug, Clone, Copy)]
+pub struct CollisionFeedbackTriggered {
+    /// Ball involved in the collision.
+    pub ball_entity: Entity,
+    /// Target entity involved in the collision.
+    pub target_entity: Entity,
+    /// Collision target kind.
+    pub target_kind: CollisionFeedbackTargetKind,
+    /// Preferred collision contact point in world space.
+    pub contact_point: Vec3,
+    /// Optional fallback point when contact point is invalid/non-finite.
+    pub fallback_contact_point: Option<Vec3>,
+    /// True if the collision destroyed a brick on impact.
+    pub brick_destroyed_on_impact: bool,
+}
+
 /// Brick destruction signal unified for scoring and audio.
 ///
 /// **Producers**: Brick collision system, entity despawn system
