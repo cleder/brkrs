@@ -143,8 +143,10 @@ These bricks cannot be destroyed and don't count toward level completion.
 | 93 | | Solid Left | Solid + accelerates ball leftward |
 | 94 | | Solid Right | Solid + accelerates ball rightward |
 | 95 | | Solid Up | Solid + accelerates ball upward on top hit |
-| 96 | | Solid Up-Left | Solid + accelerates ball up and left |
-| 97 | | Solid Up-Right | Solid + accelerates ball up and right |
+| 96 | | Solid Up-Left | Solid + accelerates ball up and left on top and left hit |
+| 97 | | Solid Up-Right | Solid + accelerates ball up and right on top and right hit |
+| 98 | | Solid Down-Left | Solid + accelerates ball down and left on bottom and left hit |
+| 99 | | Solid Down-Right | Solid + accelerates ball down and right o bottom and right hit|
 
 ### Magnet System
 
