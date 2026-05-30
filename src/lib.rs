@@ -228,6 +228,7 @@ pub fn run() {
     app.init_resource::<systems::scoring::ScoreState>();
     app.init_resource::<systems::collision_feedback::FeedbackProfile>();
     app.add_message::<crate::signals::BrickDestroyed>();
+    app.add_message::<crate::signals::CollisionFeedbackTriggered>();
     // Per-frame dedupe set for BrickDestroyed emissions
     app.init_resource::<EmittedBrickDestroyed>();
     // Clear the dedupe set at the start of each frame before collision systems run
@@ -257,6 +258,7 @@ pub fn run() {
         #[cfg(not(target_arch = "wasm32"))]
         WireframePlugin::default(),
     ));
+    app.init_resource::<systems::collision_feedback::CollisionFeedbackVisuals>();
     app.add_plugins(RapierPhysicsPlugin::<NoUserData>::default());
     app.add_plugins(LevelSwitchPlugin);
     app.add_plugins(crate::level_loader::LevelLoaderPlugin);
@@ -771,6 +773,40 @@ pub fn mark_brick_on_ball_collision(
     game_state: Option<Res<State<GameState>>>,
 ) {
     use crate::level_format::{is_multi_hit_brick, MULTI_HIT_BRICK_1, SIMPLE_BRICK};
+
+    fn emit_brick_collision_feedback(
+        commands: &mut Commands,
+        game_state: &Option<Res<State<GameState>>>,
+        triggering_ball: Entity,
+        brick_entity: Entity,
+        brick_pos: Vec3,
+        brick_destroyed_on_impact: bool,
+        transforms: &Query<&Transform>,
+    ) {
+        if !systems::collision_feedback::feedback_allowed_for_state_opt(game_state) {
+            return;
+        }
+
+        let ball_pos = transforms
+            .get(triggering_ball)
+            .map(|t| t.translation)
+            .unwrap_or(Vec3::ZERO);
+        let midpoint = (ball_pos + brick_pos) * 0.5;
+        let contact = systems::collision_feedback::offset_contact_toward_ball(
+            systems::collision_feedback::resolve_contact_point(midpoint, brick_pos),
+            brick_pos,
+            ball_pos,
+        );
+        commands.trigger(crate::signals::CollisionFeedbackTriggered {
+            ball_entity: triggering_ball,
+            target_entity: brick_entity,
+            target_kind: crate::signals::CollisionFeedbackTargetKind::Brick,
+            contact_point: contact,
+            fallback_contact_point: Some(brick_pos),
+            brick_destroyed_on_impact,
+        });
+    }
+
     // Track bricks already processed this frame to avoid double-awards on multi-ball collisions
     processed_bricks.clear();
 
@@ -825,26 +861,15 @@ pub fn mark_brick_on_ball_collision(
                     continue;
                 }
 
-                if systems::collision_feedback::feedback_allowed_for_state_opt(&game_state) {
-                    let ball_pos = transforms
-                        .get(triggering_ball)
-                        .map(|t| t.translation)
-                        .unwrap_or(Vec3::ZERO);
-                    let midpoint = (ball_pos + brick_pos) * 0.5;
-                    let contact =
-                        systems::collision_feedback::resolve_contact_point(midpoint, brick_pos);
-                    let contact = systems::collision_feedback::offset_contact_toward_ball(
-                        contact, brick_pos, ball_pos,
-                    );
-                    commands.trigger(crate::signals::CollisionFeedbackTriggered {
-                        ball_entity: triggering_ball,
-                        target_entity: entity,
-                        target_kind: crate::signals::CollisionFeedbackTargetKind::Brick,
-                        contact_point: contact,
-                        fallback_contact_point: Some(brick_pos),
-                        brick_destroyed_on_impact: !is_multi_hit_brick(current_type),
-                    });
-                }
+                emit_brick_collision_feedback(
+                    &mut commands,
+                    &game_state,
+                    triggering_ball,
+                    entity,
+                    brick_pos,
+                    !is_multi_hit_brick(current_type),
+                    &transforms,
+                );
 
                 // Skip paddle-destroyable bricks (type 57) - they are only destroyed by paddle contact
                 if crate::level_format::is_paddle_destroyable_brick(current_type) {
@@ -1027,33 +1052,15 @@ pub fn mark_brick_on_ball_collision(
                         .unwrap_or(Vec3::ZERO)
                 };
 
-                if systems::collision_feedback::feedback_allowed_for_state_opt(&game_state) {
-                    let ball_pos = transforms
-                        .get(triggering_ball)
-                        .map(|t| t.translation)
-                        .unwrap_or(Vec3::ZERO);
-                    let midpoint = (ball_pos + brick_pos) * 0.5;
-                    let contact =
-                        systems::collision_feedback::resolve_contact_point(midpoint, brick_pos);
-                    let contact = systems::collision_feedback::offset_contact_toward_ball(
-                        contact, brick_pos, ball_pos,
-                    );
-                    tracing::debug!(
-                        "emit Brick collision feedback: brick {:?} type {} ball {:?} contact {:?}",
-                        entity,
-                        current_type,
-                        triggering_ball,
-                        contact
-                    );
-                    commands.trigger(crate::signals::CollisionFeedbackTriggered {
-                        ball_entity: triggering_ball,
-                        target_entity: entity,
-                        target_kind: crate::signals::CollisionFeedbackTargetKind::Brick,
-                        contact_point: contact,
-                        fallback_contact_point: Some(brick_pos),
-                        brick_destroyed_on_impact: false,
-                    });
-                }
+                emit_brick_collision_feedback(
+                    &mut commands,
+                    &game_state,
+                    triggering_ball,
+                    entity,
+                    brick_pos,
+                    false,
+                    &transforms,
+                );
 
                 if current_type >= crate::level_format::INDESTRUCTIBLE_BRICK
                     || crate::level_format::is_paddle_destroyable_brick(current_type)

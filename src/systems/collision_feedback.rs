@@ -5,7 +5,7 @@
 
 use bevy::prelude::*;
 use rand::RngExt;
-use tracing::debug;
+use tracing::{debug, warn};
 
 use crate::game_state::GameState;
 use crate::signals::{CollisionFeedbackTargetKind, CollisionFeedbackTriggered};
@@ -46,19 +46,17 @@ impl Default for FeedbackProfile {
 
 impl FeedbackProfile {
     fn is_valid(&self) -> bool {
-        self.min_particles <= self.max_particles
-            && self.min_lifetime_seconds <= self.max_lifetime_seconds
-            && self.min_particles >= DEFAULT_MIN_PARTICLES
-            && self.max_particles <= DEFAULT_MAX_PARTICLES
-            && self.min_lifetime_seconds >= DEFAULT_MIN_LIFETIME
-            && self.max_lifetime_seconds <= DEFAULT_MAX_LIFETIME
+        self.min_particles > 0
+            && self.max_particles >= self.min_particles
+            && self.min_lifetime_seconds >= 0.0
+            && self.max_lifetime_seconds >= self.min_lifetime_seconds
     }
 
-    fn sample_particle_count(&self, rng: &mut rand::rngs::ThreadRng) -> u8 {
+    fn sample_particle_count(&self, rng: &mut impl RngExt) -> u8 {
         rng.random_range(self.min_particles..=self.max_particles)
     }
 
-    fn sample_lifetime_seconds(&self, rng: &mut rand::rngs::ThreadRng) -> f32 {
+    fn sample_lifetime_seconds(&self, rng: &mut impl RngExt) -> f32 {
         rng.random_range(self.min_lifetime_seconds..=self.max_lifetime_seconds)
     }
 }
@@ -119,41 +117,11 @@ pub fn offset_contact_toward_ball(
     }
 }
 
-fn sample_style_variant(kind: CollisionFeedbackTargetKind, rng: &mut rand::rngs::ThreadRng) -> f32 {
+fn sample_style_variant(kind: CollisionFeedbackTargetKind, rng: &mut impl RngExt) -> f32 {
     match kind {
         CollisionFeedbackTargetKind::Wall => rng.random_range(0.90..=1.10),
         CollisionFeedbackTargetKind::Paddle => rng.random_range(0.92..=1.08),
         CollisionFeedbackTargetKind::Brick => rng.random_range(0.88..=1.12),
-    }
-}
-
-fn create_collision_feedback_visuals(
-    meshes: &mut Assets<Mesh>,
-    materials: &mut Assets<StandardMaterial>,
-) -> CollisionFeedbackVisuals {
-    let particle_mesh = meshes.add(Cuboid::new(0.12, 0.12, 0.12).mesh());
-
-    let wall_material = materials.add(StandardMaterial {
-        base_color: Color::srgb(1.0, 0.95, 0.35),
-        unlit: true,
-        ..default()
-    });
-    let paddle_material = materials.add(StandardMaterial {
-        base_color: Color::srgb(0.35, 0.95, 1.0),
-        unlit: true,
-        ..default()
-    });
-    let brick_material = materials.add(StandardMaterial {
-        base_color: Color::srgb(1.0, 0.45, 0.25),
-        unlit: true,
-        ..default()
-    });
-
-    CollisionFeedbackVisuals {
-        particle_mesh,
-        wall_material,
-        paddle_material,
-        brick_material,
     }
 }
 
@@ -168,6 +136,41 @@ fn material_for_kind(
     }
 }
 
+impl FromWorld for CollisionFeedbackVisuals {
+    fn from_world(world: &mut World) -> Self {
+        let particle_mesh = {
+            let mut meshes = world.resource_mut::<Assets<Mesh>>();
+            meshes.add(Cuboid::new(0.12, 0.12, 0.12).mesh())
+        };
+        let (wall_material, paddle_material, brick_material) = {
+            let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
+            (
+                materials.add(StandardMaterial {
+                    base_color: Color::srgb(1.0, 0.95, 0.35),
+                    unlit: true,
+                    ..default()
+                }),
+                materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.35, 0.95, 1.0),
+                    unlit: true,
+                    ..default()
+                }),
+                materials.add(StandardMaterial {
+                    base_color: Color::srgb(1.0, 0.45, 0.25),
+                    unlit: true,
+                    ..default()
+                }),
+            )
+        };
+        CollisionFeedbackVisuals {
+            particle_mesh,
+            wall_material,
+            paddle_material,
+            brick_material,
+        }
+    }
+}
+
 /// Observer: spawn one feedback effect for each qualifying collision trigger.
 pub fn spawn_collision_feedback_effect(
     trigger: On<CollisionFeedbackTriggered>,
@@ -175,8 +178,6 @@ pub fn spawn_collision_feedback_effect(
     profile: Option<Res<FeedbackProfile>>,
     game_state: Option<Res<State<GameState>>>,
     visuals: Option<Res<CollisionFeedbackVisuals>>,
-    mut meshes: Option<ResMut<Assets<Mesh>>>,
-    mut materials: Option<ResMut<Assets<StandardMaterial>>>,
 ) {
     if !feedback_allowed_for_state_opt(&game_state) {
         return;
@@ -196,6 +197,15 @@ pub fn spawn_collision_feedback_effect(
         event.contact_point,
         event.fallback_contact_point.unwrap_or(Vec3::ZERO),
     );
+
+    let visuals = if let Some(visuals) = visuals.as_ref() {
+        visuals
+    } else {
+        warn!(
+            "CollisionFeedbackVisuals resource is missing; cannot spawn collision feedback effect"
+        );
+        return;
+    };
 
     let effect_entity = commands
         .spawn((
@@ -222,26 +232,14 @@ pub fn spawn_collision_feedback_effect(
         "spawned collision feedback effect"
     );
 
-    let visuals = if let Some(visuals) = visuals {
-        Some(visuals.clone())
-    } else if let (Some(meshes), Some(materials)) = (meshes.as_mut(), materials.as_mut()) {
-        let created = create_collision_feedback_visuals(meshes.as_mut(), materials.as_mut());
-        commands.insert_resource(created.clone());
-        Some(created)
-    } else {
-        None
-    };
-
-    let particle_material = visuals
-        .as_ref()
-        .map(|v| material_for_kind(event.target_kind, v));
+    let particle_material = material_for_kind(event.target_kind, visuals);
 
     for _ in 0..particle_count {
         let angle = rng.random_range(0.0..std::f32::consts::TAU);
         let speed = rng.random_range(0.8..1.8) * style_variant;
         let velocity = Vec3::new(angle.cos() * speed, 0.0, angle.sin() * speed);
 
-        let mut particle_entity = commands.spawn((
+        commands.spawn((
             CollisionFeedbackParticle {
                 source_effect: effect_entity,
                 velocity,
@@ -249,14 +247,9 @@ pub fn spawn_collision_feedback_effect(
             Transform::from_translation(contact_point),
             GlobalTransform::default(),
             Visibility::Visible,
+            Mesh3d(visuals.particle_mesh.clone()),
+            MeshMaterial3d(particle_material.clone()),
         ));
-
-        if let (Some(visuals), Some(material)) = (visuals.as_ref(), particle_material.as_ref()) {
-            particle_entity.insert((
-                Mesh3d(visuals.particle_mesh.clone()),
-                MeshMaterial3d(material.clone()),
-            ));
-        }
     }
 }
 
@@ -265,22 +258,20 @@ pub fn update_feedback_effect_lifetimes(
     time: Res<Time>,
     mut commands: Commands,
     mut effects: Query<(Entity, &mut FeedbackEffectInstance)>,
-    mut particles: ParamSet<(
-        Query<(Entity, &CollisionFeedbackParticle)>,
-        Query<(&CollisionFeedbackParticle, &mut Transform)>,
-    )>,
+    mut particles: Query<(Entity, &CollisionFeedbackParticle, &mut Transform)>,
+    particle_refs: Query<(Entity, &CollisionFeedbackParticle)>,
 ) {
     let dt = time.delta_secs();
 
-    for (particle, mut transform) in &mut particles.p1() {
+    for (_entity, particle, mut transform) in &mut particles {
         transform.translation += particle.velocity * dt;
     }
 
-    let mut expired = Vec::new();
+    let mut expired = std::collections::HashSet::new();
     for (entity, mut effect) in &mut effects {
         effect.elapsed_seconds += dt;
         if effect.elapsed_seconds >= effect.lifetime_seconds {
-            expired.push(entity);
+            expired.insert(entity);
         }
     }
 
@@ -292,7 +283,7 @@ pub fn update_feedback_effect_lifetimes(
         commands.entity(*effect).despawn();
     }
 
-    for (particle_entity, particle) in particles.p0().iter() {
+    for (particle_entity, particle) in particle_refs.iter() {
         if expired.contains(&particle.source_effect) {
             commands.entity(particle_entity).despawn();
         }

@@ -14,7 +14,11 @@ fn make_test_app() -> App {
     app.add_plugins(MinimalPlugins)
         .add_plugins(bevy::state::app::StatesPlugin)
         .init_state::<GameState>()
+        .init_resource::<Assets<Mesh>>()
+        .init_resource::<Assets<StandardMaterial>>()
         .init_resource::<FeedbackProfile>()
+        .init_resource::<brkrs::systems::collision_feedback::CollisionFeedbackVisuals>()
+        .add_message::<CollisionFeedbackTriggered>()
         .add_observer(spawn_collision_feedback_effect)
         .add_systems(Update, update_feedback_effect_lifetimes);
 
@@ -35,14 +39,16 @@ fn trigger_collision(app: &mut App, kind: CollisionFeedbackTargetKind, contact_p
     let ball = app.world_mut().spawn((Transform::default(),)).id();
     let target = app.world_mut().spawn((Transform::default(),)).id();
 
-    app.world_mut().trigger(CollisionFeedbackTriggered {
-        ball_entity: ball,
-        target_entity: target,
-        target_kind: kind,
-        contact_point,
-        fallback_contact_point: Some(contact_point),
-        brick_destroyed_on_impact: kind == CollisionFeedbackTargetKind::Brick,
-    });
+    app.world_mut()
+        .resource_mut::<Messages<CollisionFeedbackTriggered>>()
+        .write(CollisionFeedbackTriggered {
+            ball_entity: ball,
+            target_entity: target,
+            target_kind: kind,
+            contact_point,
+            fallback_contact_point: Some(contact_point),
+            brick_destroyed_on_impact: kind == CollisionFeedbackTargetKind::Brick,
+        });
 }
 
 fn effect_instances(world: &mut World) -> Vec<FeedbackEffectInstance> {
@@ -104,12 +110,75 @@ fn effect_spawns_at_exact_contact_point() {
         .world_mut()
         .query::<(&FeedbackEffectInstance, &Transform)>();
     let (effect, transform) = q
-        .iter(app.world())
+        .iter(app.world_mut())
         .next()
         .expect("Expected one feedback effect");
 
     assert_eq!(effect.origin_contact_point, point);
     assert_eq!(transform.translation, point);
+}
+
+#[test]
+fn resolve_contact_point_falls_back_to_valid_point() {
+    use brkrs::systems::collision_feedback::resolve_contact_point;
+
+    let invalid = Vec3::new(f32::NAN, 0.0, 0.0);
+    let fallback = Vec3::new(1.0, 2.0, 3.0);
+
+    let resolved = resolve_contact_point(invalid, fallback);
+    assert_eq!(resolved, fallback);
+}
+
+#[test]
+fn offset_contact_toward_ball_moves_point_forward() {
+    use brkrs::systems::collision_feedback::offset_contact_toward_ball;
+
+    let contact_point = Vec3::new(0.0, 0.0, 0.0);
+    let source_center = Vec3::new(-1.0, 0.0, 0.0);
+    let ball_position = Vec3::new(1.0, 0.0, 0.0);
+
+    let offset = offset_contact_toward_ball(contact_point, source_center, ball_position);
+    assert!(offset.x > contact_point.x);
+}
+
+#[test]
+fn feedback_allowed_without_state_resource() {
+    use brkrs::systems::collision_feedback::feedback_allowed_for_state_opt;
+    assert!(feedback_allowed_for_state_opt(&None));
+}
+
+#[test]
+fn particles_move_over_time() {
+    let mut app = make_test_app();
+    trigger_collision(
+        &mut app,
+        CollisionFeedbackTargetKind::Wall,
+        Vec3::new(0.0, 0.0, 0.0),
+    );
+    app.update();
+
+    let initial_positions: Vec<Vec3> = app
+        .world_mut()
+        .query::<(&CollisionFeedbackParticle, &Transform)>()
+        .iter(app.world_mut())
+        .map(|(_particle, transform)| transform.translation)
+        .collect();
+
+    advance_time(&mut app, 0.1);
+    app.update();
+
+    let later_positions: Vec<Vec3> = app
+        .world_mut()
+        .query::<(&CollisionFeedbackParticle, &Transform)>()
+        .iter(app.world_mut())
+        .map(|(_particle, transform)| transform.translation)
+        .collect();
+
+    assert_eq!(initial_positions.len(), later_positions.len());
+    assert!(initial_positions
+        .iter()
+        .zip(later_positions.iter())
+        .any(|(before, after)| *before != *after));
 }
 
 #[test]
@@ -146,14 +215,14 @@ fn particle_count_stays_within_required_window() {
     trigger_collision(&mut app, CollisionFeedbackTargetKind::Paddle, Vec3::ZERO);
     app.update();
 
-    let effects = effect_instances(app.world());
+    let effects = effect_instances(app.world_mut());
     assert_eq!(effects.len(), 1);
 
     let count = effects[0].particle_count;
     assert!((8..=16).contains(&count));
 
     let mut q = app.world_mut().query::<&CollisionFeedbackParticle>();
-    let particle_entities = q.iter(app.world()).count();
+    let particle_entities = q.iter(app.world_mut()).count();
     assert_eq!(particle_entities as u8, count);
 }
 

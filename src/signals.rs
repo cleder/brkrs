@@ -85,7 +85,7 @@ pub enum CollisionFeedbackTargetKind {
 }
 
 /// Immediate collision feedback trigger consumed by the collision feedback observer.
-#[derive(Event, Debug, Clone, Copy)]
+#[derive(Event, Message, Debug, Clone, Copy)]
 pub struct CollisionFeedbackTriggered {
     /// Ball involved in the collision.
     pub ball_entity: Entity,
