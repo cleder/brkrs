@@ -5,6 +5,7 @@ pub mod audio;
 pub mod ball_spawn_bricks;
 pub mod brick_effects;
 pub mod cheat_mode;
+pub mod collision_feedback;
 pub mod game_state_transitions;
 pub mod gravity;
 pub mod grid_debug;
@@ -32,6 +33,7 @@ pub use brick_effects::{
     IMPULSE_MAGNITUDE_RANDOM_MAX, IMPULSE_MAGNITUDE_RANDOM_MIN,
 };
 pub use cheat_mode::{CheatModePlugin, CheatModeState, CheatModeToggled};
+pub use collision_feedback::{CollisionFeedbackParticle, FeedbackEffectInstance, FeedbackProfile};
 pub use gravity::GravityChanged;
 pub use level_switch::{
     LevelSwitchPlugin, LevelSwitchRequested, LevelSwitchSource, LevelSwitchState,

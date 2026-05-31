@@ -226,7 +226,9 @@ pub fn run() {
     app.insert_resource(crate::physics_config::BrickPhysicsConfig::default());
     // Scoring system state
     app.init_resource::<systems::scoring::ScoreState>();
+    app.init_resource::<systems::collision_feedback::FeedbackProfile>();
     app.add_message::<crate::signals::BrickDestroyed>();
+    app.add_message::<crate::signals::CollisionFeedbackTriggered>();
     // Per-frame dedupe set for BrickDestroyed emissions
     app.init_resource::<EmittedBrickDestroyed>();
     // Clear the dedupe set at the start of each frame before collision systems run
@@ -256,6 +258,7 @@ pub fn run() {
         #[cfg(not(target_arch = "wasm32"))]
         WireframePlugin::default(),
     ));
+    app.init_resource::<systems::collision_feedback::CollisionFeedbackVisuals>();
     app.add_plugins(RapierPhysicsPlugin::<NoUserData>::default());
     app.add_plugins(LevelSwitchPlugin);
     app.add_plugins(crate::level_loader::LevelLoaderPlugin);
@@ -331,6 +334,11 @@ pub fn run() {
     #[cfg(feature = "texture_manifest")]
     app.add_systems(Update, systems::multi_hit::watch_brick_type_changes);
 
+    app.add_systems(
+        Update,
+        systems::collision_feedback::update_feedback_effect_lifetimes,
+    );
+
     add_core_observers(&mut app);
     add_gravity_feature(&mut app);
     // Note: Multi-hit brick sound observer is now registered by AudioPlugin
@@ -357,6 +365,7 @@ fn add_core_observers(app: &mut App) {
     app.add_observer(on_brick_hit);
     app.add_observer(start_camera_shake);
     app.add_observer(systems::brick_effects::apply_direction_brick_effects);
+    app.add_observer(systems::collision_feedback::spawn_collision_feedback_effect);
 }
 
 fn add_gravity_feature(app: &mut App) {
@@ -724,8 +733,10 @@ fn try_emit_brick_destroyed(
 pub fn mark_brick_on_ball_collision(
     mut collision_events: MessageReader<CollisionEvent>,
     balls: Query<Entity, With<Ball>>,
-    // Use a ParamSet to avoid Bevy B0001 conflicting borrows across queries
-    mut bricks: ParamSet<(
+    // Use a ParamSet to avoid Bevy B0001 conflicting borrows across queries.
+    // Keep the destructible-brick query limited to bricks that count toward completion
+    // to preserve ball-spawn and destruction behavior.
+    mut brick_queries: ParamSet<(
         Query<
             (
                 Entity,
@@ -740,6 +751,15 @@ pub fn mark_brick_on_ball_collision(
             ),
         >,
         Query<(Entity, &mut BrickTypeId), With<Brick>>,
+        Query<
+            (
+                Entity,
+                &BrickTypeId,
+                Option<&GlobalTransform>,
+                Option<&Transform>,
+            ),
+            (With<Brick>, Without<MarkedForDespawn>),
+        >,
     )>,
     transforms: Query<&Transform>,
     velocities: Query<&Velocity, With<Ball>>,
@@ -750,8 +770,43 @@ pub fn mark_brick_on_ball_collision(
     mut life_award_msgs: Option<MessageWriter<crate::signals::LifeAwardMessage>>,
     mut level_switch_msgs: Option<MessageWriter<crate::systems::LevelSwitchRequested>>,
     mut emitted: Option<ResMut<EmittedBrickDestroyed>>,
+    game_state: Option<Res<State<GameState>>>,
 ) {
     use crate::level_format::{is_multi_hit_brick, MULTI_HIT_BRICK_1, SIMPLE_BRICK};
+
+    fn emit_brick_collision_feedback(
+        commands: &mut Commands,
+        game_state: &Option<Res<State<GameState>>>,
+        triggering_ball: Entity,
+        brick_entity: Entity,
+        brick_pos: Vec3,
+        brick_destroyed_on_impact: bool,
+        transforms: &Query<&Transform>,
+    ) {
+        if !systems::collision_feedback::feedback_allowed_for_state_opt(game_state) {
+            return;
+        }
+
+        let ball_pos = transforms
+            .get(triggering_ball)
+            .map(|t| t.translation)
+            .unwrap_or(Vec3::ZERO);
+        let midpoint = (ball_pos + brick_pos) * 0.5;
+        let contact = systems::collision_feedback::offset_contact_toward_ball(
+            systems::collision_feedback::resolve_contact_point(midpoint, brick_pos),
+            brick_pos,
+            ball_pos,
+        );
+        commands.trigger(crate::signals::CollisionFeedbackTriggered {
+            ball_entity: triggering_ball,
+            target_entity: brick_entity,
+            target_kind: crate::signals::CollisionFeedbackTargetKind::Brick,
+            contact_point: contact,
+            fallback_contact_point: Some(brick_pos),
+            brick_destroyed_on_impact,
+        });
+    }
+
     // Track bricks already processed this frame to avoid double-awards on multi-ball collisions
     processed_bricks.clear();
 
@@ -769,16 +824,35 @@ pub fn mark_brick_on_ball_collision(
             };
 
             // Determine which entity is the brick (if any)
-            let bricks_info = bricks.p0();
-            let brick_info = if e1_is_ball {
-                bricks_info.get(*e2).ok()
+            let brick_entity = if e1_is_ball {
+                *e2
             } else if e2_is_ball {
-                bricks_info.get(*e1).ok()
+                *e1
             } else {
-                None
+                continue;
             };
 
-            if let Some((entity, brick_type_ro, gt_opt, t_opt)) = brick_info {
+            let brick_info = {
+                let bricks_info = brick_queries.p0();
+                bricks_info
+                    .get(brick_entity)
+                    .ok()
+                    .map(|(entity, brick_type_ro, gt_opt, t_opt)| {
+                        let brick_pos = if let Some(t) = t_opt {
+                            t.translation
+                        } else if let Some(gt) = gt_opt {
+                            gt.translation()
+                        } else {
+                            transforms
+                                .get(entity)
+                                .map(|t| t.translation)
+                                .unwrap_or(Vec3::ZERO)
+                        };
+                        (entity, brick_type_ro.0, brick_pos)
+                    })
+            };
+
+            if let Some((entity, current_type, brick_pos)) = brick_info {
                 let Some(triggering_ball) = triggering_ball else {
                     continue;
                 };
@@ -786,7 +860,16 @@ pub fn mark_brick_on_ball_collision(
                     debug!("Skipping already-processed brick entity {:?}", entity);
                     continue;
                 }
-                let current_type = brick_type_ro.0;
+
+                emit_brick_collision_feedback(
+                    &mut commands,
+                    &game_state,
+                    triggering_ball,
+                    entity,
+                    brick_pos,
+                    !is_multi_hit_brick(current_type),
+                    &transforms,
+                );
 
                 // Skip paddle-destroyable bricks (type 57) - they are only destroyed by paddle contact
                 if crate::level_format::is_paddle_destroyable_brick(current_type) {
@@ -799,27 +882,16 @@ pub fn mark_brick_on_ball_collision(
                     continue;
                 }
 
-                // Skip hazard brick type 91 - indestructible by ball collision
-                // Use trace-level logging to avoid flooding logs during frequent grazing collisions
-                if current_type == crate::level_format::HAZARD_BRICK_91 {
+                // Skip indestructible bricks (all types >= 90).
+                // These bricks still emit feedback on hit, but are not destroyed by the ball.
+                if current_type >= crate::level_format::INDESTRUCTIBLE_BRICK {
                     trace!(
-                        "Ball-hazard brick collision: brick {} is indestructible type 91, skipping destruction",
-                        entity
+                        "Ball-brick collision: brick {} is indestructible type {}, skipping destruction",
+                        entity,
+                        current_type
                     );
                     continue;
                 }
-
-                // Prefer Transform over GlobalTransform over direct query
-                let brick_pos = if let Some(t) = t_opt {
-                    t.translation
-                } else if let Some(gt) = gt_opt {
-                    gt.translation()
-                } else {
-                    transforms
-                        .get(entity)
-                        .map(|t| t.translation)
-                        .unwrap_or(Vec3::ZERO)
-                };
 
                 if is_multi_hit_brick(current_type) {
                     // Multi-hit brick: transition to next state (requires mutable borrow)
@@ -839,7 +911,7 @@ pub fn mark_brick_on_ball_collision(
                     });
 
                     // Update the brick type (this triggers watch_brick_type_changes for visual update)
-                    if let Ok((_, mut brick_type)) = bricks.p1().get_mut(entity) {
+                    if let Ok((_, mut brick_type)) = brick_queries.p1().get_mut(entity) {
                         brick_type.0 = new_type;
                     }
 
@@ -961,6 +1033,44 @@ pub fn mark_brick_on_ball_collision(
                         );
                     }
                 }
+            } else if let Ok((entity, brick_type_ro, gt_opt, t_opt)) =
+                brick_queries.p2().get(brick_entity)
+            {
+                let Some(triggering_ball) = triggering_ball else {
+                    continue;
+                };
+
+                let current_type = brick_type_ro.0;
+                let brick_pos = if let Some(t) = t_opt {
+                    t.translation
+                } else if let Some(gt) = gt_opt {
+                    gt.translation()
+                } else {
+                    transforms
+                        .get(entity)
+                        .map(|t| t.translation)
+                        .unwrap_or(Vec3::ZERO)
+                };
+
+                emit_brick_collision_feedback(
+                    &mut commands,
+                    &game_state,
+                    triggering_ball,
+                    entity,
+                    brick_pos,
+                    false,
+                    &transforms,
+                );
+
+                if current_type >= crate::level_format::INDESTRUCTIBLE_BRICK
+                    || crate::level_format::is_paddle_destroyable_brick(current_type)
+                {
+                    trace!(
+                        "Ball-brick collision: brick {} is indestructible or paddle-only type {}, skipping destruction",
+                        entity,
+                        current_type
+                    );
+                }
             }
         }
     }
@@ -969,22 +1079,23 @@ pub fn mark_brick_on_ball_collision(
 /// Detect ball-wall collisions and emit BallWallHit events for audio.
 fn detect_ball_wall_collisions(
     mut collision_events: MessageReader<CollisionEvent>,
-    balls: Query<(Entity, &Velocity), With<Ball>>,
-    borders: Query<Entity, With<Border>>,
+    balls: Query<(Entity, &Velocity, &Transform), With<Ball>>,
+    borders: Query<(Entity, &Transform), With<Border>>,
     mut commands: Commands,
+    game_state: Option<Res<State<GameState>>>,
 ) {
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
             // Check if one entity is a ball and the other is a border
-            let ball = if let Ok((entity, velocity)) = balls.get(*e1) {
-                Some((entity, velocity, *e2))
-            } else if let Ok((entity, velocity)) = balls.get(*e2) {
-                Some((entity, velocity, *e1))
+            let ball = if let Ok((entity, velocity, transform)) = balls.get(*e1) {
+                Some((entity, velocity, transform, *e2))
+            } else if let Ok((entity, velocity, transform)) = balls.get(*e2) {
+                Some((entity, velocity, transform, *e1))
             } else {
                 None
             };
-            if let Some((ball_entity, _velocity, other_entity)) = ball {
-                if borders.get(other_entity).is_ok() {
+            if let Some((ball_entity, _velocity, ball_transform, other_entity)) = ball {
+                if let Ok((_wall_entity, wall_transform)) = borders.get(other_entity) {
                     // Emit BallWallHit event for audio system (signals::BallWallHit)
                     println!(
                         "BallWallHit event emitted for ball {:?} and wall {:?}",
@@ -994,6 +1105,34 @@ fn detect_ball_wall_collisions(
                         ball_entity,
                         wall_entity: other_entity,
                     });
+
+                    if systems::collision_feedback::feedback_allowed_for_state_opt(&game_state) {
+                        let midpoint =
+                            (ball_transform.translation + wall_transform.translation) * 0.5;
+                        let contact = systems::collision_feedback::resolve_contact_point(
+                            midpoint,
+                            wall_transform.translation,
+                        );
+                        let contact = systems::collision_feedback::offset_contact_toward_ball(
+                            contact,
+                            wall_transform.translation,
+                            ball_transform.translation,
+                        );
+                        tracing::debug!(
+                            "emit Wall collision feedback: wall {:?} ball {:?} contact {:?}",
+                            other_entity,
+                            ball_entity,
+                            contact
+                        );
+                        commands.trigger(crate::signals::CollisionFeedbackTriggered {
+                            ball_entity,
+                            target_entity: other_entity,
+                            target_kind: crate::signals::CollisionFeedbackTargetKind::Wall,
+                            contact_point: contact,
+                            fallback_contact_point: Some(wall_transform.translation),
+                            brick_destroyed_on_impact: false,
+                        });
+                    }
                 }
             }
         }
@@ -1165,22 +1304,24 @@ fn grab_mouse(
 /// - `despawn_marked_entities`: Processes MarkedForDespawn and emits BrickDestroyed
 /// - `award_points_system`: Awards 250 points for type 57 brick destruction
 pub fn read_character_controller_collisions(
-    paddle_outputs: Query<&KinematicCharacterControllerOutput, With<Paddle>>,
+    paddle_outputs: Query<(Entity, &KinematicCharacterControllerOutput, &Transform), With<Paddle>>,
     walls: Query<Entity, With<Border>>,
     bricks: Query<Entity, With<Brick>>,
     brick_types: Query<&BrickTypeId, With<Brick>>,
-    balls: Query<Entity, With<Ball>>,
+    balls: Query<(Entity, &Transform), With<Ball>>,
     time: Res<Time>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     mut commands: Commands,
     spawn_points: Res<crate::systems::respawn::SpawnPoints>,
     mut frame_loss_state: ResMut<crate::systems::respawn::FrameLossState>,
     mut ball_lost_writer: Option<MessageWriter<crate::systems::respawn::BallLostEvent>>,
+    game_state: Option<Res<State<GameState>>>,
 ) {
-    let output = match paddle_outputs.single() {
+    let (paddle_entity, output, paddle_transform) = match paddle_outputs.single() {
         Ok(controller) => controller,
         Err(_) => return,
     };
+    let paddle_pos = paddle_transform.translation;
     for collision in output.collisions.iter() {
         // paddle collides with the walls
         for wall in walls.iter() {
@@ -1216,7 +1357,7 @@ pub fn read_character_controller_collisions(
                         && !frame_loss_state.hazard_loss_emitted
                     {
                         // Only emit one ball loss per frame even if multiple hazards contacted
-                        if let Some(ball) = balls.iter().next() {
+                        if let Some((ball, _)) = balls.iter().next() {
                             if let Some(ref mut writer) = ball_lost_writer {
                                 let ball_spawn = spawn_points.ball_spawn();
                                 writer.write(crate::systems::respawn::BallLostEvent {
@@ -1238,7 +1379,7 @@ pub fn read_character_controller_collisions(
     }
     for collision in output.collisions.iter() {
         // paddle collides with the balls
-        for ball in balls.iter() {
+        for (ball, ball_transform) in balls.iter() {
             if collision.entity == ball {
                 // println!("hit ball {:?}", ball);
                 // println!("collision {:?}", collision);
@@ -1250,6 +1391,20 @@ pub fn read_character_controller_collisions(
                     ) / time.delta_secs(),
                     ball,
                 });
+
+                if systems::collision_feedback::feedback_allowed_for_state_opt(&game_state) {
+                    let midpoint = (paddle_pos + ball_transform.translation) * 0.5;
+                    let contact =
+                        systems::collision_feedback::resolve_contact_point(midpoint, paddle_pos);
+                    commands.trigger(crate::signals::CollisionFeedbackTriggered {
+                        ball_entity: ball,
+                        target_entity: paddle_entity,
+                        target_kind: crate::signals::CollisionFeedbackTargetKind::Paddle,
+                        contact_point: contact,
+                        fallback_contact_point: Some(paddle_pos),
+                        brick_destroyed_on_impact: false,
+                    });
+                }
             }
         }
     }
