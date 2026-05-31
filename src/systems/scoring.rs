@@ -2,6 +2,7 @@
 //!
 //! This module implements the core scoring mechanics:
 //! - Score state tracking across game sessions
+//! - Score multiplier state for brick-destruction scoring
 //! - Point awards on brick destruction
 //! - Milestone detection at 5000-point intervals
 //! - Event communication with other game systems
@@ -24,6 +25,48 @@ pub struct ScoreState {
 
     /// Highest milestone tier achieved (e.g., 0, 1, 2 for 0, 5000, 10000 points)
     pub last_milestone_reached: u32,
+}
+
+/// Global score multiplier state used for future brick-destruction score awards.
+///
+/// The multiplier defaults to `1x`, changes only when multiplier bricks are destroyed,
+/// and resets when an actual life-loss event occurs.
+#[derive(Resource, Debug, Clone, Copy)]
+pub struct ScoreMultiplierState {
+    /// Active multiplier factor applied to eligible future brick-destruction scores.
+    pub factor: u32,
+
+    /// Latest multiplier brick that set the active factor, if any.
+    pub source_brick_index: Option<u8>,
+
+    /// Optional diagnostic marker for the last update source.
+    pub updated_frame: Option<u64>,
+}
+
+impl Default for ScoreMultiplierState {
+    fn default() -> Self {
+        Self {
+            factor: 1,
+            source_brick_index: None,
+            updated_frame: None,
+        }
+    }
+}
+
+impl ScoreMultiplierState {
+    /// Activates a new multiplier factor from a multiplier brick.
+    pub fn activate(&mut self, factor: u32, source_brick_index: u8) {
+        self.factor = factor;
+        self.source_brick_index = Some(source_brick_index);
+        self.updated_frame = None;
+    }
+
+    /// Resets multiplier state to normal scoring.
+    pub fn reset(&mut self) {
+        self.factor = 1;
+        self.source_brick_index = None;
+        self.updated_frame = None;
+    }
 }
 
 // BrickDestroyed message is defined in `crate::signals`.
@@ -123,6 +166,17 @@ pub fn brick_points(brick_type: u8, rng: &mut impl Rng) -> u32 {
     }
 }
 
+/// Returns the score multiplier factor activated by a multiplier brick.
+pub fn multiplier_factor_for_brick(brick_type: u8) -> Option<u32> {
+    match brick_type {
+        26 => Some(1),
+        27 => Some(2),
+        28 => Some(3),
+        29 => Some(4),
+        _ => None,
+    }
+}
+
 /// Awards points for destroyed bricks and updates ScoreState.
 ///
 /// # Purpose
@@ -150,12 +204,47 @@ pub fn brick_points(brick_type: u8, rng: &mut impl Rng) -> u32 {
 pub fn award_points_system(
     mut brick_destroyed_events: MessageReader<BrickDestroyed>,
     mut score_state: ResMut<ScoreState>,
+    mut multiplier_state: Option<ResMut<ScoreMultiplierState>>,
 ) {
     let mut rng = rng();
 
     for event in brick_destroyed_events.read() {
-        let points = brick_points(event.brick_type, &mut rng);
+        let base_points = brick_points(event.brick_type, &mut rng);
+        let points = match multiplier_state.as_mut() {
+            Some(multiplier_state) => {
+                if let Some(factor) = multiplier_factor_for_brick(event.brick_type) {
+                    multiplier_state.activate(factor, event.brick_type);
+                    base_points
+                } else {
+                    base_points.saturating_mul(multiplier_state.factor)
+                }
+            }
+            None => base_points,
+        };
+
         score_state.current_score = score_state.current_score.saturating_add(points);
+    }
+}
+
+/// Resets the score multiplier after a real life-loss event occurs.
+pub fn reset_multiplier_on_life_loss_system(
+    life_lost_events: Option<MessageReader<crate::systems::respawn::LifeLostEvent>>,
+    multiplier_state: Option<ResMut<ScoreMultiplierState>>,
+) {
+    let Some(mut life_lost_events) = life_lost_events else {
+        return;
+    };
+    let Some(mut multiplier_state) = multiplier_state else {
+        return;
+    };
+
+    let mut saw_life_loss = false;
+    for _event in life_lost_events.read() {
+        saw_life_loss = true;
+    }
+
+    if saw_life_loss {
+        multiplier_state.reset();
     }
 }
 
@@ -210,4 +299,9 @@ pub fn detect_milestone_system(
 pub fn reset_score(score_state: &mut ResMut<ScoreState>) {
     score_state.current_score = 0;
     score_state.last_milestone_reached = 0;
+}
+
+/// Helper to reset multiplier state to normal scoring.
+pub fn reset_multiplier(multiplier_state: &mut ResMut<ScoreMultiplierState>) {
+    multiplier_state.reset();
 }

@@ -9,8 +9,8 @@ Write tests first, verify they fail, and record the failing-test commit hash in 
 
 **Purpose**: Prepare focused test surfaces for multiplier scoring and HUD behavior.
 
-- [ ] T001 Create feature integration test scaffold in /home/christian/devel/bevy/brkrs/tests/score_multiplier_bricks.rs for multiplier activation, replacement, reset, and level-transition scenarios
-- [ ] T002 [P] Extend UI test harness coverage in /home/christian/devel/bevy/brkrs/tests/score_display.rs and /home/christian/devel/bevy/brkrs/tests/change_detection.rs for multiplier-indicator assertions
+- [X] T001 Create feature integration test scaffold in /home/christian/devel/bevy/brkrs/tests/score_multiplier_bricks.rs for multiplier activation, replacement, reset, and level-transition scenarios
+- [X] T002 [P] Extend UI test harness coverage in /home/christian/devel/bevy/brkrs/tests/score_display.rs and /home/christian/devel/bevy/brkrs/tests/change_detection.rs for multiplier-indicator assertions
 
 ---
 
@@ -20,9 +20,9 @@ Write tests first, verify they fail, and record the failing-test commit hash in 
 
 **⚠️ CRITICAL**: No user story work should begin until this phase is complete.
 
-- [ ] T003 Define shared `ScoreMultiplierState` resource, multiplier mapping helpers, and scoring helper APIs in /home/christian/devel/bevy/brkrs/src/systems/scoring.rs
-- [ ] T004 [P] Register multiplier state and scoring pipeline wiring in /home/christian/devel/bevy/brkrs/src/lib.rs so buffered `BrickDestroyed` message flow remains the single scoring entry path
-- [ ] T005 [P] Add shared UI component markers and layout anchors for the future multiplier indicator in /home/christian/devel/bevy/brkrs/src/ui/score_display.rs and /home/christian/devel/bevy/brkrs/src/ui/mod.rs
+- [X] T003 Define shared `ScoreMultiplierState` resource, multiplier mapping helpers, and scoring helper APIs in /home/christian/devel/bevy/brkrs/src/systems/scoring.rs
+- [X] T004 [P] Register multiplier state and scoring pipeline wiring in /home/christian/devel/bevy/brkrs/src/lib.rs so buffered `BrickDestroyed` message flow remains the single scoring entry path
+- [X] T005 [P] Add shared UI component markers and layout anchors for the future multiplier indicator in /home/christian/devel/bevy/brkrs/src/ui/score_display.rs and /home/christian/devel/bevy/brkrs/src/ui/mod.rs
 
 **Checkpoint**: Shared multiplier state and wiring are in place; story work can proceed.
 
@@ -36,14 +36,14 @@ Write tests first, verify they fail, and record the failing-test commit hash in 
 
 ### Tests for User Story 1 (REQUIRED) ⚠️
 
-- [ ] T006 [P] [US1] Write failing unit tests for multiplier factor mapping, forward-only activation, and base-score handling of triggering bricks in /home/christian/devel/bevy/brkrs/tests/scoring.rs (record red commit hash)
-- [ ] T007 [P] [US1] Write failing integration tests for multiplier activation, buffered message consumption, and 10-frame persistence in /home/christian/devel/bevy/brkrs/tests/score_multiplier_bricks.rs (record red commit hash)
+- [X] T006 [P] [US1] Write failing unit tests for multiplier factor mapping, forward-only activation, and base-score handling of triggering bricks in /home/christian/devel/bevy/brkrs/tests/scoring.rs (record red commit hash)
+- [X] T007 [P] [US1] Write failing integration tests for multiplier activation, buffered message consumption, and 10-frame persistence in /home/christian/devel/bevy/brkrs/tests/score_multiplier_bricks.rs (record red commit hash)
 - [ ] T023 [US1] Obtain feature-owner approval for failing multiplier activation tests before implementation begins
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Implement multiplier activation and forward-only brick award calculation in /home/christian/devel/bevy/brkrs/src/systems/scoring.rs
-- [ ] T009 [US1] Chain the updated multiplier-aware scoring systems after brick destruction in /home/christian/devel/bevy/brkrs/src/lib.rs and preserve `MessageReader<BrickDestroyed>`-based scoring flow
+- [X] T008 [US1] Implement multiplier activation and forward-only brick award calculation in /home/christian/devel/bevy/brkrs/src/systems/scoring.rs
+- [X] T009 [US1] Chain the updated multiplier-aware scoring systems after brick destruction in /home/christian/devel/bevy/brkrs/src/lib.rs and preserve `MessageReader<BrickDestroyed>`-based scoring flow
 
 **Checkpoint**: User Story 1 should support multiplier activation and multiplied follow-up brick scoring.
 
@@ -57,13 +57,13 @@ Write tests first, verify they fail, and record the failing-test commit hash in 
 
 ### Tests for User Story 2 (REQUIRED) ⚠️
 
-- [ ] T010 [P] [US2] Write failing unit tests for latest-hit-wins replacement semantics and brick-26 explicit reset in /home/christian/devel/bevy/brkrs/tests/scoring.rs (record red commit hash)
-- [ ] T011 [P] [US2] Write failing integration tests for sequential multiplier-brick hits and single-active-factor behavior in /home/christian/devel/bevy/brkrs/tests/score_multiplier_bricks.rs (record red commit hash)
+- [X] T010 [P] [US2] Write failing unit tests for latest-hit-wins replacement semantics and brick-26 explicit reset in /home/christian/devel/bevy/brkrs/tests/scoring.rs (record red commit hash)
+- [X] T011 [P] [US2] Write failing integration tests for sequential multiplier-brick hits and single-active-factor behavior in /home/christian/devel/bevy/brkrs/tests/score_multiplier_bricks.rs (record red commit hash)
 - [ ] T024 [US2] Obtain feature-owner approval for failing replacement tests before implementation begins
 
 ### Implementation for User Story 2
 
-- [ ] T012 [US2] Implement replacement semantics for bricks 26-29 and enforce exactly one active factor at a time in /home/christian/devel/bevy/brkrs/src/systems/scoring.rs
+- [X] T012 [US2] Implement replacement semantics for bricks 26-29 and enforce exactly one active factor at a time in /home/christian/devel/bevy/brkrs/src/systems/scoring.rs
 
 **Checkpoint**: User Story 2 should deterministically replace the active multiplier with the most recent multiplier brick.
 
@@ -77,14 +77,14 @@ Write tests first, verify they fail, and record the failing-test commit hash in 
 
 ### Tests for User Story 3 (REQUIRED) ⚠️
 
-- [ ] T013 [P] [US3] Write failing reset-path tests for life-decrement-only semantics in /home/christian/devel/bevy/brkrs/tests/life_loss_flow.rs and /home/christian/devel/bevy/brkrs/tests/scoring.rs (record red commit hash)
-- [ ] T014 [P] [US3] Write failing integration tests for multi-ball non-reset behavior, level-transition persistence, and message-boundary compliance in /home/christian/devel/bevy/brkrs/tests/score_multiplier_bricks.rs (record red commit hash)
+- [X] T013 [P] [US3] Write failing reset-path tests for life-decrement-only semantics in /home/christian/devel/bevy/brkrs/tests/life_loss_flow.rs and /home/christian/devel/bevy/brkrs/tests/scoring.rs (record red commit hash)
+- [X] T014 [P] [US3] Write failing integration tests for multi-ball non-reset behavior, level-transition persistence, and message-boundary compliance in /home/christian/devel/bevy/brkrs/tests/score_multiplier_bricks.rs (record red commit hash)
 - [ ] T025 [US3] Obtain feature-owner approval for failing life-loss reset tests before implementation begins
 
 ### Implementation for User Story 3
 
-- [ ] T015 [US3] Implement multiplier reset on actual life decrement in /home/christian/devel/bevy/brkrs/src/systems/scoring.rs and /home/christian/devel/bevy/brkrs/src/systems/game_state_transitions.rs
-- [ ] T016 [US3] Preserve multiplier state across non-life ball despawns and level transitions in /home/christian/devel/bevy/brkrs/src/systems/scoring.rs and /home/christian/devel/bevy/brkrs/src/game_state.rs
+- [X] T015 [US3] Implement multiplier reset on actual life decrement in /home/christian/devel/bevy/brkrs/src/systems/scoring.rs and /home/christian/devel/bevy/brkrs/src/systems/game_state_transitions.rs
+- [X] T016 [US3] Preserve multiplier state across non-life ball despawns and level transitions in /home/christian/devel/bevy/brkrs/src/systems/scoring.rs and /home/christian/devel/bevy/brkrs/src/game_state.rs
 
 **Checkpoint**: User Story 3 should reset multiplier only on real life loss and preserve it otherwise.
 
@@ -98,15 +98,15 @@ Write tests first, verify they fail, and record the failing-test commit hash in 
 
 ### Tests for User Story 4 (REQUIRED) ⚠️
 
-- [ ] T017 [P] [US4] Write failing unit tests for multiplier indicator text and visibility updates in /home/christian/devel/bevy/brkrs/tests/score_display.rs (record red commit hash)
-- [ ] T018 [P] [US4] Write failing integration and change-detection tests for hidden-at-1x behavior and stable multi-frame UI updates in /home/christian/devel/bevy/brkrs/tests/change_detection.rs and /home/christian/devel/bevy/brkrs/tests/score_display.rs (record red commit hash)
+- [X] T017 [P] [US4] Write failing unit tests for multiplier indicator text and visibility updates in /home/christian/devel/bevy/brkrs/tests/score_display.rs (record red commit hash)
+- [X] T018 [P] [US4] Write failing integration and change-detection tests for hidden-at-1x behavior and stable multi-frame UI updates in /home/christian/devel/bevy/brkrs/tests/change_detection.rs and /home/christian/devel/bevy/brkrs/tests/score_display.rs (record red commit hash)
 - [ ] T026 [US4] Obtain feature-owner approval for failing multiplier indicator tests before implementation begins
-- [ ] T028 [US4] Add hierarchy-safety verification for multiplier indicator spawn/update in /home/christian/devel/bevy/brkrs/tests/ui_compliance_audit.rs to confirm compliant UI relationship handling without manual `Parent` or `Children` mutation
+- [X] T028 [US4] Add hierarchy-safety verification for multiplier indicator spawn/update in /home/christian/devel/bevy/brkrs/tests/ui_compliance_audit.rs to confirm compliant UI relationship handling without manual `Parent` or `Children` mutation
 
 ### Implementation for User Story 4
 
-- [ ] T019 [US4] Implement multiplier indicator components, spawn layout beneath the score display, and text/visibility updates in /home/christian/devel/bevy/brkrs/src/ui/score_display.rs
-- [ ] T020 [US4] Wire multiplier indicator update scheduling with `Changed<T>`-style gating in /home/christian/devel/bevy/brkrs/src/ui/mod.rs and /home/christian/devel/bevy/brkrs/src/ui/score_display.rs
+- [X] T019 [US4] Implement multiplier indicator components, spawn layout beneath the score display, and text/visibility updates in /home/christian/devel/bevy/brkrs/src/ui/score_display.rs
+- [X] T020 [US4] Wire multiplier indicator update scheduling with `Changed<T>`-style gating in /home/christian/devel/bevy/brkrs/src/ui/mod.rs and /home/christian/devel/bevy/brkrs/src/ui/score_display.rs
 
 **Checkpoint**: User Story 4 should expose the active multiplier in the HUD and hide it at 1x.
 
@@ -116,9 +116,9 @@ Write tests first, verify they fail, and record the failing-test commit hash in 
 
 **Purpose**: Final regression coverage, documentation, and validation across all stories.
 
-- [ ] T021 [P] Update multiplier brick and HUD indicator documentation in /home/christian/devel/bevy/brkrs/docs/bricks.md
-- [ ] T022 Run quickstart validation and repository verification commands from /home/christian/devel/bevy/brkrs/specs/066-score-multiplier-bricks/quickstart.md
-- [ ] T027 [P] Run WASM validation for score multiplier bricks with `cargo build --target wasm32-unknown-unknown`
+- [X] T021 [P] Update multiplier brick and HUD indicator documentation in /home/christian/devel/bevy/brkrs/docs/bricks.md
+- [X] T022 Run quickstart validation and repository verification commands from /home/christian/devel/bevy/brkrs/specs/066-score-multiplier-bricks/quickstart.md
+- [X] T027 [P] Run WASM validation for score multiplier bricks with `cargo build --target wasm32-unknown-unknown`
 
 ---
 

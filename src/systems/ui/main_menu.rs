@@ -119,6 +119,7 @@ pub fn handle_main_menu_buttons(
     mut session: ResMut<GameSession>,
     lives_state: Option<ResMut<crate::systems::respawn::LivesState>>,
     score_state: Option<ResMut<crate::systems::scoring::ScoreState>>,
+    multiplier_state: Option<ResMut<crate::systems::scoring::ScoreMultiplierState>>,
     mut commands: Commands,
     mut exit: MessageWriter<AppExit>,
     keyboard: Option<Res<ButtonInput<KeyCode>>>,
@@ -180,6 +181,18 @@ pub fn handle_main_menu_buttons(
                 error!(
                     target: "game_state",
                     "ScoreState resource missing when starting new game from MainMenu"
+                );
+            }
+        }
+
+        match multiplier_state {
+            Some(mut multiplier_state) => {
+                crate::systems::scoring::reset_multiplier(&mut multiplier_state);
+            }
+            None => {
+                error!(
+                    target: "game_state",
+                    "ScoreMultiplierState resource missing when starting new game from MainMenu"
                 );
             }
         }

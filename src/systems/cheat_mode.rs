@@ -58,6 +58,7 @@ fn toggle_cheat_mode_input(
     mut cheat: ResMut<CheatModeState>,
     mut toggle_events: MessageWriter<CheatModeToggled>,
     mut score_state: ResMut<crate::systems::scoring::ScoreState>,
+    mut multiplier_state: Option<ResMut<crate::systems::scoring::ScoreMultiplierState>>,
     mut lives_state: Option<ResMut<crate::systems::respawn::LivesState>>,
 ) {
     if keyboard.just_pressed(KeyCode::KeyG) {
@@ -68,6 +69,9 @@ fn toggle_cheat_mode_input(
         });
         // Reset score on both enter and exit per spec
         crate::systems::scoring::reset_score(&mut score_state);
+        if let Some(multiplier_state) = multiplier_state.as_mut() {
+            crate::systems::scoring::reset_multiplier(multiplier_state);
+        }
         tracing::info!("Cheat mode toggled: {}", cheat.is_active());
 
         // On activation, reset lives and remove any game-over overlay so player can resume

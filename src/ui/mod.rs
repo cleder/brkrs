@@ -149,6 +149,7 @@ impl Plugin for UiPlugin {
                 cheat_indicator::handle_cheat_indicator,
                 level_label::sync_with_current_level,
                 gravity_indicator::update_gravity_indicator,
+                score_display::update_multiplier_indicator_system,
                 score_display::update_score_display_system
                     .after(crate::systems::scoring::detect_milestone_system),
             )

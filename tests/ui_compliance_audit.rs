@@ -138,6 +138,22 @@ fn audit_findings_are_traceable() {
     );
 }
 
+#[test]
+fn multiplier_indicator_system_avoids_manual_hierarchy_components() {
+    let score_display_path = "src/ui/score_display.rs";
+    let source = fs::read_to_string(score_display_path)
+        .expect("Failed to read src/ui/score_display.rs for hierarchy audit");
+
+    assert!(
+        !source.contains("Parent("),
+        "Multiplier indicator UI must not manually insert Parent components"
+    );
+    assert!(
+        !source.contains("Children("),
+        "Multiplier indicator UI must not manually insert Children components"
+    );
+}
+
 // Constitution compliance tests for 011-refactor-systems (code inspection only)
 
 #[test]
