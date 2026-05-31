@@ -255,8 +255,7 @@ fn test_brick_50_level_state_persists_across_frames() {
         .world()
         .get_resource::<CurrentLevel>()
         .map(|l| l.0.number)
-        .expect("CurrentLevel should exist")
-        .clone();
+        .expect("CurrentLevel should exist");
 
     // Run 10+ additional frames to verify no initialization system overwrites level state
     for frame in 0..12 {

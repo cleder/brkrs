@@ -18,11 +18,10 @@ use brkrs::{Ball, Paddle};
 #[derive(Resource, Default)]
 struct TestEvents {
     paddle_collision: bool,
-    life_lost: bool,
 }
 
 fn on_merkaba_paddle_collision(
-    _trigger: Trigger<MerkabaPaddleCollision>,
+    _trigger: On<MerkabaPaddleCollision>,
     mut events: ResMut<TestEvents>,
 ) {
     events.paddle_collision = true;
@@ -124,7 +123,7 @@ fn t029_paddle_contact_triggers_life_loss_and_sound() {
 /// When merkaba contacts the paddle (triggering life loss), the system MUST:
 /// - Despawn all currently active ball entities
 /// - Despawn all currently active merkaba entities
-/// This ensures a clean state after a life-loss event.
+///   This ensures a clean state after a life-loss event.
 #[test]
 fn t030_paddle_contact_despawns_balls_and_merkabas() {
     let mut app = test_app();

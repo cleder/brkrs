@@ -246,10 +246,9 @@ fn test_level_completion_excludes_type_91() {
     // - Type 91 is distinct from other indestructible types
     // - Type 42 is not type 91 (so it counts toward completion)
 
-    assert!(
-        HAZARD_BRICK_91 != HAZARD_BRICK_42,
-        "Type 91 and 42 must be distinct"
-    );
+    let brick_91 = HAZARD_BRICK_91;
+    let brick_42 = HAZARD_BRICK_42;
+    assert_ne!(brick_91, brick_42, "Type 91 and 42 must be distinct");
     assert_eq!(HAZARD_BRICK_91, 91, "Type 91 value must be 91");
     assert_eq!(HAZARD_BRICK_42, 42, "Type 42 value must be 42");
 

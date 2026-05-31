@@ -45,10 +45,18 @@ The `Index` column refers to the brick's identifier in the map file, the ✅️ 
 
 | Index | Image | Name | Score | Description |
 |-------|-------|------|-------|-------------|
-| 26 | ![1X](img/bricks/Stone1x.gif) | Times 1 | 25 | Reset to single score |
-| 27 | ![2X](img/bricks/Stone2x.gif) | Times 2 | 25 | Double all points |
-| 28 | ![3X](img/bricks/Stone3x.gif) | Times 3 | 25 | Triple all points |
-| 29 | ![4X](img/bricks/Stone4x.gif) | Times 4 | 25 | Quadruple all points |
+| 26 ✅️ | ![1X](img/bricks/Stone1x.gif) | Times 1 | 25 | Sets active multiplier to `1x` for following brick score awards |
+| 27 ✅️ | ![2X](img/bricks/Stone2x.gif) | Times 2 | 25 | Sets active multiplier to `2x` for following brick score awards |
+| 28 ✅️ | ![3X](img/bricks/Stone3x.gif) | Times 3 | 25 | Sets active multiplier to `3x` for following brick score awards |
+| 29 ✅️ | ![4X](img/bricks/Stone4x.gif) | Times 4 | 25 | Sets active multiplier to `4x` for following brick score awards |
+
+**Score Multiplier Behavior:**
+
+- Multiplier bricks (`26..=29`) score their own base value (25 points); the active factor applies only to later brick-destruction score awards.
+- The latest multiplier brick hit replaces any previously active multiplier.
+- Active multiplier persists across frames and level transitions unless a life is actually lost.
+- Active multiplier resets to `1x` when lives decrement.
+- HUD shows `x2`, `x3`, or `x4` beneath the score while active; indicator is hidden at `1x`.
 
 ### Paddle Effect Bricks
 
@@ -146,7 +154,7 @@ These bricks cannot be destroyed and don't count toward level completion.
 | 96 | | Solid Up-Left | Solid + accelerates ball up and left on top and left hit |
 | 97 | | Solid Up-Right | Solid + accelerates ball up and right on top and right hit |
 | 98 | | Solid Down-Left | Solid + accelerates ball down and left on bottom and left hit |
-| 99 | | Solid Down-Right | Solid + accelerates ball down and right o bottom and right hit|
+| 99 | | Solid Down-Right | Solid + accelerates ball down and right on bottom and right hit|
 
 ### Magnet System
 

@@ -8,7 +8,6 @@
 /// - Sequential gravity changes
 /// - Queer Gravity RNG behavior
 /// - Backward compatibility for existing levels
-
 #[cfg(test)]
 mod tests {
     use bevy::prelude::*;

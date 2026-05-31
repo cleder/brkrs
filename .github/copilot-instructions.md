@@ -51,5 +51,6 @@ Rust 2021 edition (toolchain managed by rustup): Follow standard conventions
 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
+shell commands, and other important information, read the current plan:
+specs/066-score-multiplier-bricks/plan.md
 <!-- SPECKIT END -->

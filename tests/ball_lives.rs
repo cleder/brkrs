@@ -270,7 +270,7 @@ fn life_lost_only_once_when_all_balls_gone_same_frame() {
         lower_goal,
         CollisionEventFlags::SENSOR,
     ));
-    drop(collisions);
+    let _ = collisions;
 
     app.update();
     assert_eq!(app.world().resource::<LivesState>().lives_remaining, 2);

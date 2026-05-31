@@ -12,6 +12,27 @@ fn test_app() -> App {
     app
 }
 
+fn multiplier_test_app() -> App {
+    let mut app = App::new();
+    app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::PaddlePhysicsConfig::default());
+    app.insert_resource(brkrs::physics_config::BrickPhysicsConfig::default());
+    app.add_plugins(MinimalPlugins);
+    app.add_message::<brkrs::signals::BrickDestroyed>();
+    app.add_message::<brkrs::systems::respawn::LifeLostEvent>();
+    app.insert_resource(brkrs::systems::scoring::ScoreState::default());
+    app.insert_resource(brkrs::systems::scoring::ScoreMultiplierState::default());
+    app.add_systems(
+        Update,
+        (
+            brkrs::systems::scoring::award_points_system,
+            brkrs::systems::scoring::reset_multiplier_on_life_loss_system,
+        )
+            .chain(),
+    );
+    app
+}
+
 fn milestone_test_app() -> App {
     let mut app = App::new();
     app.insert_resource(brkrs::physics_config::BallPhysicsConfig::default());
@@ -254,6 +275,72 @@ fn milestone_detection_no_duplicate_events() {
     assert!(
         msgs.is_empty(),
         "Should not emit duplicate milestone events"
+    );
+}
+
+#[test]
+fn multiplier_bricks_only_affect_following_brick_hits() {
+    let mut app = multiplier_test_app();
+
+    {
+        let mut msgs = app
+            .world_mut()
+            .resource_mut::<Messages<brkrs::signals::BrickDestroyed>>();
+        msgs.write(brkrs::signals::BrickDestroyed {
+            brick_entity: Entity::from_raw_u32(400).expect("entity id should construct"),
+            brick_type: 27,
+            brick_position: Vec3::ZERO,
+            destroyed_by: None,
+        });
+        msgs.write(brkrs::signals::BrickDestroyed {
+            brick_entity: Entity::from_raw_u32(401).expect("entity id should construct"),
+            brick_type: 20,
+            brick_position: Vec3::ZERO,
+            destroyed_by: None,
+        });
+    }
+
+    app.update();
+
+    let score = app
+        .world()
+        .resource::<brkrs::systems::scoring::ScoreState>()
+        .current_score;
+    let multiplier = app
+        .world()
+        .resource::<brkrs::systems::scoring::ScoreMultiplierState>();
+
+    assert_eq!(
+        score, 75,
+        "brick 27 should award base 25 and the following 25-point brick should award 50 at 2x"
+    );
+    assert_eq!(multiplier.factor, 2);
+}
+
+#[test]
+fn multiplier_reset_only_on_actual_life_loss() {
+    let mut app = multiplier_test_app();
+
+    app.world_mut()
+        .resource_mut::<brkrs::systems::scoring::ScoreMultiplierState>()
+        .factor = 4;
+
+    app.world_mut()
+        .resource_mut::<Messages<brkrs::systems::respawn::LifeLostEvent>>()
+        .write(brkrs::systems::respawn::LifeLostEvent {
+            ball: Entity::from_raw_u32(402).expect("entity id should construct"),
+            cause: brkrs::systems::respawn::LifeLossCause::LowerGoal,
+            ball_spawn: brkrs::systems::respawn::SpawnTransform::new(Vec3::ZERO, Quat::IDENTITY),
+        });
+
+    app.update();
+
+    let multiplier = app
+        .world()
+        .resource::<brkrs::systems::scoring::ScoreMultiplierState>();
+    assert_eq!(
+        multiplier.factor, 1,
+        "life loss should reset active multiplier to 1x"
     );
 }
 

@@ -2,12 +2,13 @@
 //!
 //! This module implements the score visualization:
 //! - Score display spawning at game startup
-//! - Real-time score updates with change detection
+//! - Multiplier indicator spawning beneath the score display
+//! - Real-time score and multiplier updates with change detection
 //! - UI positioning and styling
 
 use bevy::prelude::*;
 
-use crate::systems::scoring::ScoreState;
+use crate::systems::scoring::{ScoreMultiplierState, ScoreState};
 use crate::ui::fonts::UiFonts;
 
 /// Marker component tagging the UI entity that displays current score.
@@ -16,6 +17,10 @@ use crate::ui::fonts::UiFonts;
 /// to update the score display when ScoreState changes.
 #[derive(Component, Debug, Clone, Copy)]
 pub struct ScoreDisplayUi;
+
+/// Marker component tagging the UI entity that displays the active score multiplier.
+#[derive(Component, Debug, Clone, Copy)]
+pub struct ScoreMultiplierIndicatorUi;
 
 /// Spawns the score display UI element at game startup.
 ///
@@ -48,13 +53,9 @@ pub struct ScoreDisplayUi;
 pub fn spawn_score_display_system(
     mut commands: Commands,
     ui_fonts: Option<Res<UiFonts>>,
-    existing: Query<Entity, With<ScoreDisplayUi>>,
+    existing_score: Query<Entity, With<ScoreDisplayUi>>,
+    existing_multiplier: Query<Entity, With<ScoreMultiplierIndicatorUi>>,
 ) {
-    // Only spawn if it doesn't already exist
-    if !existing.is_empty() {
-        return;
-    }
-
     let Some(fonts) = ui_fonts else {
         warn!("UiFonts resource missing; skipping score display spawn");
         return;
@@ -62,22 +63,44 @@ pub fn spawn_score_display_system(
 
     let font = fonts.orbitron.clone();
 
-    commands.spawn((
-        Text::new("Score: 0"),
-        TextFont {
-            font,
-            font_size: 32.0,
-            ..default()
-        },
-        TextColor(Color::WHITE),
-        Node {
-            position_type: PositionType::Absolute,
-            right: Val::Px(12.0),
-            top: Val::Px(40.0),
-            ..default()
-        },
-        ScoreDisplayUi,
-    ));
+    if existing_score.is_empty() {
+        commands.spawn((
+            Text::new("Score: 0"),
+            TextFont {
+                font: font.clone(),
+                font_size: 32.0,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+            Node {
+                position_type: PositionType::Absolute,
+                right: Val::Px(12.0),
+                top: Val::Px(40.0),
+                ..default()
+            },
+            ScoreDisplayUi,
+        ));
+    }
+
+    if existing_multiplier.is_empty() {
+        commands.spawn((
+            Text::new(""),
+            TextFont {
+                font,
+                font_size: 20.0,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+            Visibility::Hidden,
+            Node {
+                position_type: PositionType::Absolute,
+                right: Val::Px(12.0),
+                top: Val::Px(74.0),
+                ..default()
+            },
+            ScoreMultiplierIndicatorUi,
+        ));
+    }
 }
 
 /// Updates the score text whenever the score state changes.
@@ -113,5 +136,29 @@ pub fn update_score_display_system(
 
     for mut text in query.iter_mut() {
         **text = format!("Score: {}", score_state.current_score);
+    }
+}
+
+/// Updates the multiplier indicator whenever multiplier state changes.
+pub fn update_multiplier_indicator_system(
+    multiplier_state: Option<Res<ScoreMultiplierState>>,
+    mut query: Query<(&mut Text, &mut Visibility), With<ScoreMultiplierIndicatorUi>>,
+) {
+    let Some(multiplier_state) = multiplier_state else {
+        return;
+    };
+
+    if !multiplier_state.is_changed() {
+        return;
+    }
+
+    for (mut text, mut visibility) in query.iter_mut() {
+        if multiplier_state.factor > 1 {
+            **text = format!("x{}", multiplier_state.factor);
+            *visibility = Visibility::Inherited;
+        } else {
+            **text = String::new();
+            *visibility = Visibility::Hidden;
+        }
     }
 }

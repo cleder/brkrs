@@ -28,7 +28,6 @@ fn ball_spawn_uses_config() {
         friction: 0.7,
         linear_damping: 0.2,
         angular_damping: 0.3,
-        ..Default::default()
     };
     let mut app = setup_app_with_ball_config(config.clone());
     // Queue a respawn so a ball is spawned
@@ -56,9 +55,11 @@ fn ball_spawn_uses_config() {
     // Advance the timer and update the app multiple times to allow the respawn system to run
     for _ in 0..10 {
         // Advance time by 0.2 seconds per frame
-        let mut time = app.world_mut().resource_mut::<bevy::time::Time>();
-        time.advance_by(std::time::Duration::from_millis(200));
-        drop(time);
+        {
+            app.world_mut()
+                .resource_mut::<bevy::time::Time>()
+                .advance_by(std::time::Duration::from_millis(200));
+        }
         app.update();
     }
     let world = app.world_mut();
@@ -95,7 +96,6 @@ fn paddle_spawn_uses_config() {
         friction: 0.6,
         linear_damping: 0.1,
         angular_damping: 0.2,
-        ..Default::default()
     };
     let mut app = setup_app_with_paddle_config(config.clone());
     // Queue a respawn so a paddle is spawned
@@ -123,9 +123,11 @@ fn paddle_spawn_uses_config() {
     // Advance the timer and update the app multiple times to allow the respawn system to run
     for _ in 0..10 {
         // Advance time by 0.2 seconds per frame
-        let mut time = app.world_mut().resource_mut::<bevy::time::Time>();
-        time.advance_by(std::time::Duration::from_millis(200));
-        drop(time);
+        {
+            app.world_mut()
+                .resource_mut::<bevy::time::Time>()
+                .advance_by(std::time::Duration::from_millis(200));
+        }
         app.update();
     }
     let world = app.world_mut();

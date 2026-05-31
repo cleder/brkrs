@@ -226,6 +226,7 @@ pub fn run() {
     app.insert_resource(crate::physics_config::BrickPhysicsConfig::default());
     // Scoring system state
     app.init_resource::<systems::scoring::ScoreState>();
+    app.init_resource::<systems::scoring::ScoreMultiplierState>();
     app.add_message::<crate::signals::BrickDestroyed>();
     // Per-frame dedupe set for BrickDestroyed emissions
     app.init_resource::<EmittedBrickDestroyed>();
@@ -342,6 +343,7 @@ fn add_scoring_systems(app: &mut App) {
     app.add_systems(
         Update,
         (
+            systems::scoring::reset_multiplier_on_life_loss_system,
             systems::scoring::award_points_system,
             systems::scoring::detect_milestone_system,
             systems::respawn::award_milestone_ball_system,

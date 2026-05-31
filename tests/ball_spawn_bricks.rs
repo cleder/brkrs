@@ -518,7 +518,7 @@ fn ball_spawn_bricks_count_toward_level_completion() {
     let ron = format!(
         "LevelDefinition(number: 999, gravity: None, matrix: {matrix_ron}, description: None, author: None)"
     );
-    let mut path = PathBuf::from(std::env::temp_dir());
+    let mut path = std::env::temp_dir();
     path.push("brkrs_ball_spawn_level_999.ron");
     fs::write(&path, ron).expect("write temp level");
 
