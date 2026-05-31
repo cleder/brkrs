@@ -17,6 +17,7 @@ Auto-generated from all feature plans. Last updated: 2025-12-19
 - RON files in `assets/levels/` directory; in-memory ECS state only (no persistent storage) (024-level-navigation-bricks)
 - Rust 1.81 (2021 edition), Bevy 0.17.3 + bevy_rapier3d 0.32.0 (physics), serde 1.0 + ron 0.8 (level loading), tracing 0.1 (logging) (025-ball-spawn-bricks)
 - In-memory ECS state only; levels persisted as RON files in `assets/levels/` (025-ball-spawn-bricks)
+- Rust 1.89 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, bevy_hanabi 0.17.0, tracing 0.1 (067-add-seamine-brick)
 
 - Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, serde/ron, tracing (011-refactor-systems)
 
@@ -33,7 +34,7 @@ cargo test cargo clippy
 
 ## Code Style
 
-Rust 1.81 (edition 2021): Follow standard conventions
+Rust 1.89 (edition 2021): Follow standard conventions
 
 ## Testing & TDD
 
@@ -41,9 +42,9 @@ Rust 1.81 (edition 2021): Follow standard conventions
 - Include unit tests, integration/acceptance tests for user scenarios, and WASM-targeted tests when behavior differs on the web.
 - CI pipelines MUST enforce tests and reject merges that do not comply with the tests-first proof.
 ## Recent Changes
+- 067-add-seamine-brick: Added Rust 1.89 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, bevy_hanabi 0.17.0, tracing 0.1
 - 027-game-states: Added Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1
 - 025-ball-spawn-bricks: Added Rust 1.81 (2021 edition), Bevy 0.17.3 + bevy_rapier3d 0.32.0 (physics), serde 1.0 + ron 0.8 (level loading), tracing 0.1 (logging)
-- 024-level-navigation-bricks: Added Rust 1.81 (edition 2021) + Bevy 0.17.3, bevy_rapier3d 0.32.0, tracing 0.1
 
 
 <!-- MANUAL ADDITIONS START -->
