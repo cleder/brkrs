@@ -87,14 +87,14 @@ fn audio_events_are_cloneable() {
         brick_position: Vec3::ZERO,
         destroyed_by: None,
     };
-    let cloned = brick_destroyed.clone();
+    let cloned = brick_destroyed;
     assert_eq!(cloned.brick_type, 20);
 
     let ball_wall_hit = BallWallHit {
         ball_entity: Entity::PLACEHOLDER,
         wall_entity: Entity::PLACEHOLDER,
     };
-    let cloned = ball_wall_hit.clone();
+    let cloned = ball_wall_hit;
     assert_eq!(cloned.ball_entity, Entity::PLACEHOLDER);
 
     let level_started = LevelStarted { level_index: 3 };

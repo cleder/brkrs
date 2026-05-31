@@ -126,9 +126,9 @@ fn t011_merkaba_spawned_after_0_5s_with_dual_tetrahedron() {
     advance_time(&mut app, 0.25);
     app.update();
     {
-        let mut world = app.world_mut();
+        let world = app.world_mut();
         let mut q = world.query_filtered::<Entity, With<Merkaba>>();
-        let any = q.iter(&mut world).next().is_some();
+        let any = q.iter(world).next().is_some();
         assert!(!any, "Merkaba should not spawn before 0.5s delay");
     }
 
@@ -147,13 +147,13 @@ fn t011_merkaba_spawned_after_0_5s_with_dual_tetrahedron() {
     app.update();
 
     let merkabas: Vec<(Entity, Transform, usize)> = {
-        let mut world = app.world_mut();
+        let world = app.world_mut();
         let mut q =
             world.query_filtered::<(Entity, &Transform, Option<&Children>), With<Merkaba>>();
-        q.iter(&mut world)
+        q.iter(world)
             .map(|(entity, transform, children)| {
                 let count = children.map(|c| c.len()).unwrap_or(0);
-                (entity, transform.clone(), count)
+                (entity, *transform, count)
             })
             .collect()
     };
@@ -164,7 +164,7 @@ fn t011_merkaba_spawned_after_0_5s_with_dual_tetrahedron() {
     );
 
     // Validate spawn position and child hierarchy count (expected 2 children: dual tetrahedrons)
-    let (_, transform, child_count) = merkabas[0].clone();
+    let (_, transform, child_count) = merkabas[0];
     assert!(
         transform.translation.distance(brick_position) < 0.01,
         "Merkaba should spawn at brick position; expected {:?}, got {:?}",

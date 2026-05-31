@@ -536,7 +536,7 @@
             fallback_chain: ["brick/default"],
         ),
         (
-            id: "brick/telport",
+            id: "brick/teleport",
             albedo_path: "bricks/default_glass.png",
             normal_path: None,
             orm_path: None,
