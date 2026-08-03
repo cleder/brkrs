@@ -25,8 +25,7 @@ Load case baseline: up to 5 concurrent merkabas MUST maintain 60 FPS; acceptance
 
 ## Constitution Check (Post-Design Re-evaluation)
 
-*GATE: Must pass before Phase 0 research.*
-(Re-check after Phase 1 design.)
+*GATE: Must pass before Phase 0 research.* (Re-check after Phase 1 design.)
 
 This check MUST verify compliance with the constitution, including **Test-Driven Development (TDD)** gates:
 

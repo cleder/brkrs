@@ -320,8 +320,7 @@ Y-axis is reserved for default downward gravity (not visualized).
 Example: 2.1 → valid (0.1 away), 2.6 → invalid (0.6 away).
 
 **Q**: What happens with gravity outside known levels?
-**A**: Displays "?"
-(unknown/question mark icon) until recognized level detected.
+**A**: Displays "?" (unknown/question mark icon) until recognized level detected.
 
 **Q**: How to test multi-frame persistence?
 **A**: Integration test `test_gravity_indicator_multi_frame_persistence` runs 10-frame simulation and verifies icon unchanged.
