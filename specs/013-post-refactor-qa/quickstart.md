@@ -15,7 +15,7 @@ It does not introduce new gameplay features.
     cargo test
     ```
 
-    Ensure all tests pass and no "fake tests" (comment-only) remain.
+   Ensure all tests pass and no "fake tests" (comment-only) remain.
 
 2. **Check Visibility**:
    Verify that `BALL_RADIUS` and other constants in `src/lib.rs` are `pub(crate)` instead of `pub`.
