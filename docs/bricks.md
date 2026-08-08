@@ -78,7 +78,7 @@ The `Index` column refers to the brick's identifier in the map file, the ✅️ 
 | Index | Image | Name | Score | Description |
 |-------|-------|------|-------|-------------|
 | 36 ✅️ | ![Donut](img/bricks/Stonedonut.gif) | Donut/Rotor | 75 | Spawns a bouncing rotor enemy |
-| 31 | ![Sun](img/bricks/Stonesun.gif) | Sun | 200 | Spawns a deadly sea-mine enemy |
+| 31 ✅️ | ![Sun](img/bricks/Stonesun.gif) | Sun | 200 | Spawns a deadly sea-mine enemy; detonates on wall/paddle/brick > 90 with 30-unit blast |
 
 ### Ball Spawn Bricks
 

@@ -12,8 +12,10 @@ pub mod level_switch;
 pub mod merkaba;
 pub mod multi_hit;
 pub mod paddle_size;
+pub mod particle_fx;
 pub mod respawn;
 pub mod scoring;
+pub mod sea_mine;
 pub mod sets;
 pub mod spawning;
 pub mod textures;
@@ -41,5 +43,7 @@ pub use multi_hit::MultiHitBrickHit;
 pub use paddle_size::{
     PaddleSizeEffect, PaddleSizeEffectApplied, PaddleSizePlugin, SizeEffectType,
 };
+pub use particle_fx::ParticleFxPlugin;
 pub use respawn::{InputLocked, RespawnPlugin, RespawnSystems};
+pub use sea_mine::SeaMinePlugin;
 pub use textures::TextureManifestPlugin;

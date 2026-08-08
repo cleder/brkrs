@@ -17,7 +17,7 @@ use crate::game_state::GameState;
 use crate::systems::TextureManifestPlugin;
 use crate::systems::{
     AudioPlugin, BallSpawnBricksPlugin, InputLocked, LevelSwitchPlugin, MerkabaPlugin,
-    PaddleSizePlugin, RespawnPlugin, RespawnSystems,
+    PaddleSizePlugin, ParticleFxPlugin, RespawnPlugin, RespawnSystems, SeaMinePlugin,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -236,6 +236,9 @@ pub fn run() {
         clear_emitted_brick_destroyed.before(mark_brick_on_ball_collision),
     );
     app.add_message::<crate::signals::SpawnMerkabaMessage>();
+    app.add_message::<crate::signals::SpawnSeaMineMessage>();
+    app.add_message::<crate::signals::SeaMineDetonationMessage>();
+    app.add_message::<crate::signals::SeaMineExplosionTriggered>();
     app.add_message::<crate::signals::LifeAwardMessage>();
     app.add_message::<systems::scoring::MilestoneReached>();
     app.add_message::<bevy_rapier3d::prelude::CollisionEvent>();
@@ -268,6 +271,8 @@ pub fn run() {
     app.add_message::<crate::signals::BallWallHit>();
     app.add_plugins(AudioPlugin);
     app.add_plugins(MerkabaPlugin);
+    app.add_plugins(SeaMinePlugin);
+    app.add_plugins(ParticleFxPlugin);
     app.add_plugins(PaddleSizePlugin);
     app.add_plugins(BallSpawnBricksPlugin);
     // Cheat mode plugin (feature: toggle, indicator, gated level controls)
@@ -748,6 +753,7 @@ pub fn mark_brick_on_ball_collision(
     mut commands: Commands,
     mut processed_bricks: Local<std::collections::HashSet<Entity>>,
     mut spawn_msgs: Option<MessageWriter<crate::signals::SpawnMerkabaMessage>>,
+    mut spawn_sea_mine_msgs: Option<MessageWriter<crate::signals::SpawnSeaMineMessage>>,
     mut brick_destroyed_msgs: Option<MessageWriter<crate::signals::BrickDestroyed>>,
     mut life_award_msgs: Option<MessageWriter<crate::signals::LifeAwardMessage>>,
     mut level_switch_msgs: Option<MessageWriter<crate::systems::LevelSwitchRequested>>,
@@ -938,6 +944,25 @@ pub fn mark_brick_on_ball_collision(
                         info!(
                             "mark_brick_on_ball_collision: try_despawn entity {:?}",
                             entity
+                        );
+                        commands.entity(entity).try_despawn();
+                    } else if current_type == crate::level_format::SEA_MINE_BRICK {
+                        if let Some(writer) = spawn_sea_mine_msgs.as_mut() {
+                            writer.write(crate::signals::SpawnSeaMineMessage {
+                                position: brick_pos,
+                                brick_entity: entity,
+                                source_brick_type: current_type,
+                            });
+                        }
+
+                        try_emit_brick_destroyed(
+                            &mut brick_destroyed_msgs,
+                            &mut emitted,
+                            entity,
+                            current_type,
+                            brick_pos,
+                            Some(triggering_ball),
+                            "SeaMine",
                         );
                         commands.entity(entity).try_despawn();
                     } else {

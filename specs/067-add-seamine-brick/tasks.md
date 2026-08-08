@@ -18,9 +18,9 @@ Tasks explicitly include Message-Event Separation, hierarchy safety, motion floo
 
 **Purpose**: Prepare shared dependencies, module scaffolding, and feature registration.
 
-- [ ] T001 [P] Update the project toolchain baseline to Rust 1.89 where needed, add `bevy_hanabi` 0.17.0 to [Cargo.toml](../../Cargo.toml), and register the Hanabi plugin path in [src/lib.rs](../../src/lib.rs)
-- [ ] T002 [P] Add the sea mine module scaffolding in [src/systems/sea_mine.rs](../../src/systems/sea_mine.rs) and [src/systems/particle_fx.rs](../../src/systems/particle_fx.rs), then export them from [src/systems/mod.rs](../../src/systems/mod.rs)
-- [ ] T003 [P] Add buffered and observer-facing sea mine message/event types in [src/signals.rs](../../src/signals.rs) for spawn, detonation, and explosion burst trigger flow
+- [X] T001 [P] Update the project toolchain baseline to Rust 1.89 where needed, add `bevy_hanabi` 0.17.0 to [Cargo.toml](../../Cargo.toml), and register the Hanabi plugin path in [src/lib.rs](../../src/lib.rs)
+- [X] T002 [P] Add the sea mine module scaffolding in [src/systems/sea_mine.rs](../../src/systems/sea_mine.rs) and [src/systems/particle_fx.rs](../../src/systems/particle_fx.rs), then export them from [src/systems/mod.rs](../../src/systems/mod.rs)
+- [X] T003 [P] Add buffered and observer-facing sea mine message/event types in [src/signals.rs](../../src/signals.rs) for spawn, detonation, and explosion burst trigger flow
 
 ---
 
@@ -30,9 +30,9 @@ Tasks explicitly include Message-Event Separation, hierarchy safety, motion floo
 
 **Checkpoint**: No user story work starts until this phase is complete.
 
-- [ ] T004 [P] Define sea mine brick index `31` and helper predicates in [src/level_format/mod.rs](../../src/level_format/mod.rs), and update the reference entry in [docs/bricks.md](../../docs/bricks.md)
-- [ ] T005 [P] Register sea mine brick loading and completion behavior in [src/level_loader.rs](../../src/level_loader.rs) so brick `31` loads as a destructible completion brick
-- [ ] T006 [P] Add the sea mine texture/material profile to [assets/textures/manifest.ron](../../assets/textures/manifest.ron) and document the visual mapping in [docs/bricks.md](../../docs/bricks.md)
+- [X] T004 [P] Define sea mine brick index `31` and helper predicates in [src/level_format/mod.rs](../../src/level_format/mod.rs), and update the reference entry in [docs/bricks.md](../../docs/bricks.md)
+- [X] T005 [P] Register sea mine brick loading and completion behavior in [src/level_loader.rs](../../src/level_loader.rs) so brick `31` loads as a destructible completion brick
+- [X] T006 [P] Add the sea mine texture/material profile to [assets/textures/manifest.ron](../../assets/textures/manifest.ron) and document the visual mapping in [docs/bricks.md](../../docs/bricks.md)
 
 ---
 
@@ -46,14 +46,14 @@ Tasks explicitly include Message-Event Separation, hierarchy safety, motion floo
 
 > Write these tests first, confirm they fail, and record the failing-test commit hash in the task notes.
 
-- [ ] T007 [P] [US1] Add the failing acceptance test in [tests/sea_mine_brick.rs](../../tests/sea_mine_brick.rs) that destroys brick `31` and asserts one sea mine spawn plus brick despawn
-- [ ] T008 [P] [US1] Add the failing persistence/motion test in [tests/sea_mine_lifecycle.rs](../../tests/sea_mine_lifecycle.rs) that checks arbitrary launch direction, visible spin, and minimum `3.0 u/s` / `180 deg/s` floors across 10 frames
+- [X] T007 [P] [US1] Add the failing acceptance test in [tests/sea_mine_brick.rs](../../tests/sea_mine_brick.rs) that destroys brick `31` and asserts one sea mine spawn plus brick despawn
+- [X] T008 [P] [US1] Add the failing persistence/motion test in [tests/sea_mine_lifecycle.rs](../../tests/sea_mine_lifecycle.rs) that checks arbitrary launch direction, visible spin, and minimum `3.0 u/s` / `180 deg/s` floors across 10 frames
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Implement `SpawnSeaMineMessage` consumption and sea mine entity spawning in [src/systems/sea_mine.rs](../../src/systems/sea_mine.rs), including hierarchy-safe child mesh setup with `add_child`/`set_parent`
-- [ ] T010 [US1] Implement sea mine motion maintenance and rotation behavior in [src/systems/sea_mine.rs](../../src/systems/sea_mine.rs) so active mines never fall below the minimum speed/spin floors
-- [ ] T011 [US1] Wire brick `31` ball-collision handling in [src/lib.rs](../../src/lib.rs) to emit the spawn message, despawn the brick, and keep the gameplay flow message-driven
+- [X] T009 [US1] Implement `SpawnSeaMineMessage` consumption and sea mine entity spawning in [src/systems/sea_mine.rs](../../src/systems/sea_mine.rs), including hierarchy-safe child mesh setup with `add_child`/`set_parent`
+- [X] T010 [US1] Implement sea mine motion maintenance and rotation behavior in [src/systems/sea_mine.rs](../../src/systems/sea_mine.rs) so active mines never fall below the minimum speed/spin floors
+- [X] T011 [US1] Wire brick `31` ball-collision handling in [src/lib.rs](../../src/lib.rs) to emit the spawn message, despawn the brick, and keep the gameplay flow message-driven
 
 **Checkpoint**: User Story 1 should now be independently playable and testable.
 
@@ -69,14 +69,14 @@ Tasks explicitly include Message-Event Separation, hierarchy safety, motion floo
 
 > Write these tests first, confirm they fail, and record the failing-test commit hash in the task notes.
 
-- [ ] T012 [P] [US2] Add the failing detonation test in [tests/sea_mine_particles.rs](../../tests/sea_mine_particles.rs) covering wall, paddle, and brick `> 90` triggers plus the 30-unit blast radius
-- [ ] T013 [P] [US2] Add the failing one-shot/life-loss test in [tests/sea_mine_lifecycle.rs](../../tests/sea_mine_lifecycle.rs) that verifies non-trigger brick contacts do not detonate and paddle destruction records exactly one life loss
+- [X] T012 [P] [US2] Add the failing detonation test in [tests/sea_mine_particles.rs](../../tests/sea_mine_particles.rs) covering wall, paddle, and brick `> 90` triggers plus the 30-unit blast radius
+- [X] T013 [P] [US2] Add the failing one-shot/life-loss test in [tests/sea_mine_lifecycle.rs](../../tests/sea_mine_lifecycle.rs) that verifies non-trigger brick contacts do not detonate and paddle destruction records exactly one life loss
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Implement detonation detection and buffered `SeaMineDetonationMessage` handling in [src/systems/sea_mine.rs](../../src/systems/sea_mine.rs) using Messages for gameplay state
-- [ ] T015 [US2] Implement the immediate Hanabi explosion observer and shared effect resource in [src/systems/particle_fx.rs](../../src/systems/particle_fx.rs), and register the effect asset in [src/lib.rs](../../src/lib.rs)
-- [ ] T016 [US2] Implement radius-based ball and paddle cleanup plus the single life-loss handoff in [src/systems/sea_mine.rs](../../src/systems/sea_mine.rs) and [src/systems/respawn.rs](../../src/systems/respawn.rs)
+- [X] T014 [US2] Implement detonation detection and buffered `SeaMineDetonationMessage` handling in [src/systems/sea_mine.rs](../../src/systems/sea_mine.rs) using Messages for gameplay state
+- [X] T015 [US2] Implement the immediate Hanabi explosion observer and shared effect resource in [src/systems/particle_fx.rs](../../src/systems/particle_fx.rs), and register the effect asset in [src/lib.rs](../../src/lib.rs)
+- [X] T016 [US2] Implement radius-based ball and paddle cleanup plus the single life-loss handoff in [src/systems/sea_mine.rs](../../src/systems/sea_mine.rs) and [src/systems/respawn.rs](../../src/systems/respawn.rs)
 
 **Checkpoint**: User Story 2 should now independently detonate, destroy targets, and render the explosion burst.
 
@@ -92,13 +92,13 @@ Tasks explicitly include Message-Event Separation, hierarchy safety, motion floo
 
 > Write these tests first, confirm they fail, and record the failing-test commit hash in the task notes.
 
-- [ ] T017 [P] [US3] Add the failing level-loading/completion test in [tests/sea_mine_brick.rs](../../tests/sea_mine_brick.rs) that confirms brick `31` is authorable and counts toward level completion
-- [ ] T018 [P] [US3] Add the failing regression test in [tests/sea_mine_lifecycle.rs](../../tests/sea_mine_lifecycle.rs) that confirms life loss from a sea mine explosion is not duplicated across later frames
+- [X] T017 [P] [US3] Add the failing level-loading/completion test in [tests/sea_mine_brick.rs](../../tests/sea_mine_brick.rs) that confirms brick `31` is authorable and counts toward level completion
+- [X] T018 [P] [US3] Add the failing regression test in [tests/sea_mine_lifecycle.rs](../../tests/sea_mine_lifecycle.rs) that confirms life loss from a sea mine explosion is not duplicated across later frames
 
 ### Implementation for User Story 3
 
-- [ ] T019 [US3] Update level loading and completion marker logic in [src/level_loader.rs](../../src/level_loader.rs) and [src/level_format/mod.rs](../../src/level_format/mod.rs) so brick `31` behaves as the new sea mine brick
-- [ ] T020 [US3] Update the feature-facing docs in [docs/bricks.md](../../docs/bricks.md) and [specs/067-add-seamine-brick/quickstart.md](quickstart.md) to describe brick `31`, the minimum-motion rules, and the Hanabi burst behavior
+- [X] T019 [US3] Update level loading and completion marker logic in [src/level_loader.rs](../../src/level_loader.rs) and [src/level_format/mod.rs](../../src/level_format/mod.rs) so brick `31` behaves as the new sea mine brick
+- [X] T020 [US3] Update the feature-facing docs in [docs/bricks.md](../../docs/bricks.md) and [specs/067-add-seamine-brick/quickstart.md](quickstart.md) to describe brick `31`, the minimum-motion rules, and the Hanabi burst behavior
 
 **Checkpoint**: User Stories 1, 2, and 3 should now all be independently functional.
 
@@ -108,7 +108,7 @@ Tasks explicitly include Message-Event Separation, hierarchy safety, motion floo
 
 **Purpose**: Final verification and repo-wide compliance checks.
 
-- [ ] T021 [P] Run `cargo test`, `cargo fmt --all`, `cargo clippy --all-targets --all-features`, and `bevy lint`, then fix any sea-mine-specific issues in [src/systems/sea_mine.rs](../../src/systems/sea_mine.rs) and [src/systems/particle_fx.rs](../../src/systems/particle_fx.rs)
+- [X] T021 [P] Run `cargo test`, `cargo fmt --all`, `cargo clippy --all-targets --all-features`, and `bevy lint`, then fix any sea-mine-specific issues in [src/systems/sea_mine.rs](../../src/systems/sea_mine.rs) and [src/systems/particle_fx.rs](../../src/systems/particle_fx.rs)
 
 ---
 

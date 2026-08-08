@@ -123,6 +123,45 @@ pub struct SpawnMerkabaMessage {
     pub min_speed_y: f32,
 }
 
+/// Spawn a sea mine hazard after the sea mine brick (index 31) is destroyed.
+#[derive(Message, Debug, Clone, Copy)]
+pub struct SpawnSeaMineMessage {
+    /// World position where the sea mine should spawn.
+    pub position: Vec3,
+    /// Brick entity that requested the spawn.
+    pub brick_entity: Entity,
+    /// Source brick type (expected to be 31).
+    pub source_brick_type: u8,
+}
+
+/// Collision trigger type that detonated a sea mine.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SeaMineTriggerCause {
+    Wall,
+    Paddle,
+    BrickGt90,
+}
+
+/// Buffered gameplay detonation request for sea mines.
+#[derive(Message, Debug, Clone, Copy)]
+pub struct SeaMineDetonationMessage {
+    /// Sea mine entity that detonated.
+    pub entity: Entity,
+    /// World-space detonation position.
+    pub position: Vec3,
+    /// Trigger cause for diagnostics/gameplay branching.
+    pub cause: SeaMineTriggerCause,
+    /// Blast radius in world units.
+    pub radius: f32,
+}
+
+/// Immediate visual burst trigger for sea-mine effects.
+#[derive(Message, Debug, Clone, Copy)]
+pub struct SeaMineExplosionTriggered {
+    pub position: Vec3,
+    pub radius: f32,
+}
+
 /// Merkaba collision with a wall boundary.
 ///
 /// **Producers**: Merkaba collision detection system (US2)

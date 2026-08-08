@@ -33,6 +33,9 @@ pub const MULTI_HIT_BRICK_4: u8 = 13;
 /// This brick is destructible (durability 1) and plays a unique destruction sound.
 pub const EXTRA_LIFE_BRICK: u8 = 41;
 
+/// Sea mine brick index 31: spawns a sea-mine hazard when destroyed.
+pub const SEA_MINE_BRICK: u8 = 31;
+
 /// Paddle-destroyable brick index 57: destroyed by paddle contact only.
 pub const PADDLE_DESTROYABLE_BRICK: u8 = 57;
 
@@ -101,6 +104,12 @@ pub fn is_paddle_destroyable_brick(type_id: u8) -> bool {
 #[inline]
 pub fn is_hazard_brick(type_id: u8) -> bool {
     type_id == HAZARD_BRICK_42 || type_id == HAZARD_BRICK_91
+}
+
+/// Returns true when the given brick type should trigger sea-mine detonation.
+#[inline]
+pub fn is_sea_mine_trigger_brick(type_id: u8) -> bool {
+    type_id > INDESTRUCTIBLE_BRICK
 }
 
 #[cfg(test)]
