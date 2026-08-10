@@ -3,8 +3,10 @@ use bevy::asset::AssetPlugin;
 use bevy::ecs::message::Messages;
 use bevy::prelude::*;
 use bevy::MinimalPlugins;
+use bevy_hanabi::prelude::ParticleEffect;
 use bevy_rapier3d::prelude::CollisionEvent;
 use bevy_rapier3d::rapier::prelude::CollisionEventFlags;
+use std::time::Duration;
 
 use brkrs::signals::SeaMineDetonationMessage;
 use brkrs::systems::particle_fx::SeaMineExplosionBurst;
@@ -24,6 +26,12 @@ fn test_app() -> App {
         .add_plugins(brkrs::systems::particle_fx::ParticleFxPlugin)
         .add_plugins(brkrs::systems::sea_mine::SeaMinePlugin);
     app
+}
+
+fn advance_time(app: &mut App, delta_secs: f32) {
+    app.world_mut()
+        .resource_mut::<Time>()
+        .advance_by(Duration::from_secs_f32(delta_secs));
 }
 
 #[test]
@@ -55,6 +63,43 @@ fn sea_mine_wall_trigger_emits_single_burst_marker() {
     assert_eq!(
         burst_count, 1,
         "Wall-triggered detonation should produce one explosion burst marker"
+    );
+}
+
+#[test]
+fn sea_mine_explosion_effect_entity_despawns_after_lifetime() {
+    let mut app = test_app();
+
+    let mine = app
+        .world_mut()
+        .spawn((SeaMine, Transform::from_xyz(0.0, 2.0, 0.0)))
+        .id();
+    let wall = app.world_mut().spawn(Border).id();
+
+    app.world_mut()
+        .resource_mut::<Messages<CollisionEvent>>()
+        .write(CollisionEvent::Started(
+            mine,
+            wall,
+            CollisionEventFlags::empty(),
+        ));
+
+    app.update();
+
+    for _ in 0..5 {
+        advance_time(&mut app, 0.1);
+        app.update();
+    }
+
+    let effect_count = {
+        let world = app.world_mut();
+        let mut query = world.query_filtered::<Entity, With<ParticleEffect>>();
+        query.iter(world).count()
+    };
+
+    assert_eq!(
+        effect_count, 0,
+        "Explosion effect entities should despawn after their lifetime"
     );
 }
 

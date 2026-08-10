@@ -140,6 +140,91 @@ fn sea_mine_only_detonates_on_valid_trigger_and_emits_single_life_loss() {
 }
 
 #[test]
+fn sea_mine_detonation_despawns_child_entities_recursively() {
+    let mut app = test_app();
+
+    let mine = app
+        .world_mut()
+        .spawn((SeaMine, Transform::from_xyz(0.0, 2.0, 0.0)))
+        .id();
+    let child = app
+        .world_mut()
+        .spawn(Transform::from_xyz(0.0, 0.0, 1.0))
+        .id();
+    app.world_mut().entity_mut(mine).add_child(child);
+
+    app.world_mut()
+        .resource_mut::<Messages<brkrs::signals::SeaMineDetonationMessage>>()
+        .write(brkrs::signals::SeaMineDetonationMessage {
+            entity: mine,
+            position: Vec3::new(0.0, 2.0, 0.0),
+            cause: brkrs::signals::SeaMineTriggerCause::Wall,
+            radius: 10.0,
+        });
+
+    app.update();
+
+    assert!(
+        !app.world().entities().contains(child),
+        "Sea-mine child entities should be removed when the mine detonates"
+    );
+}
+
+#[test]
+fn sea_mine_detonations_for_same_ball_only_emit_single_life_loss() {
+    let mut app = test_app();
+
+    let mine = app
+        .world_mut()
+        .spawn((SeaMine, Transform::from_xyz(0.0, 2.0, 0.0)))
+        .id();
+    let ball = app
+        .world_mut()
+        .spawn((Ball, Transform::from_xyz(1.0, 2.0, 0.0)))
+        .id();
+    let paddle = app
+        .world_mut()
+        .spawn((Paddle, Transform::from_xyz(100.0, 2.0, 0.0)))
+        .id();
+
+    app.world_mut()
+        .resource_mut::<Messages<brkrs::signals::SeaMineDetonationMessage>>()
+        .write(brkrs::signals::SeaMineDetonationMessage {
+            entity: mine,
+            position: Vec3::new(0.0, 2.0, 0.0),
+            cause: brkrs::signals::SeaMineTriggerCause::Wall,
+            radius: 10.0,
+        });
+    app.world_mut()
+        .resource_mut::<Messages<brkrs::signals::SeaMineDetonationMessage>>()
+        .write(brkrs::signals::SeaMineDetonationMessage {
+            entity: mine,
+            position: Vec3::new(0.0, 2.0, 0.0),
+            cause: brkrs::signals::SeaMineTriggerCause::Wall,
+            radius: 10.0,
+        });
+
+    for _ in 0..4 {
+        app.update();
+    }
+
+    assert!(
+        !app.world().entities().contains(ball),
+        "Ball inside blast radius should be removed"
+    );
+    assert!(
+        app.world().entities().contains(paddle),
+        "Paddle outside blast radius should remain"
+    );
+
+    let counter = app.world().resource::<LifeLossCounter>();
+    assert_eq!(
+        counter.0, 1,
+        "Repeated detonation messages for the same frame should not double-count a life loss"
+    );
+}
+
+#[test]
 fn sea_mine_last_ball_explosion_emits_life_loss_without_paddle_destruction() {
     let mut app = test_app();
 

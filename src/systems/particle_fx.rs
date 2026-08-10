@@ -24,6 +24,11 @@ struct SeaMineExplosionLifetime {
 }
 
 #[derive(Component)]
+struct SeaMineExplosionEffectLifetime {
+    timer: Timer,
+}
+
+#[derive(Component)]
 struct SeaMineExplosionShockwave {
     timer: Timer,
     start_major_radius: f32,
@@ -92,6 +97,9 @@ fn trigger_sea_mine_explosion_burst(
             commands.spawn((
                 Name::new("SeaMineExplosionEffect"),
                 ParticleEffect::new(effect),
+                SeaMineExplosionEffectLifetime {
+                    timer: Timer::from_seconds(EXPLOSION_PARTICLE_LIFETIME, TimerMode::Once),
+                },
                 Transform::from_translation(event.position),
                 GlobalTransform::default(),
             ));
@@ -162,6 +170,10 @@ fn animate_sea_mine_explosion_burst(
         (Entity, &mut SeaMineExplosionLifetime, &mut Transform),
         With<SeaMineExplosionBurst>,
     >,
+    mut effect_particles: Query<
+        (Entity, &mut SeaMineExplosionEffectLifetime),
+        With<ParticleEffect>,
+    >,
     mut shockwaves: Query<(
         Entity,
         &mut SeaMineExplosionShockwave,
@@ -177,6 +189,13 @@ fn animate_sea_mine_explosion_burst(
         transform.scale = Vec3::splat(scale);
 
         if lifetime.timer.is_finished() {
+            commands.entity(entity).despawn();
+        }
+    }
+
+    for (entity, mut effect_lifetime) in &mut effect_particles {
+        effect_lifetime.timer.tick(time.delta());
+        if effect_lifetime.timer.is_finished() {
             commands.entity(entity).despawn();
         }
     }

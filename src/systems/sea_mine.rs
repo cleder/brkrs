@@ -232,12 +232,28 @@ fn resolve_sea_mine_detonations(
     mut messages: MessageReader<SeaMineDetonationMessage>,
     mut explosion_writer: Option<MessageWriter<SeaMineExplosionTriggered>>,
     balls: Query<(Entity, &Transform), With<Ball>>,
+    children: Query<&Children>,
     paddles: Query<(Entity, &Transform), With<Paddle>>,
     spawn_points: Option<Res<SpawnPoints>>,
     mut ball_lost_writer: Option<MessageWriter<BallLostEvent>>,
+    mut seen_this_frame: Local<std::collections::HashSet<Entity>>,
 ) {
+    seen_this_frame.clear();
+
     for detonation in messages.read() {
-        commands.entity(detonation.entity).try_despawn();
+        if !seen_this_frame.insert(detonation.entity) {
+            continue;
+        }
+
+        let mut entities_to_despawn = vec![detonation.entity];
+        while let Some(entity) = entities_to_despawn.pop() {
+            if let Ok(children) = children.get(entity) {
+                for child in children.iter() {
+                    entities_to_despawn.push(child);
+                }
+            }
+            commands.entity(entity).despawn();
+        }
         if let Some(writer) = explosion_writer.as_mut() {
             writer.write(SeaMineExplosionTriggered {
                 position: detonation.position,
