@@ -3,6 +3,7 @@
 name = "brkrs"
 version = "0.1.1"
 edition = "2021"
+rust-version = "1.89"
 license = "AGPL-3.0-or-later"
 description = "Breakout/Arkanoid-style game built in Rust using the Bevy engine, with physics powered by bevy_rapier3d"
 
@@ -23,6 +24,7 @@ opt-level = 3
 
 [dependencies]
 bevy = { version = "0.17.3" }
+bevy_hanabi = "0.17.0"
 rand = "0"
 bevy_rapier3d = { version = "0.32.0", features = [
     "debug-render-3d",

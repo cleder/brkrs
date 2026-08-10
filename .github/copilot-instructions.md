@@ -36,7 +36,7 @@ run these commands to verify your work:
 
 ## Code Style
 
-Rust 2021 edition (toolchain managed by rustup): Follow standard conventions
+Rust 1.89 (edition 2021; toolchain managed by rustup): Follow standard conventions
 
 ## Recent Changes
 - 001-display-current-level: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
@@ -52,5 +52,5 @@ Rust 2021 edition (toolchain managed by rustup): Follow standard conventions
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-specs/066-score-multiplier-bricks/plan.md
+specs/067-add-seamine-brick/plan.md
 <!-- SPECKIT END -->

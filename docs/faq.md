@@ -30,7 +30,7 @@ See the {doc} `quickstart` for the full control scheme.
 
 ### The game won't compile. What should I check?
 
-1. Ensure you have Rust 1.81+ installed: `rustc --version`
+1. Ensure you have Rust 1.89+ installed: `rustc --version`
 2. Run `cargo clean` and try again
 3. Check the {doc}`troubleshooting` guide for common build issues
 

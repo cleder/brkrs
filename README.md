@@ -1,6 +1,6 @@
 # brkrs — a fun brick-breaker game & learning playground
 
-[![Crates.io](https://img.shields.io/crates/v/brkrs?color=blue\&logo=rust\&logoColor=white)](https://crates.io/crates/brkrs) [![Docs.rs](https://img.shields.io/docsrs/brkrs)](https://docs.rs/brkrs) [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE) [![Rust](https://img.shields.io/badge/rust-1.81+-orange?logo=rust\&logoColor=white)](https://www.rust-lang.org/) [![Documentation Status](https://readthedocs.org/projects/brkrs/badge/?version=latest)](https://brkrs.readthedocs.io/en/latest/?badge=latest)
+[![Crates.io](https://img.shields.io/crates/v/brkrs?color=blue\&logo=rust\&logoColor=white)](https://crates.io/crates/brkrs) [![Docs.rs](https://img.shields.io/docsrs/brkrs)](https://docs.rs/brkrs) [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE) [![Rust](https://img.shields.io/badge/rust-1.89+-orange?logo=rust\&logoColor=white)](https://www.rust-lang.org/) [![Documentation Status](https://readthedocs.org/projects/brkrs/badge/?version=latest)](https://brkrs.readthedocs.io/en/latest/?badge=latest)
 
 [![CI-main](https://github.com/cleder/brkrs/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/cleder/brkrs/actions/workflows/ci.yaml?branch=main) [![CI-develop](https://github.com/cleder/brkrs/actions/workflows/ci.yaml/badge.svg?branch=develop)](https://github.com/cleder/brkrs/actions/workflows/ci.yaml?branch=develop)
 
