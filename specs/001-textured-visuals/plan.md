@@ -68,7 +68,8 @@ tests/
 └── level_switcher.rs           # integration test for `KeyCode::L`
 ```
 
-**Structure Decision**: Retain single-crate layout; add a focused `systems/textures/` module tree so manifest loading, fallback management, and overrides stay isolated yet testable. `tests/level_switcher.rs` hosts integration coverage for the shortcut without polluting gameplay modules.
+**Structure Decision**: Retain single-crate layout; add a focused `systems/textures/` module tree so manifest loading, fallback management, and overrides stay isolated yet testable.
+`tests/level_switcher.rs` hosts integration coverage for the shortcut without polluting gameplay modules.
 
 ## Complexity Tracking
 
