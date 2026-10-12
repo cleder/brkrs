@@ -73,7 +73,8 @@ No coverage gaps.
 | **VII. TDD-First (Multi-Frame State)** | ✅ COMPLIANT | Constitution v1.6.0 mandates multi-frame persistence testing; tasks.md includes T023 (test_score_and_lives_persist_multi_frame) |
 | **IX. Bevy 0.17 ECS Mandates** | ✅ COMPLIANT | Plan specifies: use Local<bool> for state (idempotent), reuse Messages (not Observers), avoid unconditional overwrites |
 
-**Summary**: ✅ FULL COMPLIANCE with 7 core principles. 2 non-blocking clarity gaps (F007 – performance SLO; VI – rustdoc).
+**Summary**: ✅ FULL COMPLIANCE with 7 core principles.
+2 non-blocking clarity gaps (F007 – performance SLO; VI – rustdoc).
 
 ---
 
