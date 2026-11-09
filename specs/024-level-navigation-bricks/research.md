@@ -203,8 +203,7 @@ Reuse existing `force_load_level_from_path` behavior.
 
 **Victory Screen Components**:
 
-- Text node with "You Win!"
-  message
+- Text node with "You Win!" message
 - Positioned at screen center with style settings
 
 **Rationale**: Victory screen logic already exists for natural game completion.

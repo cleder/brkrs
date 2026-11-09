@@ -64,10 +64,9 @@ Maintains all entity state automatically.
 
 - **Timer Completion System**: System that reads fade timer and checks lives when timer completes
 - **Conditional NextState**: If lives > 0, set `NextState(FadeIn)`; if lives == 0, set `NextState(GameOver)`
-- **Single Branching Point**: One system handles the lives check logic after fade animation completes
-**Rationale**: Centralizes branching logic in one place.
-Clear separation of concerns (timer tracking vs. decision logic).
-Follows States-based architecture.
+- **Single Branching Point**: One system handles the lives check logic after fade animation completes **Rationale**: Centralizes branching logic in one place.
+  Clear separation of concerns (timer tracking vs. decision logic).
+  Follows States-based architecture.
 
 ---
 
@@ -77,9 +76,8 @@ Follows States-based architecture.
 
 **Answer**:
 
-- **Match Pattern**: Use match on `(current_state, requested_transition)` tuple
-**Decision**: Implement `is_valid_transition(current: &GameState, next: &GameState) -> bool` helper function that returns validity.
-Log warning and skip transition if invalid.
+- **Match Pattern**: Use match on `(current_state, requested_transition)` tuple **Decision**: Implement `is_valid_transition(current: &GameState, next: &GameState) -> bool` helper function that returns validity.
+  Log warning and skip transition if invalid.
 
 **Rationale**: Explicit validation function makes transition logic testable.
 `tracing::warn!` provides structured logging with context.
