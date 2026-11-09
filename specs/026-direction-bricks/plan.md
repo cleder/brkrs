@@ -333,8 +333,7 @@ tests/
 
 - Specification clarification Q1 established impulses are instantaneous (once per destruction)
 - Avoids per-frame accumulation bugs (physics system already applies forces per frame)
-- Simpler semantics: "Hit this brick, get this velocity boost" vs.
-  "Hit this brick, experience 5.0 units/sec² for how long?"
+- Simpler semantics: "Hit this brick, get this velocity boost" vs. "Hit this brick, experience 5.0 units/sec² for how long?"
 - Matches game design intent: direction bricks provide immediate, discrete velocity modifications
 
 ### 3. RNG Generation in 5.0-15.0 Range

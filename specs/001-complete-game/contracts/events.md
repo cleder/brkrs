@@ -27,8 +27,7 @@ pub struct BallHit {
 
 **Observers**:
 
-- `on_paddle_ball_hit`: Applies steering impulse to ball's
-  `ExternalImpulse` component
+- `on_paddle_ball_hit`: Applies steering impulse to ball's `ExternalImpulse` component
 
 **Usage Pattern**:
 
@@ -129,8 +128,7 @@ pub struct BrickHit {
 
 **Observers**:
 
-- `on_brick_hit`: Handles brick damage, destruction, and special behaviors
-  based on `BrickType`
+- `on_brick_hit`: Handles brick damage, destruction, and special behaviors based on `BrickType`
 
 **Usage Pattern**:
 
@@ -217,8 +215,7 @@ pub struct LevelComplete {
 
 **Observers**:
 
-- `on_level_complete`: Transitions to `GameState::LevelTransition`, prepares
-  next level
+- `on_level_complete`: Transitions to `GameState::LevelTransition`, prepares next level
 
 **Usage Pattern**:
 

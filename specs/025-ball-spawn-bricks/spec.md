@@ -1,6 +1,7 @@
 # Feature Specification: Ball Spawn Bricks
 
-**Feature Branch**: `025-ball-spawn-bricks` **Created**: 2026-01-31 **Status**: Draft **Input**: User description: "add bricks index 37,38,39. 38 spawn one additional ball, 39 spawn two additional balls, 37 despawn all other balls. the bricks score 100. balls are spawned at the center of the destroyed brick"
+**Feature Branch**: `025-ball-spawn-bricks` **Created**: 2026-01-31 **Status**: Draft **Input**: User description: "add bricks index 37,38,39.
+38 spawn one additional ball, 39 spawn two additional balls, 37 despawn all other balls. the bricks score 100. balls are spawned at the center of the destroyed brick"
 
 ## User Scenarios & Testing *(mandatory)*
 
