@@ -119,8 +119,7 @@ Platform-specific issues caught late are expensive to fix.
 
 **Code Quality**:
 
-- Rust compiler warnings MUST be addressed (no `allow` without
-  justification)
+- Rust compiler warnings MUST be addressed (no `allow` without justification)
 - Follow Clippy suggestions unless explicitly justified
 - Use `rustfmt` for consistent formatting
 - Use `bevy lint` to lint for bevy specifics
@@ -146,12 +145,9 @@ Platform-specific issues caught late are expensive to fix.
 
 All public modules, functions, types, and traits MUST have rustdoc documentation:
 
-- **Module-level docs** (`//!`): Explain the module's purpose, when to use
-  it, and how it fits into the overall architecture
-- **Function docs** (`///`): Describe WHY the function exists and WHEN to
-  use it, NOT HOW it is implemented
-- **Type docs** (`///`): Explain what the type represents and its role in
-  the system
+- **Module-level docs** (`//!`): Explain the module's purpose, when to use it, and how it fits into the overall architecture
+- **Function docs** (`///`): Describe WHY the function exists and WHEN to use it, NOT HOW it is implemented
+- **Type docs** (`///`): Explain what the type represents and its role in the system
 - **Examples**: Include usage examples for non-trivial public APIs
 - **Panics/Errors**: Document panic conditions and error cases
 
@@ -170,22 +166,12 @@ It supports onboarding, code review, and long-term maintainability.
 
 All code implementations MUST follow strict Test-Driven Development (TDD):
 
-- **Write tests first**: Unit tests and acceptance tests MUST be authored
-  and committed before any implementation code for the same feature.
-- **Red phase REQUIRED**: Tests MUST be confirmed to FAIL (red) prior to
-  writing implementation code.
-- **Approval gate**: Tests MUST be validated and explicitly approved by the
-  feature owner or requestor (a maintainer or designated reviewer) before
-  implementation begins.
-- **Test coverage**: Every new public function and critical internal path
-  MUST have unit tests; feature-level behaviors MUST have integration or
-  acceptance tests that exercise user scenarios (including WASM where
-  applicable).
-- **CI enforcement**: CI pipelines MUST run the test suite and reject merges
-  that do not include the tests-first proof (a failing test commit followed
-  by a passing commit) or that remove tests.
-- **Document test intent**: Tests MUST include clear, declarative names and
-  comments describing the intended behavior and acceptance criteria.
+- **Write tests first**: Unit tests and acceptance tests MUST be authored and committed before any implementation code for the same feature.
+- **Red phase REQUIRED**: Tests MUST be confirmed to FAIL (red) prior to writing implementation code.
+- **Approval gate**: Tests MUST be validated and explicitly approved by the feature owner or requestor (a maintainer or designated reviewer) before implementation begins.
+- **Test coverage**: Every new public function and critical internal path MUST have unit tests; feature-level behaviors MUST have integration or acceptance tests that exercise user scenarios (including WASM where applicable).
+- **CI enforcement**: CI pipelines MUST run the test suite and reject merges that do not include the tests-first proof (a failing test commit followed by a passing commit) or that remove tests.
+- **Document test intent**: Tests MUST include clear, declarative names and comments describing the intended behavior and acceptance criteria.
 - **Multi-frame state persistence**: Tests for runtime state changes (e.g., gravity, scores, powerup effects) MUST verify that the change persists across multiple frames by calling `app.update()` repeatedly after the change.
   Single-frame assertions miss bugs caused by per-frame overwrites.
 

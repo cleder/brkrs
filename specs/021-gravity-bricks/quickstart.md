@@ -25,8 +25,7 @@ This guide helps developers understand, test, and extend the gravity indicator U
 
 2. **Expected Behavior**:
    - Icon appears at (12px, 12px) from bottom-left
-   - Displays appropriate weight (0/2/10/20) or "?"
-     if unknown
+   - Displays appropriate weight (0/2/10/20) or "?" if unknown
    - Updates immediately when gravity changes (e.g., hitting gravity brick)
 
 ## Architecture Overview
