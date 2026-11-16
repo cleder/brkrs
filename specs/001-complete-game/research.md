@@ -22,10 +22,8 @@ All decisions align with the project constitution's ECS-first, physics-driven, a
 
 **Alternatives Considered**:
 
-- **Property-based organization** (rejected): Would scatter related logic
-  across multiple files, making features harder to trace
-- **Single components.rs file** (rejected): Would become too large with 37+
-  brick types
+- **Property-based organization** (rejected): Would scatter related logic across multiple files, making features harder to trace
+- **Single components.rs file** (rejected): Would become too large with 37+ brick types
 
 **Implementation**:
 
@@ -51,10 +49,8 @@ components/
 
 **Alternatives Considered**:
 
-- **Manual Y-clamping in systems** (rejected): Prone to drift, requires
-  checking every frame
-- **2D physics** (rejected): Loses 3D visual aesthetics, harder to migrate
-  to full 3D later
+- **Manual Y-clamping in systems** (rejected): Prone to drift, requires checking every frame
+- **2D physics** (rejected): Loses 3D visual aesthetics, harder to migrate to full 3D later
 
 **Implementation Details**:
 
@@ -71,8 +67,7 @@ components/
 
 **Alternatives Considered**:
 
-- **Direct velocity modification** (rejected): Fights physics engine,
-  unpredictable interactions
+- **Direct velocity modification** (rejected): Fights physics engine, unpredictable interactions
 - **Velocity multiplier** (rejected): Can cause unrealistic speed changes
 
 **Implementation**:
@@ -188,8 +183,7 @@ pub enum GameState {
 **Alternatives Considered**:
 
 - **Raw mouse events** (rejected): Frame-dependent, DPI issues
-- **Mouse position absolute** (rejected): Requires manual delta calculation,
-  cursor wrapping issues
+- **Mouse position absolute** (rejected): Requires manual delta calculation, cursor wrapping issues
 
 **Implementation**:
 
@@ -232,27 +226,21 @@ codegen-units = 1
 ### Bevy ECS Patterns
 
 1. **Plugin Architecture**: Group related systems into plugins for modularity
-2. **System Ordering**: Use explicit `.after()` and `.before()` for
-   deterministic execution
-3. **Resource Management**: Use `Res` for read-only, `ResMut` for mutable
-   access
-4. **Event Communication**: Prefer events over direct entity manipulation for
-   loose coupling
+2. **System Ordering**: Use explicit `.after()` and `.before()` for deterministic execution
+3. **Resource Management**: Use `Res` for read-only, `ResMut` for mutable access
+4. **Event Communication**: Prefer events over direct entity manipulation for loose coupling
 
 ### Rapier3D Integration
 
 1. **Collision Groups**: Use groups to filter unnecessary collision checks
-2. **Collision Events**: Subscribe to `CollisionEvent` for ball-brick/paddle
-   interactions
+2. **Collision Events**: Subscribe to `CollisionEvent` for ball-brick/paddle interactions
 3. **CCD**: Enable for fast-moving objects (ball) to prevent tunneling
 4. **Restitution/Friction**: Tune per-entity for desired gameplay feel
 
 ### Performance Optimization
 
-1. **Change Detection**: Use Bevy's change detection (`Changed<T>`) to avoid
-   unnecessary processing
-2. **Sparse Sets**: For frequently added/removed components (like temporary
-   effects)
+1. **Change Detection**: Use Bevy's change detection (`Changed<T>`) to avoid unnecessary processing
+2. **Sparse Sets**: For frequently added/removed components (like temporary effects)
 3. **Parallel Systems**: Mark independent systems as parallel-safe
 4. **Entity Pooling**: Reuse ball entities rather than spawn/despawn
 
