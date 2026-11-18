@@ -37,7 +37,7 @@ impl From<&TextureManifest> for TextureManifestContract {
             .values()
             .map(LevelTextureSetContract::from)
             .collect();
-        level_overrides.sort_by(|a, b| a.level_number.cmp(&b.level_number));
+        level_overrides.sort_by_key(|a| a.level_number);
 
         let mut type_variants: Vec<_> = manifest
             .type_variants

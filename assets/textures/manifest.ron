@@ -1654,6 +1654,7 @@
             emissive_color: None,
             animation: None,
         ),
+        (
             object_class: Brick,
             type_id: 31,
             profile_id: "brick/mine",
