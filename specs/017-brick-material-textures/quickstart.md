@@ -298,7 +298,9 @@ WARN texture_loader: Failed to load ORM texture: brick_orm.png (file not found)
 ### Workflow
 
 1. **Start Simple**: Add ORM first, then emissive, then depth
+
 2. **Reuse Textures**: Share ORM across similar brick types
+
 3. **Fallback Chain**: Always provide fallback to basic profile:
 
    ```ron

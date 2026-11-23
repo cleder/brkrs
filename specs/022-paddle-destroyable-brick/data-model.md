@@ -81,6 +81,7 @@ The data model reuses existing components and messages to minimize complexity.
 **`BrickDestroyed`**
 
 - **Purpose**: Signals that a brick was destroyed (by ball OR paddle)
+
 - **Definition** (from `src/signals.rs`):
 
   ```rust
@@ -93,7 +94,9 @@ The data model reuses existing components and messages to minimize complexity.
   ```
 
 - **Emitted By**: `despawn_marked_entities` system (when `MarkedForDespawn` entity has `BrickTypeId`)
+
 - **Consumed By**: `award_points_system` in `src/systems/scoring.rs`
+
 - **Contract**: Emitted once per brick destruction before entity despawn
 
 **No New Messages Required** - Existing `BrickDestroyed` message handles both ball-triggered and paddle-triggered destruction.

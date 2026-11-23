@@ -139,6 +139,7 @@ pub struct GravityChanged {
 **Platform-Specific Considerations**:
 
 - **Native (Linux/Windows/macOS)**: `rand` + `getrandom` = standard OS entropy (works out of box)
+
 - **WASM**: Requires explicit `getrandom` backend configuration:
 
   ```bash
@@ -146,6 +147,7 @@ pub struct GravityChanged {
   ```
 
   This enables JavaScript `crypto.getRandomValues()` as entropy source.
+
 - **Testing**: Use `#[cfg(test)]` mocks if deterministic test gravity is needed (seeded Rng for reproducibility)
 
 **Implementation Location**: `brick_destruction_gravity_handler` system in `src/systems/gravity/mod.rs` detects brick index 25, calls `rand::thread_rng().gen_range(-2.0..=15.0)` for X, always Y=0.0, and `gen_range(-5.0..=5.0)` for Z.

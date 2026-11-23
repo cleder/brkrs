@@ -202,6 +202,7 @@ cargo flamegraph --root
 ### Incremental Development
 
 1. **Make changes** in `src/`
+
 2. **Run**:
 
    ```bash
@@ -209,6 +210,7 @@ cargo flamegraph --root
    ```
 
 3. **Observe behavior** in game
+
 4. **Iterate**
 
 **Fast Recompilation**: Debug build with `opt-level=3` for dependencies provides good runtime performance with fast compile times.

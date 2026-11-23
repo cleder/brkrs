@@ -230,6 +230,7 @@ LevelDefinition(
 ## Editing and Testing Workflow
 
 - **Edit files directly** using your text editor - the RON format is human-readable and Git-friendly.
+
 - **Test a specific level** by setting environment variable `BK_LEVEL` to the level number when running the desktop build:
 
   ```bash
@@ -237,6 +238,7 @@ LevelDefinition(
   ```
 
 - **Hot-reload**: In-game, press **L** to cycle through levels quickly for visual verification.
+
 - **Unit and integration tests** exercise level loading and migration tooling.
   See `tests/` for examples.
 
@@ -262,6 +264,7 @@ This script:
 ### Manual Assignment
 
 1. **Choose a texture** from `assets/textures/background/` (e.g., `nsTile1044.png`).
+
 2. **Add a profile** to `assets/textures/manifest.ron` if not already present:
 
     ```rust

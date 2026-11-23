@@ -98,6 +98,7 @@ No new level files are needed; level 014 contains brick types needed for testing
 File: `src/lib.rs:mark_brick_on_ball_collision`
 
 - [ ] Add `MessageWriter<LevelSwitchRequested>` parameter to system
+
 - [ ] Check for brick types 50 and 54:
 
   ```rust

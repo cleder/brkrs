@@ -25,8 +25,7 @@ This guide helps developers understand, test, and extend the gravity indicator U
 
 2. **Expected Behavior**:
    - Icon appears at (12px, 12px) from bottom-left
-   - Displays appropriate weight (0/2/10/20) or "?"
-     if unknown
+   - Displays appropriate weight (0/2/10/20) or "?" if unknown
    - Updates immediately when gravity changes (e.g., hitting gravity brick)
 
 ## Architecture Overview
@@ -173,6 +172,7 @@ info!("Gravity changed: {}", gravity_cfg.is_changed());
 ### Adding New Gravity Levels
 
 1. **Add texture**: `assets/textures/default/weight-{value}.png`
+
 2. **Extend enum**:
 
    ```rust
@@ -263,6 +263,7 @@ Node {
    ```
 
 2. Update tests to cover Y-axis scenarios
+
 3. Update spec.md to document Y-axis support
 
 ## Performance Notes

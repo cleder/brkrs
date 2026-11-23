@@ -112,7 +112,9 @@ cargo test --lib
    ```
 
 2. Observe gravity changes as bricks are destroyed
+
 3. Verify ball physics responds correctly to each gravity type
+
 4. Confirm gravity resets after ball loss
 
 ### Expected Behaviors

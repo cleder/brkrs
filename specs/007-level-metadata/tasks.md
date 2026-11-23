@@ -296,8 +296,7 @@ Four independent user stories with incremental delivery strategy.
 3. Complete Phase 3 (T027-T053): 60 min
 4. Complete Phase 4 (T054-T063): 30 min
 5. Complete Phase 5 (T064-T080): 30 min
-6. Complete Phase 6 (T081-T096): 20 min
-   **Total: ~3.5 hours**
+6. Complete Phase 6 (T081-T096): 20 min **Total: ~3.5 hours**
 
 **Option B - Parallel (Faster)**:
 
@@ -305,8 +304,7 @@ Four independent user stories with incremental delivery strategy.
 2. Parallel Phase 2+3 (T009-T026 + T027-T053): 90 min (both developers)
 3. Complete Phase 4 (T054-T063): 30 min
 4. Parallel Phase 5 (T064-T080): 30 min
-5. Complete Phase 6 (T081-T096): 20 min
-   **Total: ~2.5 hours (with parallelization)**
+5. Complete Phase 6 (T081-T096): 20 min **Total: ~2.5 hours (with parallelization)**
 
 ### MVP Completion Checklist
 

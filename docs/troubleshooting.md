@@ -41,6 +41,7 @@ Bevy is a large framework.
 If you run out of RAM during compilation:
 
 1. Close other applications
+
 2. Reduce parallel compilation jobs:
 
    ```bash
