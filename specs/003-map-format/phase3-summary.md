@@ -166,7 +166,9 @@ Phase 4 tasks (User Story 2 - Grid Visualization) are ready to begin.
 **File**: `verify_level_dimensions.py`
 
 - Python script to verify level files have exactly 20x20 dimensions
+
 - Can be used for regression testing when adding new levels
+
 - Output:
 
   ```text

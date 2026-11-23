@@ -84,8 +84,11 @@ RUSTFLAGS='--cfg getrandom_backend="wasm_js"' cargo run --target wasm32-unknown-
    ```
 
 2. Launch game: `cargo run --release`
+
 3. Load test level (navigate to level via game menu or modify level loader to load test level)
+
 4. Move paddle forward (W key or mouse) to touch brick at Z=-10
+
 5. **Observe**:
    - Brick disappears within 1 frame (< 16.67ms)
    - Score increases by exactly 250 points
@@ -142,7 +145,9 @@ RUSTFLAGS='--cfg getrandom_backend="wasm_js"' cargo run --target wasm32-unknown-
    ```
 
 2. Launch game and load level
+
 3. Use paddle to destroy all 3 bricks (ball cannot complete this level)
+
 4. **Observe**: Level completion triggers after destroying all type 57 bricks
 
 ✅ **Pass Criteria**:
@@ -172,6 +177,7 @@ RUSTFLAGS='--cfg getrandom_backend="wasm_js"' cargo run --target wasm32-unknown-
    ```
 
 2. Launch game and load level
+
 3. **Observe**:
    - Brick does NOT appear (destroyed on spawn)
    - Score shows 250 points immediately
@@ -205,6 +211,7 @@ RUSTFLAGS='--cfg getrandom_backend="wasm_js"' cargo run --target wasm32-unknown-
    ```
 
 2. Move paddle to contact both bricks in same frame
+
 3. **Observe**: Score increases by 500 points (250 × 2)
 
 ✅ **Pass Criteria**:
@@ -228,6 +235,7 @@ RUSTFLAGS='--cfg getrandom_backend="wasm_js"' cargo run --target wasm32-unknown-
    ```
 
 2. Move paddle to contact type 57 brick
+
 3. **Check console output** for log message:
 
    ```text
@@ -390,6 +398,7 @@ RUSTFLAGS='--cfg getrandom_backend="wasm_js"' cargo run --target wasm32-unknown-
 **Test Method**:
 
 1. Create level with 50 paddle-destroyable bricks
+
 2. Run game with frame time profiling:
 
    ```bash
@@ -397,6 +406,7 @@ RUSTFLAGS='--cfg getrandom_backend="wasm_js"' cargo run --target wasm32-unknown-
    ```
 
 3. Move paddle through all bricks in rapid succession
+
 4. **Expected**: Frame time remains < 16.67ms throughout destruction sequence
 
 **Metrics**:

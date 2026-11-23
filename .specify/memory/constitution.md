@@ -119,8 +119,7 @@ Platform-specific issues caught late are expensive to fix.
 
 **Code Quality**:
 
-- Rust compiler warnings MUST be addressed (no `allow` without
-  justification)
+- Rust compiler warnings MUST be addressed (no `allow` without justification)
 - Follow Clippy suggestions unless explicitly justified
 - Use `rustfmt` for consistent formatting
 - Use `bevy lint` to lint for bevy specifics
@@ -146,12 +145,9 @@ Platform-specific issues caught late are expensive to fix.
 
 All public modules, functions, types, and traits MUST have rustdoc documentation:
 
-- **Module-level docs** (`//!`): Explain the module's purpose, when to use
-  it, and how it fits into the overall architecture
-- **Function docs** (`///`): Describe WHY the function exists and WHEN to
-  use it, NOT HOW it is implemented
-- **Type docs** (`///`): Explain what the type represents and its role in
-  the system
+- **Module-level docs** (`//!`): Explain the module's purpose, when to use it, and how it fits into the overall architecture
+- **Function docs** (`///`): Describe WHY the function exists and WHEN to use it, NOT HOW it is implemented
+- **Type docs** (`///`): Explain what the type represents and its role in the system
 - **Examples**: Include usage examples for non-trivial public APIs
 - **Panics/Errors**: Document panic conditions and error cases
 
@@ -170,22 +166,12 @@ It supports onboarding, code review, and long-term maintainability.
 
 All code implementations MUST follow strict Test-Driven Development (TDD):
 
-- **Write tests first**: Unit tests and acceptance tests MUST be authored
-  and committed before any implementation code for the same feature.
-- **Red phase REQUIRED**: Tests MUST be confirmed to FAIL (red) prior to
-  writing implementation code.
-- **Approval gate**: Tests MUST be validated and explicitly approved by the
-  feature owner or requestor (a maintainer or designated reviewer) before
-  implementation begins.
-- **Test coverage**: Every new public function and critical internal path
-  MUST have unit tests; feature-level behaviors MUST have integration or
-  acceptance tests that exercise user scenarios (including WASM where
-  applicable).
-- **CI enforcement**: CI pipelines MUST run the test suite and reject merges
-  that do not include the tests-first proof (a failing test commit followed
-  by a passing commit) or that remove tests.
-- **Document test intent**: Tests MUST include clear, declarative names and
-  comments describing the intended behavior and acceptance criteria.
+- **Write tests first**: Unit tests and acceptance tests MUST be authored and committed before any implementation code for the same feature.
+- **Red phase REQUIRED**: Tests MUST be confirmed to FAIL (red) prior to writing implementation code.
+- **Approval gate**: Tests MUST be validated and explicitly approved by the feature owner or requestor (a maintainer or designated reviewer) before implementation begins.
+- **Test coverage**: Every new public function and critical internal path MUST have unit tests; feature-level behaviors MUST have integration or acceptance tests that exercise user scenarios (including WASM where applicable).
+- **CI enforcement**: CI pipelines MUST run the test suite and reject merges that do not include the tests-first proof (a failing test commit followed by a passing commit) or that remove tests.
+- **Document test intent**: Tests MUST include clear, declarative names and comments describing the intended behavior and acceptance criteria.
 - **Multi-frame state persistence**: Tests for runtime state changes (e.g., gravity, scores, powerup effects) MUST verify that the change persists across multiple frames by calling `app.update()` repeatedly after the change.
   Single-frame assertions miss bugs caused by per-frame overwrites.
 
@@ -276,25 +262,34 @@ Observers provide fine-grained, immediate reactivity and are essential for moder
 
 - **Required Components:** Component structs MUST use `#[require(Transform, Visibility)]` attributes to automatically include mandatory dependencies.
   NEVER manually spawn entities with redundant component bundles.
+
 - **Query Specificity:** All queries MUST include precise filters using `With<T>` and `Without<T>` to enable system parallelism.
   Queries accessing `&mut Transform` MUST differentiate entity types to prevent scheduling conflicts.
+
 - **Change Detection:** Systems that react to component changes MUST use `Changed<T>` filters in queries.
   UI update systems MUST ONLY execute when source data changes, not every frame.
+
 - **Message-Event Separation:** Use `MessageWriter<T>` strictly for double-buffered, frame-agnostic data streams (e.g., telemetry, combat logs, physics collisions).
   Use observer systems and `Trigger<T>` for immediate, reactive logic (e.g., UI interactions, sound effects, `OnAdd`/ `OnRemove` lifecycle hooks).
   Use `#[derive(Message)]` for buffered queues with `MessageWriter`/ `MessageReader`, and `#[derive(Event)]` for observer patterns with `commands.observe()`; NEVER conflate these patterns.
+
 - **Component Mutation Over Insertion:** State changes MUST modify existing component data (e.g., enum variants) rather than inserting/removing components.
   This prevents archetype thrashing.
+
 - **Hierarchy Safety / Relationship API:** Construct and modify scene graphs strictly using `commands.entity(parent).add_child(child)` or `EntityCommands::set_parent` (or `commands.entity(parent).add_children()` where batching makes sense).
   Trust the internal `ChildOf` relationship management and use `ChildOf::parent()` to query parentage.
   NEVER manually mutate `Children` or `Parent` components or call `.replace_children()`.
+
 - **Error Recovery Patterns:** Use `let Some(value) = optional else { return; }` for graceful handling of missing resources.
   Use `let Some(value) = option else { return; }` for missing optional data.
+
 - **System Organization:** Define system sets with `*Systems` suffix (e.g., `GameplaySystems::Input`).
   Use `.configure_sets()` with `.chain()` only between sets, not individual systems.
   Group parallelizable systems within the same set.
+
 - **Plugin-Based Architecture:** Organize features into Plugin structs with `.build()` methods that register all related systems, resources, and schedules.
   Each plugin MUST be self-contained.
+
 - **Initialization System Idempotence:** Systems that initialize or load state in `Update` schedule MUST be idempotent.
   Use a guard field (e.g., `last_level_number: Option<u32>`) to track whether initialization has occurred for the current context.
   ONLY perform initialization when the context changes (e.g., level transition).
@@ -312,6 +307,7 @@ Observers provide fine-grained, immediate reactivity and are essential for moder
 
 - **Asset Handle Reuse:** Load assets once in startup systems and store handles in Resources.
   NEVER call `asset_server.load()` repeatedly for the same asset path in spawn systems.
+
 - **State-Scoped Cleanup:** Use `DespawnOnExit(State)` component for entities that should despawn when exiting a state.
   Use `despawn_entities_on_exit_state::<S>()` for automatic cleanup registration.
 

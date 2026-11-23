@@ -138,6 +138,7 @@ Need to extend boundary handling to:
 **Scoring System** (`src/systems/scoring.rs`):
 
 - `brick_points(brick_type: u8, rng: &mut impl Rng) -> u32` function maps brick types to point values
+
 - Brick 41 (Extra Ball) already returns 0 points:
 
   ```rust
@@ -203,8 +204,7 @@ Reuse existing `force_load_level_from_path` behavior.
 
 **Victory Screen Components**:
 
-- Text node with "You Win!"
-  message
+- Text node with "You Win!" message
 - Positioned at screen center with style settings
 
 **Rationale**: Victory screen logic already exists for natural game completion.

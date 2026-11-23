@@ -220,12 +220,10 @@ impl Default for GameSession {
 **Purpose**: Tracks persistent game session data across state transitions **Validation**:
 
 - `lives_remaining` >= 0 (checked during life loss flow)
-- `current_level` >= 1
-**State Transitions**:
+- `current_level` >= 1 **State Transitions**:
 - Lives decremented during FadeOut → FadeIn transition
 - Level incremented during level completion
-- Reset to default when starting new game from MainMenu
-**Lifecycle**: Initialized at app startup, mutated during gameplay
+- Reset to default when starting new game from MainMenu **Lifecycle**: Initialized at app startup, mutated during gameplay
 
 ---
 

@@ -6,6 +6,7 @@ This guide covers the contribution workflow.
 ## Getting Started
 
 1. **Fork the repository** on GitHub
+
 2. **Clone your fork** locally:
 
    ```bash
@@ -47,11 +48,14 @@ This guide covers the contribution workflow.
    ```
 
 2. Open a Pull Request against `main`
+
 3. Fill in the PR template with:
    - Description of changes
    - Related issues (if any)
    - Testing performed
+
 4. Wait for CI checks to pass
+
 5. Address review feedback
 
 ### PR Guidelines

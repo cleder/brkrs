@@ -9,6 +9,7 @@ Detect the Git remote URL for integration with GitHub services (e.g., issue crea
 ## Prerequisites
 
 - Check if Git is available by running `git rev-parse --is-inside-work-tree 2>/dev/null`
+
 - If Git is not available, output a warning and return empty:
 
   ```text

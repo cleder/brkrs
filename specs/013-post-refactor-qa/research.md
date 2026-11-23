@@ -26,8 +26,10 @@
 ### 3. Startup System Ordering
 
 - **Decision**: Create a `StartupSet` (e.g., `Initialization`) or use `.chain()` in `lib.rs`.
+
 - **Rationale**: `spawn_camera`, `spawn_ground_plane`, `spawn_light` are currently unordered.
   Chaining them or putting them in a set ensures deterministic execution.
+
 - **Implementation**:
 
     ```rust

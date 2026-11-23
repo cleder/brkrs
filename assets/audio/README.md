@@ -39,6 +39,7 @@ assets/audio/
 ### Step 1: Prepare Your Audio File
 
 1. **Create or obtain** your audio file in a supported format (WAV, MP3, FLAC, etc.)
+
 2. **Convert to OGG Vorbis**:
 
    ```bash
@@ -49,6 +50,7 @@ assets/audio/
    ```
 
 3. **Use descriptive filenames**: `brick_destroy.ogg`, `level_complete.ogg`, `paddle_hit_metal.ogg`
+
 4. **Place the file** in `assets/audio/` directory
 
 ### Step 2: Update the Audio Manifest
